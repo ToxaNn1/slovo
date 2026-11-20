@@ -214,14 +214,6 @@ export const actionButtonSize = 52;
 export const badgePadding = { horizontal: 10, vertical: 6 } as const;
 
 /**
- * The standard form under «Українською краще», a Tip's and a Correction's
- * (board С2.6, 30 pt where the Lemma is 50): this share of the Lemma's size at
- * the user's font size, so the form and the text under it keep the card's one
- * text scale (owner 08.11).
- */
-export const standardFormScale = 30 / 50;
-
-/**
  * The size an Entry of another kind starts at in Entry details' red panel at
  * M, a step of `titleScale` well under the main card's (ADR 0157): it grows
  * with the in-app text size, shrinks to fit two lines, then ends in «…».

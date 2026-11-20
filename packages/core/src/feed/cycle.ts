@@ -1,26 +1,15 @@
 import type { Entries, EntryIds } from '../entries/entries';
-import type { Random, UserStateChanges } from '../ports';
+import type { Random } from '../ports';
+import { NOTHING_STAGED, type StagedPiece } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
-
-/**
- * A change of the Cycle not made yet: the user-state changes that keep it,
- * for the caller to write, alone or in one write with other changes, and the
- * step that makes it in memory once they are written. A change whose write
- * fails is never committed, so memory keeps what the user state keeps.
- */
-export interface CycleChange {
-  readonly changes: UserStateChanges;
-  /** Makes the change in memory. Call it once the changes are written, and before the next change. */
-  commit(): void;
-}
 
 /**
  * The current Cycle: every Entry it covers in an order shuffled with its seed,
  * and the Entries Seen in it. It is read from the user state once, when it
  * opens, and kept in memory after that, so open one per app session and share
  * it (ADR 0013). A change is made in memory only once the caller has written
- * it, see `CycleChange`. When eligibility changes, it reads the eligible
+ * it: each is a staged piece. When eligibility changes, it reads the eligible
  * Entries again (ADR 0015).
  */
 export interface Cycle {
@@ -35,13 +24,13 @@ export interface Cycle {
   /** The Entries of the Cycle not Seen yet, each kind in the Cycle order. */
   unseen(): EntryIds;
   /** The change that makes the Entry Seen. It changes nothing when the Entry is Seen already. */
-  markSeen(entryId: string): CycleChange;
+  markSeen(entryId: string): StagedPiece;
   /**
    * The change that starts a new Cycle: nothing Seen, the Entries eligible
    * now, in a new shuffle from a new seed drawn from the random port. `order`
    * is the new Cycle's order.
    */
-  start(): Promise<CycleChange & { readonly order: EntryIds }>;
+  start(): Promise<StagedPiece & { readonly order: EntryIds }>;
   /**
    * Reads the eligible Entries again, once eligibility has changed (a Hidden
    * Entry, the Mix), and covers those from now on. The seed and what is Seen
@@ -173,7 +162,7 @@ export async function openCycle({
     isFirst: () => cycle.id === 1,
     unseen: () => eachList(order, (list) => list.filter((id) => !seen.has(id))),
     markSeen(entryId) {
-      if (seen.has(entryId)) return { changes: new Map(), commit: () => undefined };
+      if (seen.has(entryId)) return NOTHING_STAGED;
       return {
         changes: seenRecords.record(entryId).change(cycle.id),
         commit() {

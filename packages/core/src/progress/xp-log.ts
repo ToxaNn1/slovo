@@ -2,13 +2,14 @@ import type { DailyGoal, XpTable } from '@slovo/contracts';
 
 import { createSubscribers } from '../in-turn';
 import { dayNumber, parseLocalDate, todayBounds, todayKey } from '../local-date';
-import type { Clock, Random, UserStateChanges } from '../ports';
+import type { Clock, Random } from '../ports';
 import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
 import type { History } from '../saved/history';
 import type { XpAction, XpAward } from '../game/game-xp';
 import type { LocalDate } from '../local-date';
 import type { Subject } from '../subject';
+import { NOTHING_STAGED, type StagedPiece } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import type { XpRecord } from './records';
 import { userStateRecords } from '../user-state-schema';
@@ -110,13 +111,6 @@ export interface ResetMarker {
   readonly at: string;
 }
 
-/** Records to append for another write, and the step that makes them in memory once written. */
-export interface XpLogAppend {
-  readonly changes: UserStateChanges;
-  /** Makes the change in memory. Call it once the changes are written. */
-  commit(): void;
-}
-
 /** A solved Daily Crossword as its XP log record keeps it (ADR 0087). */
 export interface CrosswordSolve {
   readonly solveSeconds: number | undefined;
@@ -145,19 +139,19 @@ export interface XpLog {
    * write. A date has one such record by its id, so two devices that cover the
    * same day merge into one.
    */
-  freeze(dates: readonly string[]): XpLogAppend;
+  freeze(dates: readonly string[]): StagedPiece;
   /**
    * The Break-started record of a Break of `days` from today, for another
    * write. A date has one such record by its id, so two devices that start a
    * Break on the same day merge into one.
    */
-  startBreak(days: number): XpLogAppend;
+  startBreak(days: number): StagedPiece;
   /**
    * The record that ends the Break starting on `start` today, for another
    * write (ADR 0180): the Break covers the days before today only. A Break has
    * one such record by its id; of two from two devices the earlier day holds.
    */
-  endBreak(start: string): XpLogAppend;
+  endBreak(start: string): StagedPiece;
   /** What the Badges are evaluated against, in memory for the session. */
   readonly milestones: XpLogMilestones;
   /**
@@ -165,14 +159,14 @@ export interface XpLog {
    * such record by its id, so two devices that earn it merge into one, and an
    * earned Badge is never earned again or removed.
    */
-  earn(badges: readonly string[]): XpLogAppend;
+  earn(badges: readonly string[]): StagedPiece;
   /** The record of a Game Round answered wrong in `mode`, for another write; it earns no XP (ADR 0085). */
-  answeredWrong(mode: string): XpLogAppend;
+  answeredWrong(mode: string): StagedPiece;
   /**
    * The Badge-opened record of a Badge (ADR 0085), for another write. A Badge
    * has one such record by its id, so two devices that open it merge into one.
    */
-  open(badge: string): XpLogAppend;
+  open(badge: string): StagedPiece;
   /** The local date (`YYYY-MM-DD`) the total XP first reached `total`, if it has. */
   reachedOn(total: number): string | undefined;
   /**
@@ -254,11 +248,7 @@ function placeOf(
   return low;
 }
 
-const NOTHING_EARNED: XpAward = {
-  changes: new Map(),
-  amount: 0,
-  commit: () => undefined,
-};
+const NOTHING_EARNED: XpAward = { ...NOTHING_STAGED, amount: 0 };
 
 /**
  * The XP an action earns by the Edition's XP table, with the Review XP
@@ -791,7 +781,7 @@ export async function openXpLog({
   }
 
   /** The append of several records at once: one write, one change told, and none for no record. */
-  function appendAll(added: ReadonlyMap<string, XpRecord>): XpLogAppend {
+  function appendAll(added: ReadonlyMap<string, XpRecord>): StagedPiece {
     return {
       changes: new Map(
         [...added].flatMap(([id, record]) => [...xpRecords.record(id).change(record)]),
@@ -804,14 +794,14 @@ export async function openXpLog({
     };
   }
 
-  function freeze(dates: readonly string[]): XpLogAppend {
+  function freeze(dates: readonly string[]): StagedPiece {
     const at = clock.now().toISOString();
     return appendAll(
       new Map(dates.map((date) => [scoped(`freeze-${date}`), { kind: 'freeze', date, at }])),
     );
   }
 
-  function earn(badges: readonly string[]): XpLogAppend {
+  function earn(badges: readonly string[]): StagedPiece {
     const date = todayKey(clock);
     const at = clock.now().toISOString();
     return appendAll(
@@ -821,7 +811,7 @@ export async function openXpLog({
     );
   }
 
-  function answeredWrong(mode: string): XpLogAppend {
+  function answeredWrong(mode: string): StagedPiece {
     if (!on) return NOTHING_EARNED;
     const at = clock.now();
     // No draw from `random`: a wrong answer leaves the Game's own draws as they were.
@@ -842,7 +832,7 @@ export async function openXpLog({
     };
   }
 
-  function open(badge: string): XpLogAppend {
+  function open(badge: string): StagedPiece {
     const id = scoped(`badge-opened-${badge}`);
     const record: XpRecord = {
       kind: 'badge-opened',
@@ -859,7 +849,7 @@ export async function openXpLog({
     };
   }
 
-  function startBreak(days: number): XpLogAppend {
+  function startBreak(days: number): StagedPiece {
     const date = todayKey(clock);
     const id = scoped(`break-${date}`);
     const record: XpRecord = { kind: 'break', date, at: clock.now().toISOString(), days };
@@ -872,7 +862,7 @@ export async function openXpLog({
     };
   }
 
-  function endBreak(start: string): XpLogAppend {
+  function endBreak(start: string): StagedPiece {
     const id = scoped(`break-end-${start}`);
     const record: XpRecord = {
       kind: 'break-end',

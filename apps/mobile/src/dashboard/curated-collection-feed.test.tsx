@@ -1,39 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Correction, Word } from '@slovo/contracts';
-import { loadEdition, openComposition, type Composition, type Haptics } from '@slovo/core';
+import { loadEdition, openComposition, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
-import { Slot } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { View } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 
 import CuratedCollectionScreen from '../app/curated-collection/[collectionId]';
 import CuratedCollectionFeedScreen from '../app/curated-collection-feed/[collectionId]';
 import EntryFromSearchScreen from '../app/search/[entryId]';
-import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
-import { SettingsProvider } from '../settings/settings';
-import { ShellProvider } from '../shell-value';
-import { renderRoutes } from '../shell/test-render';
+import { activeEditionFiles } from '../edition/edition';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { screenSettled } from '../use-open-screen';
 
 const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
-
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 function word(id: string, lemma: string, retired = false): Word {
   return {
@@ -153,29 +135,14 @@ async function settle(action: () => unknown = () => undefined) {
 
 /** The app on the collection's screen, with the routes its cards open. */
 async function renderCollection(initialUrl = '/curated-collection/cc_mishani') {
-  await renderRoutes(
+  await renderApp(
     {
-      _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <TokensProvider tokens={editionTokens} colorScheme="light">
-            <ShellProvider shell={shellOf()}>
-              <EditionProvider edition={edition} strings={editionStrings}>
-                <HapticsProvider haptics={haptics}>
-                  <SettingsProvider>
-                    <Slot />
-                  </SettingsProvider>
-                </HapticsProvider>
-              </EditionProvider>
-            </ShellProvider>
-          </TokensProvider>
-        </SafeAreaProvider>
-      ),
       index: () => <View testID="home" />,
       'curated-collection/[collectionId]': CuratedCollectionScreen,
       'curated-collection-feed/[collectionId]': CuratedCollectionFeedScreen,
       'search/[entryId]': EntryFromSearchScreen,
     },
-    { initialUrl },
+    { shell: shellOf(), initialUrl },
   );
   await settle();
 }

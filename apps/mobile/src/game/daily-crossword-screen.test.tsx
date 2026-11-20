@@ -9,19 +9,15 @@ import {
   type Edition,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
-import { router, Slot } from 'expo-router';
+import { router } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
 import { AccessibilityInfo, Share } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import GameScreen from '../app/game';
 import GameLayout from '../app/game/_layout';
 import DailyCrosswordScreen from '../app/game/crossword';
 import { edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
-import { SettingsProvider } from '../settings/settings';
 import {
   GAMES_BOARD_SWITCHES,
   opened,
@@ -89,11 +85,6 @@ const word = (index: number): Word => ({
   correctionIds: [],
   retired: false,
 });
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 47, left: 0, right: 0, bottom: 34 },
-};
 
 /**
  * Runs what a tap starts, and lets the navigators and the Core finish it:
@@ -195,24 +186,13 @@ async function renderGame({
     remoteSwitches: switchedTo(switched),
     settings: await settingsAt(),
   });
-  const app = await renderRoutes(
+  const app = await renderApp(
     {
-      _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <ShellProvider shell={shell}>
-            <EditionProvider edition={edition} strings={editionStrings}>
-              <SettingsProvider>
-                <Slot />
-              </SettingsProvider>
-            </EditionProvider>
-          </ShellProvider>
-        </SafeAreaProvider>
-      ),
       'game/_layout': GameLayout,
       'game/index': GameScreen,
       'game/crossword': DailyCrosswordScreen,
     },
-    { initialUrl: '/game' },
+    { shell, initialUrl: '/game' },
   );
   await settle();
   return { pathname: () => app.getPathname() };
@@ -450,8 +430,10 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
     const message = content !== undefined && 'message' in content ? (content.message ?? '') : '';
     expect(message).toMatch(/^SLOVO · Кросворд №\d+\n\d+:\d\d · без підказок\n/);
     const letters = new Set(words.flatMap((w) => w.letters));
-    expect([...letters].some((c) => message.split('\n').slice(2).join('').includes(c))).toBe(false);
-    expect(screen.getByText('Скопійовано. Жодної літери — тільки клини.')).toBeOnTheScreen();
+    const lines = message.split('\n');
+    expect(lines.at(-1)).toBe('Розгадай і ти: https://slovoapp.org');
+    expect([...letters].some((c) => lines.slice(2, -1).join('').includes(c))).toBe(false);
+    expect(screen.getByText('Готово. Жодної літери, лише квадрати.')).toBeOnTheScreen();
 
     await settle(() => fireEvent.press(screen.getByRole('button', { name: 'До ігор' })));
     expect(app.pathname()).toBe('/game');

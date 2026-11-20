@@ -17,7 +17,7 @@ import {
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 
-export const TITLE_TRACKING = typeRoles.resultTitle.letterSpacing / typeRoles.resultTitle.size;
+const TITLE_TRACKING = typeRoles.resultTitle.letterSpacing / typeRoles.resultTitle.size;
 /** The Mascot's own width on the panel: its figure and the padding it draws around it. */
 const MASCOT_COLUMN = mascotWidth + 2 * space[4];
 
@@ -27,7 +27,7 @@ const MASCOT_COLUMN = mascotWidth + 2 * space[4];
  * would take its whole width on one line, run off the screen and squeeze the
  * title and line beside it until their words break.
  */
-export function PanelMascot({ children }: { children: ReactNode }) {
+function PanelMascot({ children }: { children: ReactNode }) {
   return (
     <View testID="game-panel-mascot" style={styles.mascot}>
       {children}
@@ -41,7 +41,7 @@ export function PanelMascot({ children }: { children: ReactNode }) {
  * panel is at least the board's height and grows with its text, at the
  * largest text sizes too, so the ground follows the height it is laid out at.
  */
-export function PanelGround({ color }: { color: string }) {
+function PanelGround({ color }: { color: string }) {
   const id = `result${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const { width } = useWindowDimensions();
   const [height, setHeight] = useState<number>(resultLayout.panelHeight);

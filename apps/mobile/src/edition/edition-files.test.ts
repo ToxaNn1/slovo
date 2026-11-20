@@ -879,7 +879,7 @@ describe('the strings of the Category screens and the board style (spec #1604)',
       addedToMix: '«Емоції» тепер у твоєму Міксі.',
       removedFromMix: '«Емоції» прибрано з Міксу.',
       curatedAdd: 'ДОДАТИ СОБІ',
-      curatedAdded: 'У МІКСІ',
+      curatedAdded: 'У КОЛЕКЦІЯХ',
     });
   });
 
@@ -1005,7 +1005,7 @@ describe('the board 11 strings', () => {
     expect(parsed.hidden.show).toBe('Показати');
     expect(parsed.settings.widgets).toEqual({
       title: 'Віджети',
-      subtitle: 'Слово дня на головному екрані та екрані блокування.',
+      subtitle: 'Рідкісні слова на головному екрані та екрані блокування.',
       previews: { small: 'Малий', medium: 'Середній', lockScreen: 'Екран блокування' },
     });
     expect(parsed.settings.privacy.dataExport.title).toBe('Експортувати мої дані');
@@ -1100,7 +1100,7 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
       'idiom-meaning': 'Вгадай, що означає вислів',
       'build-idiom': 'Читаєш значення — складаєш вислів.',
       survival: 'Три життя. Як далеко зайдеш?',
-      timed: 'Двадцять секунд. Скільки слів встигнеш?',
+      timed: 'Шістдесят секунд. Скільки слів встигнеш?',
     });
     expect(
       Object.fromEntries(Object.entries(parsed.modes).map(([id, mode]) => [id, mode.glyph])),
@@ -1111,7 +1111,7 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
       origin: '→А',
       'build-idiom': '«…»',
       survival: '⚑⚑⚑',
-      timed: '20 с',
+      timed: '60 с',
     });
   });
 
@@ -1787,10 +1787,6 @@ describe('UI strings the app fills in', () => {
     [
       'wordOfTheDay.badge',
       { ...strings, wordOfTheDay: { ...wordOfTheDay, badge: 'Слово дня · {day}' } },
-    ],
-    [
-      'settings.soonAccessibilityLabel',
-      { ...strings, settings: { ...settings, soonAccessibilityLabel: 'скоро буде доступно' } },
     ],
     [
       'settings.about.versionLine',

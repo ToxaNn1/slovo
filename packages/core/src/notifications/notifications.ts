@@ -1,5 +1,5 @@
 import type { Analytics } from '../analytics/analytics';
-import { MAX_NOTIFICATION_TIMES, TimeOfDaySchema } from '@slovo/contracts';
+import { TimeOfDaySchema } from '@slovo/contracts';
 
 import type { Cycle } from '../feed/cycle';
 import type { UserSettingDefaults } from '../edition/edition';
@@ -13,8 +13,9 @@ import {
   type NotificationScheduling,
   type PlanEdition,
 } from './notification-plan';
-import type { Clock, NotificationPermission, Random, UserStateChanges } from '../ports';
+import type { Clock, NotificationPermission, Random } from '../ports';
 import type { Subject } from '../subject';
+import { staged, writeStaged, type StagedPiece } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
@@ -29,17 +30,24 @@ export interface NotificationsEdition extends PlanEdition {
   readonly userSettingDefaults: Pick<UserSettingDefaults, 'notificationTimes'>;
 }
 
+/**
+ * The two Notification times (ADR 0200), local times `HH:MM`: off, or on with
+ * the Word's time and the Reminder's after it. A reader with no Reminder (one
+ * time kept from before ADR 0200, or an onboarding time at or after the
+ * Edition's Reminder) gets the Word alone until they set one.
+ */
+export type NotificationTimes =
+  | { readonly kind: 'off' }
+  | { readonly kind: 'on'; readonly word: string; readonly reminder: string | undefined };
+
+/** Which of the two Notification times: the Word's or the Reminder's. */
+export type NotificationSlot = 'word' | 'reminder';
+
 /** The Notification times and the sound as they stand. */
 export interface NotificationsState {
-  /**
-   * The Notification times, local times `HH:MM`, in time order and no two
-   * equal. An empty list means notifications are off.
-   */
-  readonly times: readonly string[];
+  readonly times: NotificationTimes;
   /** Whether notifications play their sound. */
   readonly sound: boolean;
-  /** Whether another time can be added: fewer than `MAX_NOTIFICATION_TIMES` are set. */
-  readonly canAddTime: boolean;
   /**
    * Whether the device lets the app notify, as it was when the plan was last
    * made. Without a scheduler it stays not asked.
@@ -47,12 +55,12 @@ export interface NotificationsState {
   readonly permission: NotificationPermission;
 }
 
-/** Why a Notification time is refused, for the UI to say in the Edition's words. */
-export type NotificationTimeRefusal =
-  /** The time is in the list already. */
-  | 'duplicate'
-  /** `MAX_NOTIFICATION_TIMES` are set already. */
-  | 'limit';
+/**
+ * Why a Notification time is refused, for the UI to say in the Edition's
+ * words: the Word's time is at or after the Reminder's, or the Reminder's at
+ * or before the Word's.
+ */
+export type NotificationTimeRefusal = 'order';
 
 /**
  * Notifications: the reader's Notification times, whether notifications play
@@ -71,22 +79,25 @@ export interface Notifications {
    */
   readonly state: NotificationsState;
   /**
-   * Keeps the time the reader picked: it replaces the time `replacing`, or is
-   * added when there is none to replace. Resolves to why it was refused (it
-   * is another time in the list, or a time to add over the full list), or
-   * nothing when it is kept. A `replacing` not in the list changes nothing.
+   * Keeps the time the reader picked for the Word or the Reminder. Resolves
+   * to why it was refused, or nothing when it is kept. While notifications
+   * are off it changes nothing.
    */
-  keepTime(time: string, replacing?: string): Promise<NotificationTimeRefusal | undefined>;
+  keepTime(slot: NotificationSlot, time: string): Promise<NotificationTimeRefusal | undefined>;
+  /**
+   * Switches notifications on, at the Edition's default Word and Reminder
+   * times, or off. Switching on what is on keeps its times.
+   */
+  setOn(on: boolean): Promise<void>;
   /**
    * The reader's answer to the onboarding's «Коли нагадати?»: `time` becomes
-   * the only Notification time, or with nothing («Без нагадувань») none is
-   * left. Either answer is the ask, so the Feed's explainer never comes; a
+   * the Word's, with the Edition's default Reminder when that comes after it
+   * and no Reminder otherwise, or with nothing («Без нагадувань»)
+   * notifications are off. Either answer is the ask, so the Feed's explainer never comes; a
    * time then asks for permission to notify, as `askPermission` does; a
    * device that fails to ask leaves the time kept and the ask unanswered.
    */
   chooseOnboardingTime(time: string | undefined): Promise<void>;
-  /** Removes the time. A time not in the list is skipped. */
-  removeTime(time: string): Promise<void>;
   /** Switches the notification sound on or off. */
   setSound(on: boolean): Promise<void>;
   /**
@@ -114,15 +125,27 @@ const {
   notificationAsk,
 } = userStateRecords;
 
-function stateOf(
-  times: readonly string[],
-  sound: boolean,
-  permission: NotificationPermission,
-): NotificationsState {
-  const sorted = [...times].sort((one, other) =>
-    compareTimesOfDay(parseTimeOfDay(one), parseTimeOfDay(other)),
-  );
-  return { times: sorted, sound, canAddTime: sorted.length < MAX_NOTIFICATION_TIMES, permission };
+const earlier = (one: string, other: string) =>
+  compareTimesOfDay(parseTimeOfDay(one), parseTimeOfDay(other)) < 0;
+
+/**
+ * The Notification times of a stored list: off with none, else the Word at
+ * its first time and the Reminder at its last, as the plan takes them (ADR
+ * 0176). A list from before ADR 0200 may hold more; the ones between count
+ * for nothing.
+ */
+function timesOf(list: readonly string[]): NotificationTimes {
+  const sorted = [...list].sort((one, other) => (earlier(one, other) ? -1 : 1));
+  const [word] = sorted;
+  if (word === undefined) return { kind: 'off' };
+  const last = sorted.at(-1);
+  return { kind: 'on', word, reminder: last === word ? undefined : last };
+}
+
+/** The list stored for the Notification times, in time order. */
+function listOf(times: NotificationTimes): string[] {
+  if (times.kind === 'off') return [];
+  return times.reminder === undefined ? [times.word] : [times.word, times.reminder];
 }
 
 /**
@@ -177,11 +200,12 @@ export async function openNotifications({
     userState.read(timesRecord),
     userState.read(soundRecord),
   ]);
-  let state = stateOf(
-    storedTimes ?? edition.userSettingDefaults.notificationTimes,
-    storedSound ?? true,
-    'not-asked',
-  );
+  const defaults = timesOf(edition.userSettingDefaults.notificationTimes);
+  let state: NotificationsState = {
+    times: storedTimes === undefined ? defaults : timesOf(storedTimes),
+    sound: storedSound ?? true,
+    permission: 'not-asked',
+  };
   const subscribers = createSubscribers();
   const planner =
     scheduling === undefined
@@ -200,7 +224,7 @@ export async function openNotifications({
         });
 
   /** The Notification times as the plan takes them. */
-  const planTimes = () => state.times.map(parseTimeOfDay);
+  const planTimes = () => listOf(state.times).map(parseTimeOfDay);
   /** What the evening notifications of the last plan say. */
   let eveningKey = '';
 
@@ -217,56 +241,60 @@ export async function openNotifications({
   }
 
   /**
-   * Writes the times, an empty list included, with the `also` records, then
+   * Writes the times, off as an empty list, with the `also` piece, then
    * makes the change in memory and plans again.
    */
-  async function writeTimes(
-    times: readonly string[],
-    also: UserStateChanges = new Map(),
-  ): Promise<void> {
-    const next = stateOf(times, state.sound, state.permission);
-    await userState.write(new Map([...timesRecord.change([...next.times]), ...also]));
-    state = next;
-    subscribers.tell();
+  async function writeTimes(times: NotificationTimes, also?: StagedPiece): Promise<void> {
+    await writeStaged(userState, [
+      staged(timesRecord.change(listOf(times)), () => {
+        state = { ...state, times };
+        subscribers.tell();
+      }),
+      also,
+    ]);
     await plan();
   }
 
   async function keepTime(
+    slot: NotificationSlot,
     time: string,
-    replacing: string | undefined,
   ): Promise<NotificationTimeRefusal | undefined> {
     TimeOfDaySchema.parse(time);
-    if (replacing !== undefined && !state.times.includes(replacing)) return undefined;
-    if (replacing === time) return undefined;
-    if (state.times.includes(time)) return 'duplicate';
-    if (replacing === undefined && !state.canAddTime) return 'limit';
-    await writeTimes(
-      replacing === undefined
-        ? [...state.times, time]
-        : state.times.map((kept) => (kept === replacing ? time : kept)),
-    );
+    const { times } = state;
+    if (times.kind === 'off' || times[slot] === time) return undefined;
+    const { word, reminder } =
+      slot === 'word' ? { ...times, word: time } : { ...times, reminder: time };
+    if (reminder !== undefined && !earlier(word, reminder)) return 'order';
+    await writeTimes({ kind: 'on', word, reminder });
     return undefined;
+  }
+
+  async function setOn(on: boolean): Promise<void> {
+    if ((state.times.kind === 'on') === on) return;
+    await writeTimes(on ? defaults : { kind: 'off' });
   }
 
   async function chooseOnboardingTime(time: string | undefined): Promise<void> {
     if (time !== undefined) TimeOfDaySchema.parse(time);
+    const reminder = defaults.kind === 'on' ? defaults.reminder : undefined;
     await writeTimes(
-      time === undefined ? [] : [time],
-      notificationAsk.change({ step: 'onboarding' }),
+      time === undefined
+        ? { kind: 'off' }
+        : {
+            kind: 'on',
+            word: time,
+            reminder: reminder !== undefined && earlier(time, reminder) ? reminder : undefined,
+          },
+      staged(notificationAsk.change({ step: 'onboarding' })),
     );
     // A device that fails to ask keeps the time and the reader going on.
     if (time !== undefined) await askPermission().catch(() => undefined);
   }
 
-  async function removeTime(time: string): Promise<void> {
-    if (!state.times.includes(time)) return;
-    await writeTimes(state.times.filter((kept) => kept !== time));
-  }
-
   async function setSound(on: boolean): Promise<void> {
     if (state.sound === on) return;
     await userState.write(soundRecord.change(on));
-    state = stateOf(state.times, on, state.permission);
+    state = { ...state, sound: on };
     subscribers.tell();
     await plan();
   }
@@ -304,9 +332,9 @@ export async function openNotifications({
     get state() {
       return state;
     },
-    keepTime: (time, replacing) => inTurn(() => keepTime(time, replacing)),
+    keepTime: (slot, time) => inTurn(() => keepTime(slot, time)),
+    setOn: (on) => inTurn(() => setOn(on)),
     chooseOnboardingTime: (time) => inTurn(() => chooseOnboardingTime(time)),
-    removeTime: (time) => inTurn(() => removeTime(time)),
     setSound: (on) => inTurn(() => setSound(on)),
     askPermission: () => inTurn(askPermission),
     nextMorning: () =>

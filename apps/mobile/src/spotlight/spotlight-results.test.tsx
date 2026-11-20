@@ -1,19 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import {
-  loadEdition,
-  openComposition,
-  systemRandom,
-  type Composition,
-  type Haptics,
-} from '@slovo/core';
+import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider } from '@slovo/ui';
-import { Slot } from 'expo-router';
+import { renderApp as renderInApp } from '../shell/test-app';
 import { act, screen } from 'expo-router/testing-library';
-import { renderRoutes, sendLink } from '../shell/test-render';
+import { sendLink } from '../shell/test-render';
 import { Text } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import CollectionScreen from '../app/saved/collections/[collectionId]';
 import EntryLayout from '../app/entry/_layout';
@@ -21,8 +13,6 @@ import EntryFromLinkScreen from '../app/entry/[entryId]';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { createOutsideLinks } from '../entries/entry-link';
 import { screenSettled } from '../use-open-screen';
-import { SettingsProvider } from '../settings/settings';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 
 const { config } = activeEditionFiles;
@@ -37,19 +27,6 @@ let userState: Awaited<ReturnType<typeof seedUserState>>;
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
-
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 /** A Word of the Edition's first Category. */
 function word(id: string, lemma: string): Word {
@@ -116,22 +93,16 @@ async function renderApp() {
     remoteSwitches: switchedTo(shippedEdition),
     composition: opened(composition),
   });
-  const app = await renderRoutes(
+  const app = await renderInApp(
     {
-      _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <ShellProvider shell={shell}>
-            <EditionProvider edition={edition} strings={editionStrings}>
-              <SettingsProvider>
-                <HapticsProvider haptics={haptics}>
-                  <Slot />
-                </HapticsProvider>
-              </SettingsProvider>
-            </EditionProvider>
-          </ShellProvider>
-        </SafeAreaProvider>
-      ),
-      '+native-intent': {
+      index: () => <Text>Feed</Text>,
+      'entry/_layout': EntryLayout,
+      'entry/[entryId]': EntryFromLinkScreen,
+      'saved/collections/[collectionId]/index': CollectionScreen,
+    },
+    {
+      shell,
+      nativeIntent: {
         redirectSystemPath: createOutsideLinks({
           domain: 'slovo.example',
           editionId: edition.id,
@@ -141,12 +112,7 @@ async function renderApp() {
           widgetEntries: { replaceOpenEntry: () => Promise.resolve(true), open: () => undefined },
         }),
       },
-      index: () => <Text>Feed</Text>,
-      'entry/_layout': EntryLayout,
-      'entry/[entryId]': EntryFromLinkScreen,
-      'saved/collections/[collectionId]/index': CollectionScreen,
     },
-    { initialUrl: '/' },
   );
   await settle();
   return {

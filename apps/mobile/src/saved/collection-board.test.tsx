@@ -2,17 +2,14 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import { fill, pluralCount, type Idiom, type Word } from '@slovo/contracts';
 import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
 import { createFakeBackend, createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
 import { Tabs } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
 import * as Clipboard from 'expo-clipboard';
 import { Share, Text } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import CollectionScreen from '../app/saved/collections/[collectionId]';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { screenSettled } from '../use-open-screen';
 
@@ -31,11 +28,6 @@ let linkCopyOn: boolean;
 jest.mock('expo-clipboard', () => ({
   setStringAsync: jest.fn(() => Promise.resolve(true)),
 }));
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 /** A Word with its Lemma and nothing else the screen reads. */
 const word = (id: string, lemma: string): Word => ({
@@ -116,34 +108,28 @@ async function renderCollection(collectionId: string, query = '') {
     isFeatureEnabled: (feature) =>
       feature === 'collectionLinkCopy' ? linkCopyOn : edition.isFeatureEnabled(feature),
   };
-  const app = await renderRoutes(
+  const app = await renderApp(
     {
       _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <ShellProvider
-            shell={testShell({
-              composition: opened(composition),
-              remoteSwitches: switchedTo(editionInEffect),
-            })}
-          >
-            <EditionProvider edition={edition} strings={editionStrings}>
-              {/* Expo Router 58 draws only the screens a Tabs layout declares. */}
-              <Tabs screenOptions={{ headerShown: false }}>
-                <Tabs.Screen name="index" />
-                <Tabs.Screen name="saved/collections/index" />
-                <Tabs.Screen name="saved/collections/[collectionId]/index" />
-                <Tabs.Screen name="saved/collections/[collectionId]/[entryId]" />
-              </Tabs>
-            </EditionProvider>
-          </ShellProvider>
-        </SafeAreaProvider>
+        <Tabs screenOptions={{ headerShown: false }}>
+          <Tabs.Screen name="index" />
+          <Tabs.Screen name="saved/collections/index" />
+          <Tabs.Screen name="saved/collections/[collectionId]/index" />
+          <Tabs.Screen name="saved/collections/[collectionId]/[entryId]" />
+        </Tabs>
       ),
       index: () => <Text>Feed</Text>,
       'saved/collections/index': () => <Text>Collections</Text>,
       'saved/collections/[collectionId]/index': CollectionScreen,
       'saved/collections/[collectionId]/[entryId]': () => <Text>Entry</Text>,
     },
-    { initialUrl: `/saved/collections/${collectionId}${query}` },
+    {
+      shell: testShell({
+        composition: opened(composition),
+        remoteSwitches: switchedTo(editionInEffect),
+      }),
+      initialUrl: `/saved/collections/${collectionId}${query}`,
+    },
   );
   await settle();
   return { pathname: () => app.getPathname() };

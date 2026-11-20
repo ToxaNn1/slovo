@@ -15,7 +15,7 @@ import { openStore } from './store-link';
  * device while the `forceUpdate` Feature Switch is in effect. It reads again
  * when a new answer changes them.
  */
-export function useForceUpdate(device: ForceUpdateFacts): ForceUpdate {
+function useForceUpdate(device: ForceUpdateFacts): ForceUpdate {
   return useSubscribed(useOpened(useShell().remoteSwitches), ({ edition, minimums }) =>
     edition.isFeatureEnabled('forceUpdate') ? forceUpdateOf(minimums, device) : 'none',
   );

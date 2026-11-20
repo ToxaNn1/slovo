@@ -9056,6 +9056,14 @@
                           ],
                           "type": "string"
                         },
+                        "mixTab": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "xpLog": {
                           "enum": [
                             "on",
@@ -9660,6 +9668,7 @@
                         "collectionLinks",
                         "replaceOpenEntry",
                         "mixKindWeights",
+                        "mixTab",
                         "xpLog",
                         "streakFreezes",
                         "streakBreak",
@@ -10846,6 +10855,14 @@
                           ],
                           "type": "string"
                         },
+                        "mixTab": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "xpLog": {
                           "enum": [
                             "on",
@@ -11450,6 +11467,7 @@
                         "collectionLinks",
                         "replaceOpenEntry",
                         "mixKindWeights",
+                        "mixTab",
                         "xpLog",
                         "streakFreezes",
                         "streakBreak",
@@ -12560,6 +12578,14 @@
                           ],
                           "type": "string"
                         },
+                        "mixTab": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "xpLog": {
                           "enum": [
                             "on",
@@ -13164,6 +13190,7 @@
                         "collectionLinks",
                         "replaceOpenEntry",
                         "mixKindWeights",
+                        "mixTab",
                         "xpLog",
                         "streakFreezes",
                         "streakBreak",

@@ -11,21 +11,25 @@ import {
 } from '@slovo/content-rules';
 import { CONTENT_PAGE_SIZE, type RecordingsFilter } from '@slovo/contracts/admin-api';
 import { contentReport, missedTargets } from '@slovo/language-pack';
-import type { Word } from '@slovo/contracts';
 import {
-  collectionAppearance,
   editionDateOf,
   type Actor,
   type Clock,
   type EditionRegistry,
-  type Json,
   type Random,
 } from '@slovo/server-core';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 import type { Database } from '../database/database';
-import { mediaGaps, readsDifferently, retireRecordings, voicesRecorded } from './media-rows';
+import {
+  holdContentVersion,
+  publishContentVersion,
+  saveRecord,
+  TABLES,
+  writeLogged,
+} from './content-records';
+import { mediaGaps, voicesRecorded } from './media-rows';
 import { quoteCheckCounts } from './quote-check';
 import {
   actionLog,
@@ -42,17 +46,6 @@ import {
   wordsInAllVoices,
   type ContentAuthor,
 } from '../database/schema';
-
-/** The table of each kind of record. */
-const TABLES = {
-  word: contentWords,
-  correction: contentCorrections,
-  idiom: contentIdioms,
-  synonymRow: contentSynonymRows,
-  tip: contentTips,
-  curatedCollection: contentCuratedCollections,
-  crosswordDay: contentCrosswordDays,
-} as const satisfies Record<RecordKind, unknown>;
 
 const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';
 const ID_LENGTH = 6;
@@ -132,19 +125,6 @@ class Refused extends Error {
   }
 }
 
-/** A record as JSON, for the Action log's columns: undefined fields are left out, as JSON leaves them. */
-function toJson(value: unknown): Json {
-  if (value === null || typeof value === 'string' || typeof value === 'number') return value;
-  if (typeof value === 'boolean') return value;
-  if (Array.isArray(value)) return value.map(toJson);
-  if (typeof value !== 'object') return null;
-  return Object.fromEntries(
-    Object.entries(value)
-      .filter(([, field]) => field !== undefined)
-      .map(([key, field]) => [key, toJson(field)]),
-  );
-}
-
 /**
  * Why a write of a Crossword day is refused by its date, the day's id: an
  * edit keeps the date, and an added day takes a date no day has.
@@ -190,41 +170,6 @@ function withPublishDate(
   return publishedOn === undefined || publishedOn === ''
     ? { ...fields, publishedOn: editionDateOf(now) }
     : fields;
-}
-
-/** A Curated Collection as its row keeps it beside its fields: when it appeared. */
-interface Appearance {
-  readonly publishedOn: string;
-  readonly appearedAt: Date;
-}
-
-/**
- * When the saved Curated Collection appears, and why the save is refused by
- * it: an appeared collection keeps its publish date; one not appeared yet
- * appears anew by the date it is saved with.
- */
-function appearanceOf(
-  publishedOn: string,
-  before: Appearance | undefined,
-  now: Date,
-  file: string,
-):
-  | { readonly ok: true; readonly appearedAt: Date }
-  | { readonly ok: false; readonly refusal: Refusal } {
-  if (before === undefined) return { ok: true, appearedAt: collectionAppearance(publishedOn, now) };
-  if (publishedOn === before.publishedOn) return { ok: true, appearedAt: before.appearedAt };
-  if (before.appearedAt <= now) {
-    return {
-      ok: false,
-      refusal: {
-        rule: 'curated-collection-appeared',
-        file,
-        field: 'publishedOn',
-        message: `The collection appeared on ${before.publishedOn} and keeps that date`,
-      },
-    };
-  }
-  return { ok: true, appearedAt: collectionAppearance(publishedOn, now) };
 }
 
 /**
@@ -399,26 +344,13 @@ export function createContentWrites({
     return imported?.contentVersion;
   }
 
-  /** The Edition's content version, held to the commit; none while it is not imported. */
-  async function heldVersion(tx: Tx, editionId: string) {
-    // An Edition's writes run one at a time until the commit.
-    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${editionId}))`);
-    const [held] = await tx
-      .select({ contentVersion: contentVersions.contentVersion })
-      .from(contentVersions)
-      .where(eq(contentVersions.editionId, editionId))
-      .for('update');
-    return held?.contentVersion;
-  }
-
-  /** Opens a batch of the Агент's writes to the Edition. */
   async function openBatch(
     writer: Writer,
     editionId: string,
   ): Promise<{ ok: true; batchId: string } | WriteRefusal> {
     if (editions.find(editionId) === undefined) return { ok: false, reason: 'not-found' };
     return db.transaction(async (tx) => {
-      if ((await heldVersion(tx, editionId)) === undefined) {
+      if ((await holdContentVersion(tx, editionId)) === undefined) {
         return { ok: false, reason: 'not-imported' } as const;
       }
       const [batch] = await tx
@@ -464,116 +396,6 @@ export function createContentWrites({
     }
   }
 
-  /** When the Curated Collection of the id appeared, with the publish date it was kept at. */
-  async function appearedOf(tx: Tx, editionId: string, id: string, fields: object) {
-    const [row] = await tx
-      .select({ appearedAt: contentCuratedCollections.appearedAt })
-      .from(contentCuratedCollections)
-      .where(
-        and(
-          eq(contentCuratedCollections.editionId, editionId),
-          eq(contentCuratedCollections.id, id),
-        ),
-      );
-    if (row === undefined) return undefined;
-    const publishedOn = 'publishedOn' in fields ? String(fields.publishedOn) : '';
-    return { publishedOn, appearedAt: row.appearedAt };
-  }
-
-  /** Writes the record's row at its new versions. */
-  async function saveRow(
-    tx: Tx,
-    record: AuthoredRecord,
-    common: {
-      editionId: string;
-      recordVersion: number;
-      contentVersion: number;
-      changedBy: ContentAuthor;
-      changedAt: Date;
-      batchId: string;
-    },
-    own: { readonly needsNewRecording: boolean; readonly appearedAt: Date | undefined },
-  ) {
-    const { needsNewRecording, appearedAt } = own;
-    const key = {
-      id: recordIdOf(record),
-      retired: 'retired' in record.entry && record.entry.retired === true,
-      ...common,
-    };
-    switch (record.kind) {
-      case 'word': {
-        const row = { ...key, fields: record.entry, needsNewRecording };
-        await tx
-          .insert(contentWords)
-          .values(row)
-          .onConflictDoUpdate({ target: [contentWords.editionId, contentWords.id], set: row });
-        return;
-      }
-      case 'correction': {
-        const row = { ...key, fields: record.entry };
-        await tx
-          .insert(contentCorrections)
-          .values(row)
-          .onConflictDoUpdate({
-            target: [contentCorrections.editionId, contentCorrections.id],
-            set: row,
-          });
-        return;
-      }
-      case 'idiom': {
-        const row = { ...key, fields: record.entry };
-        await tx
-          .insert(contentIdioms)
-          .values(row)
-          .onConflictDoUpdate({ target: [contentIdioms.editionId, contentIdioms.id], set: row });
-        return;
-      }
-      case 'synonymRow': {
-        const row = { ...key, fields: record.entry };
-        await tx
-          .insert(contentSynonymRows)
-          .values(row)
-          .onConflictDoUpdate({
-            target: [contentSynonymRows.editionId, contentSynonymRows.id],
-            set: row,
-          });
-        return;
-      }
-      case 'tip': {
-        const row = { ...key, fields: record.entry };
-        await tx
-          .insert(contentTips)
-          .values(row)
-          .onConflictDoUpdate({ target: [contentTips.editionId, contentTips.id], set: row });
-        return;
-      }
-      case 'curatedCollection': {
-        if (appearedAt === undefined)
-          throw new Error('a Curated Collection is saved with when it appears');
-        const row = { ...key, fields: record.entry, appearedAt };
-        await tx
-          .insert(contentCuratedCollections)
-          .values(row)
-          .onConflictDoUpdate({
-            target: [contentCuratedCollections.editionId, contentCuratedCollections.id],
-            set: row,
-          });
-        return;
-      }
-      case 'crosswordDay': {
-        const row = { ...key, fields: record.entry };
-        await tx
-          .insert(contentCrosswordDays)
-          .values(row)
-          .onConflictDoUpdate({
-            target: [contentCrosswordDays.editionId, contentCrosswordDays.id],
-            set: row,
-          });
-        return;
-      }
-    }
-  }
-
   /**
    * Checks one write by the content rules and publishes it as the next
    * content version, with its Action log row, in one transaction: a
@@ -599,7 +421,7 @@ export function createContentWrites({
     if (edition === undefined) return { ok: false, reason: 'not-found' };
     try {
       const result = await db.transaction(async (tx): Promise<WriteRefusal | Published> => {
-        const contentVersion = await heldVersion(tx, editionId);
+        const contentVersion = await holdContentVersion(tx, editionId);
         if (contentVersion === undefined) return { ok: false, reason: 'not-imported' };
         if (!(await ownBatch(tx, writer, editionId, batchId))) {
           return { ok: false, reason: 'not-found' };
@@ -607,11 +429,8 @@ export function createContentWrites({
         const now = clock.now();
         const records = await recordsAt(tx, editionId, contentVersion);
         let current: StoredRecord | undefined;
-        let wordBefore: { readonly fields: Word; readonly needsNewRecording: boolean } | undefined;
         if (change.op !== 'create') {
-          const [row] = await readersOf(tx, editionId, change.id)[kind]();
-          current = row;
-          if (row !== undefined && 'needsNewRecording' in row) wordBefore = row;
+          [current] = await readersOf(tx, editionId, change.id)[kind]();
           if (current === undefined) return { ok: false, reason: 'not-found' };
           if (current.recordVersion !== change.recordVersion) {
             return { ok: false, reason: 'stale', currentVersion: current.recordVersion };
@@ -635,17 +454,25 @@ export function createContentWrites({
         if (!parsed.ok)
           throw new Refused({ ok: false, reason: 'refused', refusals: parsed.refusals });
         const { record } = parsed;
-        let appearedAt: Date | undefined;
-        if (record.kind === 'curatedCollection') {
-          const before =
-            current === undefined
-              ? undefined
-              : await appearedOf(tx, editionId, current.id, current.fields);
-          const appearance = appearanceOf(record.entry.publishedOn, before, now, record.file);
-          if (!appearance.ok)
-            throw new Refused({ ok: false, reason: 'refused', refusals: [appearance.refusal] });
-          appearedAt = appearance.appearedAt;
-        }
+        const recordVersion = (current?.recordVersion ?? 0) + 1;
+        const published = contentVersion + 1;
+        // The rules of the record's kind refuse first: a refusal by the content
+        // rules after it rolls the save back with the rest.
+        const saved = await saveRecord(
+          tx,
+          record,
+          {
+            editionId,
+            recordVersion,
+            contentVersion: published,
+            changedBy: authorOf(writer),
+            changedAt: now,
+            batchId,
+          },
+          'authored',
+        );
+        if (!saved.ok)
+          throw new Refused({ ok: false, reason: 'refused', refusals: [saved.refusal] });
         const fieldsOf = <T>(rows: readonly { readonly fields: T }[]) =>
           rows.map((row) => row.fields);
         const set = contentSetOf({
@@ -660,45 +487,11 @@ export function createContentWrites({
         const refusals = checkRecord(edition.config, set, record, { today: now });
         if (refusals.length > 0) throw new Refused({ ok: false, reason: 'refused', refusals });
 
-        const recordVersion = (current?.recordVersion ?? 0) + 1;
-        const published = contentVersion + 1;
-        // A Word's Recordings no longer read it once its Lemma or Stress changed (ADR 0083).
-        const textChanged =
-          record.kind === 'word' &&
-          wordBefore !== undefined &&
-          readsDifferently(wordBefore.fields, record.entry);
-        const needsNewRecording =
-          record.kind === 'word' &&
-          wordBefore !== undefined &&
-          (wordBefore.needsNewRecording || textChanged);
-        if (textChanged)
-          await retireRecordings(tx, { editionId, wordId: id, version: published, now });
-        await saveRow(
-          tx,
-          record,
-          {
-            editionId,
-            recordVersion,
-            contentVersion: published,
-            changedBy: authorOf(writer),
-            changedAt: now,
-            batchId,
-          },
-          { needsNewRecording, appearedAt },
-        );
-        await tx
-          .update(contentVersions)
-          .set({ contentVersion: published, updatedAt: now })
-          .where(eq(contentVersions.editionId, editionId));
+        await publishContentVersion(tx, editionId, published, now);
         await tx.insert(actionLog).values({
           who: whoOf(writer),
           at: now,
-          what: `content.${kind}.${change.op}`,
-          before:
-            current === undefined
-              ? null
-              : toJson({ recordVersion: current.recordVersion, fields: current.fields }),
-          after: toJson({ recordVersion, fields: record.entry }),
+          ...writeLogged(kind, change.op, current, { recordVersion, fields: record.entry }),
           reason: reason ?? null,
           editionId,
           batchId,
@@ -710,7 +503,7 @@ export function createContentWrites({
             recordVersion,
             contentVersion: published,
             batchId,
-            ...(kind === 'word' ? { needsNewRecording } : {}),
+            ...(kind === 'word' ? { needsNewRecording: saved.needsNewRecording } : {}),
           },
           records: withSaved(records, record, recordVersion),
         };
@@ -741,7 +534,7 @@ export function createContentWrites({
   ): Promise<{ ok: true } | WriteRefusal> {
     if (editions.find(editionId) === undefined) return { ok: false, reason: 'not-found' };
     return db.transaction(async (tx): Promise<{ ok: true } | WriteRefusal> => {
-      if ((await heldVersion(tx, editionId)) === undefined) {
+      if ((await holdContentVersion(tx, editionId)) === undefined) {
         return { ok: false, reason: 'not-imported' };
       }
       if (!(await ownBatch(tx, writer, editionId, batchId))) {
@@ -813,10 +606,18 @@ export function createContentWrites({
       }
       const [current] = await readersOf(tx, editionId, id)[kind]();
       if (current === undefined) return { ok: false, reason: 'not-found' } as const;
-      const appeared =
+      const [appeared] =
         kind === 'curatedCollection'
-          ? await appearedOf(tx, editionId, id, current.fields)
-          : undefined;
+          ? await tx
+              .select({ appearedAt: contentCuratedCollections.appearedAt })
+              .from(contentCuratedCollections)
+              .where(
+                and(
+                  eq(contentCuratedCollections.editionId, editionId),
+                  eq(contentCuratedCollections.id, id),
+                ),
+              )
+          : [];
       return {
         ok: true,
         fields: current.fields,
@@ -968,7 +769,7 @@ export function createContentWrites({
   ) {
     if (editions.find(editionId) === undefined) return { ok: false, reason: 'not-found' } as const;
     return db.transaction(async (tx) => {
-      if ((await heldVersion(tx, editionId)) === undefined) {
+      if ((await holdContentVersion(tx, editionId)) === undefined) {
         return { ok: false, reason: 'not-imported' } as const;
       }
       const table = TABLES[kind];
@@ -1015,7 +816,7 @@ export function createContentWrites({
   ) {
     if (editions.find(editionId) === undefined) return { ok: false, reason: 'not-found' } as const;
     return db.transaction(async (tx) => {
-      if ((await heldVersion(tx, editionId)) === undefined) {
+      if ((await holdContentVersion(tx, editionId)) === undefined) {
         return { ok: false, reason: 'not-imported' } as const;
       }
       const table = TABLES[kind];
@@ -1054,7 +855,7 @@ export function createContentWrites({
     const edition = editions.find(editionId);
     if (edition === undefined) return { ok: false, reason: 'not-found' } as const;
     return db.transaction(async (tx) => {
-      if ((await heldVersion(tx, editionId)) === undefined) {
+      if ((await holdContentVersion(tx, editionId)) === undefined) {
         return { ok: false, reason: 'not-imported' } as const;
       }
       const [word] = await tx

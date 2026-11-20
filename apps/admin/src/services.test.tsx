@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, expect, test } from 'vitest';
 
+import { override, refusal } from './mock/handlers';
 import { server } from './mock/server';
 import { SENTRY_USAGE, SERVICE_IDS, SERVICES } from './mock/services-fixtures';
 import { Admin } from './router';
@@ -38,10 +38,10 @@ async function canvas() {
 test('an Адмін has no «Сервіси» in the sidebar and does not open it', async () => {
   let asked = false;
   server.use(
-    http.get('*/admin/me', () => HttpResponse.json({ email: 'a@example.com', role: 'admin' })),
-    http.get('*/admin/services', () => {
+    override('me', () => ({ email: 'a@example.com', role: 'admin' })),
+    override('services.list', () => {
       asked = true;
-      return HttpResponse.json({ code: 'FORBIDDEN' }, { status: 403 });
+      return refusal(403, { code: 'FORBIDDEN' });
     }),
   );
   render(<Admin />);
@@ -171,11 +171,9 @@ test('the Sentry and PostHog blocks show a usage bar, PostHog’s marked stale',
 
 test('a Service whose read failed says so on its block', async () => {
   server.use(
-    http.get('*/admin/services/usage', () =>
-      HttpResponse.json({
-        usage: [{ serviceId: SERVICE_IDS.Sentry, read: { state: 'unavailable' } }],
-      }),
-    ),
+    override('services.usage', () => ({
+      usage: [{ serviceId: SERVICE_IDS.Sentry, read: { state: 'unavailable' } }],
+    })),
   );
   render(<Admin />);
   const blocks = await canvas();
@@ -188,9 +186,9 @@ test('a Service whose read failed says so on its block', async () => {
 test('the panel shows the usage numbers and the read time, and «Оновити» reads again', async () => {
   let refreshed: unknown;
   server.use(
-    http.post('*/admin/services/usage/refresh', async ({ request }) => {
+    override('services.refreshUsage', async ({ request }) => {
       refreshed = await request.json();
-      return HttpResponse.json({
+      return {
         usage: {
           ...SENTRY_USAGE,
           read: {
@@ -201,7 +199,7 @@ test('the panel shows the usage numbers and the read time, and «Оновити�
             },
           },
         },
-      });
+      };
     }),
   );
   const user = userEvent.setup();
@@ -220,25 +218,23 @@ test('the panel shows the usage numbers and the read time, and «Оновити�
 
 test('the Neon panel names each limit and unit as the owner reads them', async () => {
   server.use(
-    http.get('*/admin/services/usage', () =>
-      HttpResponse.json({
-        usage: [
-          {
-            serviceId: SERVICE_IDS.Neon,
-            read: {
-              ...SENTRY_USAGE.read,
-              reading: {
-                kind: 'metered',
-                usage: [
-                  { name: 'compute', unit: 'CU-hours', used: 25, limit: 100 },
-                  { name: 'egress', unit: 'GB', used: 4.5, limit: 5 },
-                ],
-              },
+    override('services.usage', () => ({
+      usage: [
+        {
+          serviceId: SERVICE_IDS.Neon,
+          read: {
+            ...SENTRY_USAGE.read,
+            reading: {
+              kind: 'metered',
+              usage: [
+                { name: 'compute', unit: 'CU-hours', used: 25, limit: 100 },
+                { name: 'egress', unit: 'GB', used: 4.5, limit: 5 },
+              ],
             },
           },
-        ],
-      }),
-    ),
+        },
+      ],
+    })),
   );
   const user = userEvent.setup();
   render(<Admin />);

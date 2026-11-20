@@ -512,7 +512,7 @@ export const readerFacts = (): ReaderFacts => ({
 });
 
 /** The Install id of the test device, which the Analytics events carry. */
-export const TEST_INSTALL_ID = 'test-install';
+const TEST_INSTALL_ID = 'test-install';
 
 /** Analytics into `port` from the test device, with no Rule, so no Variant. */
 export const analyticsInto = (port: AnalyticsPort): AnalyticsSink => ({

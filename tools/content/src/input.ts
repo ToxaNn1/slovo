@@ -108,6 +108,6 @@ export function withoutId(fields: Record<string, unknown>): Record<string, unkno
   return rest;
 }
 
-export function isObject(value: unknown): value is Record<string, unknown> {
+function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

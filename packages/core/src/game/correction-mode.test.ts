@@ -224,7 +224,7 @@ describe('«Обери правильне» on offer', () => {
       {
         modeId: 'guess-word',
         entryKind: 'word',
-        group: 'new',
+        group: 'lead',
         canStart: false,
         refusal: 'too-few-entries',
       },

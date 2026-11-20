@@ -5,7 +5,7 @@ import { createMemoryContentPort } from '../testing';
 import { testEdition } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
-const defaultTimes = ['09:00', '13:00', '19:00'];
+const defaultTimes = ['09:00', '19:00'];
 
 /** The Core composition of one app run over the records, so the user state survives between runs. */
 async function run({
@@ -28,138 +28,120 @@ async function run({
   });
 }
 
-/** Ten distinct times, in time order. */
-const tenTimes = Array.from({ length: 10 }, (_, hour) => `${String(hour + 10)}:00`);
+const stored = (times: readonly string[]) =>
+  new Map([['notifications.times', JSON.stringify(times)]]);
 
+// ADR 0200: two Notification times, the Word's and the Reminder's, under one switch.
 describe('the Notification times', () => {
-  it("start as the Edition's default times, with the sound on, and write nothing", async () => {
+  it("start on, at the Edition's default Word and Reminder times, with the sound on, and write nothing", async () => {
     const records = new Map<string, string>();
     const { notifications } = await run({ records });
 
     expect(notifications.state).toEqual({
-      times: defaultTimes,
+      times: { kind: 'on', word: '09:00', reminder: '19:00' },
       sound: true,
-      canAddTime: true,
       permission: 'not-asked',
     });
     expect([...records.keys()].filter((key) => key.startsWith('notifications.'))).toEqual([]);
   });
 
-  it('read the stored times over the Edition defaults, in time order', async () => {
-    const records = new Map([['notifications.times', JSON.stringify(['21:30', '07:15'])]]);
+  it('read a stored list as the Word at its first time and the Reminder at its last', async () => {
+    const { notifications } = await run({ records: stored(['21:30', '07:15', '13:00']) });
 
-    const { notifications } = await run({ records });
-
-    expect(notifications.state.times).toEqual(['07:15', '21:30']);
+    expect(notifications.state.times).toEqual({ kind: 'on', word: '07:15', reminder: '21:30' });
   });
 
-  it('add a time in time order and keep it for the next app run', async () => {
+  it('read one stored time as the Word with no Reminder, and none as off', async () => {
+    expect((await run({ records: stored(['08:00']) })).notifications.state.times).toEqual({
+      kind: 'on',
+      word: '08:00',
+      reminder: undefined,
+    });
+    expect((await run({ records: stored([]) })).notifications.state.times).toEqual({
+      kind: 'off',
+    });
+  });
+
+  it('change the Word time and keep it for the next app run', async () => {
     const records = new Map<string, string>();
     const { notifications } = await run({ records });
 
-    expect(await notifications.keepTime('11:30')).toBeUndefined();
+    expect(await notifications.keepTime('word', '07:30')).toBeUndefined();
 
-    expect(notifications.state.times).toEqual(['09:00', '11:30', '13:00', '19:00']);
-    expect(records.get('notifications.times')).toBe(
-      JSON.stringify(['09:00', '11:30', '13:00', '19:00']),
-    );
-    expect((await run({ records })).notifications.state.times).toEqual([
-      '09:00',
-      '11:30',
-      '13:00',
-      '19:00',
-    ]);
+    expect(notifications.state.times).toEqual({ kind: 'on', word: '07:30', reminder: '19:00' });
+    expect(records.get('notifications.times')).toBe(JSON.stringify(['07:30', '19:00']));
+    expect((await run({ records })).notifications.state.times).toEqual({
+      kind: 'on',
+      word: '07:30',
+      reminder: '19:00',
+    });
   });
 
-  it('refuse a time already in the list', async () => {
+  it('change the Reminder time, and set one where there was none', async () => {
+    const { notifications } = await run({ records: stored(['08:00']) });
+
+    expect(await notifications.keepTime('reminder', '21:00')).toBeUndefined();
+    expect(notifications.state.times).toEqual({ kind: 'on', word: '08:00', reminder: '21:00' });
+
+    expect(await notifications.keepTime('reminder', '20:15')).toBeUndefined();
+    expect(notifications.state.times).toEqual({ kind: 'on', word: '08:00', reminder: '20:15' });
+  });
+
+  it('refuse a Word time at or after the Reminder, and a Reminder time at or before the Word', async () => {
     const records = new Map<string, string>();
     const { notifications } = await run({ records });
     const before = notifications.state;
 
-    expect(await notifications.keepTime('13:00')).toBe('duplicate');
+    expect(await notifications.keepTime('word', '19:00')).toBe('order');
+    expect(await notifications.keepTime('word', '20:00')).toBe('order');
+    expect(await notifications.keepTime('reminder', '09:00')).toBe('order');
+    expect(await notifications.keepTime('reminder', '08:00')).toBe('order');
 
     expect(notifications.state).toBe(before);
     expect(records.has('notifications.times')).toBe(false);
   });
 
-  it('refuse an 11th time, and say a 10th is the last one', async () => {
-    const records = new Map([['notifications.times', JSON.stringify(tenTimes.slice(0, 9))]]);
-    const { notifications } = await run({ records });
-
-    expect(await notifications.keepTime('22:00')).toBeUndefined();
-    expect(notifications.state.times).toHaveLength(10);
-    expect(notifications.state.canAddTime).toBe(false);
-
-    expect(await notifications.keepTime('23:00')).toBe('limit');
-    expect(notifications.state.times).toHaveLength(10);
-  });
-
-  it('change a time and keep the list in time order', async () => {
-    const records = new Map<string, string>();
-    const { notifications } = await run({ records });
-
-    expect(await notifications.keepTime('20:45', '09:00')).toBeUndefined();
-
-    expect(notifications.state.times).toEqual(['13:00', '19:00', '20:45']);
-    expect((await run({ records })).notifications.state.times).toEqual(['13:00', '19:00', '20:45']);
-  });
-
-  it('refuse to change a time into another one in the list, and allow it at the limit', async () => {
-    const records = new Map([['notifications.times', JSON.stringify(tenTimes)]]);
-    const { notifications } = await run({ records });
-
-    expect(await notifications.keepTime('11:00', '10:00')).toBe('duplicate');
-    expect(await notifications.keepTime('08:30', '10:00')).toBeUndefined();
-
-    expect(notifications.state.times).toEqual(['08:30', ...tenTimes.slice(1)]);
-  });
-
-  it('keep the list as it is when a time is changed into itself', async () => {
+  it('keep the state as it is when a time is changed into itself', async () => {
     const records = new Map<string, string>();
     const { notifications } = await run({ records });
     const before = notifications.state;
 
-    expect(await notifications.keepTime('13:00', '13:00')).toBeUndefined();
+    expect(await notifications.keepTime('word', '09:00')).toBeUndefined();
 
     expect(notifications.state).toBe(before);
     expect(records.has('notifications.times')).toBe(false);
   });
 
-  it('change nothing for a time not in the list', async () => {
-    const { notifications } = await run();
-    const before = notifications.state;
-
-    expect(await notifications.keepTime('11:00', '10:00')).toBeUndefined();
-    await notifications.removeTime('10:00');
-
-    expect(notifications.state).toBe(before);
-  });
-
-  it('remove a time', async () => {
-    const { notifications } = await run();
-
-    await notifications.removeTime('13:00');
-
-    expect(notifications.state.times).toEqual(['09:00', '19:00']);
-  });
-
-  it('keep an empty list empty after the next app run, not the Edition defaults', async () => {
-    const records = new Map<string, string>();
+  it('switch off, for the next app run too, and back on at the Edition defaults', async () => {
+    const records = stored(['07:00', '22:00']);
     const { notifications } = await run({ records });
 
-    for (const time of defaultTimes) await notifications.removeTime(time);
+    await notifications.setOn(false);
 
-    expect(notifications.state.times).toEqual([]);
+    expect(notifications.state.times).toEqual({ kind: 'off' });
     expect(records.get('notifications.times')).toBe('[]');
-    expect((await run({ records })).notifications.state.times).toEqual([]);
+    expect((await run({ records })).notifications.state.times).toEqual({ kind: 'off' });
+
+    await notifications.setOn(true);
+    expect(notifications.state.times).toEqual({ kind: 'on', word: '09:00', reminder: '19:00' });
+  });
+
+  it('change no time while off', async () => {
+    const records = stored([]);
+    const { notifications } = await run({ records });
+
+    expect(await notifications.keepTime('word', '08:00')).toBeUndefined();
+
+    expect(notifications.state.times).toEqual({ kind: 'off' });
+    expect(records.get('notifications.times')).toBe('[]');
   });
 
   it('refuse a time that is not a local time `HH:MM`', async () => {
     const { notifications } = await run();
 
-    await expect(notifications.keepTime('9:00')).rejects.toThrow();
-    await expect(notifications.keepTime('24:00', '09:00')).rejects.toThrow();
-    expect(notifications.state.times).toEqual(defaultTimes);
+    await expect(notifications.keepTime('word', '9:00')).rejects.toThrow();
+    await expect(notifications.keepTime('reminder', '24:00')).rejects.toThrow();
+    expect(notifications.state.times).toEqual({ kind: 'on', word: '09:00', reminder: '19:00' });
   });
 
   it('switch the sound off and on, for the next app run too', async () => {
@@ -183,17 +165,18 @@ describe('the Notification times', () => {
     });
     const before = notifications.state;
 
-    await notifications.keepTime('13:00');
+    await notifications.keepTime('word', '09:00');
+    await notifications.setOn(true);
     await notifications.setSound(true);
     expect(told).toBe(0);
     expect(notifications.state).toBe(before);
 
-    await notifications.removeTime('09:00');
+    await notifications.keepTime('word', '08:00');
     await notifications.setSound(false);
     expect(told).toBe(2);
 
     stop();
-    await notifications.keepTime('09:00');
+    await notifications.setOn(false);
     expect(told).toBe(2);
   });
 
@@ -205,35 +188,48 @@ describe('the Notification times', () => {
   });
 
   it('make changes one at a time, each from where the one before left', async () => {
-    const { notifications } = await run({ notificationTimes: [] });
+    const { notifications } = await run();
 
-    const refusals = await Promise.all(
-      ['08:00', '08:00', ...tenTimes].map((time) => notifications.keepTime(time)),
-    );
+    const refusals = await Promise.all([
+      notifications.keepTime('reminder', '22:00'),
+      notifications.keepTime('word', '21:00'),
+      notifications.keepTime('word', '23:00'),
+    ]);
 
-    expect(refusals.filter((refusal) => refusal === undefined)).toHaveLength(10);
-    expect(refusals[1]).toBe('duplicate');
-    expect(refusals.at(-1)).toBe('limit');
-    expect(notifications.state.times).toEqual(['08:00', ...tenTimes.slice(0, 9)]);
+    expect(refusals).toEqual([undefined, undefined, 'order']);
+    expect(notifications.state.times).toEqual({ kind: 'on', word: '21:00', reminder: '22:00' });
   });
+
   // Spec #1553, ticket #1559: the onboarding's «Коли нагадати?».
-  it('keep the time chosen on the onboarding as the only one, for the next app run too', async () => {
+  it("keep the time chosen on the onboarding as the Word's, with the default Reminder after it", async () => {
     const records = new Map<string, string>();
     const { notifications } = await run({ records });
 
-    await notifications.chooseOnboardingTime('20:30');
+    await notifications.chooseOnboardingTime('13:00');
 
-    expect(notifications.state.times).toEqual(['20:30']);
-    expect((await run({ records })).notifications.state.times).toEqual(['20:30']);
+    expect(notifications.state.times).toEqual({ kind: 'on', word: '13:00', reminder: '19:00' });
+    expect((await run({ records })).notifications.state.times).toEqual({
+      kind: 'on',
+      word: '13:00',
+      reminder: '19:00',
+    });
   });
 
-  it('keep no time after «Без нагадувань» on the onboarding, never falling back to the defaults', async () => {
+  it('keep no Reminder when the time chosen on the onboarding is at or after the default one', async () => {
+    const { notifications } = await run();
+
+    await notifications.chooseOnboardingTime('20:30');
+
+    expect(notifications.state.times).toEqual({ kind: 'on', word: '20:30', reminder: undefined });
+  });
+
+  it('switch off after «Без нагадувань» on the onboarding, never falling back to the defaults', async () => {
     const records = new Map<string, string>();
     const { notifications } = await run({ records });
 
     await notifications.chooseOnboardingTime(undefined);
 
-    expect(notifications.state.times).toEqual([]);
-    expect((await run({ records })).notifications.state.times).toEqual([]);
+    expect(notifications.state.times).toEqual({ kind: 'off' });
+    expect((await run({ records })).notifications.state.times).toEqual({ kind: 'off' });
   });
 });

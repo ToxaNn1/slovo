@@ -43,7 +43,7 @@ export const RECORDING_LEASE_MS = 30 * 60 * 1000;
  * How many stuck runs in a row stop the job for an Edition: runs whose
  * generator made no file of the Words it had or hit its time limit.
  */
-export const STALL_RUNS = 2;
+const STALL_RUNS = 2;
 
 /** What one run did, summed over the Editions. */
 export interface RecordingsRun {

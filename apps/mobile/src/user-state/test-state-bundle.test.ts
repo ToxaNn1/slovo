@@ -99,3 +99,40 @@ describe('the day shift of a test state link (#1859)', () => {
     expect(await clockIn(false)).toEqual({ systemTimeOnly: true, shiftTaken: false });
   }, 60_000);
 });
+
+/** What of «Тестовий профіль» a transformed module holds: a dependency on its screen, its route or its row. */
+function testProfileIn({ dependencies, output }: Transformed): string[] {
+  // Comments aside: the minified release bundle holds none.
+  const code = output
+    .map(({ data }) => data.code)
+    .join('\n')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/.*$/gm, '');
+  return [
+    ...dependencies
+      .map(({ name }) => name)
+      .filter((name) => name.includes('test-profile') || name.includes('test-state')),
+    ...(['Тестовий профіль', 'test-profile', 'TestProfileScreen'].some((text) =>
+      code.includes(text),
+    )
+      ? ['code']
+      : []),
+  ];
+}
+
+const PROFILE_ROUTE = 'src/app/settings/test-profile.tsx';
+const SETTINGS = 'src/app/settings/index.tsx';
+
+describe('«Тестовий профіль» in Settings (owner, 20.11)', () => {
+  it('is in a development bundle: the row and the screen behind its route', async () => {
+    expect(testProfileIn(await transformed(true, PROFILE_ROUTE))).toContain(
+      '@/settings/test-profile-screen',
+    );
+    expect(testProfileIn(await transformed(true, SETTINGS))).toContain('code');
+  }, 60_000);
+
+  it('is not in a production bundle: neither the row nor the screen and its profiles', async () => {
+    expect(testProfileIn(await transformed(false, PROFILE_ROUTE))).toEqual([]);
+    expect(testProfileIn(await transformed(false, SETTINGS))).toEqual([]);
+  }, 60_000);
+});

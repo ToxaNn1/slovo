@@ -2,17 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import type { Word } from '@slovo/contracts';
 import { openComposition, type Composition, type Edition, type UserStateFact } from '@slovo/core';
 import { createMemoryContentPort, seedUserState, SEEN_DWELL_MS } from '@slovo/core/testing';
-import { EditionProvider, RouteProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
-import { renderInGestureRoot } from '../shell/test-render';
 import { StyleSheet } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { edition as shipped, editionStrings } from '../edition/edition';
 import { fill } from '@slovo/contracts';
-import { SettingsProvider } from '../settings/settings';
-import { ShellProvider } from '../shell-value';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
+import { renderApp } from '../shell/test-app';
 import { CELEBRATION_MS, MascotCelebrations } from './mascot';
 
 /** The UA Edition as it ships, with the Daily Crossword on, so its Badges show (ADR 0176). */
@@ -22,11 +18,6 @@ const edition: Edition = {
 };
 
 const { mascot } = edition;
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 /** The one Word in the Feed, which a dwell makes Seen. */
 const word: Word = {
@@ -47,6 +38,13 @@ const word: Word = {
   correctionIds: [],
   retired: false,
 };
+
+/** The route on screen, as the router gives it to the app's tree. */
+let mockPathname = '/feed';
+jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
+  usePathname: () => mockPathname,
+}));
 
 /** The celebrations over a Core composition with one Word, whose clock moves with the fake timers, with the Mascot on or off in effect and the counters hidden or not. */
 async function renderCelebrations({
@@ -76,19 +74,8 @@ async function renderCelebrations({
     }),
     settings: await settingsAt({ noCounters }),
   });
-  await renderInGestureRoot(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider shell={shell}>
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <SettingsProvider>
-            <RouteProvider route={route}>
-              <MascotCelebrations />
-            </RouteProvider>
-          </SettingsProvider>
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
-  );
+  mockPathname = route;
+  await renderApp(<MascotCelebrations />, { shell });
   return composition;
 }
 

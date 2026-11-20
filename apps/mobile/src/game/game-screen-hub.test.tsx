@@ -13,11 +13,12 @@ import {
 beforeEach(resetGameScreen);
 
 describe('the Game screen', () => {
-  it("lists the modes on offer under the board's five groups, in the board's order (ADR 0139)", async () => {
+  it("leads with «Вгадай слово» above every group, with no group title, then lists the modes on offer under the board's five groups, in the board's order", async () => {
     await renderScreen();
 
     expect(shape()).toEqual([
       'Ігри',
+      'game-mode-guess-word',
       'Звук',
       'game-mode-stress',
       'Значення',
@@ -29,7 +30,6 @@ describe('the Game screen', () => {
       'Швидкість',
       'game-mode-timed',
       'Нове',
-      'game-mode-guess-word',
       'game-mode-by-letters',
       'game-mode-type-word',
       'game-mode-origin',
@@ -45,6 +45,7 @@ describe('the Game screen', () => {
 
     expect(shape()).toEqual([
       'Ігри',
+      'game-mode-guess-word',
       'Звук',
       'game-mode-stress',
       'Значення',
@@ -55,7 +56,6 @@ describe('the Game screen', () => {
       'Швидкість',
       'game-mode-timed',
       'Нове',
-      'game-mode-guess-word',
       'game-mode-by-letters',
       'game-mode-origin',
       'game-mode-build-idiom',
@@ -85,7 +85,7 @@ describe('the Game screen', () => {
 
       const rows: readonly (readonly [string, string, string])[] = [
         ['survival', '⚑⚑⚑', 'Три життя. Як далеко зайдеш?'],
-        ['timed', '20 с', 'Двадцять секунд. Скільки слів встигнеш?'],
+        ['timed', '60 с', 'Шістдесят секунд. Скільки слів встигнеш?'],
         ['pairs', '=', 'З’єднай чотири слова з їхніми значеннями.'],
         ['type-word', 'Аб|', 'Помилка, яку часто чуєш. Впиши, як краще.'],
         ['build-idiom', '«…»', 'Читаєш значення — складаєш вислів.'],
@@ -121,6 +121,19 @@ describe('the Game screen', () => {
         screen.getByText('«Англіцизми» ще розминається. Влучай поки в «Наголос»!'),
       ).toBeTruthy();
       expect(screen.getByTestId('game-modes')).toBeTruthy();
+      expect(composition.game.state.current).toBeUndefined();
+    });
+
+    it('names the reason on a tap of a mode the reader took out of their Mix, and starts nothing', async () => {
+      await open({ switchedOn: HUB, corrections: 15, outOfMix: ['correction'] });
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('game-mode-correction'));
+
+      expect(
+        screen.getByText('Виправлення вимкнено. Увімкни їх у Налаштуваннях, розділ «Мій Мікс».'),
+      ).toBeTruthy();
+      expect(screen.queryByText(/ще розминається/)).toBeNull();
       expect(composition.game.state.current).toBeUndefined();
     });
 

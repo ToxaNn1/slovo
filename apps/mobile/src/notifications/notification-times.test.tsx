@@ -20,11 +20,15 @@ const mockEdition = loadEdition(config);
 let mockComposition: Composition;
 
 jest.mock('../composition', () => ({ useComposition: () => mockComposition }));
-// The installed binary has the time picker; its native view stays out of the test.
+// The installed binary has the time picker; a plain view stands in for its native one.
 jest.mock('../device/device-native-modules', () => ({
-  nativeModules: { has: () => true, load: () => undefined },
+  nativeModules: {
+    has: () => true,
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    load: () => (require('react-native') as typeof import('react-native')).View,
+  },
 }));
-// The picker starts at the device's time, 09:00, so «Готово» as it opens picks 09:00.
+// The picker starts at the row's time, or at the device's for a row with none.
 jest.mock('../device/device-clock', () => ({
   deviceClock: { now: () => new Date(2026, 9, 27, 9, 0), timeZone: () => 'Europe/Kyiv' },
 }));
@@ -41,18 +45,17 @@ async function settle() {
   });
 }
 
-/** Picks the time the picker opens at, 09:00, as a new time. */
-async function addTheDeviceTime() {
-  await fireEvent.press(screen.getByTestId('notifications-add-time'));
+/** Opens the picker from the row of `slot`, turns it to `time` and keeps it. */
+async function pickTime(slot: 'word' | 'reminder', time: string) {
+  const [hours, minutes] = time.split(':').map(Number);
+  await fireEvent.press(screen.getByTestId(`notifications-${slot}`));
+  await fireEvent(
+    screen.getByTestId('time-picker'),
+    'valueChange',
+    {},
+    new Date(2026, 9, 27, hours, minutes),
+  );
   await fireEvent.press(screen.getByTestId('time-picker-done'));
-  await settle();
-}
-
-/** Removes a time through the VoiceOver action of its row. */
-async function removeTime(time: string) {
-  await fireEvent(screen.getByTestId(`notifications-time-${time}-content`), 'accessibilityAction', {
-    nativeEvent: { actionName: 'remove' },
-  });
   await settle();
 }
 
@@ -64,8 +67,6 @@ beforeEach(async () => {
     clock: { now: () => new Date('2026-10-27T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
   });
-  await mockComposition.notifications.keepTime('09:00');
-  await mockComposition.notifications.keepTime('21:00');
   await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={edition} strings={editionStrings}>
@@ -75,57 +76,74 @@ beforeEach(async () => {
   );
 });
 
-describe('the duplicate hint', () => {
-  it('shows after a refused duplicate time and goes once the list changes', async () => {
-    expect(screen.queryByTestId('notifications-duplicate-hint')).toBeNull();
-
-    await addTheDeviceTime();
-
-    expect(screen.getByTestId('notifications-duplicate-hint')).toHaveTextContent(
-      strings.duplicateHint,
+// ADR 0200: one switch on top, the Word's and the Reminder's times under it.
+describe('the Notification times', () => {
+  it('show the switch on and the two rows «Слово» and «Нагадування» at 09:00 and 19:00', () => {
+    expect(screen.getByRole('switch', { name: strings.title })).toBeChecked();
+    expect(screen.getByTestId('notifications-word')).toHaveTextContent(`${strings.word}09:00`);
+    expect(screen.getByTestId('notifications-reminder')).toHaveTextContent(
+      `${strings.reminder}19:00`,
     );
-    expect(screen.getByTestId('notifications-time-09:00')).toBeTruthy();
-
-    await removeTime('21:00');
-
-    expect(screen.queryByTestId('notifications-time-21:00')).toBeNull();
-    expect(screen.queryByTestId('notifications-duplicate-hint')).toBeNull();
+    expect(screen.queryByText('+ Додати час')).toBeNull();
   });
 
-  it('stays while the list stays, through a change of the sound', async () => {
-    await addTheDeviceTime();
+  it('hide the rows once switched off, and bring the defaults back once on', async () => {
+    await fireEvent(screen.getByRole('switch', { name: strings.title }), 'valueChange', false);
+    await settle();
 
+    expect(mockComposition.notifications.state.times).toEqual({ kind: 'off' });
+    expect(screen.queryByTestId('notifications-word')).toBeNull();
+    expect(screen.queryByTestId('notifications-reminder')).toBeNull();
+
+    await fireEvent(screen.getByRole('switch', { name: strings.title }), 'valueChange', true);
+    await settle();
+
+    expect(screen.getByTestId('notifications-word')).toHaveTextContent(`${strings.word}09:00`);
+  });
+
+  it('keep a time picked for the Word', async () => {
+    await pickTime('word', '07:30');
+
+    expect(mockComposition.notifications.state.times).toEqual({
+      kind: 'on',
+      word: '07:30',
+      reminder: '19:00',
+    });
+    expect(screen.getByTestId('notifications-word')).toHaveTextContent(`${strings.word}07:30`);
+  });
+
+  it('say why a Reminder at or before the Word is refused, until a time is kept', async () => {
+    expect(screen.queryByTestId('notifications-order-hint')).toBeNull();
+
+    await pickTime('reminder', '08:00');
+
+    expect(screen.getByTestId('notifications-order-hint')).toHaveTextContent(strings.orderHint);
+    expect(screen.getByTestId('notifications-reminder')).toHaveTextContent(
+      `${strings.reminder}19:00`,
+    );
+
+    await pickTime('reminder', '21:00');
+
+    expect(screen.queryByTestId('notifications-order-hint')).toBeNull();
+    expect(screen.getByTestId('notifications-reminder')).toHaveTextContent(
+      `${strings.reminder}21:00`,
+    );
+  });
+
+  it('show «Вимкнено» on the Reminder row with no Reminder', async () => {
     await act(async () => {
-      await mockComposition.notifications.setSound(false);
+      await mockComposition.notifications.chooseOnboardingTime('20:30');
     });
     await settle();
 
-    expect(screen.getByTestId('notifications-duplicate-hint')).toBeTruthy();
-  });
-});
-
-describe('removing a time', () => {
-  it('says under the times how a time is removed', () => {
-    // VoiceOver skips the line: each time offers «Видалити» as its action.
-    expect(
-      screen.getByTestId('notifications-remove-hint', { includeHiddenElements: true }),
-    ).toHaveTextContent(strings.removeHint);
+    expect(screen.getByTestId('notifications-reminder')).toHaveTextContent(
+      `${strings.reminder}${strings.off}`,
+    );
   });
 
-  it('has no hint with no times left', async () => {
-    for (const time of mockComposition.notifications.state.times) await removeTime(time);
-
-    expect(
-      screen.queryByTestId('notifications-remove-hint', { includeHiddenElements: true }),
-    ).toBeNull();
-  });
-});
-
-describe('the time picker', () => {
-  it('closes on «Скасувати» and keeps no time', async () => {
-    await removeTime('09:00');
+  it('close the picker on «Скасувати» and keep no time', async () => {
     const before = mockComposition.notifications.state.times;
-    await fireEvent.press(screen.getByTestId('notifications-add-time'));
+    await fireEvent.press(screen.getByTestId('notifications-word'));
 
     await fireEvent.press(screen.getByRole('button', { name: strings.cancel }));
     // The sheet slides away before it unmounts.
@@ -134,6 +152,6 @@ describe('the time picker', () => {
     });
 
     expect(screen.queryByTestId('time-picker-done')).toBeNull();
-    expect(mockComposition.notifications.state.times).toEqual(before);
+    expect(mockComposition.notifications.state.times).toBe(before);
   });
 });

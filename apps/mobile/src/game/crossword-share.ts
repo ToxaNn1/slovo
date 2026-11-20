@@ -35,7 +35,7 @@ export interface CrosswordShare {
   readonly title: string;
   /** «{time} · без підказок», the time alone after a hint, «без підказок» alone with no time. */
   readonly line: string | undefined;
-  /** The text shared: the title, the line and the grid in red and black squares. */
+  /** The text shared: the title, the line, the grid in red and black squares and the link. */
   readonly message: string;
 }
 
@@ -58,5 +58,11 @@ export function crosswordShare(
   const rows = grid.map((row) =>
     row.map((open) => (open ? SHARED_CELL.open : SHARED_CELL.block)).join(''),
   );
-  return { time, grid, title, line, message: [title, line, ...rows].filter(Boolean).join('\n') };
+  return {
+    time,
+    grid,
+    title,
+    line,
+    message: [title, line, ...rows, strings.share.link].filter(Boolean).join('\n'),
+  };
 }

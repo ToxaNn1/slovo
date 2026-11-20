@@ -1,7 +1,13 @@
 import { readFileSync } from 'node:fs';
 
-import { EditionConfigSchema, type CrosswordDay } from '@slovo/contracts';
+import {
+  EditionConfigSchema,
+  FeatureSwitchStateSchema,
+  featureSwitchStates,
+  type CrosswordDay,
+} from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 import {
   checkContentSet,
@@ -21,7 +27,14 @@ function fixture(name: string): unknown {
   return JSON.parse(readFileSync(new URL(`../fixtures/${name}`, import.meta.url), 'utf8'));
 }
 
-const config = EditionConfigSchema.parse(fixture('edition.json'));
+// The fixture states only the switches it turns off; the rest come on from the catalogue.
+const raw = z
+  .looseObject({ featureSwitches: z.record(z.string(), FeatureSwitchStateSchema) })
+  .parse(fixture('edition.json'));
+const config = EditionConfigSchema.parse({
+  ...raw,
+  featureSwitches: featureSwitchStates(raw.featureSwitches),
+});
 const content = fixture('content.json') as { records: Json[]; curatedCollections: Json[] };
 const today = new Date(2026, 10, 8);
 

@@ -1,17 +1,21 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
+import {
+  loadEdition,
+  openComposition,
+  systemRandom,
+  type Composition,
+  type Edition,
+} from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { fill, type Category } from '@slovo/contracts';
-import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
-import { act, fireEvent, screen } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { renderApp } from '../shell/test-app';
+import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 
+import MixTabScreen from '../app/mix';
 import MixScreen from '../app/settings/mix';
-import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
-import { opened, switchedTo, testShell } from '../shell/test-support';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
+import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 
 const { config } = activeEditionFiles;
 
@@ -64,31 +68,20 @@ beforeEach(async () => {
   });
 });
 
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
-
-/** Settings › Мій Мікс as the app routes to it. */
-async function renderChoices() {
+/** Settings › Мій Мікс as the app routes to it, or the tab «Мікс» opened on `url`. */
+async function renderChoices(url = '/settings/mix', editionInEffect: Edition = shippedEdition) {
   const shell = testShell({
     composition: opened(composition),
-    remoteSwitches: switchedTo(shippedEdition),
+    settings: await settingsAt({}),
+    remoteSwitches: switchedTo(editionInEffect),
   });
-  await renderRoutes(
+  await renderApp(
     {
-      _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <ShellProvider shell={shell}>
-            <EditionProvider edition={edition} strings={editionStrings}>
-              <Stack screenOptions={{ headerShown: false }} />
-            </EditionProvider>
-          </ShellProvider>
-        </SafeAreaProvider>
-      ),
+      _layout: () => <Stack screenOptions={{ headerShown: false }} />,
       'settings/mix': MixScreen,
+      'mix/index': MixTabScreen,
     },
-    { initialUrl: '/settings/mix' },
+    { shell, initialUrl: url },
   );
   await settle();
 }
@@ -191,5 +184,47 @@ describe('the Categories of Corrections on the Мій Мікс screen', () => {
     await turnCorrections();
     expect(chipOf('work')).not.toBeSelected();
     expect(chipOf('shop')).toBeSelected();
+  });
+});
+
+describe('the Мій Мікс screen', () => {
+  it('keeps its back header above the list, so it stays put while the list scrolls (D-8)', async () => {
+    await renderChoices();
+
+    expect(screen.getByRole('header', { name: mixStrings.title })).toBeOnTheScreen();
+    expect(screen.getByTestId('mix-back')).toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('mix-scroll')).queryByRole('header', { name: mixStrings.title }),
+    ).toBeNull();
+  });
+
+  it('sets «Рідкість», the same Rarity Range as Settings (ADR 0156)', async () => {
+    await renderChoices();
+    expect(screen.getByTestId('mix-rarity-bar-5')).toBeSelected();
+
+    await press('mix-rarity-bar-3');
+
+    expect(composition.rarityRange.state).toEqual({ from: 1, to: 3 });
+    expect(screen.getByTestId('mix-rarity-bar-3')).toBeSelected();
+  });
+
+  it('shows no «Рідкість» while the rarityCeiling switch is off', async () => {
+    await renderChoices('/settings/mix', {
+      ...shippedEdition,
+      isFeatureEnabled: (feature) =>
+        feature !== 'rarityCeiling' && shippedEdition.isFeatureEnabled(feature),
+    });
+
+    expect(screen.queryByTestId('mix-rarity')).toBeNull();
+    expect(screen.getByTestId('mix-selected')).toBeOnTheScreen();
+  });
+
+  it('opens as the root of the tab «Мікс», with its choices and no way back (ADR 0201)', async () => {
+    await renderChoices('/mix');
+
+    expect(screen.getByRole('header', { name: mixStrings.title })).toBeOnTheScreen();
+    expect(screen.queryByTestId('mix-back')).toBeNull();
+    expect(screen.getByTestId('mix-rarity')).toBeOnTheScreen();
+    expect(screen.getByTestId('mix-selected')).toHaveTextContent(selected(2));
   });
 });

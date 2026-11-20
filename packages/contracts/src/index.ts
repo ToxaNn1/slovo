@@ -21,6 +21,7 @@ export {
   OnboardingNotificationTimesSchema,
   EditionConfigSchema,
   FeatureSwitchesSchema,
+  featureSwitchStates,
   FeatureSwitchStateSchema,
   XpTableSchema,
   LevelsSchema,
@@ -36,7 +37,6 @@ export {
   MascotLinesSchema,
   TextSizeSchema,
   LanguageTraitsSchema,
-  MAX_NOTIFICATION_TIMES,
   MixConfigSchema,
   NotificationTimesSchema,
   ThemeSchema,
@@ -274,6 +274,11 @@ export {
   type Variant,
 } from './feature-switch-rules';
 export { DEPENDS_ON, switchedOn } from './feature-switch-dependencies';
+export {
+  FEATURE_SWITCHES,
+  type FeatureSwitchGroup,
+  type FeatureSwitchRecord,
+} from './feature-switch-catalogue';
 export { ContentTargetsSchema, type ContentTargets } from './content-targets';
 export {
   IllustrationRowSchema,

@@ -1,23 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { EditionProvider, HapticsProvider, RouteProvider, systemSchedule } from '@slovo/ui';
+import { systemSchedule } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 // First, so its mocks stand before the screen loads.
-import {
-  composition,
-  editionInEffect,
-  haptics,
-  metrics,
-  open,
-  resetGameScreen,
-} from './test-support';
+import { composition, editionInEffect, open, resetGameScreen } from './test-support';
 
 import GameScreen from '../app/game';
-import { edition, editionStrings } from '../edition/edition';
 import { CELEBRATION_MS, MascotCelebrations } from '../mascot/mascot';
-import { SettingsProvider } from '../settings/settings';
-import { ShellProvider } from '../shell-value';
-import { renderInGestureRoot } from '../shell/test-render';
+import { renderApp } from '../shell/test-app';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 
 // Owner check 15.11, item 25: a Badge's toast hid the answer banner's «Влучив!».
@@ -38,21 +27,12 @@ async function renderGameWithCelebrations() {
     remoteSwitches: switchedTo(editionInEffect),
     settings: await settingsAt({}),
   });
-  await renderInGestureRoot(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider shell={shell}>
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <HapticsProvider haptics={haptics}>
-            <SettingsProvider>
-              <RouteProvider route="/game/stress">
-                <GameScreen />
-                <MascotCelebrations />
-              </RouteProvider>
-            </SettingsProvider>
-          </HapticsProvider>
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
+  await renderApp(
+    <>
+      <GameScreen />
+      <MascotCelebrations />
+    </>,
+    { shell },
   );
   await advance(0);
 }

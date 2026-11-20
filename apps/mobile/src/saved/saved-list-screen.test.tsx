@@ -2,25 +2,22 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { fill, pluralCount, type Word } from '@slovo/contracts';
 import { HISTORY_CAP, loadEdition, openComposition, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
-import { renderInGestureRoot } from '../shell/test-render';
 import type { ComponentType } from 'react';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import FavoritesScreen from '../app/saved/favorites/index';
 import HistoryScreen from '../app/saved/history/index';
 import LearningScreen from '../app/saved/learning/index';
 import WordOfTheDayArchiveScreen from '../app/saved/words-of-the-day/index';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { SettingsProvider } from '../settings/settings';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
+import { renderApp } from '../shell/test-app';
 
 /** How many times a screen went back. */
 let mockBacks = 0;
 
 jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
   useRouter: () => ({
     back: () => {
       mockBacks += 1;
@@ -53,11 +50,6 @@ const word = (id: string, lemma: string): Word => ({
   retired: false,
 });
 
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
-
 let composition: Composition;
 
 beforeEach(async () => {
@@ -75,19 +67,9 @@ beforeEach(async () => {
 });
 
 async function renderScreen(Screen: ComponentType) {
-  await renderInGestureRoot(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider
-        shell={testShell({ composition: opened(composition), remoteSwitches: switchedTo(edition) })}
-      >
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <SettingsProvider>
-            <Screen />
-          </SettingsProvider>
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
-  );
+  await renderApp(<Screen />, {
+    shell: testShell({ composition: opened(composition), remoteSwitches: switchedTo(edition) }),
+  });
   await act(async () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
   });

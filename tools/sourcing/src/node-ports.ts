@@ -41,3 +41,14 @@ export function defaultCacheDir(): string {
     'slovo-sourcing',
   );
 }
+
+/** A whole file from the network, for the dictionary archives `source:lemmas` caches. */
+export async function fetchBytes(url: string): Promise<Uint8Array> {
+  const response = await fetch(url, {
+    headers: { 'User-Agent': 'slovo-sourcing/0.1 (dev tool; downloads once into its cache)' },
+    redirect: 'follow',
+    signal: AbortSignal.timeout(300_000),
+  });
+  if (!response.ok) throw new Error(`${url} answered HTTP ${String(response.status)}`);
+  return new Uint8Array(await response.arrayBuffer());
+}

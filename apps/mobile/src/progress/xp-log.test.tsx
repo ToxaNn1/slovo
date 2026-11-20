@@ -1,8 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
-import { act, renderHook } from '@testing-library/react-native';
-import type { ReactNode } from 'react';
+import { act } from '@testing-library/react-native';
 
-import { ShellProvider } from '../shell-value';
+import { renderHookInApp } from '../shell/test-app';
 import { opened, testShell } from '../shell/test-support';
 import { useSetDailyGoal, useXpLogState } from './xp-log';
 
@@ -13,14 +12,9 @@ import { useSetDailyGoal, useXpLogState } from './xp-log';
 async function renderXpLog() {
   const composition = await testShell().composition.opened();
   const shell = testShell({ composition: opened(composition) });
-  const wrapper = ({ children }: { children: ReactNode }) => (
-    <ShellProvider shell={shell}>{children}</ShellProvider>
-  );
-  const hook = await renderHook(
+  const hook = await renderHookInApp(
     () => ({ state: useXpLogState(), setDailyGoal: useSetDailyGoal() }),
-    {
-      wrapper,
-    },
+    { shell },
   );
   return { composition, hook };
 }

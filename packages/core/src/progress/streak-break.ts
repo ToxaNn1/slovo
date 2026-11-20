@@ -3,6 +3,7 @@ import { dateKeyOf, dayNumber, localDateAfter, parseLocalDate, todayKey } from '
 import type { Analytics } from '../analytics/analytics';
 import type { Clock } from '../ports';
 import type { Edition } from '../edition/edition';
+import { writeStaged } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import { breakStrip, type CalendarDay } from './calendar';
 import { BREAK_DAYS_AT_MOST, BREAK_INTERVAL_DAYS } from './streak';
@@ -134,9 +135,7 @@ export function openStreakBreak({
     const current = state();
     if (current.kind !== 'available' || !Number.isInteger(days) || days < 1) return 'refused';
     if (days > current.longest) return 'refused';
-    const append = xpLog.startBreak(days);
-    await userState.write(append.changes);
-    append.commit();
+    await writeStaged(userState, [xpLog.startBreak(days)]);
     void analytics.track('breakStarted', { days }).catch(() => undefined);
     return 'started';
   }
@@ -144,9 +143,7 @@ export function openStreakBreak({
   async function end(): Promise<'ended' | 'refused'> {
     const current = state();
     if (current.kind !== 'running') return 'refused';
-    const append = xpLog.endBreak(current.firstDay);
-    await userState.write(append.changes);
-    append.commit();
+    await writeStaged(userState, [xpLog.endBreak(current.firstDay)]);
     return 'ended';
   }
 

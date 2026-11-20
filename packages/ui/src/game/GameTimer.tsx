@@ -14,7 +14,7 @@ const secondsLeft = (remainingMs: number) => Math.max(0, Math.ceil(remainingMs /
 /**
  * A timed Game's countdown in its own row under the Round's header: one
  * solid slanted bar whose accent empties as the time runs out (board 06 «На
- * час»), then the seconds left, such as «20 с», drawn from the time left the
+ * час»), then the seconds left, such as «60 с», drawn from the time left the
  * Core gives. VoiceOver
  * reads the time left each time ten seconds pass, once even when the time
  * jumps over a ten, and never at none. The screen ticks the time and pauses

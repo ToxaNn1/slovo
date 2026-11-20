@@ -1,20 +1,15 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
-import { EditionProvider, TokensProvider } from '@slovo/ui';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { Linking, Text } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { edition, editionStrings, editionTokens } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
+import { edition, editionStrings } from '../edition/edition';
 import { switchedTo, testShell } from '../shell/test-support';
-import { renderInGestureRoot } from '../shell/test-render';
+import { renderApp as renderInApp } from '../shell/test-app';
 import { ForceUpdateGate } from './force-update';
 import { storeAddress } from './store-link';
 
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 47, left: 0, right: 0, bottom: 34 },
-};
+/** The notch and the home indicator of an iPhone with Face ID. */
+const insets = { top: 47, left: 0, right: 0, bottom: 34 };
 
 /** The build the tests run as. */
 const device = { appVersion: '1.0.0', platform: 'ios' } as const;
@@ -28,18 +23,15 @@ function renderApp(
     on = edition,
   }: { colorScheme?: 'light' | 'dark'; on?: typeof edition } = {},
 ) {
-  return renderInGestureRoot(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider shell={testShell({ remoteSwitches: switchedTo(on, minimums) })}>
-        <EditionProvider edition={on} strings={editionStrings}>
-          <TokensProvider tokens={editionTokens} colorScheme={colorScheme}>
-            <ForceUpdateGate device={device}>
-              <Text testID="feed">Feed</Text>
-            </ForceUpdateGate>
-          </TokensProvider>
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
+  return renderInApp(
+    <ForceUpdateGate device={device}>
+      <Text testID="feed">Feed</Text>
+    </ForceUpdateGate>,
+    {
+      shell: testShell({ remoteSwitches: switchedTo(on, minimums) }),
+      settings: { theme: colorScheme },
+      insets,
+    },
   );
 }
 

@@ -16,16 +16,14 @@ import {
   seedUserState,
   createMemoryContentStore,
 } from '@slovo/core/testing';
-import { EditionProvider, fill } from '@slovo/ui';
+import { fill } from '@slovo/ui';
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
-import { renderInGestureRoot } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { edition as shipped, editionStrings } from '../edition/edition';
 import { openOnce } from '../opening';
-import { SettingsProvider } from '../settings/settings';
-import { ShellProvider, type ShareCard } from '../shell-value';
+import { type ShareCard } from '../shell-value';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
+import { renderApp } from '../shell/test-app';
 import { ProfileScreen } from './profile-screen';
 
 /** The UA Edition as it ships, with the Daily Crossword on, so its Badges show (ADR 0176). */
@@ -36,15 +34,11 @@ const edition: Edition = {
 
 const mockPush = jest.fn();
 jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
   useRouter: () => ({ back: jest.fn(), push: mockPush }),
 }));
 
 const strings = editionStrings.settings.profile;
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 /** An Account no one is signed in to, opened. */
 async function signedOutAccount() {
@@ -192,26 +186,16 @@ async function renderScreen({
   if (name !== undefined) await composition.readerName.change(name);
   await new Promise((resolve) => setTimeout(resolve, 0));
   const account = withAccount ? await signedOutAccount() : undefined;
-  await renderInGestureRoot(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider
-        shell={testShell({
-          userState,
-          composition: opened(composition),
-          remoteSwitches,
-          settings: await settingsAt({ noCounters }),
-          account,
-          shareCard,
-        })}
-      >
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <SettingsProvider>
-            <ProfileScreen />
-          </SettingsProvider>
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
-  );
+  await renderApp(<ProfileScreen />, {
+    shell: testShell({
+      userState,
+      composition: opened(composition),
+      remoteSwitches,
+      settings: await settingsAt({ noCounters }),
+      account,
+      shareCard,
+    }),
+  });
   await act(async () => {
     await Promise.resolve();
   });
@@ -389,18 +373,14 @@ describe('the Profile', () => {
     [5, 306, 'Знавець: ЩЕ 492 XP'],
     [19, 1878, 'Словолюб: ЩЕ 120 XP'],
     [20, 1998, 'Мовознавець: ЩЕ 600 XP'],
-  ])(
-    'at Level %i reads «<next name>: ще N XP» on the card and under the row',
-    async (level, xp, line) => {
-      await renderScreen({ xp });
+  ])('at Level %i reads «<next name>: ще N XP» on the card only', async (level, xp, line) => {
+    await renderScreen({ xp });
 
-      expect(screen.getByTestId('profile-level-number')).toHaveTextContent(String(level));
-      expect(screen.getByTestId('profile-level-left')).toHaveTextContent(line);
-      expect(screen.getByTestId('profile-ladder-to-next')).toHaveTextContent(
-        line.toLocaleUpperCase(edition.locale),
-      );
-    },
-  );
+    expect(screen.getByTestId('profile-level-number')).toHaveTextContent(String(level));
+    expect(screen.getByTestId('profile-level-left')).toHaveTextContent(line);
+    expect(screen.queryByTestId('profile-ladder-to-next')).not.toBeOnTheScreen();
+    expect(screen.queryByText(line.toLocaleUpperCase(edition.locale))).not.toBeOnTheScreen();
+  });
 
   it('under the last name reads the XP to the next Level and draws no line to a next name', async () => {
     await renderScreen({ xp: 2598 });
@@ -410,7 +390,7 @@ describe('the Profile', () => {
     expect(screen.queryByTestId('profile-ladder-to-next')).not.toBeOnTheScreen();
   });
 
-  it('shows the ladder of Level names by range, passed, current and ahead, and the bar to the next name', async () => {
+  it('shows the ladder of Level names by range, passed, current and ahead, and no second Level line or bar under it', async () => {
     await renderScreen({ rounds: 60 });
     const { ladder } = strings;
 
@@ -426,8 +406,9 @@ describe('the Profile', () => {
       );
     }
     expect(screen.queryByTestId('profile-ladder-6')).not.toBeOnTheScreen();
-    expect(screen.getByTestId('profile-ladder-bar')).toHaveTextContent(/^РІВЕНЬ 1 · ПОЧАТКІВЕЦЬ/);
-    expect(screen.getByTestId('profile-ladder-to-next')).toHaveTextContent('ЧИТАЧ: ЩЕ 246 XP');
+    expect(screen.queryByTestId('profile-ladder-bar')).not.toBeOnTheScreen();
+    expect(screen.queryByText(/^РІВЕНЬ 1 · ПОЧАТКІВЕЦЬ/)).not.toBeOnTheScreen();
+    expect(screen.queryByText('ЧИТАЧ: ЩЕ 246 XP')).not.toBeOnTheScreen();
     expect(screen.queryByText(/^ДО /)).not.toBeOnTheScreen();
   });
 

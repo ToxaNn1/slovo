@@ -4,13 +4,13 @@ import { and, asc, eq, gt, gte, inArray, isNull, or, sql, type SQL } from 'drizz
 
 import type { Database } from '../database/database';
 import {
-  contentVersions,
   contentWords,
   mediaIllustrations,
   mediaRecordings,
   wordsInAllVoices,
 } from '../database/schema';
 import { RECORDING_KINDS } from '../recordings/recording-text';
+import { holdContentVersion, publishContentVersion, readsDifferently } from './content-records';
 
 type Transaction = Parameters<Parameters<Database['db']['transaction']>[0]>[0];
 
@@ -81,21 +81,13 @@ export function createMediaRows({ database, clock }: { database: Database; clock
     ) => Promise<{ recorded: string[]; illustrated: string[]; changed: boolean }>,
   ): Promise<MediaWrite> {
     return db.transaction(async (tx) => {
-      await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${editionId}))`);
-      const [held] = await tx
-        .select({ contentVersion: contentVersions.contentVersion })
-        .from(contentVersions)
-        .where(eq(contentVersions.editionId, editionId))
-        .for('update');
+      const held = await holdContentVersion(tx, editionId);
       if (held === undefined) return { ok: false, reason: 'not-imported' } as const;
       const now = clock.now();
-      const next = held.contentVersion + 1;
+      const next = held + 1;
       const { changed, recorded, illustrated } = await change(tx, next, now);
-      if (!changed) return { ok: true, contentVersion: held.contentVersion, recorded, illustrated };
-      await tx
-        .update(contentVersions)
-        .set({ contentVersion: next, updatedAt: now })
-        .where(eq(contentVersions.editionId, editionId));
+      if (!changed) return { ok: true, contentVersion: held, recorded, illustrated };
+      await publishContentVersion(tx, editionId, next, now);
       return { ok: true, contentVersion: next, recorded, illustrated };
     });
   }
@@ -166,16 +158,6 @@ export function createMediaRows({ database, clock }: { database: Database; clock
   }
 
   return { saveRecording, saveRecordings, saveIllustration, saveMedia };
-}
-
-/** Whether a Word's Recordings, made from `read`, no longer read its fields (ADR 0083). */
-export function readsDifferently(
-  fields: Pick<Word, 'lemma' | 'stress'>,
-  read: Pick<Word, 'lemma' | 'stress'>,
-): boolean {
-  return (
-    fields.lemma !== read.lemma || JSON.stringify(fields.stress) !== JSON.stringify(read.stress)
-  );
 }
 
 /**
@@ -278,32 +260,6 @@ async function saveIllustrationRow(
       set: { retiredAt: null, fileDeletedAt: null, contentVersion: version },
     });
   return true;
-}
-
-/**
- * Retires every live Recording of the Word at the content version, in the
- * transaction of the write that changed its Lemma or Stress (ADR 0083), so
- * the same Patch carries the Word and its retired Recordings.
- */
-export async function retireRecordings(
-  tx: Pick<Transaction, 'update'>,
-  {
-    editionId,
-    wordId,
-    version,
-    now,
-  }: { editionId: string; wordId: string; version: number; now: Date },
-): Promise<void> {
-  await tx
-    .update(mediaRecordings)
-    .set({ retiredAt: now, contentVersion: version })
-    .where(
-      and(
-        eq(mediaRecordings.editionId, editionId),
-        eq(mediaRecordings.wordId, wordId),
-        isNull(mediaRecordings.retiredAt),
-      ),
-    );
 }
 
 /**

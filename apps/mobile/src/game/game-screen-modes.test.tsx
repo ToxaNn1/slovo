@@ -628,15 +628,15 @@ describe('the Game screen', () => {
       jest.useRealTimers();
     });
 
-    it('starts from its card and races 20 seconds with the timer on top, a mistake moving on, to «Фініш»', async () => {
+    it('starts from its card and races 60 seconds with the timer on top, a mistake moving on, to «Фініш»', async () => {
       await renderScreen();
 
       await fireEvent.press(screen.getByTestId('game-mode-timed'));
 
       await waitFor(() => {
-        expect(timerLabel()).toBe('лишилося 20 секунд');
+        expect(timerLabel()).toBe('лишилося 60 секунд');
       });
-      expect(screen.getByTestId('game-timer')).toHaveTextContent('20 с');
+      expect(screen.getByTestId('game-timer')).toHaveTextContent('60 с');
       expect(screen.getByTestId('game-progress')).toHaveTextContent('Пройдено: 0');
       expect(screen.queryByTestId('game-lives')).toBeNull();
       expect(screen.queryByTestId('game-life-0', { includeHiddenElements: true })).toBeNull();
@@ -662,10 +662,10 @@ describe('the Game screen', () => {
 
       await pass(5_000 - 3 * 550 - 3_000);
 
-      expect(timerLabel()).toBe('лишилося 15 секунд');
-      expect(screen.getByTestId('game-timer')).toHaveTextContent('15 с');
+      expect(timerLabel()).toBe('лишилося 55 секунд');
+      expect(screen.getByTestId('game-timer')).toHaveTextContent('55 с');
 
-      await pass(15_000);
+      await pass(55_000);
 
       await waitFor(() => {
         expect(screen.getByTestId('game-end-time-up')).toBeOnTheScreen();
@@ -683,14 +683,14 @@ describe('the Game screen', () => {
 
       await fireEvent.press(screen.getByTestId('game-mode-timed'));
       await waitFor(() => {
-        expect(timerLabel()).toBe('лишилося 20 секунд');
+        expect(timerLabel()).toBe('лишилося 60 секунд');
       });
       await pickTheWordOfThePrompt();
       await pass(550);
       await pickAnotherWord();
       await pass(3_000);
       await pickAnotherWord();
-      await pass(20_000 - 550 - 3_000);
+      await pass(60_000 - 550 - 3_000);
 
       await waitFor(() => {
         expect(screen.getByTestId('game-end-time-up')).toBeOnTheScreen();
@@ -704,18 +704,18 @@ describe('the Game screen', () => {
       await renderScreen();
       await fireEvent.press(screen.getByTestId('game-mode-timed'));
       await waitFor(() => {
-        expect(timerLabel()).toBe('лишилося 20 секунд');
+        expect(timerLabel()).toBe('лишилося 60 секунд');
       });
       await pass(5_000);
 
       await moveApp('background');
       await pass(5 * 60_000);
 
-      expect(timerLabel()).toBe('лишилося 15 секунд');
+      expect(timerLabel()).toBe('лишилося 55 секунд');
       expect(screen.getByTestId('game-round')).toBeOnTheScreen();
 
       await moveApp('foreground');
-      await pass(14_000);
+      await pass(54_000);
 
       expect(timerLabel()).toBe('лишилася 1 секунда');
       expect(screen.getByTestId('game-round')).toBeOnTheScreen();

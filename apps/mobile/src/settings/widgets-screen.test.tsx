@@ -1,17 +1,17 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { loadEdition, type Edition, type FeatureSwitch } from '@slovo/core';
 import { seedUserState } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import WidgetsScreen from '../app/settings/widgets';
-import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
-import { renderInGestureRoot } from '../shell/test-render';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
 import { opened, switchedTo, testShell } from '../shell/test-support';
+import { renderApp } from '../shell/test-app';
 
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: () => undefined }) }));
+jest.mock('expo-router', () => ({
+  ...jest.requireActual<object>('expo-router'),
+  useRouter: () => ({ back: () => undefined }),
+}));
 
 const { config } = activeEditionFiles;
 
@@ -30,11 +30,6 @@ function editionWith(switches: Partial<Record<FeatureSwitch, boolean>>): Edition
   );
   return loadEdition({ ...rest, featureSwitches: { ...featureSwitches, ...states } });
 }
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 /** Lets the composition's reads and the renders after them finish. */
 async function settle() {
@@ -63,15 +58,7 @@ async function renderWidgets(switches: Partial<Record<FeatureSwitch, boolean>> =
   });
   // The screen is drawn under the gate of the composition's opening.
   const shell = { ...opening, composition: opened(await opening.composition.opened()) };
-  await renderInGestureRoot(
-    <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider shell={shell}>
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <WidgetsScreen />
-        </EditionProvider>
-      </ShellProvider>
-    </SafeAreaProvider>,
-  );
+  await renderApp(<WidgetsScreen />, { shell });
   await settle();
   await settle();
   return { writes: () => writes };

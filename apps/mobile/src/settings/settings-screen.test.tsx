@@ -5,15 +5,12 @@ import {
   type Composition,
   type Edition,
   type FeatureSwitch,
-  type Haptics,
 } from '@slovo/core';
 import { seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider } from '@slovo/ui';
 import { typeRoles } from '@slovo/ui/tokens';
 import { Stack } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native';
 
 import SettingsScreen from '../app/settings';
@@ -23,10 +20,9 @@ import NarratorVoiceScreen from '../app/settings/narrator-voice';
 import PrivacyScreen from '../app/settings/privacy';
 import WidgetGuideScreen from '../app/settings/widgets';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider, type ShareFile } from '../shell-value';
+import { type ShareFile } from '../shell-value';
 import { screenSettled } from '../use-open-screen';
 import { opened, packWithMedia, settingsAt, switchedTo, testShell } from '../shell/test-support';
-import { SettingsProvider } from './settings';
 
 const { config } = activeEditionFiles;
 
@@ -126,19 +122,6 @@ function editionWith(switches: Partial<Record<FeatureSwitch, boolean>>): Edition
   return loadEdition({ ...rest, featureSwitches: { ...featureSwitches, ...states } });
 }
 
-const haptics: Haptics = {
-  selection: () => undefined,
-  impactLight: () => undefined,
-  impactMedium: () => undefined,
-  success: () => undefined,
-  warning: () => undefined,
-};
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
-
 /**
  * Settings as the app routes to it, over the Edition in effect with the
  * switches named set as given and the settings as they ship, with the widget guide a
@@ -161,21 +144,9 @@ async function renderSettings(
     settings,
     shareFile,
   });
-  await renderRoutes(
+  await renderApp(
     {
-      _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <ShellProvider shell={shell}>
-            <EditionProvider edition={edition} strings={editionStrings}>
-              <HapticsProvider haptics={haptics}>
-                <SettingsProvider>
-                  <Stack screenOptions={{ headerShown: false }} />
-                </SettingsProvider>
-              </HapticsProvider>
-            </EditionProvider>
-          </ShellProvider>
-        </SafeAreaProvider>
-      ),
+      _layout: () => <Stack screenOptions={{ headerShown: false }} />,
       'settings/index': SettingsScreen,
       'settings/widgets': WidgetGuideScreen,
       'settings/narrator-voice': NarratorVoiceScreen,
@@ -183,7 +154,7 @@ async function renderSettings(
       'settings/text-size': TextSizeScreen,
       'settings/privacy': PrivacyScreen,
     },
-    { initialUrl: '/settings' },
+    { shell, initialUrl: '/settings' },
   );
   return (await settings.opened()).settings;
 }
@@ -724,6 +695,19 @@ describe('Settings › its header (app pass 91)', () => {
     expect(screen.getByRole('header', { name: 'Налаштування' })).toBeOnTheScreen();
     expect(
       within(screen.getByTestId('settings-scroll')).queryByRole('header', { name: 'Налаштування' }),
+    ).toBeNull();
+  });
+});
+
+describe('Settings › «Голос диктора» › its header', () => {
+  it('keeps the back header above the list, so it stays put under the status bar while the list scrolls', async () => {
+    await renderSettings();
+    await fireEvent.press(screen.getByTestId('settings-row-narrator-voice'));
+    await screen.findByTestId('narrator-voice-screen');
+
+    expect(screen.getByTestId('narrator-voice-back')).toBeOnTheScreen();
+    expect(
+      within(screen.getByTestId('narrator-voice-scroll')).queryByTestId('narrator-voice-back'),
     ).toBeNull();
   });
 });

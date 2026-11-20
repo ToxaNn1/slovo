@@ -6,23 +6,18 @@ import {
   type Clock,
   type Composition,
   type Edition,
-  type Haptics,
   type TrackedUserState,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
-import { Slot } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
 import type { AppStateStatus } from 'react-native';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HomeScreen from '../app/feed';
-import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
-import { SettingsProvider } from '../settings/settings';
-import { ShellProvider, type Shell } from '../shell-value';
+import { activeEditionFiles } from '../edition/edition';
+import { type Shell } from '../shell-value';
 import { listen } from '../shell/lifecycle';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { screenSettled } from '../use-open-screen';
@@ -35,19 +30,6 @@ const clock: Clock = { now: () => new Date(Date.now()), timeZone: () => 'Europe/
 
 /** Two minutes to midnight on Tuesday 3 November in Kyiv. */
 const BEFORE_MIDNIGHT = new Date('2026-11-03T21:58:00Z');
-
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 47, left: 0, right: 0, bottom: 34 },
-};
 
 const hidden = { includeHiddenElements: true };
 
@@ -128,7 +110,7 @@ async function swipeUp() {
 }
 
 /** The app on the Feed, with the lifecycle following the device's app state and the clock. */
-async function renderApp(appState: ReturnType<typeof fakeAppState>['source']) {
+async function openApp(appState: ReturnType<typeof fakeAppState>['source']) {
   editionInEffect = loadEdition(activeEditionFiles.config);
   // Onboarding finished weeks ago: nothing covers the Feed, and its first week is over.
   // The gestures hint was shown on an earlier launch: its finger demo loops for as long as
@@ -158,27 +140,7 @@ async function renderApp(appState: ReturnType<typeof fakeAppState>['source']) {
     remoteSwitches: switchedTo(editionInEffect),
     composition: opened(composition),
   });
-  await renderRoutes(
-    {
-      _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <TokensProvider tokens={editionTokens} colorScheme="light">
-            <ShellProvider shell={shell}>
-              <EditionProvider edition={edition} strings={editionStrings}>
-                <HapticsProvider haptics={haptics}>
-                  <SettingsProvider>
-                    <Slot />
-                  </SettingsProvider>
-                </HapticsProvider>
-              </EditionProvider>
-            </ShellProvider>
-          </TokensProvider>
-        </SafeAreaProvider>
-      ),
-      index: HomeScreen,
-    },
-    { initialUrl: '/' },
-  );
+  await renderApp({ index: HomeScreen }, { shell });
   // The lifecycle starts once the app is drawn, as the app's own Lifecycle does in an effect.
   stopLifecycle = listen(shell, {
     clock,
@@ -203,7 +165,7 @@ function expectTuesday() {
 describe('the Feed on a new local day', () => {
   it('shows the new date in its header and the new Word of the Day next, past midnight with the app open', async () => {
     const appState = fakeAppState();
-    await renderApp(appState.source);
+    await openApp(appState.source);
     expectTuesday();
 
     // Six minutes on: the app stayed open past midnight.
@@ -218,7 +180,7 @@ describe('the Feed on a new local day', () => {
 
   it('shows the new date in its header and the new Word of the Day next, on a return to the foreground on a new day', async () => {
     const appState = fakeAppState();
-    await renderApp(appState.source);
+    await openApp(appState.source);
     expectTuesday();
 
     // In the background timers stop: the clock moves past midnight with none firing.

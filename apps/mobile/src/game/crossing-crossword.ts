@@ -53,7 +53,7 @@ export function crossingSolveOf(
 }
 
 /** A Word by its number and direction, as VoiceOver reads it, e.g. «1 по горизонталі». */
-export const crossingWordName = ({ number, direction }: CrossingWord, strings: Strings) =>
+const crossingWordName = ({ number, direction }: CrossingWord, strings: Strings) =>
   fill(strings.wordName, { number: String(number), direction: strings[direction] });
 
 /**
@@ -61,7 +61,7 @@ export const crossingWordName = ({ number, direction }: CrossingWord, strings: S
  * current and the solved Words; every letter once it is solved, on another
  * device too.
  */
-export function crossingCells(
+function crossingCells(
   puzzle: CrossingPuzzle,
   state: CrossingPlay,
   strings: Strings,

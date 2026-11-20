@@ -13,7 +13,7 @@ import { xpEntryOf, type XpEntry } from './xp-entry';
 export const BREAK_DAYS_AT_MOST = 7;
 
 /** The learning actions XP comes from (ADR 0066). */
-export const XpSourceSchema = z.literal([
+const XpSourceSchema = z.literal([
   'game-round',
   'game-finished',
   'game-best',

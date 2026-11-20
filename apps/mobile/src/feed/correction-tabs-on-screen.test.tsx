@@ -6,23 +6,17 @@ import {
   type Composition,
   type TrackedUserState,
   type Edition,
-  type Haptics,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
-import { Slot } from 'expo-router';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 
 import HomeScreen from '../app/feed';
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
-import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
+import { activeEditionFiles } from '../edition/edition';
 import { screenSettled } from '../use-open-screen';
-import { SettingsProvider } from '../settings/settings';
 
 const { config } = activeEditionFiles;
 
@@ -39,19 +33,6 @@ const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Eu
 
 // The app in the foreground, where the Feed gets its next card ready.
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
-
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 /** A Word of the Edition's first Category, with the Stress on its second letter. */
 function word(id: string, lemma: string, more: Partial<Word> = {}): Word {
@@ -151,28 +132,8 @@ const shell = () =>
   });
 
 /** The app on the Feed. */
-async function renderApp() {
-  await renderRoutes(
-    {
-      _layout: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <TokensProvider tokens={editionTokens} colorScheme="light">
-            <ShellProvider shell={shell()}>
-              <EditionProvider edition={edition} strings={editionStrings}>
-                <HapticsProvider haptics={haptics}>
-                  <SettingsProvider>
-                    <Slot />
-                  </SettingsProvider>
-                </HapticsProvider>
-              </EditionProvider>
-            </ShellProvider>
-          </TokensProvider>
-        </SafeAreaProvider>
-      ),
-      index: HomeScreen,
-    },
-    { initialUrl: '/' },
-  );
+async function openApp() {
+  await renderApp({ index: HomeScreen }, { shell: shell() });
   await settle();
   // The pager lays its pages out once it knows its height.
   await fireEvent(screen.getByTestId('feed'), 'layout', {
@@ -217,7 +178,7 @@ function tabsOf(card: ReturnType<typeof correctionCard>) {
 describe('the tabs of a Correction card in the Feed', () => {
   it('shows the struck form above «Як краще», «Чому», «Приклади» and «Джерело», «Як краще» selected', async () => {
     await open();
-    await renderApp();
+    await openApp();
     await swipeUp();
 
     const card = correctionCard();
@@ -239,7 +200,7 @@ describe('the tabs of a Correction card in the Feed', () => {
 
   it('shows the reason in place on «Чому», the struck form kept and the sources left to «Джерело»', async () => {
     await open();
-    await renderApp();
+    await openApp();
     await swipeUp();
 
     await settle(() => fireEvent.press(correctionCard().getByTestId('correction-tab-why')));
@@ -256,7 +217,7 @@ describe('the tabs of a Correction card in the Feed', () => {
 
   it('names the sources one to a line on «Джерело», with no «Джерело:» before them (ADR 0116)', async () => {
     await open();
-    await renderApp();
+    await openApp();
     await swipeUp();
 
     await settle(() => fireEvent.press(correctionCard().getByTestId('correction-tab-source')));
@@ -273,7 +234,7 @@ describe('the tabs of a Correction card in the Feed', () => {
 
   it('shows the example pair on «Приклади»', async () => {
     await open();
-    await renderApp();
+    await openApp();
     await swipeUp();
 
     await settle(() => fireEvent.press(correctionCard().getByTestId('correction-tab-examples')));

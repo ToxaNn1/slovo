@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { openComposition, type FeatureSwitch } from '../index';
 import { createMemoryContentPort, seedUserState } from '../testing';
 import { fakeClock, settle, testEdition, word } from '../test-support';
+import { writeStaged } from '../user-state/staged-write';
 import { createMemoryUserStatePort } from '../user-state/user-state';
 
 // The XP log read off records kept out of order, at one instant, around reset markers.
@@ -209,6 +210,77 @@ describe('the XP log’s awards and appends', () => {
     expect(xpLog.award({ source: 'review-answer', entryId: 'w_02' }).amount).toBe(1);
     expect(xpLog.award({ source: 'daily-crossword', date: '2026-10-14' }).amount).toBe(0);
     expect(xpLog.award({ source: 'daily-crossword', date: '2026-10-13' }).amount).toBe(15);
+  });
+
+  describe('two awards staged before either is committed', () => {
+    const reviewed = (entryId: string, minute: number) =>
+      [
+        `review-answer-2026-10-14-${entryId}`,
+        {
+          kind: 'xp',
+          date: '2026-10-14',
+          at: at('2026-10-14', 4, minute),
+          source: 'review-answer',
+          amount: 1,
+          entryId,
+        },
+      ] as const;
+
+    const xpKeys = (records: Map<string, string>) =>
+      [...records.keys()].filter((key) => key.startsWith('xp.'));
+
+    it('keeps both Rounds answered right, each its own record, in one write', async () => {
+      const { xpLog, records } = await open();
+
+      const first = xpLog.award({ source: 'game-round', mode: 'definition', rarity: 2 });
+      const second = xpLog.award({ source: 'game-round', mode: 'definition', rarity: 3 });
+      expect(xpLog.state.total).toBe(0);
+      await writeStaged(createMemoryUserStatePort(records), [first, second]);
+
+      expect([first.amount, second.amount]).toEqual([1, 1]);
+      expect(xpKeys(records)).toHaveLength(2);
+      expect(xpLog.state).toMatchObject({ total: 2, today: 2 });
+      expect(xpLog.milestones.rightRarities).toEqual(new Set([2, 3]));
+    });
+
+    it('keeps both when each is written and committed on its own, the first after the second was staged', async () => {
+      const { xpLog, records } = await open();
+      const userState = createMemoryUserStatePort(records);
+
+      const first = xpLog.award({ source: 'game-round', mode: 'definition', rarity: 2 });
+      const second = xpLog.award({ source: 'quick-question' });
+      await writeStaged(userState, [first]);
+      await writeStaged(userState, [second]);
+
+      expect(xpKeys(records)).toHaveLength(2);
+      expect(xpLog.state).toMatchObject({ total: 3, today: 3 });
+    });
+
+    it('counts one Review answer of an Entry staged twice once', async () => {
+      const { xpLog, records } = await open();
+
+      const first = xpLog.award({ source: 'review-answer', entryId: 'w_01' });
+      const second = xpLog.award({ source: 'review-answer', entryId: 'w_01' });
+      await writeStaged(createMemoryUserStatePort(records), [first, second]);
+
+      expect(xpKeys(records)).toEqual(['xp.review-answer-2026-10-14-w_01']);
+      expect(xpLog.state).toMatchObject({ total: 1, today: 1 });
+      expect(xpLog.award({ source: 'review-answer', entryId: 'w_01' }).amount).toBe(0);
+    });
+
+    it('never counts Review answers past the daily cap, though each saw room under it', async () => {
+      const { xpLog, records } = await open(
+        Array.from({ length: 9 }, (_, index) => reviewed(`w_0${String(index)}`, index)),
+      );
+      expect(xpLog.state.today).toBe(9);
+
+      const first = xpLog.award({ source: 'review-answer', entryId: 'w_10' });
+      const second = xpLog.award({ source: 'review-answer', entryId: 'w_11' });
+      await writeStaged(createMemoryUserStatePort(records), [first, second]);
+
+      expect(xpLog.state).toMatchObject({ total: 10, today: 10 });
+      expect(xpLog.award({ source: 'review-answer', entryId: 'w_12' }).amount).toBe(0);
+    });
   });
 
   it('earns nothing and writes nothing with the xpLog switch off', async () => {

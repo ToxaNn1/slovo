@@ -15,7 +15,7 @@ import {
   seedUserState,
 } from '@slovo/core/testing';
 import { EditionProvider, OfflinePlateProvider, fill } from '@slovo/ui';
-import { act, fireEvent, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen, within } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -444,5 +444,14 @@ describe('the email problem on the Account screen', () => {
 
     await send();
     expect(screen.getByText(problems['invalid-email'])).toBeOnTheScreen();
+  });
+});
+
+describe('the Account screen › its header', () => {
+  it('keeps the back header above the list, so it stays put under the status bar while the list scrolls', async () => {
+    await renderScreen();
+
+    expect(screen.getByTestId('account-back')).toBeOnTheScreen();
+    expect(within(screen.getByTestId('account-scroll')).queryByTestId('account-back')).toBeNull();
   });
 });

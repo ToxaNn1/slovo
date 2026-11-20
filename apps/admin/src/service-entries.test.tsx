@@ -1,8 +1,8 @@
 import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
+import { override, refusal } from './mock/handlers';
 import { server } from './mock/server';
 import { SERVICE_ENTRIES, SERVICE_IDS } from './mock/services-fixtures';
 import { Admin } from './router';
@@ -59,9 +59,9 @@ test('the panel shows logins and links in the open, and masks the sealed entries
 test('a new entry goes through the confirmation with a reason', async () => {
   const bodies: unknown[] = [];
   server.use(
-    http.post('*/admin/services/:serviceId/entries', async ({ request, params }) => {
+    override('services.addEntry', async ({ request, params }) => {
       bodies.push({ serviceId: params['serviceId'], ...Object(await request.json()) });
-      return HttpResponse.json({ entry: SERVICE_ENTRIES[3] });
+      return { entry: SERVICE_ENTRIES[3] };
     }),
   );
   const { user, entries } = await neonEntries();
@@ -97,9 +97,9 @@ test('a new entry goes through the confirmation with a reason', async () => {
 test('a change of a sealed entry leaves its value out unless a new one is typed', async () => {
   const bodies: unknown[] = [];
   server.use(
-    http.post('*/admin/services/entries/:id', async ({ request, params }) => {
+    override('services.editEntry', async ({ request, params }) => {
       bodies.push({ id: params['id'], ...Object(await request.json()) });
-      return HttpResponse.json({ entry: SERVICE_ENTRIES[2] });
+      return { entry: SERVICE_ENTRIES[2] };
     }),
   );
   const { user, entries } = await neonEntries();
@@ -129,9 +129,9 @@ test('a change of a sealed entry leaves its value out unless a new one is typed'
 test('an entry is deleted through the confirmation', async () => {
   const bodies: unknown[] = [];
   server.use(
-    http.post('*/admin/services/entries/:id/delete', async ({ request, params }) => {
+    override('services.deleteEntry', async ({ request, params }) => {
       bodies.push({ id: params['id'], ...Object(await request.json()) });
-      return HttpResponse.json({ deleted: true });
+      return { deleted: true };
     }),
   );
   const { user, entries } = await neonEntries();
@@ -146,11 +146,7 @@ test('an entry is deleted through the confirmation', async () => {
 });
 
 test('without VAULT_KEY the section says the Vault is off and offers no write', async () => {
-  server.use(
-    http.get('*/admin/services/:serviceId/entries', () =>
-      HttpResponse.json({ vault: 'off', entries: [] }),
-    ),
-  );
+  server.use(override('services.entries', () => ({ vault: 'off', entries: [] })));
   const { entries } = await neonEntries();
 
   expect((await entries.findByRole('status')).textContent).toContain(
@@ -161,11 +157,8 @@ test('without VAULT_KEY the section says the Vault is off and offers no write', 
 
 test('a write refused as vault-off says why in the confirmation', async () => {
   server.use(
-    http.post('*/admin/services/entries/:id/delete', () =>
-      HttpResponse.json(
-        { defined: true, code: 'VAULT_OFF', status: 503, message: 'off' },
-        { status: 503 },
-      ),
+    override('services.deleteEntry', () =>
+      refusal(503, { defined: true, code: 'VAULT_OFF', status: 503, message: 'off' }),
     ),
   );
   const { user, entries } = await neonEntries();
@@ -189,34 +182,30 @@ function vaultLockedUntilCode(rightCode = '123456') {
   const calls: string[] = [];
   let open = false;
   const locked = () =>
-    HttpResponse.json(
-      { defined: true, code: 'LOCKED', status: 423, message: 'locked' },
-      { status: 423 },
-    );
+    refusal(423, { defined: true, code: 'LOCKED', status: 423, message: 'locked' });
   server.use(
-    http.post('*/admin/services/vault/unlock', async ({ request }) => {
+    override('services.unlockVault', async ({ request }) => {
       const { code } = Object(await request.json()) as { code: string };
       calls.push(`unlock ${code}`);
       if (code !== rightCode) {
-        return HttpResponse.json(
-          {
-            defined: true,
-            code: 'WRONG_CODE',
-            status: 400,
-            message: 'wrong',
-            data: { attemptsLeft: 2 },
-          },
-          { status: 400 },
-        );
+        return refusal(400, {
+          defined: true,
+          code: 'WRONG_CODE',
+          status: 400,
+          message: 'wrong',
+          data: { attemptsLeft: 2 },
+        });
       }
       open = true;
-      return HttpResponse.json({ openUntil: '2026-11-17T10:15:00.000Z' });
+      return { openUntil: '2026-11-17T10:15:00.000Z' };
     }),
-    http.post('*/admin/services/entries/:id/:how', ({ params }) => {
-      const how = String(params['how']);
-      if (how !== 'reveal' && how !== 'copy') return undefined;
-      calls.push(`${how} ${String(params['id'])}`);
-      return open ? HttpResponse.json({ value: FAKE_VALUE }) : locked();
+    override('services.revealEntry', ({ params }) => {
+      calls.push(`reveal ${String(params['id'])}`);
+      return open ? { value: FAKE_VALUE } : locked();
+    }),
+    override('services.copyEntry', ({ params }) => {
+      calls.push(`copy ${String(params['id'])}`);
+      return open ? { value: FAKE_VALUE } : locked();
     }),
   );
   return calls;

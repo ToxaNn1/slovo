@@ -13,8 +13,10 @@
   "workspaces": {
     ".": {
       // Kept files outside any package: the script that generates the
-      // Ukrainian notification sound (editions/uk/assets/README.md).
-      "entry": ["editions/*/assets/*.mjs"],
+      // Ukrainian notification sound (editions/uk/assets/README.md), the
+      // Claude Code hooks `.claude/settings.json` runs, and the page helpers
+      // of a content wave, run by hand (docs/agents/content-wave.md).
+      "entry": ["editions/*/assets/*.mjs", ".claude/hooks/*.mjs", "scripts/content-wave/*.mjs"],
       // The design export is kept byte for byte, never run by the repo.
       "ignore": ["docs/design/export/**"],
       // The Maestro CLI is installed on the Mac, not by pnpm (scripts/smoke-halves.mjs).
@@ -25,7 +27,9 @@
       // metro.config.cjs. Maestro's `runScript` runs the flows' scripts in
       // maestro/, found by their place, not by an import, as the no-orphans
       // rule of .dependency-cruiser.mjs already treats them.
-      "entry": ["**/*.d.ts", "maestro/*.js"],
+      // app.config.ts loads the App Intents plugin through tsx at run time
+      // and imports only its types, so Knip sees none of its exports used.
+      "entry": ["**/*.d.ts", "maestro/*.js", "plugins/app-intents.ts"],
       "ignoreDependencies": [
         // Native module the Expo SDK pins; autolinking only finds it while the
         // app lists it, though no source file imports it.
@@ -40,9 +44,22 @@
         // folder and `slovo-app/*` to the AppConfig's files (metro.config.cjs).
         "slovo-edition",
         "slovo-app",
+        // Not a package either: Metro serves `slovo-editions` as a module it
+        // generates from the bundled Editions (metro.config.cjs).
+        "slovo-editions",
+        // src/jest-matchers.d.ts augments `expect`'s Matchers, which needs the
+        // package resolvable though no file imports it.
+        "expect",
+        // The types of the Xcode project the config plugins edit:
+        // @expo/config-plugins names them in its own declarations.
+        "@types/xcode",
       ],
       // Maestro is installed on the machine, not through pnpm.
       "ignoreBinaries": ["maestro"],
+    },
+    "apps/backend": {
+      // The content CLI tests run the root `pnpm content` script, not a binary.
+      "ignoreBinaries": ["content"],
     },
     "packages/config": {
       // Jest loads the JUnit reporter by its resolved path in CI only

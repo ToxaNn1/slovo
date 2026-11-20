@@ -69,22 +69,31 @@ function recordText(best: OfferedBest | undefined, texts: GameStrings['hubRow'])
     : fill(texts.record, { n, total: String(best.of) });
 }
 
+/** The end of a refusal whose reason is the reader's own Mix, such as `corrections-out-of-mix`. */
+const OUT_OF_MIX = '-out-of-mix';
+
 /** The mode a toast sends the reader to while it can start. */
 const TOAST_MODE = 'stress';
 /** The mode the toast sends the reader to while «Наголос» itself cannot start. */
 const FALLBACK_TOAST_MODE = 'pairs';
 
 /**
- * The toast on a tap of a mode that can't start, such as «Пари» ще
- * розминається. Влучай поки в «Наголос»!: it names «Наголос» while it can
- * start; else, in its own words («Спробуй поки „Пари“!»), «Пари» while it can,
- * else the first mode on offer that can (still «Пари» when none can).
+ * The toast on a tap of a mode that can't start. When the reader took the
+ * mode's kind out of their Mix, it names that reason in the mode's own text
+ * («Виправлення вимкнено. …»). Otherwise it is «Пари» ще розминається.
+ * Влучай поки в «Наголос»!: it names «Наголос» while it can start; else, in
+ * its own words («Спробуй поки „Пари“!»), «Пари» while it can, else the first
+ * mode on offer that can (still «Пари» when none can).
  */
 export function gameModeToast(
   offer: GameModeOffer,
   offers: readonly GameModeOffer[],
   strings: GameStrings,
 ): string {
+  if ('refusal' in offer && offer.refusal.endsWith(OUT_OF_MIX)) {
+    const refusal = gameModeStrings(strings.modes, offer.modeId).refusals[offer.refusal];
+    if (refusal !== undefined) return refusal;
+  }
   const startable = offers.filter(({ canStart }) => canStart);
   const titleOf = (modeId: string) => gameModeStrings(strings.modes, modeId).title;
   const mode = titleOf(offer.modeId);
@@ -104,23 +113,27 @@ export function bestText({ result, of }: OfferedBest, texts: GameStrings['modeBe
   return of === undefined ? fill(texts.count, { n }) : fill(texts.outOf, { n, total: String(of) });
 }
 
-/** A group of the mode screen: its title in the Edition's texts and its modes on offer. */
+/**
+ * A group of the mode screen: its title in the Edition's texts, none for the
+ * leading row, and its modes on offer.
+ */
 export interface GameModeGroup {
-  readonly title: string;
+  readonly title: string | undefined;
   readonly offers: readonly GameModeOffer[];
 }
 
 /**
  * The modes on offer in the mode screen's groups, each under the group its
- * offer names, the board's five in the board's order (ADR 0139), and the modes in the order they register; a group
- * with no mode on offer is left out.
+ * offer names: the leading row first, with no title, then the board's five in
+ * the board's order, and the modes in the order they register; a group with no
+ * mode on offer is left out.
  */
 export function gameModeGroups(
   offers: readonly GameModeOffer[],
   strings: GameStrings,
 ): GameModeGroup[] {
   return GAME_HUB_GROUPS.map((group) => ({
-    title: strings.groups[group],
+    title: group === 'lead' ? undefined : strings.groups[group],
     offers: offers.filter((offer) => offer.group === group),
   })).filter(({ offers: inGroup }) => inGroup.length > 0);
 }

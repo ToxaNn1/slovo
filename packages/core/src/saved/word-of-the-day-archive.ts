@@ -3,19 +3,12 @@ import { createEntries, EVERYTHING_IN } from '../entries/entries';
 import { createEntryRows, type EntryRowModel } from '../entries/entry-row';
 import { createInTurn, createSubscribers } from '../in-turn';
 import { dateKeyOf, parseLocalDate, todayDate, type LocalDate } from '../local-date';
-import type { Clock, ContentReadPort, UserStateChanges } from '../ports';
+import type { Clock, ContentReadPort } from '../ports';
+import { type StagedPiece } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
 const { wordOfTheDayArchive: archiveRecords } = userStateRecords;
-
-/** A day of the Word of the Day archive on its way into a write. */
-export interface WordOfTheDayArchiveRecording {
-  /** The change that keeps the Word under the date, to go in the write. */
-  readonly changes: UserStateChanges;
-  /** Takes the day into the archive's list, once the write is made. */
-  commit(): Promise<void>;
-}
 
 /**
  * How the Feed records the Word of the Day archive («Слова дня», ADR 0054)
@@ -28,7 +21,7 @@ export interface WordOfTheDayArchiveRecorder {
    * nothing while the Feature Switch `wordOfTheDayArchive` is off, so an
    * absent feature keeps its records and writes none.
    */
-  record(date: LocalDate, wordId: string): WordOfTheDayArchiveRecording | undefined;
+  record(date: LocalDate, wordId: string): StagedPiece<Promise<void>> | undefined;
 }
 
 /** A Word's row in a list. */

@@ -20,6 +20,7 @@
     "source:idioms": "pnpm --filter @slovo/sourcing source-idioms",
     "source:corrections": "pnpm --filter @slovo/sourcing source-corrections",
     "source:synonyms": "pnpm --filter @slovo/sourcing source-synonyms",
+    "source:lemmas": "pnpm --filter @slovo/sourcing source-lemmas",
     "content": "pnpm --filter @slovo/content content",
     "smoke:halves": "node scripts/smoke-halves.mjs",
     "app-pass": "node scripts/app-pass.mjs",
@@ -40,11 +41,11 @@
     "@slovo/config": "workspace:*",
     "dependency-cruiser": "^18.7.2",
     "istanbul-lib-coverage": "^3.2.2",
-    "knip": "^6.44.1",
-    "oxlint": "~1.91.0",
-    "prettier": "^3.9.10",
-    "railway": "3.16.0",
-    "turbo": "^2.11.10",
+    "knip": "^6.45.1",
+    "oxlint": "~1.93.0",
+    "prettier": "^3.10.1",
+    "railway": "3.17.0",
+    "turbo": "^2.11.11",
     "typescript": "~6.0.3"
   }
 }

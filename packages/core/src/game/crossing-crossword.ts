@@ -22,7 +22,7 @@ export const CROSSING_PATTERNS: readonly BlockPattern[] = [
 ];
 
 /** The shortest and longest Word of the crossing Daily Crossword, in letters. */
-export const CROSSING_WORD_LENGTH = { min: 3, max: 5 } as const;
+const CROSSING_WORD_LENGTH = { min: 3, max: 5 } as const;
 
 /** Placements the backtracking search tries on one pattern before giving up on it. */
 const SEARCH_BUDGET = 1000;

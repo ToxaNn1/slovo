@@ -1,21 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import {
-  loadEdition,
-  openComposition,
-  type Composition,
-  type Edition,
-  type Haptics,
-} from '@slovo/core';
+import { loadEdition, openComposition, type Composition, type Edition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
+import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
-import { renderRoutes } from '../shell/test-render';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
-import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
 import { Onboarding } from './onboarding';
 
 const { onboarding: strings } = editionStrings;
@@ -26,19 +17,6 @@ jest.mock('expo-constants', () => ({
 }));
 
 const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
-
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
-
-const metrics = {
-  frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
-};
 
 function word(id: string, lemma: string): Word {
   return {
@@ -85,24 +63,7 @@ async function renderOnboarding(shipped: Edition = loadEdition(activeEditionFile
     remoteSwitches: switchedTo(shipped),
     composition: opened(composition),
   });
-  await renderRoutes(
-    {
-      index: () => (
-        <SafeAreaProvider initialMetrics={metrics}>
-          <TokensProvider tokens={editionTokens} colorScheme="light">
-            <ShellProvider shell={shell}>
-              <EditionProvider edition={edition} strings={editionStrings}>
-                <HapticsProvider haptics={haptics}>
-                  <Onboarding />
-                </HapticsProvider>
-              </EditionProvider>
-            </ShellProvider>
-          </TokensProvider>
-        </SafeAreaProvider>
-      ),
-    },
-    { initialUrl: '/' },
-  );
+  await renderApp({ index: Onboarding }, { shell });
   await settle();
 }
 
@@ -176,7 +137,11 @@ describe('the onboarding', () => {
     }
     await press('onboarding-time-20:30');
 
-    expect(composition.notifications.state.times).toEqual(['20:30']);
+    expect(composition.notifications.state.times).toEqual({
+      kind: 'on',
+      word: '20:30',
+      reminder: undefined,
+    });
     expect(composition.onboarding.state).toEqual({ status: 'finished', finishedAt: clock.now() });
     expect(screen.queryByTestId('onboarding-daily-goal')).toBeNull();
   });

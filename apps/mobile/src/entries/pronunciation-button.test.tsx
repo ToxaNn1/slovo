@@ -1,15 +1,13 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import type { RecordingRow } from '@slovo/contracts';
 import { loadEdition, type Edition, type FeatureSwitch, type UserSettings } from '@slovo/core';
-import { EditionProvider } from '@slovo/ui';
 import { Pressable, Text } from 'react-native';
 import { act, fireEvent, screen } from '@testing-library/react-native';
-import { renderInGestureRoot } from '../shell/test-render';
 
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { SettingsProvider, useSettings } from '../settings/settings';
-import { ShellProvider } from '../shell-value';
+import { useSettings } from '../settings/settings';
 import { opened, packWithMedia, settingsAt, switchedTo, testShell } from '../shell/test-support';
+import { renderApp } from '../shell/test-app';
 import { LemmaPronunciation, useSampleReading } from './pronunciation-button';
 
 const { config } = activeEditionFiles;
@@ -92,15 +90,7 @@ async function tapCard(
     remoteSwitches: switchedTo(editionWith(switches)),
     settings: await settingsAt(changes),
   });
-  await renderInGestureRoot(
-    <ShellProvider shell={shell}>
-      <EditionProvider edition={edition} strings={editionStrings}>
-        <SettingsProvider>
-          <LemmaPronunciation lemma="заграва" entryId={word} />
-        </SettingsProvider>
-      </EditionProvider>
-    </ShellProvider>,
-  );
+  await renderApp(<LemmaPronunciation lemma="заграва" entryId={word} />, { shell });
   played.length = 0;
   await fireEvent.press(await screen.findByTestId('word-pronunciation'));
   const reading = played[0];
@@ -139,15 +129,7 @@ async function renderCard(
     remoteSwitches: switchedTo(editionWith(switches)),
     settings: await settingsAt(changes),
   });
-  await renderInGestureRoot(
-    <ShellProvider shell={shell}>
-      <EditionProvider edition={edition} strings={editionStrings}>
-        <SettingsProvider>
-          <LemmaPronunciation lemma="заграва" entryId={entryId} />
-        </SettingsProvider>
-      </EditionProvider>
-    </ShellProvider>,
-  );
+  await renderApp(<LemmaPronunciation lemma="заграва" entryId={entryId} />, { shell });
   played.length = 0;
 }
 
@@ -226,15 +208,7 @@ describe('The voice screen › «Звуки»', () => {
       remoteSwitches: switchedTo(editionWith({})),
       settings: await settingsAt({}),
     });
-    await renderInGestureRoot(
-      <ShellProvider shell={shell}>
-        <EditionProvider edition={edition} strings={editionStrings}>
-          <SettingsProvider>
-            <SampleWithSounds />
-          </SettingsProvider>
-        </EditionProvider>
-      </ShellProvider>,
-    );
+    await renderApp(<SampleWithSounds />, { shell });
     played.length = 0;
     await fireEvent.press(await screen.findByTestId('sample'));
     expect(screen.getByText('playing')).toBeOnTheScreen();

@@ -24,6 +24,7 @@ const { tabs } = editionStrings;
 const tabIcons = {
   home: 'feed',
   game: 'games',
+  mix: 'mix',
   saved: 'saved',
   settings: 'profile',
 } as const satisfies Record<Tab, IconName>;
@@ -105,8 +106,10 @@ function tabsOptions(tabOrder: readonly Tab[], settingsName: string, feedTab: bo
     // With `feedTab` on, «Стрічка» shows as selected over the Feed it opens (ADR 0093).
     home: tabOptions('home', tabOrder, tabs.home, feedTab ? FeedTabButton : TabBarButton),
     game: tabOptions('game', tabOrder, tabs.game),
+    // «Мікс» in the centre opens «Мій Мікс» as its root (ADR 0201).
+    mix: tabOptions('mix', tabOrder, tabs.mix),
     saved: tabOptions('saved', tabOrder, tabs.saved),
-    // The fourth tab is the Profile while it is shown, Settings otherwise.
+    // The last tab is the Profile while it is shown, Settings otherwise.
     settings: tabOptions('settings', tabOrder, settingsName),
   } as const satisfies Record<Tab, unknown>;
 }
@@ -227,7 +230,9 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
   const underBar = { sceneStyle: { paddingBottom: barHeight } };
   /** The tabs whose stack's first screen the bar shows over. */
   const roomOf = (name: string) =>
-    name === 'saved' || name === 'settings' || (name === 'game' && !gameOn) ? barHeight : 0;
+    name === 'mix' || name === 'saved' || name === 'settings' || (name === 'game' && !gameOn)
+      ? barHeight
+      : 0;
   return (
     <Tabs
       screenOptions={{ ...screenOptions, tabBarStyle }}
@@ -255,6 +260,10 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
       <Tabs.Screen
         name="game"
         options={({ route }) => ({ ...options.game, ...barOn(atRoot(route) && !gameOn) })}
+      />
+      <Tabs.Screen
+        name="mix"
+        options={({ route }) => ({ ...options.mix, ...barOn(atRoot(route)) })}
       />
       <Tabs.Screen
         name="saved"

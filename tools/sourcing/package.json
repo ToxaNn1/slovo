@@ -2,7 +2,7 @@
   "name": "@slovo/sourcing",
   "version": "0.0.0",
   "private": true,
-  "description": "Dev-only tool that drafts Words from dictionary sources (СУМ-11 on sum.in.ua, goroh.pp.ua) for human review.",
+  "description": "Dev-only tool that drafts Words from dictionary sources (СУМ-11 on sum.in.ua, goroh.pp.ua) for human review, and picks Word candidates from an open headword list.",
   "type": "module",
   "exports": {
     ".": "./src/index.ts"
@@ -12,6 +12,7 @@
     "source-idioms": "tsx --disable-warning=ExperimentalWarning src/cli-idioms.ts",
     "source-corrections": "tsx --disable-warning=ExperimentalWarning src/cli-corrections.ts",
     "source-synonyms": "tsx --disable-warning=ExperimentalWarning src/cli-synonyms.ts",
+    "source-lemmas": "tsx --disable-warning=ExperimentalWarning src/cli-lemmas.ts",
     "lint": "eslint .",
     "typecheck": "tsc --build",
     "test": "vitest run"
@@ -20,14 +21,14 @@
     "@slovo/content-rules": "workspace:*",
     "@slovo/contracts": "workspace:*",
     "@slovo/language-pack": "workspace:*",
-    "node-html-parser": "^9.0.6",
+    "node-html-parser": "^9.0.7",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@slovo/config": "workspace:*",
     "@types/node": "^22.20.5",
     "@vitest/coverage-v8": "5.1.0",
-    "eslint": "^10.14.0",
+    "eslint": "^10.15.0",
     "tsx": "^4.23.15",
     "typescript": "~6.0.3",
     "vitest": "^5.1.0"

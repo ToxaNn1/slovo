@@ -40,7 +40,7 @@ const ResultsSchema = z.array(
  * by default they take one per core of the whole Railway host, which the
  * service's 2 vCPU cannot run, and the engine crawls (ADR 0172).
  */
-export const GENERATOR_THREADS = 2;
+const GENERATOR_THREADS = 2;
 
 /**
  * Runs the script to its end or its time limit, passing on each line it
@@ -100,7 +100,7 @@ function runScript(
  * lease (`RECORDING_LEASE_MS`), so a hung script never outlives its lease.
  * A run it stops keeps the Recordings the script listed by then.
  */
-export const GENERATOR_TIMEOUT_MS = 25 * 60 * 1000;
+const GENERATOR_TIMEOUT_MS = 25 * 60 * 1000;
 
 /**
  * The generator `recordings/generate.py` (ADR 0083) in its `--out-dir`

@@ -6,9 +6,9 @@ import type { PostHogSettings } from '../analytics/posthog-client';
 import { readJson, unavailableRead } from '../development/read-json';
 
 /** Sentry's Developer plan: 5,000 errors a month. */
-export const SENTRY_ERRORS_LIMIT = 5000;
+const SENTRY_ERRORS_LIMIT = 5000;
 /** PostHog's free plan: 1,000,000 events a month. */
-export const POSTHOG_EVENTS_LIMIT = 1_000_000;
+const POSTHOG_EVENTS_LIMIT = 1_000_000;
 
 /** The first moment of the clock's month, in UTC, as the providers count a month. */
 function monthStart(clock: Clock): Date {
@@ -130,7 +130,7 @@ const GB = 1_000_000_000;
 const hundredths = (value: number) => Math.round(value * 100) / 100;
 
 /** Neon's free plan, per project and month: CU-hours of compute, storage and egress. */
-export const NEON_LIMITS = { computeHours: 100, storageGb: 0.5, egressGb: 5 } as const;
+const NEON_LIMITS = { computeHours: 100, storageGb: 0.5, egressGb: 5 } as const;
 
 /** The project as Neon's API answers it: this period's consumption. */
 const NeonProjectSchema = z.object({
@@ -201,7 +201,7 @@ export function createNeonUsage({
 }
 
 /** GitHub Free's Actions minutes a month. */
-export const GITHUB_ACTIONS_MINUTES_LIMIT = 2000;
+const GITHUB_ACTIONS_MINUTES_LIMIT = 2000;
 
 /** The account's billing usage: one item per day, product, SKU and repository. */
 const GitHubUsageSchema = z.object({
@@ -279,7 +279,7 @@ export function createGitHubActionsUsage({
 }
 
 /** Cloudflare's free limits: R2 a month, a Worker's requests a day. */
-export const CLOUDFLARE_LIMITS = {
+const CLOUDFLARE_LIMITS = {
   r2StorageGb: 10,
   r2ClassA: 1_000_000,
   r2ClassB: 10_000_000,

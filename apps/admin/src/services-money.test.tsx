@@ -1,8 +1,8 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { http, HttpResponse } from 'msw';
 import { beforeEach, expect, test } from 'vitest';
 
+import { override } from './mock/handlers';
 import { server } from './mock/server';
 import { ADDED_SERVICE, SERVICE_IDS, SERVICES } from './mock/services-fixtures';
 import { Admin } from './router';
@@ -23,19 +23,17 @@ async function confirmWith(title: string, reason: string, button: string) {
 
 test('the top of the canvas shows the monthly total and the next charge from the API', async () => {
   server.use(
-    http.get('*/admin/services', () =>
-      HttpResponse.json({
-        services: SERVICES,
-        costs: {
-          monthlyTotalUsdCents: 4850,
-          nextCharge: {
-            on: '2027-02-28',
-            amountUsdCents: 900,
-            serviceIds: [SERVICE_IDS.GitHub, SERVICE_IDS.Railway],
-          },
+    override('services.list', () => ({
+      services: SERVICES,
+      costs: {
+        monthlyTotalUsdCents: 4850,
+        nextCharge: {
+          on: '2027-02-28',
+          amountUsdCents: 900,
+          serviceIds: [SERVICE_IDS.GitHub, SERVICE_IDS.Railway],
         },
-      }),
-    ),
+      },
+    })),
   );
   render(<Admin />);
 
@@ -55,9 +53,9 @@ test('with no priced Service the total is $0 and no charge comes', async () => {
 test("the side panel changes a Service's plan, price and billing day only with a reason", async () => {
   const bodies: unknown[] = [];
   server.use(
-    http.put('*/admin/services/:id/money', async ({ params, request }) => {
+    override('services.editMoney', async ({ params, request }) => {
       bodies.push({ id: params['id'], ...Object(await request.json()) });
-      return HttpResponse.json({ service: ADDED_SERVICE, changed: ['plan'] });
+      return { service: ADDED_SERVICE, changed: ['plan'] };
     }),
   );
   const user = userEvent.setup();
@@ -99,9 +97,9 @@ test("the side panel changes a Service's plan, price and billing day only with a
 test('«Додати сервіс» adds a Service only after a confirmation with a reason', async () => {
   const bodies: unknown[] = [];
   server.use(
-    http.post('*/admin/services', async ({ request }) => {
+    override('services.add', async ({ request }) => {
       bodies.push(await request.json());
-      return HttpResponse.json({ service: ADDED_SERVICE });
+      return { service: ADDED_SERVICE };
     }),
   );
   const user = userEvent.setup();

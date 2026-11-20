@@ -95,7 +95,7 @@ describe('the UA Edition', () => {
       theme: 'system',
       textSize: 'system',
       vibration: true,
-      notificationTimes: ['09:00', '13:00', '19:00'],
+      notificationTimes: ['09:00', '19:00'],
       mix: {
         categoryIds: 'all',
         correctionCategoryIds: 'all',
