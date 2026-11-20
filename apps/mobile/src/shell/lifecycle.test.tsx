@@ -5,6 +5,7 @@ import {
   openSync,
   systemRandom,
   type Composition,
+  type ContentUpdate,
   type Schedule,
   type Sync,
 } from '@slovo/core';
@@ -20,7 +21,7 @@ import type { AppStateStatus } from 'react-native';
 import { editionAtLaunch as edition } from '../edition/edition-at-launch';
 import { openOnce, type Opening, type OpeningState } from '../opening';
 import { listen } from './lifecycle';
-import { opened, switchedTo, testShell } from './test-support';
+import { opened, packWithMedia, switchedTo, testShell } from './test-support';
 
 const clock = { now: () => new Date('2026-10-18T09:00:00.000Z'), timeZone: () => 'Europe/Kyiv' };
 
@@ -240,5 +241,64 @@ describe('the lifecycle', () => {
     });
     stop();
     expect(asking).toEqual(['start', 'stop']);
+  });
+
+  it('starts no Patch timer when the app went to the background while it read the switches', async () => {
+    const following: string[] = [];
+    const contentUpdate: ContentUpdate = {
+      checkForUpdate: () => Promise.resolve(),
+      followForeground() {
+        following.push('follow');
+        return () => {
+          following.push('stop');
+        };
+      },
+      contentVersion: () => 7,
+      mediaOf: () => Promise.reject(new Error('No media here')),
+      subscribe: () => () => undefined,
+    };
+    const pack = await packWithMedia().opened();
+    // The remote switches answer once the test lets them, after the app left the foreground.
+    let answer: () => void = () => undefined;
+    const answered = new Promise<void>((resolve) => {
+      answer = resolve;
+    });
+    const switches = await switchedTo(edition).opened();
+    const base = testShell({
+      languagePack: opened({ ...pack, contentUpdate }),
+      remoteSwitches: openOnce(
+        async () => {
+          await answered;
+          return { ...switches, start: () => () => undefined };
+        },
+        { onError: () => undefined },
+      ),
+    });
+    let moveTo: (next: AppStateStatus) => void = () => undefined;
+    const stop = listen(base, {
+      clock,
+      appState: {
+        currentState: 'active',
+        addEventListener: (_, listener: (next: AppStateStatus) => void) => {
+          moveTo = listener;
+          return { remove: () => undefined };
+        },
+      },
+      writeWidgetSnapshot: () => undefined,
+      spotlight: { replace: () => Promise.resolve() },
+    });
+    // The Language Pack is heard at launch, while the switches are still read.
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    moveTo('background');
+    answer();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(following).toEqual([]);
+
+    moveTo('active');
+    await waitFor(() => {
+      expect(following).toEqual(['follow']);
+    });
+    stop();
   });
 });
