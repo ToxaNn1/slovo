@@ -4,3 +4,8 @@
 гнобитель history-antiquity 4
 годованець household-crafts 2
 гурчати nature-weather 4
+афінаж science 4
+букініст arts-culture 3
+відспівувати arts-culture 4
+волюнтарист emotions-character 4
+гомілетика language-speech 4
