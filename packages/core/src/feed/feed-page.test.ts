@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import type { FeatureSwitch, Word } from '@slovo/contracts';
 
-import { openComposition, type Composition, type ContentReadPort, type FeedCard } from '../index';
+import {
+  openComposition,
+  type Composition,
+  type ContentReadPort,
+  type FeedCard,
+  type UserStatePort,
+} from '../index';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, randomOf, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
@@ -47,6 +53,7 @@ async function run(
   on: string,
   content: readonly Word[] = words,
   port: (memory: ContentReadPort) => ContentReadPort = (memory) => memory,
+  userStatePort: UserStatePort = createMemoryUserStatePort(kept),
 ): Promise<Composition & { advance: (ms: number) => void }> {
   const { clock, advance } = fakeClock(`${on}T09:00:00+02:00`);
   const app = await openComposition({
@@ -57,7 +64,7 @@ async function run(
         mix: { kinds: { correction: false, idiom: false, synonymRow: false, tip: false } },
       },
     }),
-    userState: await openUserState({ port: createMemoryUserStatePort(kept) }),
+    userState: await openUserState({ port: userStatePort }),
     clock,
     random: randomOf(0.25),
   });
@@ -255,6 +262,26 @@ describe('the Yesterday quiz', () => {
     await app.feed.answerYesterday(1, quiz.right);
 
     expect(await pageOf(await run(kept, monday))).toBeUndefined();
+  });
+
+  it('keeps the answer and the closing together: an answer the device fails to keep comes again', async () => {
+    const kept = records({ recap: false });
+    const memory = createMemoryUserStatePort(kept);
+    // The device refuses every write that holds a Knowledge Mark.
+    const refusingMarks: UserStatePort = {
+      ...memory,
+      write: (changes) =>
+        [...changes.keys()].some((key) => key.startsWith('knowledge.'))
+          ? Promise.reject(new Error('The disk is full'))
+          : memory.write(changes),
+    };
+    const app = await run(kept, monday, words, undefined, refusingMarks);
+    const quiz = await quizOf(app);
+    if (quiz === undefined) throw new Error('No quiz');
+
+    await expect(app.feed.answerYesterday(1, quiz.right)).rejects.toThrow('The disk is full');
+
+    expect(await quizOf(await run(kept, monday))).toEqual(quiz);
   });
 
   it('answered under the Weekly Recap, leaves the week to come again without it', async () => {

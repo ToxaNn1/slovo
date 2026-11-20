@@ -581,11 +581,15 @@ export async function openFeed({
     const { quiz, word } = yesterday;
     if (!Number.isInteger(option) || option < 0 || option >= quiz.meanings.length) return undefined;
     const mark: KnowledgeMark = option === quiz.right ? 'known' : 'unknown';
-    // Closed first: the reader answers once, also after a relaunch. A Feed
-    // Notice of a day before, left open over midnight, is closed already.
+    // Closed in the write that keeps the mark: the reader answers once, also
+    // after a relaunch, and an answer the device fails to keep comes again. A
+    // Feed Notice of a day before, left open over midnight, is closed already.
     const date = dateKeyOf(card.day);
-    if (date === todayKey(clock)) await userState.write(await notices.close(yesterday, date));
-    await knowledge.set(word.wordId, mark);
+    await knowledge.set(
+      word.wordId,
+      mark,
+      date === todayKey(clock) ? await notices.close(yesterday, date) : undefined,
+    );
     const answered = { ...yesterday, quiz: { ...quiz, answered: option } };
     // Yesterday alone, or under the Weekly Recap.
     const renewed: FeedCard =
