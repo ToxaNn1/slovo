@@ -380,9 +380,12 @@ export function ExampleText({
       testID={testID}
       accessible
       // The Example and its author's line, as VoiceOver joins them, without the Stress marks:
-      // an Example ending in its own full stop takes no comma before the author's dash.
+      // an Example ending in its own full stop takes no comma before the author's dash. The stop
+      // is looked for in the Example itself: the quoted text ends in the closing mark.
       accessibilityLabel={withoutStress(
-        author === undefined ? text : `${text}${/[.!?…]$/.test(text) ? '' : ','} ${author}`,
+        author === undefined
+          ? text
+          : `${text}${/[.!?…]$/.test(example.text) ? '' : ','} ${author}`,
       )}
       {...voice}
     >
