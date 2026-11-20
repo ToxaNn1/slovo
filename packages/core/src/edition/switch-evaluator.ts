@@ -11,7 +11,7 @@ import {
 } from '@slovo/contracts';
 
 import type { Clock } from '../ports';
-import { compareVersions } from './app-version';
+import { compareVersions, isAppVersion } from './app-version';
 import { switchedOn } from './edition';
 
 const everyFeature = FeatureSwitchesSchema.keyof().options;
@@ -67,8 +67,17 @@ function fnv1a(text: string): number {
 /** The reader's bucket of the Rule, 0 to 99: the Install id hashed with the Rule id as salt. */
 const bucketOf = (ruleId: string, installId: string) => fnv1a(`${ruleId}:${installId}`) % 100;
 
+/**
+ * The reader's Variant of the Rule: the Install id hashed with a salt of its
+ * own, apart from the share's bucket, so a share of any size gets every Variant.
+ */
+const variantOf = (variants: readonly Variant[], ruleId: string, installId: string) =>
+  variants[fnv1a(`${ruleId}:variant:${installId}`) % variants.length];
+
 function matches(ruleId: string, targets: RuleTargets, facts: SwitchFacts): boolean {
   const { appVersion, platform, region, share, signedIn, schedule, channel } = targets;
+  // An app version that cannot be read, as a development build's, is in no range.
+  if (appVersion !== undefined && !isAppVersion(facts.appVersion)) return false;
   if (appVersion?.from !== undefined && compareVersions(facts.appVersion, appVersion.from) < 0) {
     return false;
   }
@@ -104,8 +113,7 @@ function ruleVerdict(
     if (!matches(rule.id, targets.data, facts)) continue;
     if (verdict.data === 'on') return { on: true };
     if (verdict.data === 'off') return { on: false };
-    const { variants } = verdict.data;
-    const variant = variants[bucketOf(rule.id, facts.installId) % variants.length];
+    const variant = variantOf(verdict.data.variants, rule.id, facts.installId);
     return variant === undefined ? { on: true } : { on: true, variant };
   }
   return undefined;
