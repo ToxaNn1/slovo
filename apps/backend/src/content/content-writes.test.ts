@@ -328,6 +328,28 @@ describe('the content write API', () => {
     });
   });
 
+  it("refuses an edit of today's Crossword day past midnight in Kyiv, while UTC is still on the day before", async () => {
+    const { client, agent, batchId } = await contentBackend();
+    const last = (await snapshotOf(client)).crosswordDays.at(-1);
+    if (last === undefined) throw new Error('no Crossword days');
+    // 00:30 or 01:30 of the day in Kyiv, 22:30 of the day before in UTC.
+    vi.setSystemTime(new Date(`${dateAfter(last.date, -1)}T22:30:00.000Z`));
+
+    await expect(
+      agent.admin.content.edit({
+        editionId: 'uk',
+        kind: 'crosswordDay',
+        batchId,
+        id: last.date,
+        recordVersion: 1,
+        fields: last,
+      }),
+    ).rejects.toMatchObject({
+      code: 'REFUSED',
+      data: { refusals: [{ rule: 'crossword-days-immutable', field: 'date' }] },
+    });
+  });
+
   it('writes Crossword days by their date: a day ahead edits and retires, a published day never changes', async () => {
     const { client, agent, batchId } = await contentBackend();
     const days = (await snapshotOf(client)).crosswordDays;
