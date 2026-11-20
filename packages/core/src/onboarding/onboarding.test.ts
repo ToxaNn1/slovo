@@ -420,7 +420,7 @@ describe('the onboarding', () => {
       expect(app.onboarding.state.status).toBe('finished');
       expect(app.history.list.map(({ entryId }) => entryId)).toEqual([first.word.wordId]);
       expect(app.xpLog.state.dailyGoal).toMatchObject({ goal: 3, seen: 1 });
-      // ADR 0196: the goal set after «Беру!» earns the first Word its XP.
+      // ADR 0202: the goal set after «Беру!» earns the first Word its XP.
       expect(app.xpLog.state.today).toBe(1);
     });
 

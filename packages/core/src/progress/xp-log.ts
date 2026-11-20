@@ -188,7 +188,7 @@ export interface XpLog {
    * Sets the Daily Goal from today on, or turns it off with `null` («Без
    * цілі»): today's goal changes, a day already met stays met, and the
    * earlier days keep theirs. The Words Seen today while no goal was in force
-   * earn their Seen-Word XP with it, up to the goal (ADR 0196). Nothing while
+   * earn their Seen-Word XP with it, up to the goal (ADR 0202). Nothing while
    * the Daily Goal is off.
    */
   setDailyGoal(goal: DailyGoal | null): Promise<void>;
@@ -962,7 +962,7 @@ export async function openXpLog({
     const at = clock.now();
     const date = todayKey(clock);
     const record: XpRecord = { kind: 'word-goal', date, at: at.toISOString(), goal };
-    // The Words Seen today while no goal was in force earn their XP with the goal (ADR 0196).
+    // The Words Seen today while no goal was in force earn their XP with the goal (ADR 0202).
     const seenWithNoGoal = seenWordsToday(
       goal ?? undefined,
       (_, seenAt) => goalOf(date, seenAt.toISOString()) === undefined,

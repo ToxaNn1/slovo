@@ -893,7 +893,7 @@ describe('the Seen-Word XP', () => {
     expect(xpKeys(records).filter((key) => key.startsWith('xp.seen-word-'))).toHaveLength(2);
   });
 
-  // Ticket #2062, ADR 0196: the first Word of the onboarding is Seen before the Daily Goal step.
+  // Ticket #2062, ADR 0202: the first Word of the onboarding is Seen before the Daily Goal step.
   it('earns the XP of the Words Seen earlier today with no goal once the goal is set, each once', async () => {
     const { app, time, records } = await run({ on });
     await look(app, time);
