@@ -142,10 +142,12 @@ function ModeScreen({
           />
         )}
         {gameModeGroups(modes, strings).map(({ title, offers }) => (
-          <View key={title} style={styles.group}>
-            <View style={styles.groupTitle}>
-              <GameModeGroupTitle>{title}</GameModeGroupTitle>
-            </View>
+          <View key={title ?? 'lead'} style={styles.group}>
+            {title !== undefined && (
+              <View style={styles.groupTitle}>
+                <GameModeGroupTitle>{title}</GameModeGroupTitle>
+              </View>
+            )}
             {offers.map((offer) => (
               <GameModeCard
                 key={offer.modeId}
