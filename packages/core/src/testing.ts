@@ -24,6 +24,7 @@ export {
   type FakeNotificationScheduler,
 } from './fakes/fake-notification-scheduler';
 export { createMemoryContentPort } from './fakes/memory-content';
+export { loadEdition } from './edition/edition';
 export {
   readFact,
   seedUserState,

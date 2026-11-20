@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, screen } from '@testing-library/react-native';
 import { Linking, Text } from 'react-native';
 
-import { edition, editionStrings } from '../edition/edition';
+import { editionStrings } from '../edition/edition';
+import { editionAtLaunch as edition } from '../edition/edition-at-launch';
 import { switchedTo, testShell } from '../shell/test-support';
 import { renderApp as renderInApp } from '../shell/test-app';
 import { ForceUpdateGate } from './force-update';

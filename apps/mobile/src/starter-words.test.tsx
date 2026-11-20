@@ -3,7 +3,7 @@ import type { Word } from '@slovo/contracts';
 import { createFakeBackend, createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 
 import { compositionOpening } from './composition';
-import { edition } from './edition/edition';
+import { editionAtLaunch as edition } from './edition/edition-at-launch';
 import { opened, packWithMedia } from './shell/test-support';
 
 /** The Word whose media the app bundles, the only Starter Word of the Edition. */

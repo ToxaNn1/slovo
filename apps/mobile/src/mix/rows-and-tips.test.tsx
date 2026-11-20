@@ -1,13 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { SynonymRow, Tip } from '@slovo/contracts';
-import {
-  loadEdition,
-  openComposition,
-  systemRandom,
-  type Composition,
-  type Edition,
-} from '@slovo/core';
-import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import { openComposition, systemRandom, type Composition, type Edition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import { Pressable } from 'react-native';
 import { HideChoiceSheet, UndoToastProvider } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';

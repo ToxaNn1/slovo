@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { loadEdition, type Edition, type FeatureSwitch } from '@slovo/core';
-import { seedUserState } from '@slovo/core/testing';
+import { type Edition, type FeatureSwitch } from '@slovo/core';
+import { seedUserState, loadEdition } from '@slovo/core/testing';
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
 
 import WidgetsScreen from '../app/settings/widgets';

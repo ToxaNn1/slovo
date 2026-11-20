@@ -1,14 +1,18 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
 import {
-  loadEdition,
   openComposition,
   systemRandom,
   type Clock,
   type Composition,
   type FeedCard,
 } from '@slovo/core';
-import { createMemoryContentPort, seedUserState, type UserStateFacts } from '@slovo/core/testing';
+import {
+  createMemoryContentPort,
+  seedUserState,
+  type UserStateFacts,
+  loadEdition,
+} from '@slovo/core/testing';
 import type { VerticalPagerHandle } from '@slovo/ui';
 import { act, waitFor } from '@testing-library/react-native';
 

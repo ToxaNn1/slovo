@@ -137,7 +137,7 @@ export {
 export { type CrossingCrossword } from './game/crossing-crossword-progress';
 export { type DailyCrosswordOpening } from './game/daily-crossword';
 export { decorOf, loadSeasonalMotifs } from './decor/decor-of';
-export { loadEdition, type Edition } from './edition/edition';
+export { inEffectWithoutRules, loadShippedEdition, type Edition } from './edition/edition';
 export { openRemoteSwitches, type ReaderFacts } from './edition/remote-switches';
 export { evaluateSwitches } from './edition/switch-evaluator';
 export { forceUpdateOf, type ForceUpdate, type ForceUpdateFacts } from './edition/force-update';

@@ -19,7 +19,8 @@ import {
 import { fill } from '@slovo/ui';
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
 
-import { edition as shipped, editionStrings } from '../edition/edition';
+import { editionStrings } from '../edition/edition';
+import { editionAtLaunch as shipped } from '../edition/edition-at-launch';
 import { openOnce } from '../opening';
 import { type ShareCard } from '../shell-value';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';

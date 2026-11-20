@@ -5,7 +5,8 @@ import { createMemoryContentPort, seedUserState, SEEN_DWELL_MS } from '@slovo/co
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { StyleSheet } from 'react-native';
 
-import { edition as shipped, editionStrings } from '../edition/edition';
+import { editionStrings } from '../edition/edition';
+import { editionAtLaunch as shipped } from '../edition/edition-at-launch';
 import { fill } from '@slovo/contracts';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { renderApp } from '../shell/test-app';

@@ -5,7 +5,7 @@ import { fileURLToPath, URL } from 'node:url';
 
 import { FeatureSwitchStateSchema, featureSwitchStates } from '@slovo/contracts';
 import type { ContentSnapshot } from '@slovo/contracts/api';
-import { loadEdition } from '@slovo/core';
+import { loadEdition } from '@slovo/core/testing';
 import { afterAll } from 'vitest';
 import { z } from 'zod';
 

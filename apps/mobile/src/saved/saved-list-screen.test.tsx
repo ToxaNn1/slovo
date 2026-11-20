@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { fill, pluralCount, type Word } from '@slovo/contracts';
-import { HISTORY_CAP, loadEdition, openComposition, type Composition } from '@slovo/core';
-import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import { HISTORY_CAP, openComposition, type Composition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import type { ComponentType } from 'react';
 
@@ -9,7 +9,8 @@ import FavoritesScreen from '../app/saved/favorites/index';
 import HistoryScreen from '../app/saved/history/index';
 import LearningScreen from '../app/saved/learning/index';
 import WordOfTheDayArchiveScreen from '../app/saved/words-of-the-day/index';
-import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
+import { editionAtLaunch as edition } from '../edition/edition-at-launch';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { renderApp } from '../shell/test-app';
 

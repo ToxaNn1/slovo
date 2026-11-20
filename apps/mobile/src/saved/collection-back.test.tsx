@@ -1,7 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
-import { createFakeBackend, createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import { openComposition, systemRandom, type Composition } from '@slovo/core';
+import {
+  createFakeBackend,
+  createMemoryContentPort,
+  seedUserState,
+  loadEdition,
+} from '@slovo/core/testing';
 import { router, Tabs } from 'expo-router';
 import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen } from 'expo-router/testing-library';
@@ -10,7 +15,8 @@ import { Text } from 'react-native';
 import CollectionLinkScreen from '../app/c/[linkId]';
 import SavedLayout from '../app/saved/_layout';
 import CollectionScreen from '../app/saved/collections/[collectionId]';
-import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, editionStrings } from '../edition/edition';
+import { editionAtLaunch as edition } from '../edition/edition-at-launch';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { screenSettled } from '../use-open-screen';
 

@@ -1,12 +1,6 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import {
-  loadEdition,
-  openComposition,
-  systemRandom,
-  type Composition,
-  type Edition,
-} from '@slovo/core';
-import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import { openComposition, systemRandom, type Composition, type Edition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import { fill, type Category } from '@slovo/contracts';
 import { Stack } from 'expo-router';
 import { renderApp } from '../shell/test-app';
