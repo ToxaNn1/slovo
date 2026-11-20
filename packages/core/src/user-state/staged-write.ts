@@ -21,7 +21,7 @@ export interface StagedPiece<Made extends void | Promise<void> = void> {
 }
 
 /** A staged piece whatever its commit takes: what a write is given. */
-type AnyStagedPiece = StagedPiece<void | Promise<void>>;
+export type AnyStagedPiece = StagedPiece<void | Promise<void>>;
 
 const nothing = () => undefined;
 

@@ -1,6 +1,6 @@
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import { createInTurn, createSubscribers, newestFirst } from '../in-turn';
-import { staged, type StagedPiece } from '../user-state/staged-write';
+import { staged, writeStaged, type AnyStagedPiece } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -44,11 +44,13 @@ export interface History {
 /** How an Entry that becomes Seen joins History; the shell never gets it. */
 export interface HistoryRecorder {
   /**
-   * The staged piece of the Entry's History entry, for the write that marks
-   * it Seen: the Entry with the time it was Seen, which puts it on top unless
-   * the clock went back, evicting the oldest beyond `HISTORY_CAP`.
+   * Writes the Entry's History entry in one write with `pieces` (the Feed's
+   * Seen mark and the rest of its write), History's piece first, in History's
+   * turn, so a clear never runs between staging and committing it: the Entry
+   * with the time it was Seen, which puts it on top unless the clock went
+   * back, evicting the oldest beyond `HISTORY_CAP`.
    */
-  record(seen: Seen): Promise<StagedPiece>;
+  record(seen: Seen, pieces: readonly (AnyStagedPiece | undefined)[]): Promise<void>;
 }
 
 /** An Entry the Feed marked Seen: a History entry without its row. */
@@ -106,19 +108,23 @@ export async function openHistory({
     return [...others.slice(0, at), entry, ...others.slice(at)];
   }
 
-  async function record({ entryId, seenAt, wordOfTheDay }: Seen): Promise<StagedPiece> {
-    const entry = { entryId, seenAt, wordOfTheDay, row: await rows.row(entryId) };
-    const evicted = withEntry(entry).slice(HISTORY_CAP);
-    return staged(
+  async function record(
+    { entryId, seenAt, wordOfTheDay }: Seen,
+    pieces: readonly (AnyStagedPiece | undefined)[],
+  ): Promise<void> {
+    const all = withEntry({ entryId, seenAt, wordOfTheDay, row: await rows.row(entryId) });
+    const evicted = all.slice(HISTORY_CAP);
+    const joined = staged(
       new Map([
         ...historyRecords.record(entryId).change({ seenAt: seenAt.toISOString(), wordOfTheDay }),
         ...evicted.flatMap((old) => [...historyRecords.record(old.entryId).change(undefined)]),
       ]),
-      // Into the list as it is once written, so a History cleared meanwhile stays cleared.
+      // The list the evictions were written from: nothing changes it within the turn.
       () => {
-        changeKept(withEntry(entry).slice(0, HISTORY_CAP));
+        changeKept(all.slice(0, HISTORY_CAP));
       },
     );
+    await writeStaged(userState, [joined, ...pieces]);
   }
 
   async function clear(): Promise<void> {
@@ -131,8 +137,7 @@ export async function openHistory({
     await userState.write(
       new Map([...ids].flatMap((id) => [...historyRecords.record(id).change(undefined)])),
     );
-    // An Entry that joined History during the write stays in it.
-    changeKept(kept.filter((entry) => !ids.has(entry.entryId)));
+    changeKept([]);
   }
 
   return {
@@ -144,7 +149,7 @@ export async function openHistory({
       subscribe: subscribers.subscribe,
     },
     recorder: {
-      record,
+      record: (seen, pieces) => inTurn(() => record(seen, pieces)),
     },
   };
 }
