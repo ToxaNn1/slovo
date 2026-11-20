@@ -20,11 +20,11 @@ import { forgetUnsentCounters, unsentAfterSending } from './counter-deltas';
 const SEND_EVERY = 5 * 60_000;
 
 /**
- * The sending of this device's Community Counters (ADR 0060): the changes it
+ * The sending of this device's Community Counters: the changes it
  * counted and not yet sent go to the backend in batches of at most
  * `COUNTERS_BATCH_SIZE` Entries, at launch, on each return to the foreground
  * and every few minutes while the app is open, each batch by the one retry
- * rule (ADR 0037). A request carries the Edition and the events alone: no
+ * rule. A request carries the Edition and the events alone: no
  * Account, no Session, no device id. A batch leaves the unsent changes when
  * the backend counts it, or refuses it as a request it never expects; it
  * stays offline, after a server error, for an Edition the backend doesn't
@@ -67,7 +67,7 @@ export function openCounterSending({
 
   /**
    * Sends the changes of 1 to 100 Entries, each once, with no Session and no
-   * device id (ADR 0060); the backend counts them whole or not at all, or
+   * device id; the backend counts them whole or not at all, or
    * answers `not-found` for an Edition it doesn't serve or counters off.
    */
   async function send(

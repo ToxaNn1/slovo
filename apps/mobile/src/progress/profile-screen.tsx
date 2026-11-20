@@ -71,7 +71,7 @@ function calendarOf(progress: {
 }
 
 /**
- * The Profile tab, as the board (ADR 0145): the title, the Level card (its
+ * The Profile tab, as the board: the title, the Level card (its
  * ring, its name, the XP to the next), the giant Streak and the Best Streak,
  * the Active Days calendar, whose day tapped shows its text in a toast, and
  * the Badges as marks by family (each opened at a tap). Below them the blocks
@@ -376,7 +376,7 @@ function onTwoLines(text: string): string {
 const nameStrings = strings.readerName;
 
 /**
- * The Profile's header below the Badges (ADR 0136, 0145): the reader's name
+ * The Profile's header below the Badges: the reader's name
  * with its avatar letter, or the neutral avatar and the invitation, and the
  * «Ім’я» row that opens the name sheet. The Level stays on its card alone, so
  * with the reader's name switched off there is no header.
@@ -454,7 +454,7 @@ function SaveProgressOffer({ opening, onSave }: { opening: Opening<Account>; onS
 }
 
 /**
- * The Level card's one goal (ADR 0188). From Level 1 it is the next name's
+ * The Level card's one goal. From Level 1 it is the next name's
  * first Level, in total XP, as the board; under the last name, the next
  * Level. Before Level 1 the ring holds the XP and measures to Level 1.
  */

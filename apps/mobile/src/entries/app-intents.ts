@@ -1,4 +1,4 @@
-/** The App Intents (ADR 0057), by the key of their Edition strings. */
+/** The App Intents, by the key of their Edition strings. */
 export const APP_INTENTS = ['wordOfTheDay', 'openGame'] as const;
 
 export type AppIntent = (typeof APP_INTENTS)[number];

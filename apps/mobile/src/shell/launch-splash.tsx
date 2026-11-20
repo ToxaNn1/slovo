@@ -8,7 +8,7 @@ import { editionStrings } from '../edition/edition';
 void SplashScreen.preventAutoHideAsync();
 
 /**
- * The design's splash cut over the native splash (ADR 0070): the whole cut on
+ * The design's splash cut over the native splash: the whole cut on
  * every launch, then the app.
  */
 export function LaunchSplash() {

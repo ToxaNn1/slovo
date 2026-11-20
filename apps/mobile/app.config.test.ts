@@ -279,7 +279,7 @@ describe('app config', () => {
     expect(appConfig(context).version).toBe('0.9');
   });
 
-  it('turns on the React Compiler (ADR 0059)', () => {
+  it('turns on the React Compiler', () => {
     expect(appConfig(context).experiments?.reactCompiler).toBe(true);
   });
 
@@ -511,7 +511,7 @@ describe('app config', () => {
     expect(ios?.entitlements?.['com.apple.developer.applesignin']).toEqual(['Default']);
   });
 
-  it("claims the app's domain for Collection Links (ADR 0058, 0065)", () => {
+  it("claims the app's domain for Collection Links (ADR 0065)", () => {
     const otherDomain = repoWithEdition(() => undefined, {
       editApp: (config) => {
         config['domain'] = 'links.slovo.test';
@@ -625,7 +625,7 @@ describe('app config', () => {
   });
 
   it('links the local Spotlight module, with its handler of a tap on a search result, into the native app', () => {
-    // What Expo's autolinking hands the native build of this app (ADR 0057).
+    // What Expo's autolinking hands the native build of this app.
     const resolved = JSON.parse(
       execFileSync(
         join(context.projectRoot, 'node_modules/.bin/expo-modules-autolinking'),
@@ -662,7 +662,7 @@ describe('app config', () => {
   });
 
   it('compiles the App Intents and their App Shortcuts into the app, however often it is prebuilt', async () => {
-    // iOS reads App Shortcuts only from the app's own target, never from a pod (ADR 0057).
+    // iOS reads App Shortcuts only from the app's own target, never from a pod.
     const iosDir = await prebuildIos(
       repoWithEdition(() => undefined),
       2,

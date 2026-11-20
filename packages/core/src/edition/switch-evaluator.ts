@@ -115,7 +115,7 @@ function ruleVerdict(
  * The effective value of every Feature Switch (ADR 0089): the first Rule of
  * the feature that matches the facts decides, the Edition's state when none
  * does. An unavailable feature is never on, and a feature is on only while
- * every switch it depends on is in effect too (ADR 0040). Pure: the same
+ * every switch it depends on is in effect too. Pure: the same
  * Rules, states and facts give the same verdicts on every device.
  */
 export function evaluateSwitches({

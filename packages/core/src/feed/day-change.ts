@@ -9,7 +9,7 @@ import type { WordOfTheDay } from './word-of-the-day';
 /**
  * The day change of the composition: the one module that decides a new
  * local day started, in the clock's time zone, and turns the composition to
- * it (ADR 0022). The shell only reports that the app is in the foreground, on
+ * it. The shell only reports that the app is in the foreground, on
  * its return and on a timer set to the next local day; a notification or the
  * widget that opens an Entry reports it too. Internal: `index.ts` does not
  * export it.
@@ -20,7 +20,7 @@ import type { WordOfTheDay } from './word-of-the-day';
  * turns to it, in this order:
  *
  * 1. the Word of the Day module takes the Word of the day's morning
- *    notification (ADR 0016), before anything else can
+ *    notification, before anything else can
  *    read the day or drop a passed morning record;
  * 2. `dayStarted`: the Knowledge Marks turn to the day, so the Entries due
  *    today are due and the «Вчу» list counts the days from it;

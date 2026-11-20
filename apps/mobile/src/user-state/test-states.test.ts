@@ -154,7 +154,7 @@ describe('a test state loaded from its link', () => {
     const app = await opened('cycle-end');
     await app.feed.show(0);
 
-    // The Word left is the Word of the Day, so the end-of-Cycle card may be ready already (ADR 0184).
+    // The Word left is the Word of the Day, so the end-of-Cycle card may be ready already.
     const kinds: string[] = app.feed.cards.map((card) => card.kind);
     while (!kinds.includes('end-of-cycle') && kinds.length < 6) {
       const card = await app.feed.next();

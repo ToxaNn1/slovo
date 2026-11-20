@@ -36,7 +36,7 @@ export function AppProviders({
   children,
 }: {
   shell: Shell;
-  /** The Edition's Decor on the device (ADR 0055). */
+  /** The Edition's Decor on the device. */
   decor: Decor;
   children: ReactNode;
 }) {
@@ -105,11 +105,11 @@ export function ScreenProviders({ children }: { children: ReactNode }) {
     // Every screen draws over the open Language Pack and composition.
     <Opened opening={languagePack} failedTestID="language-pack-failed">
       <Opened opening={composition} failedTestID="feed-error">
-        {/* The screens' background and divider follow the local date (ADR 0055). */}
+        {/* The screens' background and divider follow the local date. */}
         <TextSizeInEffect>
           <ReduceMotionInEffect>
             <RouteInEffect>
-              {/* «Немає з’єднання» over every screen, under the status bar (ADR 0158). */}
+              {/* «Немає з’єднання» over every screen, under the status bar. */}
               <OfflinePlateProvider message={editionStrings.offlinePlate}>
                 {children}
               </OfflinePlateProvider>
@@ -135,7 +135,7 @@ function ReduceMotionInEffect({ children }: { children: ReactNode }) {
   );
 }
 
-/** Gives the Word cards the reader's step on the three-step text size ladder (ADR 0134). */
+/** Gives the Word cards the reader's step on the three-step text size ladder. */
 function TextSizeInEffect({ children }: { children: ReactNode }) {
   const { textSize } = useSettings().current;
   return <FontSizeProvider size={textSize}>{children}</FontSizeProvider>;

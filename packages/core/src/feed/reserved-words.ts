@@ -39,9 +39,9 @@ export interface StoredPlan {
 /**
  * The Reserved Words (glossary): the Words the notification plan promised to
  * its notifications, kept as the plan records of the user state, one per
- * notification (ADR 0021), so Reserved is never stored on its own. The plan
- * writes them, the Word of the Day reads a day's morning Word from them (ADR
- * 0016's amendment for 0.4), and Notifications asks whether a Word is
+ * notification, so Reserved is never stored on its own. The plan
+ * writes them, the Word of the Day reads a day's morning Word from them (since 0.4),
+ * and Notifications asks whether a Word is
  * Reserved. Only this module knows how the records are keyed. Each question
  * reads the stored plan once, so it holds nothing in memory and any number of
  * modules can ask it.

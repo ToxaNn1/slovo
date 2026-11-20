@@ -32,10 +32,10 @@ const strings = editionStrings.mix;
  * обрано», the line saying why the last Category's tile is disabled and the
  * chip «Усі»; under «Типи карток» the Corrections and Idioms
  * switches, each when the Edition turns it on, with the chips of the Categories of Corrections
- * under the Corrections switch while it is on (ADR 0033), and under each kind
+ * under the Corrections switch while it is on, and under each kind
  * in the Mix its Mix kind weight while the mixKindWeights switch is on, and
  * how often the Feed asks a Quick Question while the game and quickQuestion
- * switches are on. A change applies at once (the Core's Mix, ADR 0019).
+ * switches are on. A change applies at once (the Core's Mix).
  */
 export function MixChoices() {
   const state = useMixState();
@@ -176,7 +176,7 @@ function KindWeightChoice({
 
 /**
  * The Categories of Words as tiles in two columns, each with its pictogram,
- * the big shape of its place on the Categories grid (ADR 0014), under the
+ * the big shape of its place on the Categories grid, under the
  * label «Категорії» and «N з M обрано»; then the line saying why the last
  * Category's tile is disabled and `all`, the chip «Усі».
  */

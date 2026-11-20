@@ -16,7 +16,7 @@ const strings = editionStrings.mix;
  * (ADR 0156), then a tile for every Category of the Edition under «N з M
  * обрано» and «Усі», and the switches of Corrections, Idioms, Synonym Rows and
  * Tips, each when the Edition turns it on. A change applies at once (the Core's
- * Mix, ADR 0019). The header stays above the scroll. It is the root of the tab
+ * Mix). The header stays above the scroll. It is the root of the tab
  * «Мікс», with no way back (ADR 0201), and a screen of Settings, with `back`.
  */
 export function MyMixScreen({

@@ -1,5 +1,5 @@
 /**
- * A path on the site under the base GitHub Pages serves it at (ADR 0071), so
+ * A path on the site under the base GitHub Pages serves it at, so
  * a link works from the landing and from a Word page alike: `uk/privacy` →
  * `/slovo/uk/privacy` at the github.io address, `/uk/privacy` behind the domain.
  */

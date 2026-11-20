@@ -8,13 +8,12 @@ import { CorrectionTypeTile } from './CorrectionTypeTile';
 import { RailHeader } from './RailHeader';
 
 /**
- * The Correction Types rail of the Dashboard (ADR 0076): «Виправлення» with
+ * The Correction Types rail of the Dashboard: «Виправлення» with
  * the count of tiles over a horizontal row that runs to the screen's edges,
  * one tile per Correction Type with live Corrections. A tile opens its
  * type's screen. Given a `grid`, the header reads its count instead and is
  * a button that opens it: the Categories of Corrections, k2 (spec #1604),
- * or with `correctionTypeGrid` the same tiles with k2 under them (ADR
- * 0140); without, a plain title.
+ * or with `correctionTypeGrid` the same tiles with k2 under them; without, a plain title.
  */
 export function CorrectionTypesRail({
   tiles,

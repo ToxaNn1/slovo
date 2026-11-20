@@ -7,7 +7,7 @@ import { motifOf, type SeasonalMotifs } from './holiday';
 /**
  * Validates an Edition's Decor and gives its seasonal motifs, or `undefined`
  * for an Edition without a motif for every Season, whose Decor stays plain
- * whatever the date (ADR 0055).
+ * whatever the date.
  */
 export function loadSeasonalMotifs(decor: unknown): SeasonalMotifs | undefined {
   const { seasons, holidays = [] } = parseDecor(decor);
@@ -15,7 +15,7 @@ export function loadSeasonalMotifs(decor: unknown): SeasonalMotifs | undefined {
 }
 
 /**
- * The Decor of a local date (ADR 0055). While «Сезонний декор» and its
+ * The Decor of a local date. While «Сезонний декор» and its
  * `seasonalDecor` switch are both on, the Mascot wears the accessory of the
  * date's Holiday, or else of its Season; otherwise the Decor stays the
  * Edition's own. It follows the local date alone, so it changes at local

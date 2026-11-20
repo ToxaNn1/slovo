@@ -121,7 +121,7 @@ export interface FakeBackend {
     /** The records kept, by key. */
     readonly records: ReadonlyMap<string, KeptRecord>;
   };
-  /** The Mistake Report procedure (ADR 0056): it keeps the reports it takes. */
+  /** The Mistake Report procedure: it keeps the reports it takes. */
   readonly reports: {
     /** The reports the backend took, in order. */
     readonly received: readonly MistakeReport[];
@@ -129,7 +129,7 @@ export interface FakeBackend {
     readonly sessions: readonly (string | undefined)[];
   };
   /**
-   * The Collection Link procedures (ADR 0058): a link gets the next id,
+   * The Collection Link procedures: a link gets the next id,
    * `link000001` on, and its URL on the link domain; it reads back as it was
    * stored, and an unknown id is not found.
    */
@@ -149,7 +149,7 @@ export interface FakeBackend {
      */
     publishPatch(patch: Patch): void;
   };
-  /** The Community Counters procedures (ADR 0060): the counts the backend keeps, and what it counted. */
+  /** The Community Counters procedures: the counts the backend keeps, and what it counted. */
   readonly counters: {
     /** The events of each `counters.send` request the backend counted, in order. */
     readonly sent: readonly (readonly CounterEvent[])[];
@@ -173,7 +173,7 @@ export interface FakeBackend {
     answerCommunityWord(communityWord: CommunityWordAnswer | undefined): void;
   };
   /**
-   * The `edition.switches` procedure (ADR 0040, 0089): the Rules and
+   * The `edition.switches` procedure (ADR 0089): the Rules and
    * force-update minimums the owner set, with an ETag that names them and the
    * backend's clock as the date, and 304 when the app names that ETag.
    */

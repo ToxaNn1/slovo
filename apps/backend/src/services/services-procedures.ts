@@ -19,7 +19,7 @@ import type {
 import { actorOf, type Caller } from '../admin/admission';
 import { serviceEntriesProcedures } from './service-entries-procedures';
 
-/** The «Сервіси» procedures of the admin API (ADR 0164): a Власник only. */
+/** The «Сервіси» procedures of the admin API: a Власник only. */
 export function servicesProcedures({
   store,
   entries,

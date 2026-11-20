@@ -1,5 +1,5 @@
 'use no memo';
-// Split from the Game Round, whose modules the React Compiler skips (ADR 0059).
+// Split from the Game Round, whose modules the React Compiler skips.
 
 import type { TextRange } from '@slovo/core';
 import type { ReactNode } from 'react';
@@ -63,7 +63,7 @@ export type RoundFace =
  * and VoiceOver reads it after the prompt.
  * An answer drawn in the prompt's place, such as the vowel buttons, stands in
  * for the prompt, and VoiceOver reads the label, then each of its buttons.
- * In a Round on the ground (ADR 0139) the prompt stands on the background
+ * In a Round on the ground the prompt stands on the background
  * with no card, in the large display face up to 40 characters and the text
  * face past that, or in the one face the Round asks for, a long question in
  * the display face sized down; the Mascot, if any, stands beside it.
@@ -177,7 +177,7 @@ export function RoundCard({
             text={prompt}
             typeRole={promptRole}
             // A prompt too big for its lines takes a lower step of the cards' one title
-            // scale (ADR 0157); on the ground the text face already sets a long one.
+            // scale; on the ground the text face already sets a long one.
             lines={promptRole === 'roundPrompt' ? undefined : roundLayout.promptLines}
             stepped={promptRole !== 'roundPrompt'}
             maxFontSizeMultiplier={

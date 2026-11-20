@@ -22,8 +22,7 @@ const { communityWord: kept } = userStateRecords;
  * UTC, so while the UTC date is still before the local one, as just past a
  * local midnight east of UTC, the week is not asked for yet. It is there only
  * while the Feature Switches `communityCounters` and `communityWord` are both
- * on. Swiping past it closes it for its day
- * (ADR 0060).
+ * on. Swiping past it closes it for its day.
  */
 export function createCommunityWord({
   edition,
@@ -46,7 +45,7 @@ export function createCommunityWord({
     const keptOfDay = await userState.read(kept);
     if (keptOfDay?.date === date) return keptOfDay.communityWord ?? undefined;
     if (clock.now().toISOString().slice(0, 10) < date) return undefined;
-    // `counters.communityWord` needs no Account and carries no device id (ADR 0060).
+    // `counters.communityWord` needs no Account and carries no device id.
     const answer = await answerOf(backend.counters.communityWord({ edition: edition.id }));
     if (!answer.ok) return undefined;
     // The client does not check answers: one out of the contract's shape is unexpected and kept nowhere.

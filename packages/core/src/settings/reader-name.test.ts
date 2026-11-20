@@ -61,7 +61,7 @@ describe('the reader name', () => {
   });
 });
 
-// ADR 0136: never sent with Analytics, Community Counters or the Questionnaire counters.
+// Never sent with Analytics, Community Counters or the Questionnaire counters.
 describe('the reader name in the composition', () => {
   it('is kept in its own record alone and in no Analytics event', async () => {
     const records = new Map<string, string>();

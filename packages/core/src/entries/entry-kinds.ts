@@ -17,7 +17,7 @@ export interface KindNames {
 /**
  * A kind of Entry that is in or out of the Mix as a whole, which its Feature
  * Switch turns on: every kind but the Word, whose Categories are in or out
- * one by one (ADR 0019, 0051). The contracts derive it from the Entry.
+ * one by one. The contracts derive it from the Entry.
  */
 export type { MixKind };
 
@@ -26,7 +26,7 @@ export type MixKindName = KindNames[MixKind];
 
 /**
  * A kind of Entry with Categories of its own: Words and Corrections each have
- * the Edition's list, in or out of the Mix one by one (ADR 0019, 0050). The
+ * the Edition's list, in or out of the Mix one by one. The
  * other kinds have none.
  */
 export type CategoryKind = Extract<EntryKind, 'word' | 'correction'>;
@@ -45,7 +45,7 @@ export type EntryOfKind<Kind extends EntryKind> = Extract<Entry, { kind: Kind }>
 interface EntryKindTraits<Kind extends EntryKind> {
   /**
    * The prefix of its ids, a letter and `_`, which tells the kind of an id
-   * apart (ADR 0010, 0046, 0051).
+   * apart (ADR 0010).
    */
   readonly idPrefix: `${string}_`;
   /** Its name as a whole. */
@@ -53,7 +53,7 @@ interface EntryKindTraits<Kind extends EntryKind> {
   /**
    * Every how many cards of the Feed it takes a turn, counted from its last
    * card, while the Cycle has unseen Entries of it; the Word has no turn and
-   * takes the cards between the turns (ADR 0046, 0051).
+   * takes the cards between the turns.
    */
   readonly feedTurn: Kind extends MixKind ? number : undefined;
   /** Whether every screen shows it (spec #730). */
@@ -63,7 +63,7 @@ interface EntryKindTraits<Kind extends EntryKind> {
 /**
  * The kind table: every kind of Entry with every trait, in the Mix screen's
  * order, which is also the order the kinds take a card their Feed turns fall
- * on together. The Entries module owns it (ADR 0015): the Feed's turns,
+ * on together. The Entries module owns it: the Feed's turns,
  * Search and the Game Review read it instead of telling the kinds apart
  * themselves. A further kind is one more row here, and the compiler names
  * every table over the kinds that needs a row for it.

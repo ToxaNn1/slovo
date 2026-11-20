@@ -12,7 +12,7 @@ import { accountProblemLine, accountSummary, type AccountRowSummary } from './ac
 /**
  * The opening of the Account while its switch is on in effect, so its row and
  * its screen go when it is turned off remotely; undefined then, and when the
- * Edition has no Account. The Session stays kept either way (ADR 0040).
+ * Edition has no Account. The Session stays kept either way.
  */
 export function useAccountInEffect(): Opening<Account> | undefined {
   const { account } = useShell();
@@ -63,8 +63,8 @@ export function useAccountState(account: Account): AccountState {
 
 /**
  * The line under the field of the Account screen for the last request's
- * problem, if any. No connection is said on the offline plate instead
- * (ADR 0158): the plate shows once for each request that finds no network,
+ * problem, if any. No connection is said on the offline plate instead:
+ * the plate shows once for each request that finds no network,
  * and the line stays empty.
  */
 export function useAccountProblemLine(state: AccountState): string | undefined {

@@ -51,7 +51,7 @@ export const RECORD_KINDS = everyKind([
 ]);
 export const RecordKindSchema = z.enum(RECORD_KINDS);
 
-/** The kinds of record that are Entries, which a Mistake Report names (ADR 0056). */
+/** The kinds of record that are Entries, which a Mistake Report names. */
 export const ENTRY_KINDS = ['word', 'correction', 'idiom', 'synonymRow', 'tip'] as const;
 export type EntryKind = (typeof ENTRY_KINDS)[number];
 
@@ -94,7 +94,7 @@ export async function publishContentVersion(
     .where(eq(contentVersions.editionId, editionId));
 }
 
-/** Whether a Word's Recordings, made from `read`, no longer read its fields (ADR 0083). */
+/** Whether a Word's Recordings, made from `read`, no longer read its fields. */
 export function readsDifferently(
   fields: Pick<Word, 'lemma' | 'stress'>,
   read: Pick<Word, 'lemma' | 'stress'>,
@@ -108,7 +108,7 @@ export function readsDifferently(
  * Whether the saved Word needs a new Recording: a Word whose Lemma or Stress
  * the save changes no longer reads as its Recordings, so they retire at the
  * saved content version, in the same transaction, and it needs new ones
- * (ADR 0083, 0099, 0195). Once set, only the narrator-voice work clears it.
+ * (ADRs 0099 and 0195). Once set, only the narrator-voice work clears it.
  */
 export async function needsNewRecordingOf(
   tx: Pick<Transaction, 'update'>,
@@ -157,7 +157,7 @@ export type SaveSource = 'authored' | 'restored';
 
 /**
  * When an authored Curated Collection appears, and why the save is refused
- * by it (ADR 0178): an appeared collection keeps its publish date; one not
+ * by it: an appeared collection keeps its publish date; one not
  * appeared yet appears anew by the date it is saved with.
  */
 export function authoredAppearance(
@@ -185,7 +185,7 @@ export function authoredAppearance(
 }
 
 /**
- * When a restored Curated Collection appears (ADR 0178): it keeps its
+ * When a restored Curated Collection appears: it keeps its
  * appearance, or appears from the start of the publish date it is restored
  * with, as an imported one does.
  */

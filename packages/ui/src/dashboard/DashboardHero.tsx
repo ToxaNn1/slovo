@@ -36,17 +36,17 @@ const { card } = place;
 const RARITY_BARS = [1, 2, 3, 4, 5] as const;
 
 /**
- * The Word of the Day hero of the Dashboard (ADR 0076), on the red ground
+ * The Word of the Day hero of the Dashboard, on the red ground
  * whose bottom falls to the left. Unrevealed, it shouts «Лови слово!» under a
  * giant «?» with «Розкрий слово» and the waiting Mascot; revealed, it shows
  * the Lemma in capitals over a cream card of its Stress and part of speech,
  * rarity bars, short Definition and rarity, with «Ще про слово →», which opens
  * the Feed on the Word of the Day card, and the happy Mascot. Revealed while
- * on screen, it opens as the board does (ADR 0105): the reveal shouts, the
+ * on screen, it opens as the board does: the reveal shouts, the
  * Mascot shouts a moment, the Lemma flies in letter by letter and the card,
  * then the button, rise in. Opened already revealed, it stands still.
  * With `sparks`, the Mascot throws the board's sparks from its megaphone,
- * closed and open (ADR 0109). Each day's hero opens anew, so a new day's
+ * closed and open. Each day's hero opens anew, so a new day's
  * reveal plays though the day before stood revealed.
  */
 export function DashboardHero(props: Parameters<typeof HeroOfTheDay>[0]) {
@@ -310,7 +310,7 @@ function WordLine({ text }: { text: string }) {
   );
 }
 
-/** At the hero's top left: «СЛОВО ДНЯ · №312» closed, «СЛОВО ДНЯ · 2.11» open (ADR 0105). */
+/** At the hero's top left: «СЛОВО ДНЯ · №312» closed, «СЛОВО ДНЯ · 2.11» open. */
 function Kicker({ hero }: { hero: WordOfTheDayHero }) {
   const { strings } = useEdition();
   const { day, month }: LocalDate = hero.date;

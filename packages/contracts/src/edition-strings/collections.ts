@@ -21,7 +21,7 @@ export const CollectionsStringsSchema = z.strictObject({
   tile: z.strictObject({ add: TextSchema, filed: TextSchema }),
   /** The Collections screen: its cards, their menu, the delete confirmation and the empty list. */
   screen: z.strictObject({
-    /** The kicker of a Collection's screen in the board style, «КОЛЕКЦІЯ · {count}» (ADR 0082). Takes `{count}`, the `wordCount` phrase. */
+    /** The kicker of a Collection's screen in the board style, «КОЛЕКЦІЯ · {count}». Takes `{count}`, the `wordCount` phrase. */
     kicker: templateOf('count'),
     /** How many Entries the kicker of a Collection's screen counts, «{count} слів». */
     wordCount: PluralSchema,
@@ -31,7 +31,7 @@ export const CollectionsStringsSchema = z.strictObject({
     rowLabel: templateOf('name', 'count', 'lemmas'),
     /** The «…» button of a row, as VoiceOver reads it. Takes `{name}`. */
     moreLabel: templateOf('name'),
-    /** The menu the «…» button opens: rename, delete and the cancel row; the share row is `link.share` (ADR 0132). */
+    /** The menu the «…» button opens: rename, delete and the cancel row; the share row is `link.share`. */
     menu: z.strictObject({
       rename: TextSchema,
       delete: TextSchema,
@@ -88,7 +88,7 @@ export const CollectionsStringsSchema = z.strictObject({
       duplicate: TextSchema,
     }),
   }),
-  /** The bottom sheet that names a new Collection or renames one (ADR 0132); its field takes `sheet.namePlaceholder` and its refusals `sheet.refusal`. */
+  /** The bottom sheet that names a new Collection or renames one; its field takes `sheet.namePlaceholder` and its refusals `sheet.refusal`. */
   nameSheet: z.strictObject({
     /** The sheet's title for a new Collection. */
     newTitle: TextSchema,
@@ -103,7 +103,7 @@ export const CollectionsStringsSchema = z.strictObject({
     /** The button that closes the sheet. */
     cancel: TextSchema,
   }),
-  /** The bottom sheet that shares a Collection Link (ADR 0132). */
+  /** The bottom sheet that shares a Collection Link. */
   shareSheet: z.strictObject({
     /** The sheet's title. */
     title: TextSchema,
@@ -116,7 +116,7 @@ export const CollectionsStringsSchema = z.strictObject({
     /** The button that closes the sheet. */
     cancel: TextSchema,
   }),
-  /** The toasts after a Collection action (ADR 0132). */
+  /** The toasts after a Collection action. */
   toasts: z.strictObject({
     /** Takes `{name}`, the new Collection's. */
     created: templateOf('name'),
@@ -127,7 +127,7 @@ export const CollectionsStringsSchema = z.strictObject({
     /** The link is on the clipboard. */
     copied: TextSchema,
   }),
-  /** Collection Links: sharing a Collection and the recipient's sheet that copies it (ADR 0058). */
+  /** Collection Links: sharing a Collection and the recipient's sheet that copies it. */
   link: z.strictObject({
     /** The Collection menu's action that shares a link. */
     share: TextSchema,
@@ -149,7 +149,7 @@ export const CollectionsStringsSchema = z.strictObject({
     notFound: TextSchema,
     /** The recipient's button that reads the link again after no connection, «Спробувати ще». */
     retry: TextSchema,
-    /** The web page a browser gets for the link, `https://<domain>/<edition>/c/<id>` (ADR 0058). */
+    /** The web page a browser gets for the link, `https://<domain>/<edition>/c/<id>`. */
     page: z.strictObject({
       /** The page's title. Takes `{name}`, the Collection's. */
       title: templateOf('name'),

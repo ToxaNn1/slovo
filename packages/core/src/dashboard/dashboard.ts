@@ -20,9 +20,9 @@ const PREVIOUS_WORDS = 3;
 /**
  * The Word of the Day hero: unrevealed until «Розкрий слово», revealed with
  * its Lemma, Stress and short Definition once the Word is Seen in the current
- * Cycle (ADR 0076). Revealed is derived from Seen, never stored. Its `number`
+ * Cycle. Revealed is derived from Seen, never stored. Its `number`
  * is the reader's own count of Words of the Day, «№312»: the kept archive days
- * before today, plus one (ADR 0105).
+ * before today, plus one.
  */
 export type WordOfTheDayHero =
   | {
@@ -69,7 +69,7 @@ export interface WordOfTheDayBlock {
 /**
  * The Mood check-in's block, after the hero: asking «Як настрій?» with the
  * five moods, or today's chosen Mood with its reply. A skipped day has no
- * block till tomorrow (ADR 0076).
+ * block till tomorrow.
  */
 export interface MoodBlock {
   readonly kind: 'mood';
@@ -82,7 +82,7 @@ export interface MoodBlock {
         readonly mood: Mood;
         /**
          * The line under the check-in that says what the Mood changed in the
-         * Feed, while `moodEffect` is on (ADR 0185): then a second tap on the
+         * Feed, while `moodEffect` is on: then a second tap on the
          * chosen Mood unpicks it.
          */
         readonly effect: string | undefined;
@@ -92,7 +92,7 @@ export interface MoodBlock {
 /**
  * «Минулі Слова дня», after the Mood check-in: the three newest days of the
  * Word of the Day archive before today, newest first. A Retired Word stays;
- * with no such day there is no block (ADR 0076). A tap opens the Entry card
+ * with no such day there is no block. A tap opens the Entry card
  * as Search does, making nothing Seen.
  */
 export interface PreviousWordsBlock {
@@ -117,7 +117,7 @@ export interface CorrectionTypesBlock {
 /**
  * The Categories rail's block, «Категорії», after «SLOVO пропонує»: every
  * Category of Words of the Language Pack, in its order, with
- * `categoryScreens` on (ADR 0081). Its header opens the grid of them all.
+ * `categoryScreens` on. Its header opens the grid of them all.
  */
 export interface CategoriesBlock {
   readonly kind: 'categories';
@@ -126,7 +126,7 @@ export interface CategoriesBlock {
 
 /**
  * The Curated Collections rail's block, «SLOVO пропонує», after «Попередні
- * слова» and before «Категорії» (ADR 0178): ten cards at most of the
+ * слова» and before «Категорії»: ten cards at most of the
  * collections published by today, the unopened first, and the header's count
  * of them all. No card, no block.
  */
@@ -138,7 +138,7 @@ export interface CuratedCollectionsBlock {
 }
 
 /**
- * The Dashboard (ADR 0076): the home's blocks for the local day the
+ * The Dashboard: the home's blocks for the local day the
  * composition turned to last. They follow the day change and Seen.
  */
 export interface Dashboard {
@@ -187,7 +187,7 @@ export async function openDashboard({
   const correctionCategoriesOn = edition.isFeatureEnabled('correctionCategoryScreens');
 
   async function hero(): Promise<WordOfTheDayHero | undefined> {
-    // The Feed chooses a day's Word of the Day, past what it showed (ADR 0076).
+    // The Feed chooses a day's Word of the Day, past what it showed.
     const today = wordOfTheDay.chosen() ?? (await feed.wordOfTheDay());
     if (today === undefined) return undefined;
     const { wordId, date } = today;

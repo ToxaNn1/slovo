@@ -361,7 +361,7 @@ describe('the Content queue', () => {
     expect(actions.find(({ what }) => what === 'report.resolve')?.reason).toBe('Виправлено');
   });
 
-  it('shows each Mistake Report with its Entry and the email of a signed-in reader (ADR 0159)', async () => {
+  it('shows each Mistake Report with its Entry and the email of a signed-in reader', async () => {
     const { client, clientOf, mailer, owner } = await queueBackend();
     const [word] = (await snapshotOf(client)).words;
     if (word === undefined) throw new Error('no Word');

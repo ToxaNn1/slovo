@@ -4,7 +4,7 @@ import type { ForegroundReports } from '../foreground/foreground-reports';
 import type { Opening } from '../opening';
 
 /**
- * Lets the Sync module follow the app's moments (ADR 0036): it syncs at the
+ * Lets the Sync module follow the app's moments: it syncs at the
  * launch and on each return to the foreground, and waits while the app is in
  * the background. Sync opens apart from the composition and nothing waits
  * for it: the report tells it its moments once it is open, and the launch of
@@ -70,8 +70,8 @@ export function reopenAfterSync({
  * as it opens, and the Widget Snapshot is written from the composition that
  * opened. A reopen that failed keeps the composition the snapshot was written
  * from, and writes none. The Game on screen, in play or its result, lives in
- * the composition alone (ADR 0052), so a reopen asked meanwhile waits until
- * it is left, and the asks made while it waits reopen once (ADR 0189).
+ * the composition alone, so a reopen asked meanwhile waits until
+ * it is left, and the asks made while it waits reopen once.
  */
 export function reopenComposition(
   composition: Opening<Composition>,

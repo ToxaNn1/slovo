@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
+// Reanimated or gesture code: the React Compiler skips this module.
 
 import { useEffect, useEffectEvent, useRef } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
@@ -31,7 +31,7 @@ import {
 } from '../tokens';
 
 export interface SplashOverlayProps {
-  /** The whole cut at launch, or the short daily splash from the Dashboard's logo, which shouts (ADR 0105). */
+  /** The whole cut at launch, or the short daily splash from the Dashboard's logo, which shouts. */
   pace?: 'launch' | 'daily';
   /** The app's name, whose letters pop up. */
   wordmark: string;
@@ -96,7 +96,7 @@ interface Fit {
 }
 
 /**
- * The design's splash cut (ADR 0070): on the Theme's background the red wedge
+ * The design's splash cut: on the Theme's background the red wedge
  * unfolds, the S is drawn, the wordmark's letters pop up, the tagline rises,
  * the Mascot jumps in shouting, and a red wedge wipes the screen to the app.
  * It plays once, whole, on every launch; the daily splash plays the same cut

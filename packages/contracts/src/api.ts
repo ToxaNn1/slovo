@@ -86,7 +86,7 @@ function secondsOf(header: string | readonly string[] | undefined): number | und
 /**
  * What a call throws on a 429, whatever its body: the contract's
  * `TOO_MANY_REQUESTS`, with the seconds of the answer's `Retry-After`, which
- * the backend sets on every limit (ADR 0037); none when the answer has no
+ * the backend sets on every limit; none when the answer has no
  * such header or it says anything else.
  */
 export class TooManyRequestsError extends ORPCError<'TOO_MANY_REQUESTS', unknown> {

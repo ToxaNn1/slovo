@@ -166,7 +166,7 @@ const historyOpened = () => analytics.events.filter(({ event }) => event === 'wo
 describe('the Entry screen and the Word History', () => {
   it('tells Analytics the Word History opened once, with the Entry, when the section is drawn', async () => {
     await renderEntry('w_sumyrnyi');
-    // The Word History is drawn on «Суть», the tab the card opens on (ADR 0186).
+    // The Word History is drawn on «Суть», the tab the card opens on.
     await settle();
 
     expect(screen.getByTestId('word-history')).toBeOnTheScreen();
@@ -215,8 +215,8 @@ function scrollsAround(element: ReturnType<typeof screen.getByTestId>) {
 }
 
 describe('a tab too long for the Entry screen', () => {
-  it('is clamped under «Детальніше», which opens it whole in a scroll inside the card, and nothing around the card scrolls (ADR 0113)', async () => {
-    // The long Word History is on «Суть», the tab the card opens on (ADR 0186).
+  it('is clamped under «Детальніше», which opens it whole in a scroll inside the card, and nothing around the card scrolls', async () => {
+    // The long Word History is on «Суть», the tab the card opens on.
     await renderEntry('w_sumyrnyi');
     await settle();
     await fireEvent(screen.getByTestId('word-tab-panel'), 'layout', {
@@ -264,7 +264,7 @@ describe('the Entry screen of a kind other than a Word (owner 15.11)', () => {
   });
 });
 
-describe('the Entry screen and the side swipes (ADR 0077)', () => {
+describe('the Entry screen and the side swipes', () => {
   it('marks the Word Known on a swipe right, with its stamp', async () => {
     await renderEntry('w_sumyrnyi');
 
@@ -324,17 +324,17 @@ function tabsOnScreen() {
   }));
 }
 
-describe('the tabs of an Entry card on the Entry screen (ADR 0091)', () => {
+describe('the tabs of an Entry card on the Entry screen', () => {
   it('shows a Word with its tabs, «Суть» selected with the Definition', async () => {
     await renderEntry('w_sumyrnyi');
 
     expect(tabsOnScreen()[0]).toEqual({ name: 'Суть', selected: true });
-    // No etymology, so no «Історія» (ADR 0186).
+    // No etymology, so no «Історія».
     expect(tabsOnScreen().map(({ name }) => name)).toEqual(['Суть', 'Джерело']);
     expect(screen.getByTestId('word-definition')).toBeOnTheScreen();
   });
 
-  it("ends a Word's tabs with «Джерело», which names its sources (ADR 0116)", async () => {
+  it("ends a Word's tabs with «Джерело», which names its sources", async () => {
     await renderEntry('w_sumyrnyi');
 
     expect(tabsOnScreen().at(-1)).toEqual({ name: 'Джерело', selected: false });

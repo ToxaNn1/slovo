@@ -5,7 +5,7 @@ import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
 /**
- * The Community Counters of this device (ADR 0060): the changes it counted
+ * The Community Counters of this device: the changes it counted
  * from the reader's own Knowledge Marks and Favorites, kept `device-only` until they are
  * sent.
  */
@@ -134,8 +134,8 @@ export function openCommunityCounters({
 }
 
 /**
- * The changes that forget what waits to be sent, for turning sharing off
- * (ADR 0060), or only what waits for the Entries `ofEntries`, for a batch the
+ * The changes that forget what waits to be sent, for turning sharing off,
+ * or only what waits for the Entries `ofEntries`, for a batch the
  * backend refused: each unsent change goes, and what this device counted goes
  * back to what it had sent, so a later change counts from there.
  */

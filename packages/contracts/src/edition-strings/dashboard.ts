@@ -4,19 +4,19 @@ import { CorrectionTypeSchema } from '../correction';
 import { TextSchema } from '../shared';
 import { PluralSchema, templateOf } from './shared';
 
-/** The Dashboard, the home behind «Стрічка» (ADR 0076). */
+/** The Dashboard, the home behind «Стрічка». */
 export const DashboardStringsSchema = z.strictObject({
-  /** The closed hero's button that reveals the Word of the Day, «Розкрий слово» (ADR 0105). */
+  /** The closed hero's button that reveals the Word of the Day, «Розкрий слово». */
   reveal: TextSchema,
   /** The open hero's button that opens the Feed on the Word of the Day card, «Ще про слово →». */
   toCard: TextSchema,
-  /** What VoiceOver reads for the Feed header's wordmark, which opens the Dashboard (ADR 0079), «SLOVO, на головну». */
+  /** What VoiceOver reads for the Feed header's wordmark, which opens the Dashboard, «SLOVO, на головну». */
   open: TextSchema,
-  /** What VoiceOver reads for the Dashboard's logo, which plays the daily splash (ADR 0105), «SLOVO, заставка дня». */
+  /** What VoiceOver reads for the Dashboard's logo, which plays the daily splash, «SLOVO, заставка дня». */
   dailySplash: TextSchema,
   /** The open hero's kicker, «Слово дня · {day}.{month}». Takes `{day}` and `{month}`, both numbers. */
   kicker: templateOf('day', 'month'),
-  /** The closed hero's kicker, «Слово дня · №{number}». Takes `{number}`, the reader's count of Words of the Day (ADR 0105). */
+  /** The closed hero's kicker, «Слово дня · №{number}». Takes `{number}`, the reader's count of Words of the Day. */
   kickerNumber: templateOf('number'),
   /** The line under the closed hero's shout, «Рідкісне. Свіже. Твоє на 24 години.». */
   subtitle: TextSchema,
@@ -32,7 +32,7 @@ export const DashboardStringsSchema = z.strictObject({
     question: TextSchema,
     /** The note at the end of the title, «Настрій дня». */
     note: TextSchema,
-    /** VoiceOver's hint on the chosen tile while a second tap unpicks it (ADR 0185), «Торкнися ще раз, щоб зняти настрій.». */
+    /** VoiceOver's hint on the chosen tile while a second tap unpicks it, «Торкнися ще раз, щоб зняти настрій.». */
     unpickHint: TextSchema,
   }),
   /** The block «Минулі Слова дня» under the Mood check-in: the Word of the Day archive's newest days before today. */
@@ -59,7 +59,7 @@ export const DashboardStringsSchema = z.strictObject({
     /** Each Correction Type's line under its title on its screen, «Слова, що прослизають у мову непомітно.». */
     descriptions: z.record(CorrectionTypeSchema, TextSchema),
   }),
-  /** The title over the Curated Collections rail, «SLOVO пропонує» (ADR 0081, 0178). */
+  /** The title over the Curated Collections rail, «SLOVO пропонує». */
   curatedCollectionsTitle: TextSchema,
   /** The title of the grid of every Curated Collection, opened from the rail's header, «Добірки». */
   curatedCollectionsGridTitle: TextSchema,
@@ -89,12 +89,12 @@ export const DashboardStringsSchema = z.strictObject({
       added: templateOf('name'),
     }),
     /**
-     * The kicker of each card of the collection's Feed (ADR 0178), «Добірка · {name} · {place} з {of}».
+     * The kicker of each card of the collection's Feed, «Добірка · {name} · {place} з {of}».
      * Takes `{name}`, the collection's name, `{place}`, the card's place from the tapped Entry, and `{of}`, the collection's Entries.
      */
     feedKicker: templateOf('name', 'place', 'of'),
   }),
-  /** The Categories of Words: the Dashboard rail, the grid and the kicker of a Category screen (ADR 0081). */
+  /** The Categories of Words: the Dashboard rail, the grid and the kicker of a Category screen. */
   categories: z.strictObject({
     /** The rail's and the grid's title, «Категорії»; the count beside it is the bare number. */
     title: TextSchema,
@@ -103,7 +103,7 @@ export const DashboardStringsSchema = z.strictObject({
     /** How many live Words a Category holds, «{count} слів». */
     count: PluralSchema,
   }),
-  /** The Categories of Corrections: the grid and the kicker of a Category screen (ADR 0081). */
+  /** The Categories of Corrections: the grid and the kicker of a Category screen. */
   correctionCategories: z.strictObject({
     /** The grid's title, «Виправлення»; the count beside it is the bare number. */
     title: TextSchema,
@@ -112,7 +112,7 @@ export const DashboardStringsSchema = z.strictObject({
     /** How many live Corrections a Category holds, «{count} виправлень». */
     count: PluralSchema,
   }),
-  /** A Category screen of either list (ADR 0081, 0082). */
+  /** A Category screen of either list. */
   category: z.strictObject({
     /** The line over a quiet Category's name, «Категорія». */
     quiet: TextSchema,
@@ -125,7 +125,7 @@ export const DashboardStringsSchema = z.strictObject({
     /** The stamp on a card marked Known, «ЗНАЮ». */
     knownStamp: TextSchema,
     /**
-     * The kicker of a card in the Category's Feed, «Категорія · {name} · {place} з {of}», drawn in capitals (ADR 0110).
+     * The kicker of a card in the Category's Feed, «Категорія · {name} · {place} з {of}», drawn in capitals.
      * Takes `{name}`, the Category's display name, `{place}`, the card's place from the tapped Word, and `{of}`, the Category's Words.
      */
     feedKicker: templateOf('name', 'place', 'of'),

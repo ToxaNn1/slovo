@@ -33,7 +33,7 @@ export function useReduceMotionKnown(): boolean | undefined {
 /**
  * Whether the reader turned on Reduce Motion in the system settings or
  * «Менше руху» in the app. It follows both while the app runs; every animation has a calmer
- * variant for it (ADR 0055, `docs/design/README.md`).
+ * variant for it (`docs/design/README.md`).
  */
 export function useReduceMotion(): boolean {
   return useReduceMotionKnown() === true;

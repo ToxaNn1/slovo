@@ -27,8 +27,8 @@ export interface HiddenRowModel {
 export interface HiddenScreenModel {
   /**
    * Everything hidden, in one list: the Hidden Categories in the Language
-   * Pack's order, the Words' and then the Corrections' (ADR 0033); each kind
-   * of Entry out of the Mix as a whole, in the Mix's order (ADR 0019); then
+   * Pack's order, the Words' and then the Corrections'; each kind
+   * of Entry out of the Mix as a whole, in the Mix's order; then
    * the Hidden Entries newest first. Empty is when the screen says nothing is
    * hidden.
    */

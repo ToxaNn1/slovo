@@ -20,7 +20,7 @@ export const feedRecords = {
   }),
   /**
    * The Feed Notices the reader swiped past on this device and the local
-   * date they are closed for; on another date none is closed (ADR 0054).
+   * date they are closed for; on another date none is closed.
    */
   feedNoticesClosed: declareRecord(
     'feed.noticesClosed',
@@ -54,7 +54,7 @@ export const feedRecords = {
   ),
   /**
    * The Community Word the backend answered on the local date `date`, kept so
-   * the week is read once a day; `null`, none (ADR 0060). It stays on the
+   * the week is read once a day; `null`, none. It stays on the
    * device; a new key needs no migration.
    */
   communityWord: declareRecord(
@@ -83,7 +83,7 @@ export const feedRecords = {
    * of the date before it, so a Word chosen again that day is not the day
    * before's; none in a record kept before it was there. It stays on the
    * device: it is the Word of the morning notification this device's own plan
-   * Reserves (ADR 0021, 0022).
+   * Reserves.
    */
   wordOfTheDay: declareRecord(
     'feed.wordOfTheDay',

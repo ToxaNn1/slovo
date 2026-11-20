@@ -214,7 +214,7 @@ describe('the tabs of a Correction card in the Feed', () => {
     expect(card.getByTestId('correction-non-standard', hidden)).toHaveTextContent(/Слідуючий/);
   });
 
-  it('names the sources one to a line on «Джерело», with no «Джерело:» before them (ADR 0116)', async () => {
+  it('names the sources one to a line on «Джерело», with no «Джерело:» before them', async () => {
     await open();
     await openApp();
     await swipeUp();

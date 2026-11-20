@@ -14,8 +14,8 @@ const ByMarkSchema = z.strictObject({
 const HintRowSchema = z.strictObject({ title: TextSchema, body: TextSchema });
 
 /**
- * The texts of the Entry card's side swipes and its «⋯» sheet, exactly as on board 04 (ADR 0077).
- * The hint sheet keeps the board's «ви» forms (ADR 0075).
+ * The texts of the Entry card's side swipes and its «⋯» sheet, exactly as on board 04.
+ * The hint sheet keeps the board's «ви» forms.
  */
 const SwipeStringsSchema = z.strictObject({
   /** The labels at the card's edges while it is dragged, e.g. «ЗНАЮ», «НЕ ЗНАЮ». */

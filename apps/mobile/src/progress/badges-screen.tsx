@@ -24,8 +24,8 @@ const strings = editionStrings.settings.badges;
 /**
  * The Badge families overview, while its Feature Switch is on, then every
  * Badge of the Edition as a card, by the Edition's Badge families, under how
- * many of all are earned (left out with «Без лічильників», ADR 0188); each card shows its name, its condition and its
- * status, «Отримано» or «Ще ні · N%» (ADR 0145). A tap opens it
+ * many of all are earned (left out with «Без лічильників»); each card shows its name, its condition and its
+ * status, «Отримано» or «Ще ні · N%». A tap opens it
  * (`useBadgeOpening`).
  */
 function Badges() {
@@ -71,7 +71,7 @@ function Badges() {
   );
 }
 
-/** Settings › Відзнаки (ADR 0066, 0145), as `XBadges`: the Badge families, then the Badges' cards by family. */
+/** Settings › Відзнаки (ADR 0066), as `XBadges`: the Badge families, then the Badges' cards by family. */
 export function BadgesScreen() {
   const { colors } = useTokens();
   const router = useRouter();

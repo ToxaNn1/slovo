@@ -14,7 +14,7 @@ interface LinkedCorrection {
 
 /**
  * The Synonym Row a Word card links back to, shown as «У синонімічному ряду:
- * {домінанта}» and opened on a tap (ADR 0051).
+ * {домінанта}» and opened on a tap.
  */
 interface WordCardSynonymRow {
   readonly synonymRowId: string;
@@ -71,7 +71,7 @@ export interface WordCardModel {
   readonly linkedCorrections: readonly LinkedCorrection[];
   /** The first live Synonym Row that links the Word as a member; nothing for a Word in no row. */
   readonly synonymRow: WordCardSynonymRow | undefined;
-  /** The names of the Word's sources, for the card's «Джерело» tab (ADR 0116). */
+  /** The names of the Word's sources, for the card's «Джерело» tab. */
   readonly sourceNames: readonly string[];
 }
 

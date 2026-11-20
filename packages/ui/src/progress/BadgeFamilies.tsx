@@ -8,8 +8,7 @@ import type { BadgeGridItem } from './BadgeGrid';
 import { BadgeMark } from './BadgeMark';
 
 /**
- * The Badge families overview heading the Badges screen (`XBadges` fams,
- * ADR 0145): a card for each of the Edition's `families` that holds a Badge,
+ * The Badge families overview heading the Badges screen (`XBadges` fams): a card for each of the Edition's `families` that holds a Badge,
  * in its order, in a row that scrolls sideways. A card shows the family's
  * mark (its shape and tone, earned, with its first Badge's symbol), its name
  * as a header, how many Badges it holds («5 відзнак»), its description and

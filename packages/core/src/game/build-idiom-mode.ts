@@ -15,13 +15,13 @@ const wordsOf = (expression: string, punctuation: ReadonlySet<string>): string[]
     .filter((word) => word !== '');
 
 /**
- * «Склади вислів», the Core's expression-building mode (ADR 0052), on while
+ * «Склади вислів», the Core's expression-building mode, on while
  * the Edition turns Idioms on: a Round shows an idiom's or a proverb's
  * primary Definition and the words of its expression as shuffled chips,
  * tapped in order, compared ignoring case; equal words are interchangeable.
  * The Edition's expression punctuation, such as a comma or a dash, is no
  * chip and no part of one; a hyphen inside a word stays. Only expressions of
- * 2–8 words play, and a place name never does (ADR 0046). Its sheet shows
+ * 2–8 words play, and a place name never does. Its sheet shows
  * the whole expression and the Idiom's first Example, if it has one; the
  * last chip gives the answer.
  */

@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
+// Reanimated code: the React Compiler skips this module.
 
 import { withoutStress, type EntryRowModel } from '@slovo/core';
 import { Pressable, StyleSheet, Text } from 'react-native';

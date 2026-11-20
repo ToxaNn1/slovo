@@ -1,6 +1,6 @@
 import Foundation
 
-/// The Widget Snapshot (ADR 0026) the app writes into the App Group: the
+/// The Widget Snapshot the app writes into the App Group: the
 /// parts this widget reads. The contracts' `WidgetSnapshotSchema` is the
 /// source of truth; the Core decided every Entry and its text already.
 struct WidgetSnapshot: Decodable {

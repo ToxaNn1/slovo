@@ -16,7 +16,7 @@ import { dashboardRecords } from './records';
 const RAIL_LENGTH = 10;
 
 /**
- * The pictogram a Curated Collection's tile draws (ADR 0178): that of a
+ * The pictogram a Curated Collection's tile draws: that of a
  * Category of Words or of Corrections, at its place in the Language Pack's
  * list of them, which picks the shapes as on that Category's own tile.
  */
@@ -65,7 +65,7 @@ export interface CuratedCollectionScreen {
 }
 
 /**
- * The Curated Collections (ADR 0076, 0178): the Dashboard's «SLOVO пропонує»
+ * The Curated Collections: the Dashboard's «SLOVO пропонує»
  * rail of the Language Pack's editorial Entry sets. A collection is on the
  * rail from its publication date in the local calendar until it is Retired,
  * when a reader's copy in Collections stays; the unopened ones come
@@ -92,7 +92,7 @@ export interface CuratedCollections {
   /**
    * The screen of a collection on the rail's terms (published by today, the
    * switch on); nothing for any other id. Opening an Entry from it goes
-   * through `entryCard`, which makes nothing Seen (ADR 0076).
+   * through `entryCard`, which makes nothing Seen.
    */
   screen(collectionId: string): Promise<CuratedCollectionScreen | undefined>;
   /**
@@ -132,7 +132,7 @@ export async function openCuratedCollections({
   const records = dashboardRecords.curatedCollectionsOpened;
   // The pack is read once per composition: a Patch applied reopens the
   // composition, which reads them afresh. A Retired one is out of
-  // circulation: no rail, grid, screen or Feed (ADR 0178).
+  // circulation: no rail, grid, screen or Feed.
   const all = on ? (await content.listCuratedCollections()).filter(({ retired }) => !retired) : [];
   const pictogramOf = await pictograms(on ? entries : undefined);
   const defaultPictogram = pictogramOf(edition.curatedCollectionPictogram);

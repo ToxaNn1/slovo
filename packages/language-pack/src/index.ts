@@ -3,7 +3,7 @@
  * file, and opens such files in Node for tests and tooling. The mobile shell
  * reads packs through `@slovo/language-pack/reader`, which needs no Node APIs.
  * Edition folders are read through `@slovo/language-pack/edition`, which loads
- * no SQLite, so the app config and Metro use it too (ADR 0035).
+ * no SQLite, so the app config and Metro use it too.
  */
 export { buildFromBackend, buildFromSnapshot, type BuildResult } from './build';
 export { formatBuildError, type BuildError } from './build-error';

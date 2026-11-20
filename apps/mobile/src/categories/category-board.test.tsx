@@ -337,7 +337,7 @@ describe("the Category's Feed", () => {
     expect(composition.history.list).toEqual([]);
   });
 
-  it('lays a tabbed card in a fixed frame: no page scroll around its tab bar (ADR 0113)', async () => {
+  it('lays a tabbed card in a fixed frame: no page scroll around its tab bar', async () => {
     await open();
     await renderCategory('emotions-character');
     await settle(() => fireEvent.press(screen.getByTestId('category-entry-w_lahidnyi')));

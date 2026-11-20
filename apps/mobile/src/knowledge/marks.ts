@@ -11,7 +11,7 @@ import { useUndo } from '../undo';
  * The mark an Entry's card shows, read from the Knowledge snapshot and kept up
  * to date (none while the Entry is due, as its card is a Review), and the call
  * a tap on a mark button makes, and the calls a swipe and the card's «⋯»
- * menu make (ADR 0077).
+ * menu make.
  */
 export function useKnowledgeMark(entryId: string): {
   mark: KnowledgeMark | undefined;

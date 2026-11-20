@@ -268,7 +268,7 @@ describe('Settings, as the board', () => {
   });
 });
 
-describe('Settings › the text size (ADR 0134)', () => {
+describe('Settings › the text size', () => {
   it('opens «Шрифт і розмір» from its row: the sample «Заграва» and the three sizes, «Як у системі» chosen', async () => {
     await renderSettings();
     await fireEvent.press(screen.getByRole('button', { name: 'Шрифт і розмір, Як у системі' }));
@@ -484,7 +484,7 @@ describe('Settings › «Сезонний декор»', () => {
     expect(screen.queryByRole('switch', { name: 'Сезонний декор' })).not.toBeOnTheScreen();
   });
 
-  it('has no row even while the Edition turns Seasonal Decor on (ADR 0055)', async () => {
+  it('has no row even while the Edition turns Seasonal Decor on', async () => {
     await renderSettings({ seasonalDecor: true });
 
     expect(screen.queryByTestId('settings-seasonal-decor')).not.toBeOnTheScreen();

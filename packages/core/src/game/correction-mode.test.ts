@@ -466,7 +466,7 @@ describe('the Corrections a Game asks about', () => {
   });
 });
 
-// Spec #461, ADR 0043: a wrong answer marks the Entry «Не знаю», in every Game Mode.
+// Spec #461: a wrong answer marks the Entry «Не знаю», in every Game Mode.
 describe('the Knowledge Marks «Обери правильне» leaves', () => {
   it('marks the Correction of a wrong answer «Не знаю», due for Review tomorrow', async () => {
     const app = await run();

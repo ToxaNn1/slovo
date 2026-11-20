@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
+// Reanimated code: the React Compiler skips this module.
 
 import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -24,8 +24,8 @@ const { mascot, sparks } = dashboard.hero;
 const SPARKS = Array.from({ length: sparks.count }, (_, index) => index);
 
 /**
- * The sparks the Mascot throws from its megaphone in the Dashboard's hero
- * (ADR 0109), as the board's `slLeaf`: diamonds of the key ink and the cream,
+ * The sparks the Mascot throws from its megaphone in the Dashboard's hero,
+ * as the board's `slLeaf`: diamonds of the key ink and the cream,
  * each flying off to the right and down, turning, and again, endlessly. They
  * are not Decor and do not change with the date. Without the Decor's Mascot
  * figure there is no megaphone to throw them from, so there are none; under

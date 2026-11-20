@@ -269,7 +269,7 @@ function namesForm(headword: string, form: string): boolean {
 
 /**
  * Marks the words the standard sentence changes, the draft's guess at its
- * standard form (ADR 0117): words compared without case, Stress and
+ * standard form: words compared without case, Stress and
  * punctuation, each run of changed words marked on its own, its punctuation
  * left outside the marks. The author widens the marks to the whole phrase.
  * Undefined when the sentences change no word.

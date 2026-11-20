@@ -19,13 +19,13 @@ export interface Collection {
    * Word, and for a Correction the standard equivalent.
    */
   readonly newestLemmas: readonly string[];
-  /** The id of the Curated Collection it is a copy of (ADR 0076); absent for any other. */
+  /** The id of the Curated Collection it is a copy of; absent for any other. */
   readonly source?: string;
 }
 
 /**
  * How long a delete can be undone, in milliseconds: a little longer than the
- * toast that offers it stays (ADR 0132).
+ * toast that offers it stays.
  */
 export const COLLECTION_UNDO_MS = 4000;
 
@@ -111,11 +111,11 @@ export interface Collections {
   /**
    * Creates a Collection, as of now, of the Entries in the order given, the
    * first listed first, skipping those the Language Pack doesn't have, in one
-   * write: the copy of a Collection Link (ADR 0058). It takes the name, cut to
+   * write: the copy of a Collection Link. It takes the name, cut to
    * the longest a name may be, or, when another Collection has it in any
    * letter case, the first free of «{name} (2)», «{name} (3)»…, cut so the
    * number fits. A copy of a Curated Collection records its `source`, the
-   * Curated Collection's id (ADR 0076).
+   * Curated Collection's id.
    */
   createCopy(name: string, entryIds: readonly string[], source?: string): Promise<Collection>;
   /**

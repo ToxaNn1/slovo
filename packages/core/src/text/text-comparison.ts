@@ -57,7 +57,7 @@ export interface TextComparison {
  * distinct otherwise, so г and ґ, е and ё never match: decomposing first
  * takes out a Stress mark typed over a precomposed letter and keeps the
  * diaeresis of ё. A Search query also reads the Edition's Search letters as
- * the ones they map to (ADR 0054), since a reader looking a word up
+ * the ones they map to, since a reader looking a word up
  * shouldn't have to know its spelling; a Definition or option reads every run
  * of spaces inside it as one.
  */

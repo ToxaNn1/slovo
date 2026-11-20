@@ -10,7 +10,7 @@ export const communityCounterRecords = {
   /**
    * What this device counted for the Community Counters, one record per
    * Entry, by Entry id: the mark it counted, or none, and whether it counted
-   * the Entry saved (ADR 0060). A device starts with none at the update, so
+   * the Entry saved. A device starts with none at the update, so
    * nothing from before it is ever counted. It stays on the device: what one
    * device counted is not the Account's. A new key, so no migration.
    */
@@ -22,7 +22,7 @@ export const communityCounterRecords = {
   /**
    * The Community Counter changes counted and not yet sent, one record per
    * Entry, by Entry id: the change of its known, unknown and saved counts,
-   * merged (ADR 0060). It stays on the device. A new key, so no migration.
+   * merged. It stays on the device. A new key, so no migration.
    */
   countersUnsent: declareRecords(
     'counters.unsent.',
@@ -36,7 +36,7 @@ export const communityCounterRecords = {
   /**
    * The Community Counters this device read from the backend, one record per
    * Entry, by Entry id: its known, unknown and saved counts and when they
-   * were read, kept for 24 hours (ADR 0060). It stays on the device: the
+   * were read, kept for 24 hours. It stays on the device: the
    * server's numbers are no reader's own. A new key, so no migration.
    */
   countersRead: declareRecords(

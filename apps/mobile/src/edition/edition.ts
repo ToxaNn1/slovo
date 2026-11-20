@@ -9,7 +9,7 @@ import { bundledEditions } from './registry';
 /**
  * The id of the Edition this app run is for, chosen at launch and fixed for
  * the run (ADR 0065): every module reads the Edition in effect from here, and
- * the shell opens its one Shell for it (ADR 0036).
+ * the shell opens its one Shell for it.
  */
 export const activeEditionId = deviceActiveEdition(bundledEditions);
 
@@ -30,7 +30,7 @@ export const appStore = {
   appStoreConnectAppId: app.appStoreConnectAppId,
 } as const;
 
-/** The App Group the app shares with its widget (ADR 0026), from the AppConfig. */
+/** The App Group the app shares with its widget, from the AppConfig. */
 export const appGroup = app.appGroup;
 
 /** The app's one domain (ADR 0065), from the AppConfig: its web addresses live under `/<edition>/` paths. */
@@ -45,5 +45,5 @@ export const editionTokens = designTokens(EditionTokensSchema.parse(tokens ?? {}
 /** The Edition's Decor over the Core's neutral Decor, slot by slot. */
 export const editionDecor = loadDecor(decor);
 
-/** The Edition's motifs per Season and per Holiday, or none when its Decor stays plain (ADR 0055). */
+/** The Edition's motifs per Season and per Holiday, or none when its Decor stays plain. */
 export const seasonalMotifs = loadSeasonalMotifs(decor);

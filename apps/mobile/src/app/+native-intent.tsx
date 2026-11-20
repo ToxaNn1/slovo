@@ -15,7 +15,7 @@ const outsideLinks = createOutsideLinks({
   domain: appDomain,
   editionId: activeEditionId,
   widgetLinkKey: deviceWidgetLinkKey,
-  // The App Intents (ADR 0057).
+  // The App Intents.
   appIntents: { on: () => on('appIntents'), landOnWordOfTheDay: wordOfTheDayLanding.ask },
   widgetEntries: { replaceOpenEntry: () => on('replaceOpenEntry'), open: widgetEntryLinks.open },
 });

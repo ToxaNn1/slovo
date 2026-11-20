@@ -43,8 +43,7 @@ export function EntryKicker({ label, testID }: { label: string; testID: string }
 
 /**
  * A kicker in ink capitals over a card, as XSwipeV's «КАТЕГОРІЯ · … · 2 З 4»:
- * the card's place in a Category's or a Curated Collection's Feed (ADR 0110,
- * 0178). It wraps rather than shrinks.
+ * the card's place in a Category's or a Curated Collection's Feed. It wraps rather than shrinks.
  */
 export function CardKicker({ text, testID }: { text: string; testID: string }) {
   const tokens = useTokens();

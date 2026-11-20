@@ -1,4 +1,4 @@
-# The full app pass (ADR 0177): one flow that opens every screen route of
+# The full app pass: one flow that opens every screen route of
 # `apps/mobile/src/app` and the sheets a tap opens, keeping a screenshot of
 # each. Run it from the repo root with `pnpm app-pass` (scripts/app-pass.mjs),
 # on a booted simulator with the app open from the one Metro on 8082.

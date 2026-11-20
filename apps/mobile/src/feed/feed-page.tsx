@@ -11,7 +11,7 @@ import { useEditionInEffect } from '../edition/remote-switches';
 export const TOP_ROW = 80;
 
 /**
- * The Feed's header with nothing under the logo row (board p1, ADR 0091):
+ * The Feed's header with nothing under the logo row (board p1):
  * the room above the row (8), the row (32) and the room under it (14), where
  * the first card starts.
  */
@@ -19,7 +19,7 @@ export const LOGO_ROW = 54;
 
 /**
  * The Feed header's rows: the status bar's height, and whether the row of
- * Search sits under the logo row while Search is shown (board p1, ADR 0091).
+ * Search sits under the logo row while Search is shown (board p1).
  */
 export interface FeedHeaderRows {
   readonly top: number;
@@ -112,7 +112,7 @@ export function entryPage(header: FeedHeaderRows, position: number) {
  * the top edge, so a scrolled card passes under it unseen. Its lower edge
  * fades out inside the top row, so the card fades under it and the first card
  * at rest stays clear of the fade. The Feed has no XP bar over its cards
- * (board p1, ADR 0091): under the logo row only Search, while it is shown.
+ * (board p1): under the logo row only Search, while it is shown.
  */
 export function FeedHeaderBar({
   header,

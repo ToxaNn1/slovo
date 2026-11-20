@@ -1,5 +1,5 @@
 // Jest runs the component tests (`*.test.tsx`), on Expo's preset for iOS;
-// Vitest runs the rest (ADR 0029).
+// Vitest runs the rest.
 import { jestReports } from '@slovo/config/test-reports';
 
 export default {

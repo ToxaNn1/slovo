@@ -7,7 +7,7 @@ import { shuffled } from '../shuffled';
 const LETTERS = { min: 4, max: 9 } as const;
 
 /**
- * «Анаграми», the Core's anagram mode (ADR 0052): a Round shows a Word's
+ * «Анаграми», the Core's anagram mode: a Round shows a Word's
  * primary Definition and its letters as shuffled chips, tapped in order to
  * assemble the Word; equal letters are interchangeable. A character the
  * Edition reads as an apostrophe, or a hyphen, stays in place and is no chip. Only Words of 4–9 letters with no

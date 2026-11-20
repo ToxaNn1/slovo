@@ -118,7 +118,7 @@ function TopWords({
  * the Favorites, with what each means, the Words most counted for each, and
  * every questionnaire answer grouped
  * by its question with its share. All anonymous totals: no reader is named
- * (ADR 0060, 0068).
+ * (ADR 0068).
  */
 export function CommunityCounters({
   counters,

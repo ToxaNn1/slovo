@@ -15,7 +15,7 @@ import { procedure } from './procedure';
 /**
  * The Patch format the backend writes; an app refuses another one and keeps
  * its content (ADR 0090). Format 2 brought the media rows (ADR 0099); format 3
- * lets a Patch carry `**` standard-form marks and Tip exceptions (ADR 0121).
+ * lets a Patch carry `**` standard-form marks and Tip exceptions.
  */
 export const PATCH_FORMAT = 3;
 
@@ -85,7 +85,7 @@ const PatchCachingSchema = z.object({
 
 /**
  * What a published pack file answers besides its bytes: a published content
- * version never changes (ADR 0032), so a client or a proxy may keep the file
+ * version never changes, so a client or a proxy may keep the file
  * for good, and the ETag, the file's SHA-256 in quotes, names it.
  */
 const PackFileCachingSchema = z.object({

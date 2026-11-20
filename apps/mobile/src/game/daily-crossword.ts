@@ -16,7 +16,7 @@ import { logError } from '../diagnostics/log';
 import { crossingMiniGrid, crossingProgress, crossingSolveOf } from './crossing-crossword';
 import { solveTimeText } from './crossword-share';
 
-/** What the Daily Crossword's card draws: the crossing one's card in board 08's states (ADR 0087). */
+/** What the Daily Crossword's card draws: the crossing one's card in board 08's states. */
 export interface DailyCrosswordCardContent {
   readonly title: string;
   readonly state: CrosswordDayCardState;

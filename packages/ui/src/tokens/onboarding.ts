@@ -25,7 +25,7 @@ export const splashMotion = {
   frame: { width: 390, height: 844 },
   duration: 4200,
   reduceMotionHold: 800,
-  /** The daily splash from the Dashboard's logo (ADR 0105): the same cut, played in `duration` ms, shouting `shoutAt` ms in. */
+  /** The daily splash from the Dashboard's logo: the same cut, played in `duration` ms, shouting `shoutAt` ms in. */
   daily: { duration: 560, reduceMotionHold: 350, shoutAt: 100 },
   /** The frame the splash holds under Reduce Motion: every piece in place, the wipe not yet in. */
   still: 0.86,
@@ -199,7 +199,7 @@ export const onboardingLayout = {
    * shows its content: it still holds «Пропустити», the shout word and the Mascot.
    */
   minHeroHeight: 260,
-  /** How far from the side a step starts when it slides in (ADR 0055). */
+  /** How far from the side a step starts when it slides in. */
   slideDistance: 40,
   /**
    * Where the shout word sits on the red top, its turn in degrees, and where

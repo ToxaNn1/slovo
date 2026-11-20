@@ -87,8 +87,7 @@ const sameState = (one: ProgressState, other: ProgressState) =>
   (Object.keys(one) as (keyof ProgressState)[]).every((key) => one[key] === other[key]);
 
 /**
- * Opens Progress over the Active Days, which the day change records (ADR
- * 0022), for the Core composition. It follows them, History, Favorites,
+ * Opens Progress over the Active Days, which the day change records, for the Core composition. It follows them, History, Favorites,
  * Collections, the Knowledge Marks and the Game, so a change of any of them
  * changes the state at once.
  */

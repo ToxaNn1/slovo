@@ -40,7 +40,7 @@ function subscribe(listener: () => void) {
 }
 
 /**
- * The currency of «Сервіси» on this device (ADR 0164): the one the owner
+ * The currency of «Сервіси» on this device: the one the owner
  * picked last, else dollars. Every place that shows money follows one pick.
  */
 export function useCurrency(): readonly [Currency, (currency: Currency) => void] {

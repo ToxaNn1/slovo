@@ -84,7 +84,7 @@ import { openWordOfTheDay } from './feed/word-of-the-day';
 /**
  * The Core features that open once the Language Pack is open, linked to each
  * other inside the composition, so a shell subscribes to what it draws and
- * holds no rule between them (ADR 0018). The settings open before the
+ * holds no rule between them. The settings open before the
  * Language Pack and stay apart. Its `hide` and `unhide` hold the rules of
  * the card's hide action and of the Hidden screen, each with its undo, so the
  * shell only shows the action sheet and the toast.
@@ -92,13 +92,13 @@ import { openWordOfTheDay } from './feed/word-of-the-day';
 export interface Composition extends Hiding {
   /** The Feed of the app session. */
   readonly feed: Feed;
-  /** The Dashboard, the home's blocks for the local day (ADR 0076). */
+  /** The Dashboard, the home's blocks for the local day. */
   readonly dashboard: Dashboard;
-  /** The Correction Types, the rail's tiles and each type's Corrections (ADR 0076); none with `correctionTypes` off. */
+  /** The Correction Types, the rail's tiles and each type's Corrections; none with `correctionTypes` off. */
   readonly correctionTypes: CorrectionTypes;
-  /** The Curated Collections, the «SLOVO пропонує» rail's cards (ADR 0076); none with `curatedCollections` off. */
+  /** The Curated Collections, the «SLOVO пропонує» rail's cards; none with `curatedCollections` off. */
   readonly curatedCollections: CuratedCollections;
-  /** The daily Mood check-in the Dashboard asks (ADR 0076); asking and asking nothing with `mood` off. */
+  /** The daily Mood check-in the Dashboard asks; asking and asking nothing with `mood` off. */
   readonly mood: MoodCheckIns;
   /** Favorites, which a heart tapped anywhere changes. */
   readonly favorites: Favorites;
@@ -114,19 +114,19 @@ export interface Composition extends Hiding {
   readonly dataExport: () => Promise<DataExport>;
   /**
    * The Word of the Day archive «Слова дня», the days whose Word of the Day's
-   * card was Seen (ADR 0054). Opening a Word from it makes nothing Seen: open
+   * card was Seen. Opening a Word from it makes nothing Seen: open
    * it with `entryCard`.
    */
   readonly wordOfTheDayArchive: WordOfTheDayArchive;
   /** The Hidden Entries, eligible nowhere until restored. */
   readonly hiddenEntries: HiddenEntries;
-  /** The Mix, whose Categories out of it are the Hidden Categories (ADR 0019). */
+  /** The Mix, whose Categories out of it are the Hidden Categories. */
   readonly mix: Mix;
-  /** The Knowledge Marks, which an Entry card's «Знаю» and «Не знаю» change (ADR 0043). */
+  /** The Knowledge Marks, which an Entry card's «Знаю» and «Не знаю» change. */
   readonly knowledge: Knowledge;
-  /** The Due Quiz «Перевір себе» on the «Вчу» list (ADR 0131); no questions with `dueQuiz` off. */
+  /** The Due Quiz «Перевір себе» on the «Вчу» list; no questions with `dueQuiz` off. */
   readonly dueQuiz: DueQuiz;
-  /** The Community Counters, which the reader's own Knowledge Marks and Favorites change (ADR 0060). */
+  /** The Community Counters, which the reader's own Knowledge Marks and Favorites change. */
   readonly communityCounters: CommunityCounters;
   /**
    * Progress: the Streak and the Best Streak, derived from the Active Days,
@@ -144,9 +144,9 @@ export interface Composition extends Hiding {
   readonly badges: Badges;
   /** The Break: a pause of the Streak the reader starts, up to 7 days, once every 30 days (ADR 0066). */
   readonly streakBreak: StreakBreak;
-  /** The reader's optional name on the Profile (ADR 0136), which syncs and reaches no Analytics. */
+  /** The reader's optional name on the Profile, which syncs and reaches no Analytics. */
   readonly readerName: ReaderName;
-  /** The Weekly Recap, whose numbers its Feed Notice shows on a local Monday (ADR 0054). */
+  /** The Weekly Recap, whose numbers its Feed Notice shows on a local Monday. */
   readonly weeklyRecap: WeeklyRecap;
   /** The progress Share Cards on offer today: a Level reached, a Badge earned, a Streak milestone. */
   readonly progressShareCards: ProgressShareCards;
@@ -176,11 +176,11 @@ export interface Composition extends Hiding {
    * permission, and its sample notification, taken from the plan.
    */
   readonly onboarding: Onboarding;
-  /** The questionnaire past the onboarding: its later questions through Feed Notices and the retake in Settings (ADR 0067). */
+  /** The questionnaire past the onboarding: its later questions through Feed Notices and the retake in Settings. */
   readonly questionnaire: Questionnaire;
   /**
    * Search, over every live Entry that is not Hidden, the Mix and the Rarity
-   * Ceiling aside; nothing while the Edition turns it off (ADR 0054). Open
+   * Ceiling aside; nothing while the Edition turns it off. Open
    * what it finds with `openedFromSearch`.
    */
   readonly search: Search;
@@ -188,12 +188,12 @@ export interface Composition extends Hiding {
   readonly recentQueries: RecentQueries;
   /** The Rarity Test, which draws the Words it asks about and sets the Rarity Range by the answers. */
   readonly rarityTest: RarityTest;
-  /** The Rarity Range, the one «Рідкість» setting every surface obeys (ADR 0072). */
+  /** The Rarity Range, the one «Рідкість» setting every surface obeys. */
   readonly rarityRange: RarityRangeSetting;
   /**
    * Opens today's Daily Crossword, the one its card and its screen draw: the
-   * crossing one (ADR 0087) with the progress this device made in it, or none
-   * on a day no pattern fills or while it is off (ADR 0176). Open it again
+   * crossing one with the progress this device made in it, or none
+   * on a day no pattern fills or while it is off. Open it again
    * once the next local day starts.
    */
   openDailyCrossword(): Promise<DailyCrosswordOpening>;
@@ -220,8 +220,7 @@ export interface Composition extends Hiding {
   openedFromNotification(entryId: string): Promise<AnyEntryCard | undefined>;
   /**
    * Opens an Entry from a Search result: its Entry card, like `entryCard`.
-   * It writes nothing, so the Entry is not Seen and History stays as it was
-   * (ADR 0054).
+   * It writes nothing, so the Entry is not Seen and History stays as it was.
    */
   openedFromSearch(entryId: string): Promise<AnyEntryCard | undefined>;
   /** The row model of any Entry, Retired or not, for a list; nothing for an id the Language Pack doesn't have. */
@@ -230,12 +229,12 @@ export interface Composition extends Hiding {
    * The live Entries of one Category of the kind's list, Words or
    * Corrections, in the Language Pack's order, a Retired one left out and the
    * Mix aside, for the Category screens. Like Search, it makes nothing Seen
-   * and writes nothing (ADR 0076).
+   * and writes nothing.
    */
   categoryEntries: Entries['ofCategory'];
   /**
    * The home-screen widget: the Widget Snapshot the app writes for it, and an
-   * Entry opened from it (ADR 0026).
+   * Entry opened from it.
    */
   readonly widget: Widget;
   /**
@@ -255,11 +254,11 @@ export interface Composition extends Hiding {
     /** The app left the foreground: the Visit begun last ends, with how long it ran. */
     sessionEnded(): Promise<void>;
   };
-  /** The iPhone search: the Spotlight Snapshot the app hands its native module (ADR 0057). */
+  /** The iPhone search: the Spotlight Snapshot the app hands its native module. */
   readonly spotlight: Spotlight;
   /**
    * Closes the composition, once the shell opened another over the same user
-   * state (ADR 0036): from then on it writes nothing to the user state, hands
+   * state: from then on it writes nothing to the user state, hands
    * the device no plan, and the Game tries no planning of its offers again.
    * What it reads stays as it was. Resolves once the writes and the plans it
    * had under way end; never rejects.
@@ -333,7 +332,7 @@ function closable({
 
 /**
  * The Core's own Game Modes, registered through the same Extension Point as an
- * Edition's, in the order the mode screen lists them within a group (ADR 0139).
+ * Edition's, in the order the mode screen lists them within a group.
  */
 const coreGameModes: readonly GameMode[] = [
   guessWord,
@@ -410,7 +409,7 @@ export async function openComposition({
   visit?: Visit;
   /**
    * Whether the reader is signed in to the Account, which opens apart from
-   * the composition (ADR 0037); without it, as in tools and tests of other
+   * the composition; without it, as in tools and tests of other
    * features, the Feed offers no saving of progress.
    */
   signedIn?: () => boolean;
@@ -418,7 +417,7 @@ export async function openComposition({
   const { userState, scheduling, schedule, close } = closable(ports);
   /** The Edition's text comparison, built once and handed to every module that compares text. */
   const comparison = createTextComparison(edition);
-  // The named subjects the modules link through (ADR 0018), made before any
+  // The named subjects the modules link through, made before any
   // module opens. A subject's listeners follow in the order the modules open.
   const eligibility: Subject<void> = createSubject();
   const seen: Subject<string> = createSubject();
@@ -542,7 +541,7 @@ export async function openComposition({
     xpLog,
     analytics,
   });
-  // The Feed reads the day's Mood for each card it adds (ADR 0076); the check-in follows the day change.
+  // The Feed reads the day's Mood for each card it adds; the check-in follows the day change.
   const mood = await openMoodCheckIns({
     edition,
     userState,
@@ -737,7 +736,7 @@ export async function openComposition({
         ? await buildEntryCard(entries, entry, today.date)
         : await buildFeedCard(entries, entryId);
     if (card === undefined) return undefined;
-    // A Review wherever its card is shown, as on the Feed (ADR 0043).
+    // A Review wherever its card is shown, as on the Feed.
     return asReviewIfDue(card, knowledge);
   }
   /** An Entry opened from outside the app, from a notification or the widget: one rule for both. */
@@ -805,7 +804,7 @@ export async function openComposition({
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,
     openedFromNotification: openedFromOutside,
-    // Opened from inside the app: nothing Seen (ADR 0054).
+    // Opened from inside the app: nothing Seen.
     openedFromSearch: entryCard,
     entryRow: (entryId) => rows.row(entryId),
     categoryEntries: (of, categoryId) => entries.ofCategory(of, categoryId),

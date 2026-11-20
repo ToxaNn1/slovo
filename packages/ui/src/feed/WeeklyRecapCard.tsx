@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
+// Reanimated code: the React Compiler skips this module.
 
 import type { Plural } from '@slovo/contracts';
 import { sentences, type LocalDate, type WeeklyRecapModel } from '@slovo/core';
@@ -43,8 +43,8 @@ const belowEasing = bezier(below.easing);
  * dates and, when sharing is there, the Share icon in the top-right corner;
  * the past week's Entries Seen, Favorites added and Known marks, and the
  * current Streak, then the week's XP and goal days out of 7, each on a tile
- * three to a row, the Streak's tile red (ADR 0054); and «Готово», which
- * folds the card away (ADR 0130).
+ * three to a row, the Streak's tile red; and «Готово», which
+ * folds the card away.
  * The Known number, the XP and the goal days are left out when the recap has
  * none, and the Streak while the reader hides it. Until its numbers are read
  * the card shows its title alone.

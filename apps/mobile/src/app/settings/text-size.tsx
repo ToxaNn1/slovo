@@ -13,7 +13,7 @@ const strings = editionStrings.settings.textSize;
  * Settings › «Шрифт і розмір» on board 11: the sample «Заграва» drawn at the
  * chosen step of the three-step text size, the line that explains it, then
  * «Як у системі», «Більший» and «Найбільший». A tap keeps the size in the
- * settings at once (ADR 0134).
+ * settings at once.
  */
 export default function TextSizeScreen() {
   const { colors } = useTokens();

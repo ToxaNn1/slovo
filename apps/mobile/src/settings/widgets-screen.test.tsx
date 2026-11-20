@@ -77,7 +77,7 @@ describe('Settings › Віджети', () => {
     );
     expect(screen.getByTestId('widget-previews-widget-lockScreen', HIDDEN)).toBeOnTheScreen();
     expect(screen.queryByText('✓')).toBeNull();
-    // The three steps to add a widget stay under the previews (ADR 0054).
+    // The three steps to add a widget stay under the previews.
     for (const [index, step] of editionStrings.widget.guide.steps.entries()) {
       expect(screen.getByTestId(`widget-guide-step-${String(index + 1)}`)).toHaveTextContent(
         `${String(index + 1)}${step.title}${step.hint}`,

@@ -3,7 +3,7 @@ import type { EditionConfig } from '@slovo/contracts';
 import type { BuildError } from './build-error';
 
 /**
- * The sample Word the voice screen reads (ADR 0083) must be a Word of the
+ * The sample Word the voice screen reads must be a Word of the
  * Edition. `isWord` tells whether the Edition has a Word of that id, broken
  * or not, so a broken Word reports its own problem only.
  */

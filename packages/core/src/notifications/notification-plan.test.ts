@@ -955,7 +955,7 @@ const xpOn = (date: string, amount: number): [string, string] => [
   JSON.stringify({ kind: 'xp', date, at: `${date}T07:00:00.000Z`, source: 'game-round', amount }),
 ];
 
-/** The record of a Daily Goal in Words set on a local date (ADR 0074). */
+/** The record of a Daily Goal in Words set on a local date. */
 const goalFrom = (date: string, goal: number): [string, string] => [
   `xp.word-goal-${date}`,
   JSON.stringify({ kind: 'word-goal', date, at: `${date}T06:00:00.000Z`, goal }),

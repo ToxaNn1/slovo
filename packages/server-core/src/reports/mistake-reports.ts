@@ -5,17 +5,17 @@ import type { EditionRegistry, NotServing } from '../edition/edition-registry';
 import type { Clock, MistakeReportStore, RateLimits } from '../ports';
 import { countRequest, ipSubject, type TooManyRequests } from '../rate-limit';
 
-/** The reports one IP address may send in a day (ADR 0056). */
+/** The reports one IP address may send in a day. */
 const REPORTS_PER_IP = { requests: 10, windowSeconds: 24 * 60 * 60 } as const;
 
-/** The Mistake Reports readers send the owner (ADR 0056). */
+/** The Mistake Reports readers send the owner. */
 export interface MistakeReports {
   /**
    * Keeps the report with its time of arrival, when its Edition serves
    * Mistake Reports. Its shape is checked where it enters; whether its Entry
    * is in a pack is not. A report over the day's limit of its IP address is
    * refused; one its Edition doesn't take counts nothing. A report sent with
-   * a Session keeps its Account, so the owner can thank the reader (ADR 0159).
+   * a Session keeps its Account, so the owner can thank the reader.
    */
   send(
     report: MistakeReport,

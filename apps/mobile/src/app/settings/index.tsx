@@ -56,9 +56,9 @@ const themeSegments = THEME_ORDER.map((theme) => ({
  * Range (ADR 0156), «Пройти тест ще раз», «Відзнаки», «Анкета: підлаштувати
  * Стрічку», «Перерва», the counters, «Самоперевірка» and «Конфіденційність»,
  * which holds the privacy switch and the Data export (ADR 0135; the privacy
- * policy link lives in «Про SLOVO»). Seasonal Decor has no row (ADR 0055).
+ * policy link lives in «Про SLOVO»). Seasonal Decor has no row.
  * Under the groups, «Скинути прогрес» asks in its sheet and starts the
- * progress over (ADR 0133).
+ * progress over.
  */
 export default function SettingsScreen() {
   // The toast after the Progress reset shows on this screen.

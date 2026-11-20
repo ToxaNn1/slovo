@@ -16,7 +16,7 @@ const { wordOfTheDayArchive: strings } = editionStrings;
  * «Слова дня» (board 09): each day the reader saw the Word of the Day's card,
  * newest first, the Word with its meaning and the day («26 жовтня») on a
  * chip, today's marked; a Retired Word stays. A tap opens the Entry screen
- * without making it Seen (ADR 0054).
+ * without making it Seen.
  */
 export function WordOfTheDayArchiveList({ header }: { header: ListHeader }) {
   const days = useWordOfTheDayArchive();

@@ -32,7 +32,7 @@ type Knowledge = ReturnType<typeof useKnowledgeMark>;
 
 /**
  * The marks of an Entry's card: its Knowledge Mark while the Knowledge
- * switch is on in effect, set by its side swipes (ADR 0077).
+ * switch is on in effect, set by its side swipes.
  */
 export interface EntryMarks {
   knowledge: Knowledge | undefined;
@@ -50,7 +50,7 @@ export function useEntryMarks(entryId: string): EntryMarks {
 /**
  * The side swipes of an Entry's card that set its Knowledge Mark, with the
  * stamp and the undo toast: there only when the Knowledge switch is on in
- * effect (ADR 0077). Feed Notices take none.
+ * effect. Feed Notices take none.
  */
 export function entrySwipe({ knowledge }: EntryMarks): EntrySwipe | undefined {
   return knowledge !== undefined
@@ -107,7 +107,7 @@ function useEntryCardActions(card: AnyEntryCard): EntryCardActions {
 
 /**
  * The slots of an Entry card, wherever the card appears: its corner
- * (`EntryCorner`) and its side swipes (ADR 0077).
+ * (`EntryCorner`) and its side swipes.
  */
 export function useEntrySlots(card: AnyEntryCard): EntryCardSlots {
   const actions = useEntryCardActions(card);
@@ -291,7 +291,7 @@ function EntryShareSheet({
 
 /**
  * The «Повідомити про помилку» item of an Entry's «⋯» sheet, and the sheet
- * it opens: there only while Mistake Reports are on in effect (ADR 0056).
+ * it opens: there only while Mistake Reports are on in effect.
  * «Надіслати» closes the sheet, thanks the reader at once («Дякуємо! Ми
  * перевіримо.», offline too) and hands the report to the Core's queue, which
  * sends it now or later; if the Core then says the daily limit is spent, or

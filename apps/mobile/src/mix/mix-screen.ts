@@ -13,7 +13,7 @@ export interface MixChipModel {
   readonly id: string;
   readonly name: string;
   readonly on: boolean;
-  /** The last Category left in the Mix: its chip can't be turned off (ADR 0019). */
+  /** The last Category left in the Mix: its chip can't be turned off. */
   readonly disabled: boolean;
 }
 
@@ -40,8 +40,8 @@ export interface MixScreenModel extends MixCategoriesModel {
     readonly on: boolean;
   }[];
   /**
-   * The chips of the Categories of Corrections, under the Corrections switch
-   * (ADR 0033), left out while Corrections are out of the Mix or the Edition
+   * The chips of the Categories of Corrections, under the Corrections switch,
+   * left out while Corrections are out of the Mix or the Edition
    * doesn't turn them on.
    */
   readonly correctionCategories: MixCategoriesModel | undefined;

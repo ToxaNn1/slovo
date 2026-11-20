@@ -244,7 +244,7 @@ describe('the room of the tab bar (owner, 16.11)', () => {
   });
 });
 
-/** The shipped Edition with the «Стрічка» tab leading to the Dashboard, as before ADR 0093. */
+/** The shipped Edition with the «Стрічка» tab leading to the Dashboard, as it used to. */
 const feedTabOff: Edition = {
   ...edition,
   isFeatureEnabled: (feature) => feature !== 'feedTab' && edition.isFeatureEnabled(feature),

@@ -38,7 +38,7 @@ export interface FeedState {
   readonly openCorrection: (position: number, correctionId: string) => void;
   /** Keeps the option the reader picked on the Quick Question at `position`. */
   readonly answerQuickQuestion: (position: number, option: number) => void;
-  /** Keeps the meaning the reader picked first on the Yesterday quiz at `position` (ADR 0130). */
+  /** Keeps the meaning the reader picked first on the Yesterday quiz at `position`. */
   readonly answerYesterday: (position: number, option: number) => void;
   /** «Готово»: folds the Weekly Recap at `position` away for its week. */
   readonly foldWeeklyRecap: (position: number) => void;
@@ -51,7 +51,7 @@ export interface FeedState {
  * It tells the Feed which card is on screen while the Feed is in sight, and
  * that none is otherwise, and keeps the pager on the reader's card. An ask
  * of `landing` puts today's Word of the Day card on screen, by `clock`, once
- * the Feed has it (ADR 0057).
+ * the Feed has it.
  */
 export function useFeed(
   pager: RefObject<VerticalPagerHandle | null>,

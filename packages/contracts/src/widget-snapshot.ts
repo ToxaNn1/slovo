@@ -36,7 +36,7 @@ const WidgetEntryText = {
 
 /**
  * An Entry any Widget Mode may show, ready to draw. The widget never reads
- * `kind`, so a new kind keeps the format (ADR 0026).
+ * `kind`, so a new kind keeps the format.
  */
 export const WidgetEntrySchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('word'), id: WordIdSchema, ...WidgetEntryText }),
@@ -60,7 +60,7 @@ const WidgetCollectionSchema = z.strictObject({
 });
 
 /**
- * The Widget Snapshot (ADR 0026): everything each Widget Mode may show,
+ * The Widget Snapshot: everything each Widget Mode may show,
  * already decided by the Core, which the app writes into the App Group and
  * the widget only reads. Every id in a mode is one of `entries`.
  */
@@ -104,7 +104,7 @@ export const WidgetSnapshotSchema = z
      * the Streak. None while the widget goal ring, the XP log or the Daily
      * Goal is off or not set, or «Без лічильників» hides the counters.
      * Optional, so the format stays. `xp` keeps its name for the format and
-     * carries the Words Seen toward the Daily Goal (ADR 0074).
+     * carries the Words Seen toward the Daily Goal.
      */
     goalRing: z
       .strictObject({

@@ -195,7 +195,7 @@ export const swipeStampLayout = {
   paddingHorizontal: 12,
   border: 3,
   /**
-   * The room a card that fills its page (ADR 0091) leaves under it for the
+   * The room a card that fills its page leaves under it for the
    * stamp: its 20-point hang below the card and the drop of the far end of
    * the longest stamp, «✓ КАЖУ ПРАВИЛЬНО», tilted 6°, about 18 points.
    */
@@ -215,12 +215,12 @@ export const badgePadding = { horizontal: 10, vertical: 6 } as const;
 
 /**
  * The size an Entry of another kind starts at in Entry details' red panel at
- * M, a step of `titleScale` well under the main card's (ADR 0157): it grows
+ * M, a step of `titleScale` well under the main card's: it grows
  * with the in-app text size, shrinks to fit two lines, then ends in «…».
  */
 export const panelHeadline = { size: 24, lines: 2 } as const;
 
-/** The tallest an Illustration is drawn, in points (ADR 0055). */
+/** The tallest an Illustration is drawn, in points. */
 export const illustrationHeight = 160;
 
 /** On the SE an Entry card's padding shrinks by 25% (the Lemma's size is in `useLemmaSize`). */

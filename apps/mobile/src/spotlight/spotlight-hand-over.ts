@@ -7,8 +7,7 @@ import type { Opening } from '../opening';
 import type { SpotlightIndex } from './spotlight-index';
 
 /**
- * Hands the Core's Spotlight Snapshot to the iPhone search's index (ADR
- * 0057): when the composition opens, each time the app goes to the
+ * Hands the Core's Spotlight Snapshot to the iPhone search's index: when the composition opens, each time the app goes to the
  * background, and after each change of Favorites, the Collections or the Word
  * of the Day archive. A reopen of the composition, over a sync's changes or a
  * changed Feature Switch, hands over the snapshot of the one that opened and

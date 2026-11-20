@@ -1,5 +1,5 @@
 // Imports a content snapshot saved to a file into the content tables, once
-// (ADR 0090, 0152): `pnpm content import --edition <id> --snapshot <file> [--override]`,
+// (ADR 0090): `pnpm content import --edition <id> --snapshot <file> [--override]`,
 // as CI, Maestro and `pnpm dev` seed an empty database. An Edition already
 // imported is left as it is and the command succeeds, so it can run again.
 import { join, resolve } from 'node:path';

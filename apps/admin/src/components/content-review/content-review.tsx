@@ -32,14 +32,14 @@ const RESTORE_REASON = 'Повернуто з перегляду';
 
 /**
  * «Перегляд»: per kind, the records no Admin user has checked since their last
- * change, one at a time as a card to read (ADR 0143). «Так» (key 1) checks it,
+ * change, one at a time as a card to read. «Так» (key 1) checks it,
  * «Ні» (key 2) retires it with an optional reason, «Редагувати» (key 3) opens
  * the record form, whose save checks it at its new version; each shows the next.
  * «Далі» (key 4 or →) shows the next with no answer, the record left unchecked.
  * «Назад» (←) shows the records shown here again, newest first: one passed by
  * to answer now, a reviewed one to edit or to bring back into use.
  * «Позначити перевіреними всі (N)» checks every unchecked one of the kind at
- * one confirmation with a reason (ADR 0152).
+ * one confirmation with a reason.
  */
 export function ContentReview({ editionId }: { readonly editionId: string }) {
   const queryClient = useQueryClient();

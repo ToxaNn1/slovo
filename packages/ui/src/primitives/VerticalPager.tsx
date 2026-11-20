@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
+// Reanimated or gesture code: the React Compiler skips this module.
 
 import {
   createContext,
@@ -50,7 +50,7 @@ import { useReduceMotion } from '../providers/useReduceMotion';
 import { pageTurn } from '../tokens';
 
 /**
- * How a swipe let go settles (ADR 0055, the audit's C1): a critically damped
+ * How a swipe let go settles (the audit's C1): a critically damped
  * spring that never passes the page, carrying on at the swipe's speed.
  * Reanimated takes a spring's `duration` as perceptual and runs 1.5 times it,
  * so 200 here settles in 300 ms; a mass of 1 lets a spring this short reach
@@ -640,7 +640,7 @@ function forget(scrolls: SharedValue<Record<number, PageScroll>>, index: number)
  * taller than the screen. It scrolls with the same swipe that turns pages,
  * and holds still while the swipe turns the page. One drawn inside another
  * owns the page's scroll while it is drawn, as a Word card's tab that scrolls
- * inside its fixed frame does (ADR 0091). Outside a `VerticalPager`, as on the
+ * inside its fixed frame does. Outside a `VerticalPager`, as on the
  * Entry screen, it is a plain scroll view.
  */
 export function PagerScrollView(props: PagerScrollViewProps) {

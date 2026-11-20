@@ -1,5 +1,5 @@
 'use no memo';
-// Split from the Game Round, whose modules the React Compiler skips (ADR 0059).
+// Split from the Game Round, whose modules the React Compiler skips.
 
 import type { GivenAnswer, Round, RoundBlank, TextRange } from '@slovo/core';
 import { useState } from 'react';

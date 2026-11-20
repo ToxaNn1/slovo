@@ -117,7 +117,7 @@ const role = (
 ): TypeRoleSpec => ({ family, size, weight, lineHeight, letterSpacing, textTransform });
 
 /**
- * The Core's type roles (ADR 0070): a role carries its weight, so components
+ * The Core's type roles: a role carries its weight, so components
  * write none. The word family sets the loud roles, the UI family the reading
  * text and the meta.
  */
@@ -264,7 +264,7 @@ export const typeRoles = {
   crosswordState: role('word', '800', 12, 12, 1, 'uppercase'),
   /** The day under the Daily Crossword's name on its red card. */
   crosswordDay: role('ui', '600', 15, 19.6),
-  /** The crossing Daily Crossword's name and day on its card of the hub (ADR 0087). */
+  /** The crossing Daily Crossword's name and day on its card of the hub. */
   crosswordCardTitle: role('word', '800', 15, 16.9),
   /** The line under it, its grid size and count of Words, and the solved card's time line. */
   crosswordCardLine: role('ui', '500', 15, 19.6),
@@ -338,11 +338,11 @@ export const typeRoles = {
   widgetLine: role('word', '500', 12, 15),
   /** An Idiom's «Походження», the tab «Звідки» (XEntry2 e7). */
   idiomEtymology: role('ui', '500', 19, 28.5),
-  /** An Idiom's expression, from 26 on `titleScale` (ADR 0157; XEntry2 e7: line 1.02, tracking −1 at 40). */
+  /** An Idiom's expression, from 26 on `titleScale` (XEntry2 e7: line 1.02, tracking −1 at 40). */
   idiomExpression: role('word', '900', 26, 27.2, -0.8),
   /** An Idiom's primary Definition in the tab «Суть», at the user's font size (XEntry2 e7). */
   idiomEssence: role('ui', '500', 19, 26.8),
-  /** A Synonym Row's dominant, on one line at the Lemma's size (ADR 0157; XEntry2 e8: line 1). */
+  /** A Synonym Row's dominant, on one line at the Lemma's size (XEntry2 e8: line 1). */
   synonymDominant: role('word', '900', 44, 46, -1.3),
   /** A Synonym Row's member, one per row, at the user's font size (XEntry2 e8). */
   synonymMember: role('word', '800', 19, 20.9),
@@ -450,7 +450,7 @@ export const typeRoles = {
   endOfCycleInfinity: role('word', '900', 330, 330),
   /** A Badge's symbol on its mark, at a 156-wide mark; the mark scales it to a third of its side. */
   badgeSymbol: role('word', '900', 52, 62),
-  /** The «НОВА» tag on an earned Badge the reader has not opened (ADR 0085). */
+  /** The «НОВА» tag on an earned Badge the reader has not opened. */
   badgeNewTag: role('word', '900', 12, 12, 1, 'uppercase'),
   /** The Game Review's title. */
   reviewTitle: role('word', '800', 15, 15),
@@ -478,7 +478,7 @@ export const typeRoles = {
   errorTitle: role('word', '900', 26, 28.6),
   /** What went wrong, under the title of the Feed's error state. */
   errorText: role('ui', '400', 15, 21.8),
-  /** A Tip's title, from 26 on `titleScale` (ADR 0157; board XEntry2 e9: line 1.1). */
+  /** A Tip's title, from 26 on `titleScale` (board XEntry2 e9: line 1.1). */
   tipTitle: role('word', '900', 26, 27.2, -0.8),
   /** A Tip's rule on its card's «Правило» tab (board XEntry2 e9). */
   tipRule: role('ui', '500', 19, 26.6),
@@ -590,7 +590,7 @@ export const typeRoles = {
   reviewTag: role('word', '800', 12, 12, 1, 'uppercase'),
   /** The label over a form of a Correction: «Так часто кажуть», «Українською краще». */
   formLabel: role('ui', '600', 12, 12, 0.5),
-  /** A Correction's non-standard form, struck through, from 26 on `titleScale` (ADR 0157). */
+  /** A Correction's non-standard form, struck through, from 26 on `titleScale`. */
   nonStandardForm: role('word', '800', 26, 28.17),
   /** A Correction's explanation, also in an expanded Round of the Game Review. */
   explanation: role('ui', '400', 15, 22),
@@ -670,17 +670,17 @@ export const typeRoles = {
   cardKicker: role('word', '800', 12, 12, 1.5, 'uppercase'),
   /** The label over a form on a Correction card: «Так часто кажуть · калька», «Українською краще» (XEntry2 e6). */
   correctionFormLabel: role('ui', '700', 12, 12),
-  /** A Correction's non-standard form on its card, under the red strike, from 26 on `titleScale` (ADR 0157; XEntry2 e6). */
+  /** A Correction's non-standard form on its card, under the red strike, from 26 on `titleScale` (XEntry2 e6). */
   correctionStruck: role('word', '800', 26, 28.6),
-  /** A Correction's standard form in «Як краще», from 32 on `titleScale` (ADR 0157; XEntry2 e6: line 1.05). */
+  /** A Correction's standard form in «Як краще», from 32 on `titleScale` (XEntry2 e6: line 1.05). */
   correctionStandard: role('word', '900', 32, 33.5, -0.9),
   /** A Correction's explanation in «Чому» (XEntry2 e6). */
   correctionWhy: role('ui', '500', 19, 27.6),
   /** A sentence of a Correction's example pair in «Приклади» (XEntry2 e6). */
   correctionExample: role('ui', '500', 19, 27.9),
   /**
-   * The marked standard form in the standard sentence of «Приклади»
-   * (ADR 0117). The board sets it in bold; the Edition ships Onest up to 700.
+   * The marked standard form in the standard sentence of «Приклади».
+   * The board sets it in bold; the Edition ships Onest up to 700.
    */
   correctionExampleStrong: role('ui', '700', 19, 27.9),
   /** The big red opening quote mark over the Example in the tabbed Word card's «Приклад» (board p1). */
@@ -875,7 +875,7 @@ export function roleSize(name: TypeRole): DrawnSize {
 
 /**
  * The one fixed type scale of the cards' titles at M, «Як у системі»,
- * largest first (ADR 0157). A title starts at its role's step and, when its
+ * largest first. A title starts at its role's step and, when its
  * widest word or its lines do not fit, takes the next lower step, never a size
  * between two. At a larger in-app text size, or in the compact layout, every
  * step grows or shrinks by the same factor as the Lemma.
@@ -885,7 +885,7 @@ export const titleScale = [50, 44, 40, 36, 32, 28, 26, 24, 22, 20] as const;
 /**
  * A card title's start size at the Lemma's size: its role's size at M, grown
  * or shrunk as the Lemma is from its own, so every title keeps its step of
- * `titleScale` at every text size (ADR 0157).
+ * `titleScale` at every text size.
  */
 export function titleSize(name: TypeRole, lemma: DrawnSize): DrawnSize {
   const factor = lemma.fontSize / textSizeSteps.system.lemma;
@@ -1103,7 +1103,7 @@ export type Easing = readonly [number, number, number, number];
 /** CSS `ease`, for the motions the design gives no curve. */
 const ease: Easing = [0.25, 0.1, 0.25, 1];
 
-/** The design's motions: durations in milliseconds and their curves (ADR 0070). */
+/** The design's motions: durations in milliseconds and their curves. */
 export const motion = {
   press: { duration: 80, easing: ease },
   screen: { duration: 500, easing: [0.2, 0.8, 0.2, 1] },
@@ -1317,10 +1317,10 @@ export const scrim = 'rgba(20, 12, 10, 0.55)';
 export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32 } as const;
 
 /**
- * The Word card's type sizes at each step of the three-step text size ladder
- * (ADR 0134), before the OS text size: «Як у системі» at the base step, the
+ * The Word card's type sizes at each step of the three-step text size ladder,
+ * before the OS text size: «Як у системі» at the base step, the
  * hero word and the reading text at their base size, «Більший» and
- * «Найбільший» at 1.15 and 1.3 times it (ADR 0070). The OS text size scales
+ * «Найбільший» at 1.15 and 1.3 times it. The OS text size scales
  * them within `fontScaleCap.text`.
  */
 export const textSizeSteps: Readonly<
@@ -1406,10 +1406,10 @@ export const disabledOpacity = 0.5;
 /** The opacity a pressed tile fades to where its face does not sink: under Reduce Motion, or with no edge. */
 export const pressedFade = 0.7;
 
-/** The heights of a button's face: the boards' 62 pt main button (ADR 0145), a 48 pt one on a card (the Due Quiz's «ПОЧАТИ»), and a small one as tall as a tap area. */
+/** The heights of a button's face: the boards' 62 pt main button, a 48 pt one on a card (the Due Quiz's «ПОЧАТИ»), and a small one as tall as a tap area. */
 export const buttonHeight = { large: 62, medium: 48, small: 44 } as const;
 
-/** The main button's height inside a sheet, a little lower than on a screen (ADR 0145). */
+/** The main button's height inside a sheet, a little lower than on a screen. */
 export const buttonHeightInSheet = 60;
 
 /** The side of the design's square icon button, and of the icon inside it. */

@@ -242,7 +242,7 @@ export const userStateMigrations: readonly UserStateMigration[] = [
       return new Map(kept ? [[INSTALLED_KEY, JSON.stringify(true)]] : []);
     },
   },
-  // 0.8.12: a Best result per Game Mode (ADR 0052). The single `game.best` of
+  // 0.8.12: a Best result per Game Mode. The single `game.best` of
   // every mode becomes the Best result of «Вгадай слово», under a new key that
   // syncs as `highest`, with a pending change from the first-sign-in time so
   // the Account gets it too; `game.best` stays as it is and is no longer read.
@@ -267,7 +267,7 @@ export const userStateMigrations: readonly UserStateMigration[] = [
       ]);
     },
   },
-  // 1.0: one Rarity Ceiling for every surface (ADR 0072). The Ceiling of the
+  // 1.0: one Rarity Ceiling for every surface. The Ceiling of the
   // Mix becomes the `settings.rarityCeiling` setting, with a pending change
   // from the first-sign-in time so the Account gets it too; a Ceiling that does
   // not read is dropped, as 1.0 read none from it. The Mix's Rarity Floor and
@@ -291,11 +291,11 @@ export const userStateMigrations: readonly UserStateMigration[] = [
       return changes;
     },
   },
-  // 1.0: the text size in three steps on one ladder (ADR 0134). The S…XL font
+  // 1.0: the text size in three steps on one ladder. The S…XL font
   // size opens as its step: S and M as system, L as larger, XL as largest,
   // under the new key `settings.textSize`, with a pending change from the
   // first-sign-in time so the Account gets it too. `settings.fontSize` stays
-  // reserved (ADR 0176); one that does not read brings nothing, and the
+  // reserved; one that does not read brings nothing, and the
   // Edition's default holds.
   {
     version: 8,

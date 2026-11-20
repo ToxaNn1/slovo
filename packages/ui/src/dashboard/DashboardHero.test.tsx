@@ -181,7 +181,7 @@ describe('DashboardHero', () => {
     ).toHaveLength(0);
   });
 
-  // Owner recording 12.11: the board's Рупор throws sparks from its megaphone (ADR 0109).
+  // Owner recording 12.11: the board's Рупор throws sparks from its megaphone.
   it("throws the board's five sparks from the Mascot's megaphone, closed and open", async () => {
     const { show } = await renderHero(unrevealed, { sparks: true });
 

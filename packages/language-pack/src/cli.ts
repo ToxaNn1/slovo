@@ -15,7 +15,7 @@
  * Prints the content report after every successful build. Exits non-zero,
  * listing every error, when the content is invalid. It lists every content
  * target of `contentTargets` in `edition.json` the content misses and still
- * exits zero: the targets block nothing (ADR 0123).
+ * exits zero: the targets block nothing.
  */
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';

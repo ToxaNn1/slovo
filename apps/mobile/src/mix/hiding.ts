@@ -80,7 +80,7 @@ async function hide(
   composition: Composition,
   option: Exclude<HideChoiceOption, { readonly kind: 'last-category' }>,
   showToast: (toast: UndoToastContent) => void,
-  /** Runs the undo in the composition open at the tap (ADR 0018). */
+  /** Runs the undo in the composition open at the tap. */
   undo: (subject: string, undo: Undo) => void,
 ): Promise<void> {
   const result = await composition.hide(option.target);

@@ -11,7 +11,7 @@ import { createMemoryUserStatePort, openUserState } from '../user-state/user-sta
 
 const HOUR = 60 * 60_000;
 
-/** Long enough for every wait between the tries of one request (ADR 0037). */
+/** Long enough for every wait between the tries of one request. */
 const ALL_TRIES = 10_000;
 
 const typo: MistakeReportDraft = { entryId: 'w_kvasha', type: 'typo', comment: '' };
@@ -51,7 +51,7 @@ async function device({
       edition: { id: 'uk', isFeatureEnabled: (feature) => !switchedOff.has(feature) },
       appVersion,
       contentVersion: () => 42,
-      // The device's Account, lending the Session it holds, if any (ADR 0159).
+      // The device's Account, lending the Session it holds, if any.
       account: {
         withSession: async (request) => (session === undefined ? undefined : request(session)),
       },
@@ -134,7 +134,7 @@ describe('reporting a mistake online', () => {
   });
 });
 
-describe('who sent a report (ADR 0159)', () => {
+describe('who sent a report', () => {
   it('sends the Session of a signed-in reader with the report', async () => {
     const app = await device({ session: 'session-of-anna' });
 
@@ -158,7 +158,7 @@ describe('reporting a mistake offline', () => {
     app.api.online = false;
 
     expect(await app.report()).toBe('thanked');
-    // The first try and three more (ADR 0037).
+    // The first try and three more.
     expect(app.api.calls).toHaveLength(4);
     expect(app.received()).toEqual([]);
 
@@ -229,7 +229,7 @@ describe('reporting a mistake offline', () => {
     app.reports.foreground();
     await app.advance(3 * ALL_TRIES);
 
-    // Four tries of the report, four more of the return (ADR 0037).
+    // Four tries of the report, four more of the return.
     expect(app.api.calls).toHaveLength(8);
   });
 
@@ -269,7 +269,7 @@ describe('reporting a mistake offline', () => {
 });
 
 describe('the queue of at most 20 unsent reports', () => {
-  it('keeps 20, and a 21st pushes out the oldest (ADR 0056)', async () => {
+  it('keeps 20, and a 21st pushes out the oldest', async () => {
     const app = await device();
     app.api.online = false;
     for (let report = 0; report <= MISTAKE_REPORT_QUEUE_SIZE; report += 1) {

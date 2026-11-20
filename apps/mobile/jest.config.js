@@ -1,6 +1,6 @@
 // Jest runs the shell's tests that render (`*.test.tsx`), such as its routes
 // under expo-router's test renderer, on Expo's preset for iOS; Vitest runs the
-// rest (ADR 0029).
+// rest.
 import { jestReports } from '@slovo/config/test-reports';
 
 /** The folder of the Edition the tests run as. */
@@ -20,7 +20,7 @@ export default {
     '/node_modules/@react-native/babel-preset/',
   ],
   moduleNameMapper: {
-    // The routes import `src` as `@/…`, as tsconfig.json maps it for Metro (ADR 0027).
+    // The routes import `src` as `@/…`, as tsconfig.json maps it for Metro.
     '^@/(.*)$': '<rootDir>/src/$1',
     // A plain view in place of the one native view jest-expo has no double for.
     '^expo-glass-effect$': '<rootDir>/jest.glass-effect.js',

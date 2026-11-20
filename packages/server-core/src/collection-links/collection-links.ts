@@ -4,10 +4,10 @@ import type { EditionRegistry, NotServing } from '../edition/edition-registry';
 import type { Clock, CollectionLinkStore, Random, RateLimits } from '../ports';
 import { countRequest, ipSubject, type TooManyRequests } from '../rate-limit';
 
-/** The characters of a Collection Link's id: letters and digits (ADR 0058). */
+/** The characters of a Collection Link's id: letters and digits. */
 const ID_CHARACTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 
-/** The new links one IP address may make in a day (ADR 0058). */
+/** The new links one IP address may make in a day. */
 const LINKS_PER_IP = { requests: 20, windowSeconds: 24 * 60 * 60 } as const;
 
 /** How many characters a Collection Link's id has. */
@@ -25,7 +25,7 @@ interface UnknownLink {
   readonly reason: 'unknown-link';
 }
 
-/** The Collection Links readers share and open, with no Account on either side (ADR 0058). */
+/** The Collection Links readers share and open, with no Account on either side. */
 export interface CollectionLinks {
   /**
    * Keeps the Collection as it is now under a new random id, when its Edition

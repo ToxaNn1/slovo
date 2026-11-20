@@ -177,7 +177,7 @@ export interface Authenticator {
 /** A Sign-in method an Account keeps a record of; a Sign-in code reaches every Account. */
 export type RecordedSignInMethod = 'google' | 'apple';
 
-/** An Account as the owner admin lists it (ADR 0162). */
+/** An Account as the owner admin lists it. */
 export interface ReaderAccount {
   readonly account: AccountRecord;
   readonly signInMethods: readonly RecordedSignInMethod[];
@@ -199,7 +199,7 @@ export interface Mail {
   readonly text: string;
 }
 
-/** Sends emails (ZeptoMail's HTTPS API in the backend, ADR 0115). */
+/** Sends emails (ZeptoMail's HTTPS API in the backend). */
 export interface Mailer {
   send(mail: Mail): Promise<void>;
 }
@@ -212,7 +212,7 @@ export interface AnalyticsPeriod {
 
 /**
  * One aggregate read of the Analytics events of some Editions. Every read
- * answers counts per key only, never a person or an id (ADR 0060).
+ * answers counts per key only, never a person or an id.
  */
 export type AnalyticsQuery =
   | {
@@ -325,7 +325,7 @@ export interface SwitchRuleStore {
 
 /**
  * A Mistake Report as the backend keeps it: the report, its time of arrival
- * and the Account of a signed-in reader, none for an anonymous one (ADR 0159).
+ * and the Account of a signed-in reader, none for an anonymous one.
  */
 export interface KeptReport extends MistakeReport {
   readonly receivedAt: Date;
@@ -334,8 +334,8 @@ export interface KeptReport extends MistakeReport {
 
 /**
  * The Mistake Reports still to check, per Edition (Postgres in the backend).
- * It keeps no IP address and no device id (ADR 0056); a deleted Account
- * leaves its reports anonymous (ADR 0159).
+ * It keeps no IP address and no device id; a deleted Account
+ * leaves its reports anonymous.
  */
 export interface MistakeReportStore {
   keep(report: KeptReport): Promise<void>;
@@ -343,7 +343,7 @@ export interface MistakeReportStore {
 
 /**
  * A Collection Link as the backend keeps it: the Collection as it was shared
- * and the time it was made, nothing else (ADR 0058).
+ * and the time it was made, nothing else.
  */
 export interface KeptCollectionLink extends CollectionLink {
   readonly createdAt: Date;
@@ -352,7 +352,7 @@ export interface KeptCollectionLink extends CollectionLink {
 /**
  * The Collection Links of every Edition (Postgres in the backend), each under
  * its id. A link is never changed; it keeps no IP address, no device id and
- * no Account (ADR 0058).
+ * no Account.
  */
 export interface CollectionLinkStore {
   /** Keeps the link under the id, unless the id is taken: then it keeps nothing and answers false. */
@@ -412,7 +412,7 @@ export interface UserRecords {
   ): Promise<readonly KeptRecord[]>;
   /** Every record of the Account, in every Edition, in sequence order, tombstones included. */
   ofAccount(accountId: string): Promise<readonly (KeptRecord & { readonly editionId: string })[]>;
-  /** How many Accounts keep a record other than a tombstone in any of the Editions (ADR 0162). */
+  /** How many Accounts keep a record other than a tombstone in any of the Editions. */
   accountsWithRecords(editionIds: readonly string[]): Promise<number>;
 }
 
@@ -420,7 +420,7 @@ export interface UserRecords {
  * The Community Counters of every Edition and Entry (Postgres in the
  * backend): known, unknown and saved, totals only, each never below zero, and
  * the Favorites adds of each ISO week. It keeps no per-reader rows, so nothing
- * links two changes to one reader (ADR 0060).
+ * links two changes to one reader.
  */
 export interface CounterStore {
   /**
@@ -454,7 +454,7 @@ export interface CounterStore {
   topWords(editionIds: readonly string[], limit: number): Promise<TopWords>;
 }
 
-/** A Word among the most counted of a mark (ADR 0060). */
+/** A Word among the most counted of a mark. */
 export interface TopWord {
   readonly entryId: string;
   readonly lemma: string;
@@ -482,7 +482,7 @@ export interface AnswerCount {
   readonly count: number;
 }
 
-/** The Community Word of a week: the Entry most added to Favorites, with its adds (ADR 0060). */
+/** The Community Word of a week: the Entry most added to Favorites, with its adds. */
 export interface CommunityWord {
   readonly entryId: string;
   readonly adds: number;

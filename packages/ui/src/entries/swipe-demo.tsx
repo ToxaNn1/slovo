@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
+// Reanimated code: the React Compiler skips this module.
 
 import { createContext, useContext, useEffect, type ReactNode } from 'react';
 import { StyleSheet } from 'react-native';
@@ -18,7 +18,7 @@ import { useReduceMotion } from '../providers/useReduceMotion';
 import { gesturesHint } from '../tokens';
 
 /**
- * The swipe hint's demo (board XSwipeV, ADR 0112): while «ГОРТАЙ ПАЛЬЦЕМ» is
+ * The swipe hint's demo (board XSwipeV): while «ГОРТАЙ ПАЛЬЦЕМ» is
  * open the Feed's own card plays the three gestures. One round takes 8.4 s;
  * its place in the round runs from 0 to 1 and every part of the demo is a
  * function of it, so the card, its wedges, the finger and the sheet's rows

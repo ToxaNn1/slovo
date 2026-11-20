@@ -64,7 +64,7 @@ export interface Pronunciation {
 const STRESS_MARK = /́/g;
 
 /**
- * Pronunciation (ADR 0083): the Word read aloud by its Recording in the
+ * Pronunciation: the Word read aloud by its Recording in the
  * Narrator Voice, or by the device's voice for the Edition's language when it
  * has none. One Word is read at a time, and nothing with «Звуки» off. When
  * the Word has no Recording and the device no voice for the language, the

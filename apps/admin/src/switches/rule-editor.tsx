@@ -32,7 +32,7 @@ const inputClass =
 
 const PLATFORMS: readonly Platform[] = ['ios', 'android'];
 
-/** The Update channels in the admin's words: `beta` is the owner's testers (ADR 0170). */
+/** The Update channels in the admin's words: `beta` is the owner's testers. */
 const CHANNEL_TEXTS: Readonly<Record<UpdateChannel, string>> = {
   beta: 'бета',
   production: 'основний',

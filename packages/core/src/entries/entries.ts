@@ -67,8 +67,7 @@ export type EligibleOfKind<E extends AskableEntry = ShownEntry> =
  * Retired, a Feature Switch or the Mix themselves. An eligible Entry is live
  * (not Retired), of a kind the Edition turns on and no remote Feature Switch
  * turns off, in the user's Mix, within the Rarity Range (a Word in it;
- * the rarities touch no other kind) and not Hidden (ADR 0015, 0019, 0040,
- * 0051, 0156). Synonym Rows and Tips are eligible by the same rules.
+ * the rarities touch no other kind) and not Hidden (ADR 0156). Synonym Rows and Tips are eligible by the same rules.
  */
 export interface Entries {
   /**
@@ -92,12 +91,12 @@ export interface Entries {
    * The Words within the Rarity Range, the Mix and the Hidden Entries
    * aside: every live Word in it, in the Language Pack's order, which the
    * Daily Crossword picks from, so readers in one Rarity Range get the same
-   * puzzle (ADR 0156, 0073). Read afresh on every call, as `eligible` reads.
+   * puzzle (ADR 0156). Read afresh on every call, as `eligible` reads.
    */
   wordsInRarityRange(): Promise<readonly Word[]>;
   /**
    * Every live Correction that is not Hidden, in the Language Pack's order,
-   * the Mix aside, for the Correction Types rail (ADR 0076). Read afresh on
+   * the Mix aside, for the Correction Types rail. Read afresh on
    * every call, as `eligible` reads.
    */
   liveCorrections(): Promise<readonly Correction[]>;
@@ -141,7 +140,7 @@ export interface Entries {
   getManyOfAnyKind(ids: readonly string[]): Promise<ReadonlyMap<string, AskableEntry>>;
   /**
    * Every Category of the Language Pack, with its display name, in its order,
-   * read once per Patch: a Patch makes new Entries (ADR 0033, 0090).
+   * read once per Patch: a Patch makes new Entries (ADR 0090).
    */
   categories(): Promise<readonly Category[]>;
   /** Every Category of Corrections of the Language Pack, as `categories` gives the Words'. */
@@ -171,7 +170,7 @@ export interface Entries {
    * The first live Synonym Row that is not Hidden, in the Language Pack's
    * stable order, that links the live Word as a member, or none when no such
    * row does, the Edition turns Synonym Rows off or the reader keeps them out
-   * of the Mix (ADR 0051). Derived from the rows: nothing on the Word names it.
+   * of the Mix. Derived from the rows: nothing on the Word names it.
    */
   linkingSynonymRow(word: Word): Promise<SynonymRow | undefined>;
   /**
@@ -297,7 +296,7 @@ export function createEntries({
   /**
    * The live Entries of the kind in the Categories, one query per Category
    * the first time, Category by Category in the Categories' order (the Words'
-   * of the Mix, or the Corrections' under Corrections as a whole, ADR 0033),
+   * of the Mix, or the Corrections' under Corrections as a whole),
    * or every live Entry of the kind without a Mix.
    */
   async function idsInCategories(

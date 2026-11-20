@@ -27,7 +27,7 @@ import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support
 import { renderApp } from '../shell/test-app';
 import { ProfileScreen } from './profile-screen';
 
-/** The UA Edition as it ships, with the Daily Crossword on, so its Badges show (ADR 0176). */
+/** The UA Edition as it ships, with the Daily Crossword on, so its Badges show. */
 const edition: Edition = {
   ...shipped,
   isFeatureEnabled: (feature) => feature === 'dailyCrossword' || shipped.isFeatureEnabled(feature),
@@ -272,7 +272,7 @@ describe('the Profile', () => {
     }
   });
 
-  // ADR 0145: the board's blocks first, then the blocks the board does not draw.
+  // The board's blocks first, then the blocks the board does not draw.
   it('renders the title, Level card, Streak, calendar and Badges, then the name header, ladder, share, freeze card and the offer to save progress', async () => {
     await renderScreen({ rounds: 50, withAccount: true, shareCard: sendingShareCard });
 
@@ -320,14 +320,14 @@ describe('the Profile', () => {
     expect(screen.queryByTestId('profile-best-guess-word')).not.toBeOnTheScreen();
   });
 
-  // ADR 0145: the Level appears once, its number in the ring and its name beside it.
+  // The Level appears once, its number in the ring and its name beside it.
   it('reads the Level card as its number and name, its XP in the Level and the XP left to the next name', async () => {
     await renderScreen({ rounds: 60 });
 
     expect(screen.getByTestId('profile-level-number')).toHaveTextContent('1');
     expect(screen.getByTestId('profile-level-name')).toHaveTextContent(/^Початківець$/);
     expect(screen.queryByText(/Рівень 1/)).toBeNull();
-    // One goal on the card (ADR 0188): the total XP of the next name's first Level.
+    // One goal on the card: the total XP of the next name's first Level.
     expect(screen.getByTestId('profile-level-progress')).toHaveTextContent('60 / 306 XP');
     expect(screen.getByTestId('profile-level-left')).toHaveTextContent('Читач: ЩЕ 246 XP');
     expect(screen.getByText(strings.levelLabel)).toBeOnTheScreen();
@@ -792,7 +792,7 @@ describe('the Profile', () => {
       expect(card.getByLabelText(label('future', 15))).toBeOnTheScreen();
     });
 
-    // ADR 0145: the Break card is one of the blocks below the Badges.
+    // The Break card is one of the blocks below the Badges.
     it('shows the card below the Badges while a Break runs, the Streak still in its place', async () => {
       await renderScreen({ switchedOn: 'breakCard', seed: running });
 
@@ -836,7 +836,7 @@ describe('the Profile', () => {
   });
 });
 
-// ADR 0136: the Profile's header with the reader's optional name.
+// The Profile's header with the reader's optional name.
 describe("the Profile's header", () => {
   const nameStrings = strings.readerName;
 
@@ -864,7 +864,7 @@ describe("the Profile's header", () => {
     });
   }
 
-  // ADR 0145: the Level appears once, on the Level card.
+  // The Level appears once, on the Level card.
   it('shows the name and its first letter, and no Level', async () => {
     await renderScreen({ name: 'олена' });
 

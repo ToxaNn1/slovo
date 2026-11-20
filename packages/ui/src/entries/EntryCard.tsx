@@ -39,18 +39,18 @@ export interface EntryCardProps {
   onWordHistoryShown?: (() => void) | undefined;
   /** The corner and the side swipes; none on a bare card. */
   slots?: EntryCardSlots | undefined;
-  /** The card's place in a Category's or a Curated Collection's Feed (ADR 0110, 0178); none in the Feed. */
+  /** The card's place in a Category's or a Curated Collection's Feed; none in the Feed. */
   kicker?: string | undefined;
   /**
    * The page the card lays itself out on, a fixed frame the page's height
-   * (ADR 0091) or, for the red card of the Word of the Day that Self-check
+   * or, for the red card of the Word of the Day that Self-check
    * keeps closed, a scroll. None: the card alone.
    */
   page?: EntryCardPage | undefined;
 }
 
 /**
- * What an Entry card carries beside its content (ADR 0077, XSwipe): the
+ * What an Entry card carries beside its content (XSwipe): the
  * actions in the card's top row, beside its kicker, and the side swipes that
  * set the Entry's Knowledge Mark, with its stamp and undo toast, while the
  * Knowledge switch is on. Self-check conceals them as it conceals the card.
@@ -169,7 +169,7 @@ function EntryCardFace({
       <RevealFrame
         testID={`${card.kind}-card`}
         style={[
-          // The tabbed card takes the page's height, whatever its tab holds (ADR 0091),
+          // The tabbed card takes the page's height, whatever its tab holds,
           // outlined in ink over the red offset shadow of board p1.
           styles.card,
           {
@@ -263,8 +263,8 @@ function EntryCardFace({
 }
 
 /**
- * Whether the card is a fixed frame the page's height with tabs
- * (ADR 0091): every card but the Word of the Day's while Self-check keeps it
+ * Whether the card is a fixed frame the page's height with tabs:
+ * every card but the Word of the Day's while Self-check keeps it
  * closed, which is the red card until the reader reveals it.
  */
 function fixedFrame(card: EntryCardProps['card'], concealed: boolean): boolean {

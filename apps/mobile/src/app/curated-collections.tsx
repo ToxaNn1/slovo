@@ -7,7 +7,7 @@ import { useCuratedCollectionGrid, useOpenCuratedCollection } from '@/dashboard/
 import { editionStrings } from '@/edition/edition';
 
 /**
- * The grid of every Curated Collection published by today (ADR 0178), opened
+ * The grid of every Curated Collection published by today, opened
  * from the «SLOVO пропонує» rail's header, as k1 draws the Categories: its
  * title with their number, three columns of tiles in the rail's order, a tile
  * opening its collection's screen. With none to show it returns to the Dashboard.

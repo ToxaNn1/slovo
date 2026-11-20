@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
+// Reanimated or gesture code: the React Compiler skips this module.
 
 import type { FixedChip, RoundAnswer } from '@slovo/core';
 import { Fragment, useEffect, useRef, useState } from 'react';

@@ -178,7 +178,7 @@ describe('a Correction card (board XEntry2 e6)', () => {
     expect(screen.getByTestId('correction-example-standard')).toHaveTextContent(
       'We join in the race.',
     );
-    // The content marks «join in» as the standard form (ADR 0117), though
+    // The content marks «join in» as the standard form, though
     // both sentences share «in»: the mark, not a comparison, picks the bold.
     expect(textStyle('join in')).toMatchObject({
       fontWeight: typeRoles.correctionExampleStrong.weight,

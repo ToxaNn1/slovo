@@ -3,7 +3,7 @@ import { READER_NAME_AT_MOST, readerNameLength, settingsRecords } from './record
 
 export { READER_NAME_AT_MOST, readerNameLength };
 
-/** What a typed name keeps (ADR 0136): the name trimmed, no name for a blank one, or nothing past the limit. */
+/** What a typed name keeps: the name trimmed, no name for a blank one, or nothing past the limit. */
 export type ReaderNameChoice =
   | { readonly kind: 'name'; readonly name: string }
   | { readonly kind: 'none' }
@@ -18,7 +18,7 @@ export function readerNameOf(typed: string): ReaderNameChoice {
 }
 
 /**
- * The reader's optional name on the Profile (ADR 0136), kept in the user
+ * The reader's optional name on the Profile, kept in the user
  * state, which syncs it through the Account. It reaches no Analytics, no
  * Community Counter and no Questionnaire counter: it holds no port to them.
  */

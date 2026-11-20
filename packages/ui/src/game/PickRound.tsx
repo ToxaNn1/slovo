@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
+// Reanimated or gesture code: the React Compiler skips this module.
 
 import {
   stressLabel,
@@ -126,7 +126,7 @@ export function PickRound({
  * The options of a pick Round, one under another, as a Game's Round and a
  * Quick Question show them; a new set of options takes a new `key`. In a
  * Quick Question's card (board f3) a tile is lower and a Word on it smaller.
- * In a Round on the ground (ADR 0139) they sit at the bottom of the screen
+ * In a Round on the ground they sit at the bottom of the screen
  * and rise in one after another, at once with Reduce Motion.
  */
 export function AnswerOptions({

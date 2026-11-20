@@ -2,8 +2,7 @@ import type { Mail, Mailer } from '@slovo/server-core';
 import { z } from 'zod';
 
 /**
- * Where the backend sends its emails, from the environment (`config.ts`,
- * ADR 0115): ZeptoMail's HTTPS API in the Deployment, Mailpit's send API on
+ * Where the backend sends its emails, from the environment (`config.ts`): ZeptoMail's HTTPS API in the Deployment, Mailpit's send API on
  * a developer's machine (`compose.yaml`).
  */
 export type MailTransport =
@@ -68,7 +67,7 @@ async function refusalOf(name: string, response: Response): Promise<string> {
 
 /**
  * Sends the emails over HTTPS to ZeptoMail, or to Mailpit locally. Railway
- * blocks outbound SMTP, so no email goes over SMTP (ADR 0115). An error names
+ * blocks outbound SMTP, so no email goes over SMTP. An error names
  * the service's status and codes alone: never the token, never the address.
  */
 export function createMailer(

@@ -26,7 +26,7 @@ const SEARCH_BUDGET = 500;
 
 /**
  * The days to append to an Edition's crossword days so that 400 lie ahead of
- * `today` (ADR 0052): from the day after its last one, or from `today` when
+ * `today`: from the day after its last one, or from `today` when
  * it has none. It gives the new days, none when enough lie ahead, and
  * refuses when a day can't be made. Each day's search tries at most
  * `searchBudget` placements; tests pass a smaller one to build days fast.
@@ -145,7 +145,7 @@ const CLUE_WORD = /\p{L}[\p{L}\p{M}ʼ'’]*/gu;
 
 /**
  * A clue that doesn't give its answer away: each word of it that is the
- * answer, ignoring case and Stress, becomes «…» (ADR 0052).
+ * answer, ignoring case and Stress, becomes «…».
  */
 function withoutAnswer(clue: string, answer: string): string {
   return clue

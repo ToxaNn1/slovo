@@ -84,9 +84,9 @@ function Glyph() {
 }
 
 /**
- * The Services on a Railway-like canvas (ADR 0164): each block at its fixed
+ * The Services on a Railway-like canvas: each block at its fixed
  * place, and a line for each link, solid for a constant link and dashed for
- * a scheduled run. It follows the admin's Theme (ADR 0171): white with black
+ * a scheduled run. It follows the admin's Theme: white with black
  * dots in the light one, black with white dots in the dark one. It zooms,
  * opens fitted to the window and moves anywhere by dragging its empty room
  * or with the wheel.

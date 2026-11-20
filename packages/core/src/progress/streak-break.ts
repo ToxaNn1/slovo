@@ -33,7 +33,7 @@ export type BreakState =
   | { readonly kind: 'waiting'; readonly nextStart: string };
 
 /**
- * The Break (ADR 0066, 0180): the reader pauses the Streak from today, free,
+ * The Break (ADR 0066): the reader pauses the Streak from today, free,
  * for up to 7 Break days in the 30 days from the first Break of them, and may
  * end it early. Starting one appends a Break-started record to the XP log;
  * its days keep the Streak and add nothing to it. Ending one appends a

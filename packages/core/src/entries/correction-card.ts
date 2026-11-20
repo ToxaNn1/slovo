@@ -16,7 +16,7 @@ import { markedStressedVowelsOf } from './stress';
  * never picks sections itself. It carries data and keys only; the UI turns
  * the Correction Type key into the Edition's string. A Correction's texts
  * show as written; a wrong-stress Correction writes its Stress marks into
- * them (ADR 0045).
+ * them.
  */
 export interface CorrectionCardModel {
   readonly kind: 'correction';
@@ -49,7 +49,7 @@ export interface CorrectionCardModel {
 /**
  * The example pair as the card shows it: the non-standard sentence, and the
  * standard one both as plain text (for VoiceOver and sharing) and in pieces,
- * its standard form apart for the card to draw bold (ADR 0117).
+ * its standard form apart for the card to draw bold.
  */
 export interface CorrectionCardExamplePair {
   readonly nonStandard: string;

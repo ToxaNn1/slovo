@@ -1,4 +1,4 @@
-# The app's own Spotlight module (ADR 0057), linked by Expo's autolinking
+# The app's own Spotlight module, linked by Expo's autolinking
 # from apps/mobile/modules.
 Pod::Spec.new do |s|
   s.name           = 'SlovoSpotlight'

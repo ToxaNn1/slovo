@@ -10,7 +10,7 @@ import { userStateRecords } from '../user-state-schema';
  * opens, and kept in memory after that, so open one per app session and share
  * it (ADR 0013). A change is made in memory only once the caller has written
  * it: each is a staged piece. When eligibility changes, it reads the eligible
- * Entries again (ADR 0015).
+ * Entries again.
  */
 export interface Cycle {
   /** Every Entry the Cycle covers, each kind in the Cycle order. */

@@ -30,7 +30,7 @@ export interface SyncState {
  * a moment during a sync starts one more after it, once.
  *
  * A sync that fails with no answer or a server error is tried again by the
- * one rule (ADR 0037); one that finds too many requests waits for the
+ * one rule; one that finds too many requests waits for the
  * answer's `Retry-After`, and nothing syncs sooner; one that finds the
  * Session ended goes to the Account, which signs out quietly; no try follows
  * the end of a Session. When the Session ends, Sync forgets its cursor and
@@ -62,7 +62,7 @@ export interface Sync {
 const { syncCursor, syncSyncedAt } = userStateRecords;
 
 /**
- * Opens Sync apart from the composition, like the Account (ADR 0037), over
+ * Opens Sync apart from the composition, like the Account, over
  * the tracked user state every module writes through, with the time of the
  * last sync the device kept. Signed out, it forgets what a Session that ended
  * before the launch left.

@@ -10,7 +10,7 @@ import { userStateRecords } from '../user-state-schema';
 /** The user settings in effect. */
 export interface UserSettings {
   readonly theme: Theme;
-  /** The step on the three-step text size ladder a Word text starts from (ADR 0134). */
+  /** The step on the three-step text size ladder a Word text starts from. */
   readonly textSize: TextSize;
   /** Whether haptics are on. */
   readonly vibration: boolean;
@@ -24,23 +24,23 @@ export interface UserSettings {
   readonly noCounters: boolean;
   /** Whether Self-check hides the answer on an Entry card until the reader taps. */
   readonly selfCheck: boolean;
-  /** Whether «Сезонний декор» is on: slots 1 and 2 of the Decor follow the local date (ADR 0055). */
+  /** Whether «Сезонний декор» is on: slots 1 and 2 of the Decor follow the local date. */
   readonly seasonalDecor: boolean;
   /**
    * Whether «Ділитися анонімною статистикою» is on: this device counts and
-   * sends its Community Counters (ADR 0060). Turning it off forgets what
+   * sends its Community Counters. Turning it off forgets what
    * waits to be sent.
    */
   readonly shareCounters: boolean;
   /**
    * Whether «Менше руху» is on: the app draws the calmer variant of every
-   * animation, as it does when the system's Reduce Motion is on (ADR 0055).
+   * animation, as it does when the system's Reduce Motion is on.
    */
   readonly reduceMotion: boolean;
   /**
    * The id of the Narrator Voice that reads: the reader's choice, else the
    * Edition's default. The Edition reads an id it no longer declares as its
-   * default (ADR 0083).
+   * default.
    */
   readonly narratorVoice: string;
 }

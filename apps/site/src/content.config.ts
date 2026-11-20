@@ -16,7 +16,7 @@ import { LANDING_EDITION, LandingEditionSchema, readLandingEdition } from './edi
 import { readLiveWords, snapshotSource } from './snapshot';
 
 /**
- * The landing's Edition (ADR 0071), one entry by its id. The files are read
+ * The landing's Edition, one entry by its id. The files are read
  * here, at the content sync, since the built pages no longer know where the
  * editions folder lies.
  */
@@ -58,7 +58,7 @@ const legal = defineCollection({
 });
 
 /**
- * The landing's live Words (ADR 0149), by id: from the backend's content
+ * The landing's live Words, by id: from the backend's content
  * snapshot when SLOVO_BACKEND_URL is set, from the seed snapshot when not.
  * The snapshot is parsed once, here; a failed read fails the build.
  */

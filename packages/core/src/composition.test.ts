@@ -311,7 +311,7 @@ describe('an Entry opened by id', () => {
 });
 
 describe('the undo of a toast', () => {
-  /** The composition of the same app run opened again over the records, the one before closed (ADR 0018). */
+  /** The composition of the same app run opened again over the records, the one before closed. */
   async function reopen(before: Awaited<ReturnType<typeof run>>) {
     const { app } = await run({ records: before.records });
     await before.app.close();

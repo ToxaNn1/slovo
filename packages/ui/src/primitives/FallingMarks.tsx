@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
+// Reanimated code: the React Compiler skips this module.
 
 import { useEffect, type ReactNode } from 'react';
 import { StyleSheet, Text, type StyleProp, type TextProps, type TextStyle } from 'react-native';
@@ -21,7 +21,7 @@ export interface FallingMarksOf {
   readonly playing: boolean;
 }
 
-/** The fall lasts 300 ms (ADR 0055). */
+/** The fall lasts 300 ms. */
 const FALL = {
   duration: 300,
   easing: Easing.out(Easing.cubic),

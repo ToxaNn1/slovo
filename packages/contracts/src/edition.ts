@@ -49,7 +49,7 @@ const categoryFields = {
  * A thematic group of Words, or of Corrections, with its display name and
  * one-line description in the Edition's language, and its tone: a `loud`
  * Category is shown in full, a `quiet` one held back (spec #1604). The Words
- * and the Corrections each have their own list (ADR 0033).
+ * and the Corrections each have their own list.
  */
 export const CategorySchema = z.discriminatedUnion('tone', [
   z.strictObject({ ...categoryFields, tone: z.literal('loud') }),
@@ -59,7 +59,7 @@ export const CategorySchema = z.discriminatedUnion('tone', [
 export type Category = z.infer<typeof CategorySchema>;
 
 /**
- * The band of rarities a Mood puts first in the Feed (ADR 0076): `upper` is
+ * The band of rarities a Mood puts first in the Feed: `upper` is
  * the top of the Rarity Range and the one below it, `lower` its bottom and
  * the one above it, `whole` every rarity; the bands clip to the range.
  */
@@ -68,7 +68,7 @@ export const RarityBandSchema = z.enum(['upper', 'lower', 'whole']);
 export type RarityBand = z.infer<typeof RarityBandSchema>;
 
 /**
- * How a Mood shifts the reader's Mix kind weight of a kind (ADR 0076): one
+ * How a Mood shifts the reader's Mix kind weight of a kind: one
  * step towards «Менше», none, or one step towards «Більше», clamped to the
  * weights; a kind turned off in the Mix stays off.
  */
@@ -79,10 +79,10 @@ export type MoodShift = z.infer<typeof MoodShiftSchema>;
 /**
  * A Mood («настрій») the Edition lists: its id, its name in the Edition's
  * language, its emoji, the reply the Dashboard's Mood check-in answers it
- * with, in the Edition's language, and its Feed parameters (ADR 0076): the
+ * with, in the Edition's language, and its Feed parameters: the
  * rarity band put first and a shift per kind. A mood that names neither
  * leaves the Feed as it is. `effect` is the short line under the check-in
- * that says what the Mood changed in the Feed (ADR 0185): every Mood the
+ * that says what the Mood changed in the Feed: every Mood the
  * Dashboard lists has one.
  */
 export const MoodSchema = z.strictObject({
@@ -226,7 +226,7 @@ export type NarratorVoiceSample = z.infer<typeof NarratorVoiceSampleSchema>;
 
 /**
  * The Edition's Narrator Voices, in their order, each id once, and the one
- * that reads without the reader's choice (ADR 0083).
+ * that reads without the reader's choice.
  */
 export const NarratorVoicesSchema = z
   .strictObject({
@@ -348,7 +348,7 @@ const BadgeThresholdSchema = z.number().int().positive();
 const BadgeModesSchema = z.array(KebabCaseIdSchema).min(1);
 
 /**
- * A condition from the Core's catalogue of Badge conditions (ADR 0066, 0085),
+ * A condition from the Core's catalogue of Badge conditions (ADR 0066),
  * with its parameters: the Streak reaching `days`, `entries` confirmed
  * Entries, the first win (a finished Game with at least half right) in one
  * of `modes`, `days` Daily Crosswords in a row, `count` right Game answers in
@@ -378,7 +378,7 @@ export const BadgeConditionSchema = z.discriminatedUnion('kind', [
 
 export type BadgeCondition = z.infer<typeof BadgeConditionSchema>;
 
-/** The shape of a Badge family's mark (ADR 0085; `checker`, ADR 0087). */
+/** The shape of a Badge family's mark (`checker`). */
 export const BadgeShapeSchema = z.enum([
   'hexagon',
   'shield',
@@ -391,13 +391,13 @@ export const BadgeShapeSchema = z.enum([
 
 export type BadgeShape = z.infer<typeof BadgeShapeSchema>;
 
-/** The tone a Badge family's earned mark is drawn in (ADR 0085). */
+/** The tone a Badge family's earned mark is drawn in. */
 export const BadgeToneSchema = z.enum(['red', 'ink', 'cream']);
 
 export type BadgeTone = z.infer<typeof BadgeToneSchema>;
 
 /**
- * A Badge family the Edition declares (ADR 0085): its id, the name over its
+ * A Badge family the Edition declares: its id, the name over its
  * Badges, the line that says what its Badges count, its mark's shape and
  * the tone an earned mark is drawn in.
  */
@@ -413,10 +413,9 @@ export type BadgeFamily = z.infer<typeof BadgeFamilySchema>;
 
 /**
  * A Badge the Edition chooses (ADR 0066): its id, its name, the short symbol
- * its mark shows (at most three characters), the id of its Badge family
- * (ADR 0085), its condition from the catalogue, the short line that words
- * that condition for the reader and, optionally, its stamp's kicker
- * (ADR 0087).
+ * its mark shows (at most three characters), the id of its Badge family,
+ * its condition from the catalogue, the short line that words
+ * that condition for the reader and, optionally, its stamp's kicker.
  */
 export const BadgeSchema = z.strictObject({
   id: KebabCaseIdSchema,
@@ -426,7 +425,7 @@ export const BadgeSchema = z.strictObject({
   condition: BadgeConditionSchema,
   /** What its condition asks, in a few words under its mark and in its sheet, e.g. «Виграй «Наголос»». */
   conditionText: TextSchema,
-  /** The line over the Badge's name on its full-screen stamp, e.g. «7 ПОСПІЛЬ»; left out, none (ADR 0087). */
+  /** The line over the Badge's name on its full-screen stamp, e.g. «7 ПОСПІЛЬ»; left out, none. */
   stampKicker: TextSchema.optional(),
 });
 
@@ -488,20 +487,20 @@ export type QuickQuestionEvery = z.infer<typeof QuickQuestionEverySchema>;
 
 export type Theme = z.infer<typeof ThemeSchema>;
 
-/** The three-step text size, in ladder order: «Як у системі», «Більший», «Найбільший» (ADR 0134). */
+/** The three-step text size, in ladder order: «Як у системі», «Більший», «Найбільший». */
 export const TextSizeSchema = z.enum(['system', 'larger', 'largest']);
 
 export type TextSize = z.infer<typeof TextSizeSchema>;
 
 /**
- * The Daily Goal (ADR 0074): the Words the reader aims to see on a local day.
- * It replaces the Daily Limit of ADR 0054.
+ * The Daily Goal: the Words the reader aims to see on a local day.
+ * It replaces the old Daily Limit.
  */
 export const DailyGoalSchema = z.int().positive();
 
 export type DailyGoal = z.infer<typeof DailyGoalSchema>;
 
-/** The Daily Goals the reader chooses from, in rising order, and the one highlighted (ADR 0074). */
+/** The Daily Goals the reader chooses from, in rising order, and the one highlighted. */
 export const DailyGoalsSchema = z
   .strictObject({
     options: z
@@ -528,7 +527,7 @@ export const TimeOfDaySchema = z
 
 /**
  * The three Notification times «Коли нагадати?» offers, one for each bucket
- * it is counted in, in time order (ADR 0067).
+ * it is counted in, in time order.
  */
 export const OnboardingNotificationTimesSchema = z
   .strictObject({ morning: TimeOfDaySchema, midday: TimeOfDaySchema, evening: TimeOfDaySchema })
@@ -561,21 +560,20 @@ export const MixConfigSchema = z.strictObject({
   /** Either every Category of the Language Pack, also one a content update adds, or the listed Category ids. */
   categories: z.union([
     z.literal('all'),
-    // At least one Category always stays in the Mix (ADR 0019).
+    // At least one Category always stays in the Mix.
     z.array(KebabCaseIdSchema).min(1, 'Expected at least one Category'),
   ]),
   /**
-   * The Categories of Corrections in the Mix (ADR 0033): every one of the
+   * The Categories of Corrections in the Mix: every one of the
    * Language Pack, or the listed ids. They sit under Corrections as a whole.
    */
   correctionCategories: z.union([
     z.literal('all'),
-    // At least one Category of Corrections always stays in the Mix, as of Words (ADR 0019).
+    // At least one Category of Corrections always stays in the Mix, as of Words.
     z.array(KebabCaseIdSchema).min(1, 'Expected at least one Category of Corrections'),
   ]),
   /**
-   * Whether each kind of Entry beside Words is in the Mix as a whole (ADR
-   * 0033, 0046, 0051): the same map of Entry kinds as the Mix state in the Core.
+   * Whether each kind of Entry beside Words is in the Mix as a whole: the same map of Entry kinds as the Mix state in the Core.
    */
   kinds: z.record(MixKindSchema, z.boolean()),
 });
@@ -585,7 +583,7 @@ export type MixConfig = z.infer<typeof MixConfigSchema>;
 /** The settings a new user starts with. */
 export const UserSettingDefaultsConfigSchema = z.strictObject({
   theme: ThemeSchema,
-  /** The three-step text size (ADR 0134). */
+  /** The three-step text size. */
   textSize: TextSizeSchema,
   /** Whether haptics are on for a new user. */
   vibration: z.boolean(),
@@ -636,7 +634,7 @@ const WidgetBackgroundSchema = z
 
 /**
  * The widget palette: the colours of the widget's Пергамент and Синій
- * backgrounds (ADR 0026). Світлий and Темний take the Edition's light and
+ * backgrounds. Світлий and Темний take the Edition's light and
  * dark colour tokens.
  */
 const WidgetPaletteSchema = z.strictObject({
@@ -648,7 +646,7 @@ const WidgetPaletteSchema = z.strictObject({
 export const EditionIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a lowercase id');
 
 /**
- * The steps of the onboarding, in order (ADR 0067): the one place that has
+ * The steps of the onboarding, in order: the one place that has
  * them, so a step that joins changes the count everywhere. The first Word
  * comes only with a Word of the Day, «ГРАЙ!» only with `playStep`, the two
  * questions only with the `questionnaire` Feature Switch, the Daily Goal only
@@ -667,7 +665,7 @@ export const ONBOARDING_STEPS = [
 /** A step of the onboarding. */
 export type OnboardingStepKind = (typeof ONBOARDING_STEPS)[number];
 
-/** The questions the onboarding asks (ADR 0067): «Як добре ти знаєш мову?» and «Навіщо». */
+/** The questions the onboarding asks: «Як добре ти знаєш мову?» and «Навіщо». */
 export const QuestionnaireQuestionSchema = z.enum(['level', 'why']);
 
 export type QuestionnaireQuestion = z.infer<typeof QuestionnaireQuestionSchema>;
@@ -676,8 +674,8 @@ export type QuestionnaireQuestion = z.infer<typeof QuestionnaireQuestionSchema>;
 export const QuestionnaireAnswerIdSchema = KebabCaseIdSchema;
 
 /**
- * The Edition's questionnaire (ADR 0067): the options of the level
- * question, which set nothing (ADR 0183) but for the one opening the Rarity Test, of
+ * The Edition's questionnaire: the options of the level
+ * question, which set nothing but for the one opening the Rarity Test, of
  * «Навіщо», each setting the Mix kind weights it names (the others stay), and
  * of the self-rating. Ids are unique within a question.
  */
@@ -688,7 +686,7 @@ export const QuestionnaireSchema = z.strictObject({
         z.strictObject({
           id: QuestionnaireAnswerIdSchema,
           label: TextSchema,
-          /** No longer read: «Рівень» sets no Rarity Range (ADR 0183). Kept so Edition configs written before stay valid. */
+          /** No longer read: «Рівень» sets no Rarity Range. Kept so Edition configs written before stay valid. */
           rarityCeiling: RaritySchema,
         }),
         /** «Не знаю»: the onboarding opens the Rarity Test, whose result sets the top of the Rarity Range. */
@@ -711,7 +709,7 @@ export const QuestionnaireSchema = z.strictObject({
     .min(1),
   /**
    * The vocabulary self-rating, asked later through a Feed Notice: each
-   * option only says whether to offer the Rarity Test (ADR 0072).
+   * option only says whether to offer the Rarity Test.
    */
   selfRating: z
     .array(
@@ -750,16 +748,16 @@ export const EditionConfigSchema = z
      * Lemma may hold, or for the Stress mark.
      */
     wordOfTheDayFont: FontFileSchema,
-    /** The colours of the widget's Пергамент and Синій backgrounds (ADR 0026). */
+    /** The colours of the widget's Пергамент and Синій backgrounds. */
     widgetPalette: WidgetPaletteSchema,
     /**
      * The Categories, in their order, as the Language Pack build writes them
-     * into the pack. The app reads them from the pack only (ADR 0033).
+     * into the pack. The app reads them from the pack only.
      */
     categories: z.array(CategorySchema).min(1),
     /**
-     * The Categories of Corrections, a list of their own beside the Words'
-     * (ADR 0033), in their order, as the Language Pack build writes them into
+     * The Categories of Corrections, a list of their own beside the Words',
+     * in their order, as the Language Pack build writes them into
      * the pack.
      */
     correctionCategories: z.array(CategorySchema).min(1),
@@ -771,50 +769,50 @@ export const EditionConfigSchema = z
     categoriesRequiringHistory: z.array(KebabCaseIdSchema),
     /**
      * The id of the Category or Correction Category whose pictogram a Curated
-     * Collection's tile draws when the collection names none (ADR 0178);
+     * Collection's tile draws when the collection names none;
      * unset, such a tile draws no pictogram.
      */
     curatedCollectionPictogram: KebabCaseIdSchema.optional(),
     /**
-     * The languages Words come from, in their order (ADR 0052): the Edition
+     * The languages Words come from, in their order: the Edition
      * owns the list, so the Core stays language-agnostic. Empty when the
      * Edition gives no Word an origin.
      */
     originLanguages: z.array(OriginLanguageSchema),
     /**
-     * The moods, in their order (ADR 0054): the Edition owns the list, so the
+     * The moods, in their order: the Edition owns the list, so the
      * Core stays language-agnostic. It lists every one `dashboardMoods` names,
-     * and keeps a Mood the Dashboard hides so a saved one still reads (ADR 0192).
+     * and keeps a Mood the Dashboard hides so a saved one still reads.
      */
     moods: z.array(MoodSchema),
     /**
      * The moods the Dashboard's Mood check-in offers, by id among `moods`, in
-     * display order (ADR 0076, ADR 0105, ADR 0192): three to five.
+     * display order: three to five.
      */
     dashboardMoods: z
       .array(KebabCaseIdSchema)
       .min(3, { message: 'The Dashboard lists three to five moods' })
       .max(5, { message: 'The Dashboard lists three to five moods' }),
     /**
-     * The letters Search reads as another (ADR 0054), each lower-case letter
+     * The letters Search reads as another, each lower-case letter
      * to the one it reads as, such as ґ to г: the Edition owns them, so the
      * Core stays language-agnostic. Empty when Search reads each letter as
      * itself.
      */
     searchLetters: z.record(LowerCaseLetterSchema, LowerCaseLetterSchema),
-    /** The Narrator Voices that read Words (ADR 0083). */
+    /** The Narrator Voices that read Words. */
     narratorVoices: NarratorVoicesSchema,
     /** The XP table: what each Game learning action earns (ADR 0066). */
     xp: XpTableSchema,
     /** The Level curve and the Level names (ADR 0066). */
     levels: LevelsSchema,
-    /** The Daily Goals in Words the reader chooses from (ADR 0074). */
+    /** The Daily Goals in Words the reader chooses from. */
     dailyGoals: DailyGoalsSchema,
-    /** The Notification times «Коли нагадати?» offers (ADR 0067). */
+    /** The Notification times «Коли нагадати?» offers. */
     onboardingNotificationTimes: OnboardingNotificationTimesSchema,
-    /** The onboarding questions, their options and what each sets (ADR 0067). */
+    /** The onboarding questions, their options and what each sets. */
     questionnaire: QuestionnaireSchema,
-    /** The Badge families, in their order, each id once (ADR 0085). */
+    /** The Badge families, in their order, each id once. */
     badgeFamilies: z
       .array(BadgeFamilySchema)
       .min(1)
@@ -822,13 +820,13 @@ export const EditionConfigSchema = z
         (families) => hasNoRepeats(families.map(({ id }) => id)),
         'Expected each Badge family id once',
       ),
-    /** The Badges, in their order, each id once, each of a declared family (ADR 0066, 0085). */
+    /** The Badges, in their order, each id once, each of a declared family (ADR 0066). */
     badges: z
       .array(BadgeSchema)
       .refine((badges) => hasNoRepeats(badges.map(({ id }) => id)), 'Expected each Badge id once'),
     /** The Mascot's line for each moment it shows in. */
     mascot: MascotLinesSchema,
-    /** The floors the Edition's content should reach; the admin shows a miss and nothing blocks on it (ADR 0123). */
+    /** The floors the Edition's content should reach; the admin shows a miss and nothing blocks on it. */
     contentTargets: ContentTargetsSchema.optional(),
   })
   .superRefine(

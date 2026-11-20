@@ -17,7 +17,7 @@ export interface HiddenEntry {
 
 /**
  * The Hidden Entries: the Entries the user doesn't want to see, which are
- * eligible nowhere until restored (ADR 0015). Hiding an Entry leaves it
+ * eligible nowhere until restored. Hiding an Entry leaves it
  * wherever the user keeps it. Read from the user state once, when it opens,
  * like the Cycle, so open one per app session (the Core composition does). A
  * change is made in memory only once it is written.

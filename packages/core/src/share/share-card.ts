@@ -42,7 +42,7 @@ export type ShareCardSubject =
 
 /**
  * The blocks of a Share Card, by what it shows, each text final, with its
- * Stress where the card draws it (ADR 0017, 0051, 0054).
+ * Stress where the card draws it.
  */
 export type ShareCardBody =
   | {
@@ -271,7 +271,7 @@ export function buildShareCardContent(
 }
 
 /**
- * A Weekly Recap's Share Card (ADR 0054): the title, the week's dates as its
+ * A Weekly Recap's Share Card: the title, the week's dates as its
  * overline and the recap's numbers, with no words, without the Streak while
  * the reader hides it.
  */

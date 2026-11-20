@@ -25,7 +25,7 @@ export const roundLimitOf = ({ roundLimit = GAME_ROUNDS }: GameMode): number | u
  */
 const roundsToPlanOf = (mode: GameMode): number => roundLimitOf(mode) ?? GAME_ROUNDS;
 
-/** How many Rounds of a Game, at most, ask about Entries the reader is weak on (ADR 0043). */
+/** How many Rounds of a Game, at most, ask about Entries the reader is weak on. */
 const WEAK_ROUNDS = 5;
 
 /** A Round of the Game in play, with the Entry it asks about. */
@@ -102,13 +102,13 @@ function checkedRound(mode: GameMode, round: RoundContent, upTo: number): RoundC
  * Makes the `RoundPlanner` of the Game over History and the Knowledge Marks,
  * for `openGame`. Up to `WEAK_ROUNDS` Rounds of a Game, in every mode, ask
  * about eligible Entries the reader is weak on, marked Unknown or due for
- * Review (ADR 0043, 0052); the Rounds already `asked` about such Entries
+ * Review; the Rounds already `asked` about such Entries
  * count. They take places drawn at random among the first `GAME_ROUNDS`
- * Rounds a plan makes, so no two Games start alike (ADR 0190); every Round is
+ * Rounds a plan makes, so no two Games start alike; every Round is
  * built at its own place, and a weak Round the mode cannot build at its
  * place moves to the next one. The others ask first about the pool, the eligible
  * Entries in History when at least `GAME_ROUNDS` of them make a Round (a
- * place name makes none, ADR 0024), else every eligible one; should the pool
+ * place name makes none), else every eligible one; should the pool
  * make too few fair Rounds, the other eligible Entries fill in, the weak ones
  * left over last. Each pair of a pairs grid counts as a Round. In a mode with
  * no Round limit, once a Game under way has asked about every eligible Entry,

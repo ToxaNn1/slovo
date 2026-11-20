@@ -24,7 +24,7 @@ import { todayText } from '@/feed/today-text';
 import { StatsPillAndSheet } from '@/progress/progress';
 
 /**
- * The home behind «Стрічка», the Dashboard, which opens the Feed (ADR 0076):
+ * The home behind «Стрічка», the Dashboard, which opens the Feed:
  * the header, as the Feed's with the logo on an ink plate,
  * over the blocks of the local day, in display order, each with the board's
  * room above it. A Mood's reply comes as a toast.
@@ -57,7 +57,7 @@ function DashboardBlocks() {
   const typeGrid = useEditionInEffect().isFeatureEnabled('correctionTypeGrid');
   const { colors } = useTokens();
   const inEffect = useEditionInEffect();
-  // The daily splash from the logo plays over the Dashboard, then hands it back (ADR 0105).
+  // The daily splash from the logo plays over the Dashboard, then hands it back.
   const [splash, setSplash] = useState(false);
   return (
     <SafeAreaView

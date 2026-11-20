@@ -110,7 +110,7 @@ describe('StatsSheet', () => {
     expect(screen.getByTestId('stats-favorites')).toBeOnTheScreen();
   });
 
-  // Spec #461, ADR 0043: the knowledge rows, in the plural forms of Ukrainian.
+  // Spec #461: the knowledge rows, in the plural forms of Ukrainian.
   it.each([
     [1, 'one'],
     [2, 'few'],

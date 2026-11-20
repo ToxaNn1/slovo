@@ -421,7 +421,7 @@ describe('the notification plan over the Ukrainian Language Pack', () => {
     await openComposition({
       content,
       edition: ukrainian,
-      // The evening reminds of a Daily Goal set (ADR 0074).
+      // The evening reminds of a Daily Goal set.
       userState: await seedUserState({
         xpLog: {
           'word-goal-2026-10-13': {

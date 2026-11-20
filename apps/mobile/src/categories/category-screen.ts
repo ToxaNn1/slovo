@@ -18,7 +18,7 @@ import { useOpenScreen } from '../use-open-screen';
 import { useEditionInEffect } from '../edition/remote-switches';
 
 const { toasts } = editionStrings.dashboard.category;
-/** What the Mix screen says under a list whose last Category can't be taken out (ADR 0019). */
+/** What the Mix screen says under a list whose last Category can't be taken out. */
 const lastCategoryHint: Record<CategoryKind, string> = {
   word: editionStrings.mix.lastCategoryHint,
   correction: editionStrings.mix.corrections.lastCategoryHint,
@@ -28,7 +28,7 @@ const lastCategoryHint: Record<CategoryKind, string> = {
 export interface CategoryScreen {
   /**
    * A card per live Entry of the Category, the Known ones first, each group in
-   * the Language Pack's order (ADR 0111);
+   * the Language Pack's order;
    * `undefined` till the first read ends, so nothing counts the Entries before.
    */
   readonly cards: readonly RailBoardCard[] | undefined;
@@ -42,8 +42,8 @@ export interface CategoryScreen {
    */
   readonly toggleMix: () => void;
   /**
-   * Opens a Word in the Category's Feed while `categoryFeed` is on (ADR 0110),
-   * else an Entry's card as Search does; neither makes anything Seen (ADR 0076).
+   * Opens a Word in the Category's Feed while `categoryFeed` is on,
+   * else an Entry's card as Search does; neither makes anything Seen.
    */
   readonly openEntry: (entryId: string) => void;
 }

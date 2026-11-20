@@ -16,7 +16,7 @@ const familyOf = ({ family }: BadgeState) => edition.badgeFamilies.find(({ id })
 /** The shape of a Badge's family. */
 const shapeOf = (badge: BadgeState) => familyOf(badge)?.shape ?? 'circle';
 
-/** What a Badge's condition asks, in the Edition's short words (ADR 0085). */
+/** What a Badge's condition asks, in the Edition's short words. */
 export const conditionOf = ({ id }: BadgeState) =>
   edition.badges.find((badge) => badge.id === id)?.conditionText ?? '';
 
@@ -41,7 +41,7 @@ function progressForms({ condition }: BadgeState) {
 }
 
 /**
- * What a Badge's card says under its mark and to VoiceOver (ADR 0145):
+ * What a Badge's card says under its mark and to VoiceOver:
  * «Отримано», or while not earned how far its condition has come, rounded
  * down so it never reads the whole («Ще ні · 77%»); and the sheet's line,
  * which keeps the date («Отримано 13 жовтня») and the exact progress
@@ -79,10 +79,9 @@ type Opened =
   | { readonly kind: 'stamp'; readonly badge: BadgeState & { earned: true } };
 
 /**
- * A tap on a Badge's mark, for the screens that show the Badges (decision 5,
- * ADR 0145). An earned Badge with no `badge-opened` record yet is stamped on
+ * A tap on a Badge's mark, for the screens that show the Badges (decision 5). An earned Badge with no `badge-opened` record yet is stamped on
  * red with the shout, and taking the stamp writes that record, which ends its
- * «НОВА» mark on every device (ADR 0085). Every other Badge opens its sheet
+ * «НОВА» mark on every device. Every other Badge opens its sheet
  * (`XSaved` p3/p4) behind the `badgeSheet` switch; with it off, only an
  * earned Badge answers, stamped. Draw `opening` on the screen.
  */

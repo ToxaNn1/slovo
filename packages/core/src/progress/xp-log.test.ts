@@ -170,7 +170,7 @@ describe('the XP log and the Game', () => {
     await play(app, true);
 
     expect(app.xpLog.state).toMatchObject({ total: 2, today: 2 });
-    // The wrong answer's record earns nothing (ADR 0085).
+    // The wrong answer's record earns nothing.
     expect(heard).toEqual([1, 1, 2]);
     expect(kindsOf(records)).toEqual(['xp', 'wrong-answer', 'xp']);
   });
@@ -476,7 +476,7 @@ async function look(app: Composition, time: ReturnType<typeof fakeClock>): Promi
 const recordsOf = (records: Map<string, string>) =>
   xpKeys(records).map((key) => [key, JSON.parse(records.get(key) ?? '') as unknown]);
 
-// Ticket #1554, ADR 0074: the Daily Goal counts the Words Seen on a local day.
+// Ticket #1554: the Daily Goal counts the Words Seen on a local day.
 describe('the Daily Goal', () => {
   const dailyGoal: readonly FeatureSwitch[] = ['dailyGoal'];
 
@@ -853,7 +853,7 @@ describe('the Active Day with a Daily Goal', () => {
 
     time.advance(60_000);
     await app.xpLog.setDailyGoal(10);
-    // Today reached 5 XP before its goal was set: it stays an Active Day (ADR 0188).
+    // Today reached 5 XP before its goal was set: it stays an Active Day.
     expect(app.progress.state.streak).toBe(24);
     for (let looks = 0; looks < 30 && app.xpLog.state.dailyGoal?.met !== true; looks += 1) {
       await look(app, time);
@@ -1132,7 +1132,7 @@ describe('the Seen-Word XP', () => {
   });
 });
 
-describe('the Daily Crossword solve in the XP log (ADR 0087)', () => {
+describe('the Daily Crossword solve in the XP log', () => {
   const solve = (date: string, extra: object = {}) =>
     [
       `xp.daily-crossword-${date}`,
@@ -1178,7 +1178,7 @@ describe('the Daily Crossword solve in the XP log (ADR 0087)', () => {
   });
 });
 
-// Ticket #1876, ADR 0133: a Progress reset is a reset marker in the XP log.
+// Ticket #1876: a Progress reset is a reset marker in the XP log.
 const RESET_ON: readonly FeatureSwitch[] = [
   'progressReset',
   'levels',

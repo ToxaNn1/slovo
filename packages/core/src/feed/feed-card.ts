@@ -16,7 +16,7 @@ export type {
 /**
  * The card of a Feed Notice: a Feed card that is not an Entry. It counts in
  * no turn and no Review slot and makes nothing Seen; swiping past it closes
- * it for its local day (ADR 0054).
+ * it for its local day.
  */
 export type FeedNoticeCard = FeedNoticeContent & {
   readonly kind: 'notice';
@@ -54,7 +54,7 @@ export type FeedCard =
 
 /**
  * The card as a Review, labelled «Повторення», while the Entry's card shows
- * one: wherever it is shown, the Feed and every Entry screen (ADR 0043).
+ * one: wherever it is shown, the Feed and every Entry screen.
  */
 export function asReviewIfDue<Card extends AnyEntryCard>(
   card: Card,

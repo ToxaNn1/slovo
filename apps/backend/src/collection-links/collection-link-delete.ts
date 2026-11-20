@@ -11,7 +11,7 @@ export interface DeleteOutcome {
 
 /**
  * Deletes the Collection Link of the id, so the owner can take down an
- * abusive name (ADR 0058) and reading the link answers NOT_FOUND. An id the
+ * abusive name and reading the link answers NOT_FOUND. An id the
  * database doesn't keep deletes nothing and says so.
  */
 export async function deleteCollectionLink({ db }: Database, id: string): Promise<DeleteOutcome> {

@@ -47,7 +47,7 @@ A second running copy of the backend for the owner's tests: the `staging` Railwa
 _Avoid_: Staging server, test environment, dev
 
 **Owner admin**:
-The Vite app `apps/admin`, served built by the backend at `/admin` on the Deployment, where the owner and admins run SLOVO (ADR 0088, 0164): eight sections, Огляд, Контент, Свічі, Аналітика, Якість, Розробка, Безпека and Сервіси, behind a global Edition and period filter. It imports only the contracts and talks to the backend over HTTP alone.
+The Vite app `apps/admin`, served built by the backend at `/admin` on the Deployment, where the owner and admins run SLOVO (ADR 0088): eight sections, Огляд, Контент, Свічі, Аналітика, Якість, Розробка, Безпека and Сервіси, behind a global Edition and period filter. It imports only the contracts and talks to the backend over HTTP alone.
 _Avoid_: Dashboard, back office, admin panel
 
 **Admin user**:
@@ -63,15 +63,15 @@ The append-only record of every write through the admin API, the server commands
 _Avoid_: Audit trail, history, journal
 
 **Service**:
-An outside provider SLOVO pays for or depends on (Railway, Neon, Cloudflare, GitHub, Expo/EAS, Sentry, PostHog, Zoho Mail, Apple Developer / App Store Connect, Google Play, the Telegram bot), with a block on the canvas of «Сервіси», the Власник-only section of the Owner admin: its kind, plan, monthly price, billing day, limits, fixed place and links to other Services (ADR 0164).
+An outside provider SLOVO pays for or depends on (Railway, Neon, Cloudflare, GitHub, Expo/EAS, Sentry, PostHog, Zoho Mail, Apple Developer / App Store Connect, Google Play, the Telegram bot), with a block on the canvas of «Сервіси», the Власник-only section of the Owner admin: its kind, plan, monthly price, billing day, limits, fixed place and links to other Services.
 _Avoid_: Integration, provider
 
 **Service entry**:
-One login, link, password, token or recovery-codes item of a Service, with a label and a note of where it is used; logins and links show openly, the rest is kept in the Vault (ADR 0164).
+One login, link, password, token or recovery-codes item of a Service, with a label and a note of where it is used; logins and links show openly, the rest is kept in the Vault.
 _Avoid_: Credential, secret (for the item)
 
 **Vault**:
-The encrypted store of the secret Service entries: sealed with AES-256-GCM under `VAULT_KEY`, a Deployment environment variable apart from `AUTH_SECRET`, and opened only by a reveal or copy inside a TOTP unlock (ADR 0164).
+The encrypted store of the secret Service entries: sealed with AES-256-GCM under `VAULT_KEY`, a Deployment environment variable apart from `AUTH_SECRET`, and opened only by a reveal or copy inside a TOTP unlock.
 _Avoid_: Password manager
 
 **Content queue** («Черга контенту»):
@@ -80,7 +80,7 @@ _Avoid_: Inbox, moderation queue
 
 **Batch** («пачка»):
 The records one `pnpm content add|edit|flag` run adds or edits, published at once and reviewed afterwards in the Content queue; «Відкотити пачку» reverts it whole, new records to Retired and edits to their previous versions, skipping a record anyone changed after the batch (ADR 0090).
-_Avoid_: Wave (that is the retired repo process of ADR 0080, replaced by ADR 0090), PR, commit
+_Avoid_: Wave (that is a retired repo process, replaced by ADR 0090), PR, commit
 
 **Owner check**:
 A manual check the owner ticks in the Owner admin, kept in the database per version; agents add one through a command (ADR 0088).
@@ -91,7 +91,7 @@ The language-agnostic behaviour and screens shared by every Edition. Editions ne
 _Avoid_: Engine, base app
 
 **Feature Switch**:
-A per-Edition setting for a Core feature (e.g. the Game) that the Edition declares `on`, `off` or `unavailable` in `edition.json`, and that a remote Rule set in the Owner admin can turn on or off for the readers it targets; `unavailable` nothing turns on (ADR 0089). Its effective value, which everything reads, is the first matching Rule's answer on the device, else the Edition's state, and every Feature Switch it depends on in effect (a Game Mode needs the Game, the Badges need the XP log); the Core's Edition module lists the dependencies, nothing else joins two switches. Off, its feature is absent; a Feature Switch never chooses between an old and a new version of a feature (ADR 0176).
+A per-Edition setting for a Core feature (e.g. the Game) that the Edition declares `on`, `off` or `unavailable` in `edition.json`, and that a remote Rule set in the Owner admin can turn on or off for the readers it targets; `unavailable` nothing turns on (ADR 0089). Its effective value, which everything reads, is the first matching Rule's answer on the device, else the Edition's state, and every Feature Switch it depends on in effect (a Game Mode needs the Game, the Badges need the XP log); the Core's Edition module lists the dependencies, nothing else joins two switches. Off, its feature is absent; a Feature Switch never chooses between an old and a new version of a feature.
 _Avoid_: Toggle, flag (in conversation)
 
 **`unavailable`**:
@@ -99,7 +99,7 @@ The Edition state of a feature it has no content or assets for (no Narrator Voic
 _Avoid_: Disabled, hidden
 
 **Rule**:
-One remote Feature Switch setting: the readers it targets (Edition, app version, platform, the phone's region, a share of readers, signed in or not, a schedule, the Update channel) and on, off or a Variant; ordered per feature, the first match decides. A Rule the app doesn't understand is skipped (ADR 0089, 0170).
+One remote Feature Switch setting: the readers it targets (Edition, app version, platform, the phone's region, a share of readers, signed in or not, a schedule, the Update channel) and on, off or a Variant; ordered per feature, the first match decides. A Rule the app doesn't understand is skipped (ADR 0089).
 _Avoid_: Flag, override, condition
 
 **Rollout**:
@@ -165,7 +165,7 @@ The dictionary form of a Word as it is written.
 _Avoid_: Title, headword
 
 **Stress**:
-The stressed vowel position(s) of a Lemma; a Lemma may have more than one valid Stress. Only exists in Editions whose language marks stress. A wrong-stress Correction's forms carry Stress too, written into their text as the combining acute mark after the stressed vowel (ADR 0045).
+The stressed vowel position(s) of a Lemma; a Lemma may have more than one valid Stress. Only exists in Editions whose language marks stress. A wrong-stress Correction's forms carry Stress too, written into their text as the combining acute mark after the stressed vowel.
 _Avoid_: Accent
 
 **Definition**:
@@ -184,18 +184,18 @@ Where a dialect Word is said (e.g. Гуцульщина), a short text in the Ed
 _Avoid_: Area, dialect, location
 
 **Category**:
-A thematic group a Word or a Correction belongs to. Words and Corrections each have the Edition's own list: Words by what they name (e.g. human body, emotions, military), Corrections by where a reader meets them (e.g. at work, in a shop, transport). Every Word and every Correction has one Category of its list. Every Category carries a one-line description and a tone, loud or quiet; a quiet Category (e.g. the Words removed from dictionaries in the 1930s) has a quiet tile and a quiet screen without the Mix button or progress. A Category has a screen of its live Entries, opened from its grid (ADR 0081), the Known ones first (ADR 0111); a tap on a Word there opens the Category's Feed, its Words alone from the tapped one, round again after the last (ADR 0110).
+A thematic group a Word or a Correction belongs to. Words and Corrections each have the Edition's own list: Words by what they name (e.g. human body, emotions, military), Corrections by where a reader meets them (e.g. at work, in a shop, transport). Every Word and every Correction has one Category of its list. Every Category carries a one-line description and a tone, loud or quiet; a quiet Category (e.g. the Words removed from dictionaries in the 1930s) has a quiet tile and a quiet screen without the Mix button or progress. A Category has a screen of its live Entries, opened from its grid, the Known ones first; a tap on a Word there opens the Category's Feed, its Words alone from the tapped one, round again after the last.
 _Avoid_: Topic, tag, theme
 
 **Rare Word**:
 The editorial standard for every Word: a normative dictionary word that an educated native speaker most likely doesn't know or hardly uses, but is worth knowing. It excludes obscene words, surzhyk and russianisms, narrow jargon and proper names; an old, witty dictionary insult marked «лайл.» or «зневажл.» (e.g. бевзь, телепень) is a Rare Word, an obscene word never is. A place name is not a Word: it is an Idiom of Idiom Type `placeName`. A dialect Word, with the dialectal register label («діал.») and its Region, is a Rare Word too when a normative dictionary (e.g. СУМ, Грінченко) or a dialect dictionary that names the Region lists it. Each Word carries a rarity from 1 ("heard it, never use it") to 5 ("almost nobody knows it").
 
 **Correction**:
-A non-standard form people commonly use (often a phrase) paired with one or more standard equivalents in the Edition's language, plus a short neutral explanation, e.g. «на протязі року» → «протягом року». A Core concept; each Edition supplies its own Corrections. A Word may point to the Corrections it is the standard form for (протягом → «на протязі»), so each is reachable from the other without duplicating data. A rule with no one form to swap is a Tip, not a Correction. The standard sentence of its example pair marks the standard form `**like this**`, in parts when it is split, and the Correction card shows that form bold (ADR 0117).
+A non-standard form people commonly use (often a phrase) paired with one or more standard equivalents in the Edition's language, plus a short neutral explanation, e.g. «на протязі року» → «протягом року». A Core concept; each Edition supplies its own Corrections. A Word may point to the Corrections it is the standard form for (протягом → «на протязі»), so each is reachable from the other without duplicating data. A rule with no one form to swap is a Tip, not a Correction. The standard sentence of its example pair marks the standard form `**like this**`, in parts when it is split, and the Correction card shows that form bold.
 _Avoid_: Mistake, error, surzhyk card
 
 **Literary Use**:
-A real use of a Correction's standard form in literature, quoted with its author and work and shown under the Correction («Як пишуть насправді»). Only texts in the public domain (ADR 0045); a Correction carries up to three.
+A real use of a Correction's standard form in literature, quoted with its author and work and shown under the Correction («Як пишуть насправді»). Only texts in the public domain; a Correction carries up to three.
 _Avoid_: Quote, citation (a citation is a source)
 
 **Retired Correction**:
@@ -206,7 +206,7 @@ _Avoid_: Deleted correction
 Why the form is non-standard: russianism, calque, surzhyk, officialese (канцелярит), anglicism (англіцизм), an English borrowing where a dictionary word of the Edition's language serves, wrong stress (`wrongStress`, «наголос»: a stress trap, the right word said with the wrong Stress), or a paronym (`paronym`, «пароніми»: a word swapped for its look-alike of another meaning, e.g. «ефективна сукня» → «ефектна сукня»). The Dashboard shows a tile per Correction Type the Language Pack has Corrections for, with a screen listing its Corrections; a Correction is «розібрано» once Seen in any Cycle or revealed with «Як правильно?» on that screen.
 
 **Idiom**:
-A fixed expression whose meaning is not the sum of its words, with its Definitions, Examples and, where known, its origin, e.g. «бити байдики» → «ледарювати». The third kind of Entry (ADR 0046); a Core concept, each Edition supplies its own. An Idiom has an expression instead of a Lemma, and no Stress, part of speech, Category, rarity or Pronunciation. Its Ukrainian name is «фразеологізм».
+A fixed expression whose meaning is not the sum of its words, with its Definitions, Examples and, where known, its origin, e.g. «бити байдики» → «ледарювати». The third kind of Entry; a Core concept, each Edition supplies its own. An Idiom has an expression instead of a Lemma, and no Stress, part of speech, Category, rarity or Pronunciation. Its Ukrainian name is «фразеологізм».
 _Avoid_: Phrase, expression (for the Entry; the expression is its text); saying or proverb for the Entry (a proverb is an Idiom of Idiom Type `proverb`)
 
 **Idiom Type**:
@@ -218,19 +218,19 @@ An Idiom marked Retired in the content database (never deleted), so it leaves th
 _Avoid_: Deleted idiom
 
 **Synonym Row**:
-A dominant word with a short meaning line and a row of 5 to 12 of its synonyms, its members, each with its Stress and an optional note on its shade, e.g. «іти → простувати, чимчикувати, шкандибати». The fourth kind of Entry (ADR 0051); a Core concept, each Edition supplies its own. A member or the dominant may link a Word of the Language Pack, and that Word's card links back to the row («У синонімічному ряду: іти»). A Synonym Row has no Category, rarity or Pronunciation; a Retired one behaves like a Retired Word. Its Ukrainian name is «синонімічний ряд». Its members are not the Synonyms a Word lists.
+A dominant word with a short meaning line and a row of 5 to 12 of its synonyms, its members, each with its Stress and an optional note on its shade, e.g. «іти → простувати, чимчикувати, шкандибати». The fourth kind of Entry; a Core concept, each Edition supplies its own. A member or the dominant may link a Word of the Language Pack, and that Word's card links back to the row («У синонімічному ряду: іти»). A Synonym Row has no Category, rarity or Pronunciation; a Retired one behaves like a Retired Word. Its Ukrainian name is «синонімічний ряд». Its members are not the Synonyms a Word lists.
 _Avoid_: Synonym set, thesaurus
 
 **Tip**:
-A rule of good speech with its standard form, a short explanation and its own Game question, e.g. «Котра година?» instead of «Скільки час?». The fifth kind of Entry (ADR 0051); a Core concept, each Edition supplies its own. It may show a non-standard form, but needs none (the vocative «пане Андрію» has no wrong form to show). The boundary with a Correction: one form swapped for one standard form is a Correction; a rule, a construction, etiquette or punctuation is a Tip. A Tip has no Category, rarity or Pronunciation; a Retired one behaves like a Retired Word. It may have exceptions: a short explanation and at least one word that breaks the rule (буряк, крякати for the apostrophe after «р»), shown in the tab «Винятки» (ADR 0120). Its Ukrainian name is «порада».
+A rule of good speech with its standard form, a short explanation and its own Game question, e.g. «Котра година?» instead of «Скільки час?». The fifth kind of Entry; a Core concept, each Edition supplies its own. It may show a non-standard form, but needs none (the vocative «пане Андрію» has no wrong form to show). The boundary with a Correction: one form swapped for one standard form is a Correction; a rule, a construction, etiquette or punctuation is a Tip. A Tip has no Category, rarity or Pronunciation; a Retired one behaves like a Retired Word. It may have exceptions: a short explanation and at least one word that breaks the rule (буряк, крякати for the apostrophe after «р»), shown in the tab «Винятки». Its Ukrainian name is «порада».
 _Avoid_: Hack, advice, lifehack
 
 **Entry card**:
-How the app shows one Entry: a Word card, a Correction card, an Idiom card, a Synonym Row card or a Tip card in the same frame, with heart, Collections and «⋯» in its top-right corner; the «⋯» sheet holds the mark items, share, hide and «Повідомити про помилку», and a side swipe sets a Knowledge Mark (ADR 0077). Every card but the Word of the Day's is a fixed frame the height of the Feed's page (ADR 0091): a Word card with the tabs «Суть», «Приклад», «Зв’язки» and «Історія» under its Lemma, a Correction card with «Як краще», «Чому» and «Приклади» under its struck non-standard form, an Idiom card with «Суть», «Звідки» and «Приклад» under its expression, a Tip card with «Правило» (and, with `tipExceptions` on, «Винятки» for a Tip with exceptions, ADR 0120), and a Synonym Row card with its members four to a tab, «Ряд · 1/2», «Ряд · 2/2» (ADR 0114), empty tabs left out. With `sourceTab` on too, each of them ends with a tab «Джерело» that names the Entry's sources one to a line, and the source line leaves the other tabs (ADR 0116). Content too tall for the frame shrinks a Text size step at a time down to the floor, then is clamped under «Детальніше», which opens it whole in a scroll inside the card (ADR 0113). The Feed and every screen that opens a kept Entry show the same Entry card.
+How the app shows one Entry: a Word card, a Correction card, an Idiom card, a Synonym Row card or a Tip card in the same frame, with heart, Collections and «⋯» in its top-right corner; the «⋯» sheet holds the mark items, share, hide and «Повідомити про помилку», and a side swipe sets a Knowledge Mark. Every card but the Word of the Day's is a fixed frame the height of the Feed's page: a Word card with the tabs «Суть», «Приклад», «Зв’язки» and «Історія» under its Lemma, a Correction card with «Як краще», «Чому» and «Приклади» under its struck non-standard form, an Idiom card with «Суть», «Звідки» and «Приклад» under its expression, a Tip card with «Правило» (and, with `tipExceptions` on, «Винятки» for a Tip with exceptions), and a Synonym Row card with its members four to a tab, «Ряд · 1/2», «Ряд · 2/2», empty tabs left out. With `sourceTab` on too, each of them ends with a tab «Джерело» that names the Entry's sources one to a line, and the source line leaves the other tabs. Content too tall for the frame shrinks a Text size step at a time down to the floor, then is clamped under «Детальніше», which opens it whole in a scroll inside the card. The Feed and every screen that opens a kept Entry show the same Entry card.
 _Avoid_: Item, tile (for a card; a tile is the pressed button of the design)
 
 **Text size**:
-«Шрифт і розмір»: the size the Entry card's texts start from. With its Feature Switch on, one of «Як у системі» (the phone's text size within a cap), «Більший» and «Найбільший», steps of one ordered ladder whose lowest step is the shrink floor; stored S and M read as «Як у системі», L as «Більший», XL as «Найбільший». Off, the old scale S, M, L, XL with the floor S (ADR 0134).
+«Шрифт і розмір»: the size the Entry card's texts start from. With its Feature Switch on, one of «Як у системі» (the phone's text size within a cap), «Більший» and «Найбільший», steps of one ordered ladder whose lowest step is the shrink floor; stored S and M read as «Як у системі», L as «Більший», XL as «Найбільший». Off, the old scale S, M, L, XL with the floor S.
 _Avoid_: font scale, zoom
 
 ### User's words
@@ -240,7 +240,7 @@ The single built-in list of Entries the user marked with the heart ("save word")
 _Avoid_: Saved words, likes
 
 **Dashboard**:
-The home the app opens on, behind «Стрічка» unless `feedTab` makes that tab open the Feed (ADR 0093): the Word of the Day hero, the Mood check-in, «Попередні слова», the «Категорії» rail of Categories of Words, the «Добірки» rail of Curated Collections and the Correction Types rail, whose header opens the grid of the Categories of Corrections, with `correctionTypeGrid` instead a grid of the rail's own Correction Types alone (ADR 0140). Each block has its own Feature Switch; the Word of the Day hero shows with `wordOfTheDay` on.
+The home the app opens on, behind «Стрічка» unless `feedTab` makes that tab open the Feed: the Word of the Day hero, the Mood check-in, «Попередні слова», the «Категорії» rail of Categories of Words, the «Добірки» rail of Curated Collections and the Correction Types rail, whose header opens the grid of the Categories of Corrections, with `correctionTypeGrid` instead a grid of the rail's own Correction Types alone. Each block has its own Feature Switch; the Word of the Day hero shows with `wordOfTheDay` on.
 _Avoid_: Home, start screen, overview
 
 **Curated Collection**:
@@ -273,7 +273,7 @@ _Avoid_: backup, Sync
 ### Progress
 
 **Active Day**:
-A local calendar day on which the reader met the Daily Goal set for it (a `goal-met` record) or, on a day with no Daily Goal, earned at least 5 XP from learning actions (ADR 0074). Active Days recorded before 1.0, when a day on which the app was opened was an Active Day, stay Active Days. Derived from the XP log and the kept earlier days, never stored on its own.
+A local calendar day on which the reader met the Daily Goal set for it (a `goal-met` record) or, on a day with no Daily Goal, earned at least 5 XP from learning actions. Active Days recorded before 1.0, when a day on which the app was opened was an Active Day, stay Active Days. Derived from the XP log and the kept earlier days, never stored on its own.
 _Avoid_: Opened day, visit day
 
 **Streak**:
@@ -289,7 +289,7 @@ The points a learning action earns: a right answer in a Game (1 per Round), a fi
 _Avoid_: Points, score, coins, experience
 
 **XP log**:
-The append-only record of the reader's progress, kept per Edition: XP records, the Daily Goal set (`word-goal`) and met (`goal-met`) for a day, a freeze consumed, a Break started, a Badge earned, a Badge opened (`badge-opened`, which ends its «НОВА» mark on every device) and a wrong answer in a Game (`wrong-answer`, which earns no XP and feeds the `rightRun` Badge) and a reset marker (a Progress reset, ADR 0133). Every record has a unique id, a local date and a time. Sync merges XP logs as a set union by id, so two devices never double the XP. Total XP, Level, today's XP, Active Days, Streak, Best Streak, freezes held and Break eligibility are derived from the records after the latest reset marker and never stored.
+The append-only record of the reader's progress, kept per Edition: XP records, the Daily Goal set (`word-goal`) and met (`goal-met`) for a day, a freeze consumed, a Break started, a Badge earned, a Badge opened (`badge-opened`, which ends its «НОВА» mark on every device) and a wrong answer in a Game (`wrong-answer`, which earns no XP and feeds the `rightRun` Badge) and a reset marker (a Progress reset). Every record has a unique id, a local date and a time. Sync merges XP logs as a set union by id, so two devices never double the XP. Total XP, Level, today's XP, Active Days, Streak, Best Streak, freezes held and Break eligibility are derived from the records after the latest reset marker and never stored.
 _Avoid_: XP history, score table, ledger
 
 **Level**:
@@ -297,7 +297,7 @@ A step derived from total XP: 50 XP reach level 1, each level up to 10 costs 10%
 _Avoid_: Rank, tier, grade
 
 **Daily Goal**:
-The number of Words Seen the reader aims for on a local day: one of the Edition's options (10, 25 or 50 in the UA Edition), chosen in onboarding with 10 highlighted, or none when skipped (ADR 0074). Only Words count. It is recorded in the XP log as `word-goal` (the last set on or before a day is in force) and met once by a `goal-met` record, so a past day keeps the goal the reader had then; a change applies from the same local day and a day already met stays met. «Без цілі» in Settings turns it off the same way, a `word-goal` with none. It replaces the Daily Limit.
+The number of Words Seen the reader aims for on a local day: one of the Edition's options (10, 25 or 50 in the UA Edition), chosen in onboarding with 10 highlighted, or none when skipped. Only Words count. It is recorded in the XP log as `word-goal` (the last set on or before a day is in force) and met once by a `goal-met` record, so a past day keeps the goal the reader had then; a change applies from the same local day and a day already met stays met. «Без цілі» in Settings turns it off the same way, a `word-goal` with none. It replaces the Daily Limit.
 _Avoid_: Target, quota, Daily Limit
 
 **Streak freeze**:
@@ -305,7 +305,7 @@ A cover for one missed day that keeps the Streak, used automatically. A new read
 _Avoid_: Streak saver, repair, shield
 
 **Break**:
-A pause of the Streak the reader starts: up to 7 days, at most 7 Break days in the 30 days from the first Break of them, free; the reader can end it early, and the days it did not use come back (ADR 0180). Break days keep the Streak and add nothing to it.
+A pause of the Streak the reader starts: up to 7 days, at most 7 Break days in the 30 days from the first Break of them, free; the reader can end it early, and the days it did not use come back. Break days keep the Streak and add nothing to it.
 _Avoid_: Vacation, pause (the polite pause is a notification rule), repair
 
 **Badge**:
@@ -313,23 +313,23 @@ A kept milestone, about 20 in all: Streak days, confirmed learned Entries, the f
 _Avoid_: Achievement, trophy, medal
 
 **Badge family**:
-A group of Badges an Edition declares, with a name, a description, a shape and a tone that every Badge in it is drawn with. The shapes are `hexagon`, `shield`, `circle`, `tile`, `wedge`, `diamond` and `checker` (ADR 0087). The UA Edition has six. A Badge earned but never opened is new and carries «НОВА».
+A group of Badges an Edition declares, with a name, a description, a shape and a tone that every Badge in it is drawn with. The shapes are `hexagon`, `shield`, `circle`, `tile`, `wedge`, `diamond` and `checker`. The UA Edition has six. A Badge earned but never opened is new and carries «НОВА».
 _Avoid_: Badge category, Badge group, tier
 
 **Badge families overview**:
-The head of the Badges screen: a card for each Badge family with its mark, name, how many Badges it holds, its description and its shape («ФОРМА · Шестикутник»), above a card for each Badge with its mark, name, condition and status, «Отримано» or «Ще ні · N%»; the date and the exact progress show in the Badge sheet. Its own Feature Switch, `badgeFamiliesOverview`, needs `badges` (ADR 0145).
+The head of the Badges screen: a card for each Badge family with its mark, name, how many Badges it holds, its description and its shape («ФОРМА · Шестикутник»), above a card for each Badge with its mark, name, condition and status, «Отримано» or «Ще ні · N%»; the date and the exact progress show in the Badge sheet. Its own Feature Switch, `badgeFamiliesOverview`, needs `badges`.
 _Avoid_: families screen, family list
 
 **Profile**:
-The screen of the reader's whole progress: Level and progress to the next, Streak, Best Streak, the Active Days calendar (the last 35 days across months, with Break and frozen days), confirmed learned Entries by rarity, Badges with progress, the Best result of each Game Mode and a button to share the Level; the reader's earlier numbers (Seen, Favorites, Known, Game results) stay available. Without an Account it offers to save the progress. Its header shows the avatar (the first letter of the reader's name, a neutral mark without one), the name and «Рівень N — назва»; the name is optional, trimmed, at most 24 characters, synced through the Account and never sent with Analytics or any counter (ADR 0136).
+The screen of the reader's whole progress: Level and progress to the next, Streak, Best Streak, the Active Days calendar (the last 35 days across months, with Break and frozen days), confirmed learned Entries by rarity, Badges with progress, the Best result of each Game Mode and a button to share the Level; the reader's earlier numbers (Seen, Favorites, Known, Game results) stay available. Without an Account it offers to save the progress. Its header shows the avatar (the first letter of the reader's name, a neutral mark without one), the name and «Рівень N — назва»; the name is optional, trimmed, at most 24 characters, synced through the Account and never sent with Analytics or any counter.
 _Avoid_: Account (the identity that syncs), dashboard, stats screen
 
 **Progress reset**:
-«Скинути прогрес»: a reset marker the reader writes into the XP log. Every value derived from the log, Badges and Best results included, counts only the records after the latest marker; the Daily Goal in force is written again after it. Favorites, Collections, History, Seen, Knowledge Marks and Reviews, Hidden Entries, the Mix, the Rarity Range, settings, the name and the Account stay (ADR 0133).
+«Скинути прогрес»: a reset marker the reader writes into the XP log. Every value derived from the log, Badges and Best results included, counts only the records after the latest marker; the Daily Goal in force is written again after it. Favorites, Collections, History, Seen, Knowledge Marks and Reviews, Hidden Entries, the Mix, the Rarity Range, settings, the name and the Account stay.
 _Avoid_: wipe, delete data, sign out
 
 **Mascot**:
-The Edition's character, a silent figure that moves and shows short lines from the Edition in onboarding, celebrations (a new Level, a Badge, the Daily Goal, Streak milestones), Game reactions and empty states, and never interrupts the Feed. The Edition supplies its vector; the Core draws its states and their motion (ADR 0070). It makes no sound: the interface sounds of the app are not its voice.
+The Edition's character, a silent figure that moves and shows short lines from the Edition in onboarding, celebrations (a new Level, a Badge, the Daily Goal, Streak milestones), Game reactions and empty states, and never interrupts the Feed. The Edition supplies its vector; the Core draws its states and their motion. It makes no sound: the interface sounds of the app are not its voice.
 _Avoid_: Avatar, bot, assistant, voice (of the Mascot)
 
 **Interface sound**:
@@ -359,15 +359,15 @@ _Avoid_: Provider, login type, auth method
 ### Discovery
 
 **Feed**:
-The vertical stream of Entries the user swipes through, opened from the Dashboard; Corrections, Idioms, Synonym Rows and Tips are mixed in among Words. Every 5th card of the Cycle is a Correction's turn while the Cycle has unseen Corrections, every 7th an Idiom's turn while it has unseen Idioms, every 9th a Synonym Row's turn while it has unseen Synonym Rows and every 11th a Tip's turn while it has unseen Tips, each counted from its kind's last card, at the Mix kind weight «Звичайно» («Менше» spaces a kind's turns twice as far apart, «Більше» twice as close). When turns fall on one card the order is Correction, Idiom, Synonym Row, Tip, and each loser takes the next card. While Entries are due for Review, every 3rd card that is no other kind's turn is a Word due for Review, labelled «Повторення», and a Correction, an Idiom, a Synonym Row or a Tip due for Review takes the next turn of its kind before a new one, Seen in this Cycle or not. The Word of the Day and the Review slot stay Words only; once the Word of the Day's card opened the day, that Word takes no other card of the Feed that day (ADR 0184). Beside Entry cards the Feed shows Feed Notices, which take no turn.
+The vertical stream of Entries the user swipes through, opened from the Dashboard; Corrections, Idioms, Synonym Rows and Tips are mixed in among Words. Every 5th card of the Cycle is a Correction's turn while the Cycle has unseen Corrections, every 7th an Idiom's turn while it has unseen Idioms, every 9th a Synonym Row's turn while it has unseen Synonym Rows and every 11th a Tip's turn while it has unseen Tips, each counted from its kind's last card, at the Mix kind weight «Звичайно» («Менше» spaces a kind's turns twice as far apart, «Більше» twice as close). When turns fall on one card the order is Correction, Idiom, Synonym Row, Tip, and each loser takes the next card. While Entries are due for Review, every 3rd card that is no other kind's turn is a Word due for Review, labelled «Повторення», and a Correction, an Idiom, a Synonym Row or a Tip due for Review takes the next turn of its kind before a new one, Seen in this Cycle or not. The Word of the Day and the Review slot stay Words only; once the Word of the Day's card opened the day, that Word takes no other card of the Feed that day. Beside Entry cards the Feed shows Feed Notices, which take no turn.
 _Avoid_: Timeline, home list, home screen
 
 **Feed Notice**:
-A Feed card that is not an Entry, shown one at a time, except that the Weekly Recap and Yesterday share one page, the week first, when both are due (ADR 0130). The 1.0 list: the Weekly Recap, the Community Word, a first-week card, Yesterday («Пам’ятаєш учорашнє слово?»: yesterday's Word of the Day as a quiz of three meanings, its own and two of other Words, its part of speech first; the right one sets Known as «Знаю» does, a wrong one Unknown as «Не знаю» does, which starts a Review), «Може, на сьогодні досить?», a Level milestone at Levels 5, 10 and 20 that suggests a wider rarity or a new Category, the offer to save progress, «Ціль дня виконано!» once the Daily Goal is met (ADR 0129), the later onboarding questions and the notification re-ask. «Може, на сьогодні досить?» comes once a local day after 50 distinct Seen Entries, has no setting and never locks the Feed. The save-progress Notice comes without an Account on day 3 of the Streak and after the first new Level, at most twice in all; the notification explainer and its re-ask, 7 days after a refusal, once, come only to a reader who did not answer «Коли нагадати?» in onboarding (ADR 0074). A reader who finished the old onboarding gets the Daily Goal choice once through a Feed Notice. In the Feed a Feed Notice comes before a due Review, a due Review before a Quick Question and a Quick Question before the rest. It counts in no turn and no Review slot and makes nothing Seen; swiping past it closes it for the local day.
+A Feed card that is not an Entry, shown one at a time, except that the Weekly Recap and Yesterday share one page, the week first, when both are due. The 1.0 list: the Weekly Recap, the Community Word, a first-week card, Yesterday («Пам’ятаєш учорашнє слово?»: yesterday's Word of the Day as a quiz of three meanings, its own and two of other Words, its part of speech first; the right one sets Known as «Знаю» does, a wrong one Unknown as «Не знаю» does, which starts a Review), «Може, на сьогодні досить?», a Level milestone at Levels 5, 10 and 20 that suggests a wider rarity or a new Category, the offer to save progress, «Ціль дня виконано!» once the Daily Goal is met, the later onboarding questions and the notification re-ask. «Може, на сьогодні досить?» comes once a local day after 50 distinct Seen Entries, has no setting and never locks the Feed. The save-progress Notice comes without an Account on day 3 of the Streak and after the first new Level, at most twice in all; the notification explainer and its re-ask, 7 days after a refusal, once, come only to a reader who did not answer «Коли нагадати?» in onboarding. A reader who finished the old onboarding gets the Daily Goal choice once through a Feed Notice. In the Feed a Feed Notice comes before a due Review, a due Review before a Quick Question and a Quick Question before the rest. It counts in no turn and no Review slot and makes nothing Seen; swiping past it closes it for the local day.
 _Avoid_: Banner, tip (a Tip is an Entry)
 
 **Seen**:
-An Entry is Seen in the current Cycle once its card stayed on screen for a minimum dwell time in the Feed, or the user opened it from a notification or widget. The Dashboard's reveal of the Word of the Day makes it Seen, through the Feed's own Seen. Opening an Entry from Search, «Попередні слова», a Curated Collection, a Correction Type or a Category's screen, a Category's Feed (ADR 0110), the Rarity Test and Feed Notices make nothing Seen.
+An Entry is Seen in the current Cycle once its card stayed on screen for a minimum dwell time in the Feed, or the user opened it from a notification or widget. The Dashboard's reveal of the Word of the Day makes it Seen, through the Feed's own Seen. Opening an Entry from Search, «Попередні слова», a Curated Collection, a Correction Type or a Category's screen, a Category's Feed, the Rarity Test and Feed Notices make nothing Seen.
 _Avoid_: Viewed, read
 
 **Cycle**:
@@ -375,7 +375,7 @@ One pass through all eligible Entries. The first Cycle opens with the Starter Wo
 _Avoid_: Round (that is a Game term), loop
 
 **Knowledge Mark**:
-What the reader says about an Entry on its card: Known («Знаю») or Unknown («Не знаю»). A side swipe sets it (right Known, left Unknown) or the «⋯» sheet does; a repeated swipe to the same side changes nothing, only «Зняти позначку» removes it, and undo within 4 s restores the previous state (ADR 0077). A mark set from 0.8.13 on keeps the time it was set; only marks with a time count in a Weekly Recap. On a Correction, Known means "I already say it right". A mistake in any Game Mode is an Unknown mark; there is no separate list of hard words.
+What the reader says about an Entry on its card: Known («Знаю») or Unknown («Не знаю»). A side swipe sets it (right Known, left Unknown) or the «⋯» sheet does; a repeated swipe to the same side changes nothing, only «Зняти позначку» removes it, and undo within 4 s restores the previous state. A mark set from 0.8.13 on keeps the time it was set; only marks with a time count in a Weekly Recap. On a Correction, Known means "I already say it right". A mistake in any Game Mode is an Unknown mark; there is no separate list of hard words.
 _Avoid_: Rating, grade
 
 **Review**:
@@ -394,7 +394,7 @@ A setting («Перевір себе», off by default) that hides the answer on
 _Avoid_: Quiz mode, test mode
 
 **Due Quiz**:
-The quiz «Перевір себе» on the «Вчу» list over the Words Due for Review today: for each, its Lemma and three meanings, as Yesterday asks them; the right meaning sets Known, any other Unknown (ADR 0131). It shares its UI name with the Self-check setting and is not it: the Self-check hides the answer on Entry cards, the Due Quiz asks the Words due today.
+The quiz «Перевір себе» on the «Вчу» list over the Words Due for Review today: for each, its Lemma and three meanings, as Yesterday asks them; the right meaning sets Known, any other Unknown. It shares its UI name with the Self-check setting and is not it: the Self-check hides the answer on Entry cards, the Due Quiz asks the Words due today.
 _Avoid_: Self-check (for this quiz), Review quiz, flashcards
 
 **Mix**:
@@ -402,7 +402,7 @@ The set of Categories of Words, plus Corrections as a whole with their own Categ
 _Avoid_: Filter, preferences
 
 **Rarity Range**:
-«Рідкість»: the rarities of Words the reader wants, from a bottom to a top, «від 1 до 5» by default, «лише 3» when both are one. Only Words within it appear anywhere new: the Feed, notifications, widgets, every Game Mode and the Daily Crossword. Entries of other kinds have no rarity and are not affected. A setting of its own, not part of the Mix; set in Settings on five slanted bars, and its top alone by the Rarity Test, which puts the bottom back to 1 (ADR 0156, 0182); onboarding's «Рівень» sets nothing (ADR 0183).
+«Рідкість»: the rarities of Words the reader wants, from a bottom to a top, «від 1 до 5» by default, «лише 3» when both are one. Only Words within it appear anywhere new: the Feed, notifications, widgets, every Game Mode and the Daily Crossword. Entries of other kinds have no rarity and are not affected. A setting of its own, not part of the Mix; set in Settings on five slanted bars, and its top alone by the Rarity Test, which puts the bottom back to 1 (ADR 0156); onboarding's «Рівень» sets nothing.
 _Avoid_: Rarity Ceiling, Rarity Floor, ceiling, floor, difficulty, level, maximum difficulty
 
 **Mix kind weight**:
@@ -414,7 +414,7 @@ A Feed slot that shows one Round over an Eligible Entry: a Round of an enabled G
 _Avoid_: Pop quiz, Feed Game
 
 **Word Meaning question**:
-A round type of the Quick Question, not a Game Mode: the Lemma of a Word that is an Eligible Entry («„{word}“ — це…») and four Definitions shown whole, its primary Definition among them. The Distractors are primary Definitions of other such Words, of the same part of speech first. A Word whose Definition holds its Lemma is never asked. It has its own Feature Switch (ADR 0128).
+A round type of the Quick Question, not a Game Mode: the Lemma of a Word that is an Eligible Entry («„{word}“ — це…») and four Definitions shown whole, its primary Definition among them. The Distractors are primary Definitions of other such Words, of the same part of speech first. A Word whose Definition holds its Lemma is never asked. It has its own Feature Switch.
 _Avoid_: Definition mode, meaning Game
 
 **Questionnaire**:
@@ -442,7 +442,7 @@ _Avoid_: Normalized text, search key, folded form
 _Avoid_: Lookup, filter, dictionary
 
 **Rarity Test**:
-«Перевірка рівня»: 10 Words, 2 of each rarity, each shown as its Lemma with Stress for «Знаю» or «Не знаю», which set the top of the Rarity Range to the highest rarity of which the reader knew at least half of the Words asked («до 1» when there is none; ADR 0182). Optional in onboarding, from «Не знаю» on «Рівень», and again from Settings. It sets no Knowledge Mark, starts no Review and makes nothing Seen.
+«Перевірка рівня»: 10 Words, 2 of each rarity, each shown as its Lemma with Stress for «Знаю» or «Не знаю», which set the top of the Rarity Range to the highest rarity of which the reader knew at least half of the Words asked («до 1» when there is none). Optional in onboarding, from «Не знаю» on «Рівень», and again from Settings. It sets no Knowledge Mark, starts no Review and makes nothing Seen.
 _Avoid_: Level test, placement test, quiz
 
 **Weekly Recap**:
@@ -462,15 +462,15 @@ Reader-consented product events (onboarding steps, Games, Review, goals, Streak 
 _Avoid_: Tracking, telemetry, stats (the reader's own numbers)
 
 **Mistake Report**:
-«Повідомлення про помилку»: what a reader sends from an Entry card's menu about a mistake in that Entry: its type (typo, Stress, Definition or other), an optional comment of at most 500 characters (required for other), the Edition, the Entry id, the app version and the content version. It carries no device id and no Install id; a signed-in reader's report names their Account, an anonymous one nothing (ADR 0159). It waits on the device until it can be sent, and is kept on the server until the owner resolves it in the Owner admin's Content queue.
+«Повідомлення про помилку»: what a reader sends from an Entry card's menu about a mistake in that Entry: its type (typo, Stress, Definition or other), an optional comment of at most 500 characters (required for other), the Edition, the Entry id, the app version and the content version. It carries no device id and no Install id; a signed-in reader's report names their Account, an anonymous one nothing. It waits on the device until it can be sent, and is kept on the server until the owner resolves it in the Owner admin's Content queue.
 _Avoid_: Bug report, feedback, complaint
 
 **Daily Limit**:
-Retired in 1.0. The old setting «Ліміт на день» is replaced by the Daily Goal and by the Feed Notice «Може, на сьогодні досить?» after 50 Seen Entries. The word survives only in history, in ADR 0054.
+Retired in 1.0. The old setting «Ліміт на день» is replaced by the Daily Goal and by the Feed Notice «Може, на сьогодні досить?» after 50 Seen Entries. The word survives only in history.
 _Avoid_: use Daily Goal or the 50-Seen Notice
 
 **Mood**:
-«настрій»: a set of Feed parameters the reader chooses once a local day on the Dashboard: a rarity band inside the Rarity Range (never crossing or lowering it) and a shift of each Mix kind weight. The Edition lists its moods (id, name, emoji) and names the four the Dashboard shows. The choice can be skipped or changed, ends with the local day and syncs; no Mood means the Feed as before. While `moodEffect` is on, a line under the check-in says what the picked Mood changed in the Feed (the Mood's `effect`), and a second tap on the picked Mood unpicks it: no Mood that day (ADR 0185).
+«настрій»: a set of Feed parameters the reader chooses once a local day on the Dashboard: a rarity band inside the Rarity Range (never crossing or lowering it) and a shift of each Mix kind weight. The Edition lists its moods (id, name, emoji) and names the four the Dashboard shows. The choice can be skipped or changed, ends with the local day and syncs; no Mood means the Feed as before. While `moodEffect` is on, a line under the check-in says what the picked Mood changed in the Feed (the Mood's `effect`), and a second tap on the picked Mood unpicks it: no Mood that day.
 _Avoid_: Emotion, feeling, vibe, roulette
 
 **Reserved**:
@@ -565,16 +565,16 @@ The result screen's plain list «Огляд раундів» of every played Rou
 _Avoid_: Mistakes list, answer log
 
 **Daily Crossword**:
-«Кросворд дня»: one 5×5 crossing crossword a day, the same for every reader with the same Rarity Range on a local date (ADR 0087). Its blocks leave runs of white cells, each run a Word within the Rarity Range, Hidden Entries included, numbered where it starts; across and down Words cross and share their letters, and a few crossing cells come pre-filled. One clue at a time, the current Word's primary Definition, is entered on the Letter Wheel. Solving it earns XP once a day; it is not a Game.
+«Кросворд дня»: one 5×5 crossing crossword a day, the same for every reader with the same Rarity Range on a local date. Its blocks leave runs of white cells, each run a Word within the Rarity Range, Hidden Entries included, numbered where it starts; across and down Words cross and share their letters, and a few crossing cells come pre-filled. One clue at a time, the current Word's primary Definition, is entered on the Letter Wheel. Solving it earns XP once a day; it is not a Game.
 _Avoid_: Daily puzzle, crossword game, Word of the Day
 
 **Letter Wheel**:
-The Daily Crossword's ring of the current Word's letters, repeats kept, plus one decoy letter of the Edition's alphabet, shuffled by the day's seed and traced with a finger to enter the Word (ADR 0087).
+The Daily Crossword's ring of the current Word's letters, repeats kept, plus one decoy letter of the Edition's alphabet, shuffled by the day's seed and traced with a finger to enter the Word.
 _Avoid_: keyboard, letter circle
 
 **Crossword Hint**:
-«Підказка»: fills the first empty letter of the Daily Crossword's current Word; it costs nothing and only marks the day as hinted, so its solve shows no «без підказок» (ADR 0087).
+«Підказка»: fills the first empty letter of the Daily Crossword's current Word; it costs nothing and only marks the day as hinted, so its solve shows no «без підказок».
 _Avoid_: reveal, help
 
 **Solve time**:
-The seconds the Daily Crossword was on screen until it was solved, kept and synced with its XP log record; a solve recorded before it has none (ADR 0087).
+The seconds the Daily Crossword was on screen until it was solved, kept and synced with its XP log record; a solve recorded before it has none.

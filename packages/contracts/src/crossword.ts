@@ -4,7 +4,7 @@ import { CorrectionIdSchema } from './correction';
 import { TextSchema } from './shared';
 import { WordIdSchema } from './word';
 
-/** The Daily Crossword's grid is this many cells wide and high (ADR 0052). */
+/** The Daily Crossword's grid is this many cells wide and high. */
 export const CROSSWORD_SIZE = 5;
 
 /** The fewest and most words of a day. */

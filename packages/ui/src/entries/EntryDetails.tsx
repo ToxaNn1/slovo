@@ -27,7 +27,7 @@ import { WordOfTheDayBadge } from './WordOfTheDayBadge';
  * edge, under the halftone raster, with the ink back tile. A Word's panel
  * carries the giant first letter of its Lemma, the Word of the Day's kicker
  * when it is one, the Lemma, part of speech and the Pronunciation button.
- * Every other kind is headed the same way (owner 15.11, ADR 0142): the giant first letter of its headline, its expression, dominant,
+ * Every other kind is headed the same way (owner 15.11): the giant first letter of its headline, its expression, dominant,
  * title or struck form, and the name of its kind under it. The meaning
  * follows on the screen's ground, with no card frame, and the corner sits at
  * the panel's top right. It never conceals the meaning.
@@ -122,7 +122,7 @@ export function EntryDetails({
   return (
     <EntryReveal>
       {/* The tabbed card is a fixed frame the rest of the screen's height: nothing around it
-      scrolls, only an opened tab inside it (ADR 0091, ADR 0113). */}
+      scrolls, only an opened tab inside it. */}
       <View
         testID="entry-frame"
         style={[styles.scroll, { paddingBottom: foot }, drop > 0 && { marginBottom: -drop }]}
@@ -162,7 +162,7 @@ function OtherKindBody({
 
 /**
  * The whole content of Entry details, panel and meaning, under the side
- * swipes that set the Knowledge Mark when the screen has them (ADR 0077).
+ * swipes that set the Knowledge Mark when the screen has them.
  * Entry details never conceals the meaning, so the swipes are always on.
  */
 function Swiped({
@@ -173,7 +173,7 @@ function Swiped({
 }: {
   swipe: EntrySwipe | undefined;
   correction: boolean;
-  /** The tabbed card fills the rest of the screen (ADR 0091), so the swipe grows to it. */
+  /** The tabbed card fills the rest of the screen, so the swipe grows to it. */
   fill: boolean;
   children: ReactNode;
 }) {
@@ -208,7 +208,7 @@ function BackTile({ label, onPress }: { label: string; onPress: () => void }) {
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
-  // A tabbed Word fills the rest of the screen, its tab bar at the foot (ADR 0091).
+  // A tabbed Word fills the rest of the screen, its tab bar at the foot.
   tabbed: { flexGrow: 1, paddingBottom: 0 },
   panel: {
     paddingHorizontal: space[4],

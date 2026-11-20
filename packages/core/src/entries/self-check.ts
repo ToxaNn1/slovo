@@ -4,7 +4,7 @@ import type { TipCardModel } from './tip-card';
 /**
  * An Entry card under Self-check: until the reader reveals it, the card shows
  * only the concealed model and its Knowledge Mark buttons do not work; once
- * revealed, it shows the whole card model and the buttons work (ADR 0051).
+ * revealed, it shows the whole card model and the buttons work.
  */
 type SelfCheckCardModel<Card, Concealed> =
   | { readonly concealed: true; readonly marksActive: false; readonly card: Concealed }

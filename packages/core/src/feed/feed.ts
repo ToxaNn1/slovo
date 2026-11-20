@@ -41,7 +41,7 @@ export const SEEN_DWELL_MS = 500;
  * The Feed of one app session. Its cards are the ones shown so far, oldest
  * first; a card's position is its index there, so going back walks them. A
  * card whose Entry stops being eligible leaves them at once, and goes back to
- * its place when its Entry is eligible again (ADR 0015).
+ * its place when its Entry is eligible again.
  */
 export interface Feed {
   /**
@@ -71,7 +71,7 @@ export interface Feed {
    * The local day the composition turned to last, the day the Feed's header
    * says: it follows the day change, never the clock alone, so it turns at
    * the report of the next local day, with the app open over midnight or on
-   * its return (ADR 0022). Before the composition first turns to a day, today
+   * its return. Before the composition first turns to a day, today
    * by the clock. The subscribers are told when it turns.
    */
   readonly today: LocalDate;
@@ -117,8 +117,7 @@ export interface Feed {
   /**
    * Answers the Yesterday quiz at `position`, alone or under the Weekly
    * Recap, with the meaning `option`: the right one sets Known, as «Знаю»
-   * does, any other Unknown, as «Не знаю» does, which starts a Review (ADR
-   * 0130). Yesterday is closed for the day with it, so it comes no more that
+   * does, any other Unknown, as «Не знаю» does, which starts a Review. Yesterday is closed for the day with it, so it comes no more that
    * day. Resolves the mark set; its card then carries the option. Nothing
    * when no Yesterday quiz not answered yet is there.
    */
@@ -138,15 +137,15 @@ export interface Feed {
   restoreWeeklyRecap(): Promise<boolean>;
   /**
    * Makes today's Word of the Day Seen through the Feed's own Seen, as a
-   * dwell on its card would: History, the archive and the Seen subscribers
-   * (ADR 0076). Nothing when today has none chosen or it is Seen already.
+   * dwell on its card would: History, the archive and the Seen subscribers.
+   * Nothing when today has none chosen or it is Seen already.
    */
   seeWordOfTheDay(): Promise<void>;
   /**
    * Today's Word of the Day, chosen in the Feed's turn as its card would be
    * when today has none yet: past the cards the Feed showed in this Cycle,
    * starting the Feed's new Cycle when the choice starts one. The Dashboard's
-   * hero reads it, so the Feed stays the one that chooses (ADR 0076).
+   * hero reads it, so the Feed stays the one that chooses.
    */
   wordOfTheDay(): Promise<WordOfTheDayChoice | undefined>;
 }
@@ -250,15 +249,14 @@ function eligibleDue(
  *
  * The Cycle covers the eligible Entries; the card order (`nextEntryId` in
  * `card-order.ts`) gives each card's Entry: each kind's turn, spaced by its
- * Mix kind weight, and the Review slots are set out there (ADR 0046,
- * 0051). Every kind is shuffled and Seen like Words, and the Cycle ends only
+ * Mix kind weight, and the Review slots are set out there. Every kind is shuffled and Seen like Words, and the Cycle ends only
  * once every eligible Entry is Seen. The Word of the Day is always a Word,
  * and once its card opened the day it takes no other card that day, in this
- * Cycle or a new one (ADR 0184).
+ * Cycle or a new one.
  *
  * While Words are due for Review, every 3rd card of the session
  * that is no other kind's turn shows one, Seen in this Cycle or not, until
- * the reader answers it (ADR 0043); one whose card the reader read in this
+ * the reader answers it; one whose card the reader read in this
  * session today was passed without a mark and waits for the next day (ADR 0194). While Entries of another kind are due,
  * the kind's turn shows one before a new Entry of the kind, in the same way. A
  * due Entry the Cycle doesn't cover (Hidden, out of the Mix, above the
@@ -293,7 +291,7 @@ function eligibleDue(
  * the next card, in the order of `FEED_NOTICES`. A Feed Notice counts in no turn and no Review slot, makes
  * nothing Seen and keeps no reader's place, and the Feed keeps the next card
  * after it ready too. Swiping past one to another card closes it for its
- * local day on this device (ADR 0054).
+ * local day on this device.
  */
 export async function openFeed({
   entries,
@@ -324,7 +322,7 @@ export async function openFeed({
   notices: FeedNoticeQueue;
   /** The Mix, whose kind weights and Quick Question frequency in effect the next card follows, read for each card. */
   mix: Pick<Mix, 'kindWeightsInEffect' | 'quickQuestionEveryInEffect'>;
-  /** The Mood check-in, whose Feed parameters for today the next card follows (ADR 0076), read for each card. */
+  /** The Mood check-in, whose Feed parameters for today the next card follows, read for each card. */
   mood: Pick<MoodCheckIns, 'feedParameters'>;
   eligibility: Pick<Subject<void>, 'subscribe'>;
   seen: Pick<Subject<string>, 'publish'>;
@@ -483,7 +481,7 @@ export async function openFeed({
   /**
    * The Entries an ordinary card may take: the readable ones, without the
    * Word of the Day whose card opened today's Feed, which comes no second
-   * time that day, Seen or not, in this Cycle or a new one (ADR 0184).
+   * time that day, Seen or not, in this Cycle or a new one.
    */
   function ordinary(ids: EntryIds): EntryIds {
     const { words, ...rest } = readable(ids);
@@ -520,7 +518,7 @@ export async function openFeed({
   }
 
   /**
-   * Whether a Word of `words` is in the Mood's rarity band (ADR 0076), or
+   * Whether a Word of `words` is in the Mood's rarity band, or
    * nothing without a band.
    */
   async function inBandOf(
@@ -780,7 +778,7 @@ export async function openFeed({
 
   /**
    * Writes the `pieces` in one write with the Entry's Seen mark and History
-   * entry, if given and it isn't Seen yet (ADR 0018), and the archive's day
+   * entry, if given and it isn't Seen yet, and the archive's day
    * for the Word of the Day's card. Returns the Entry that became Seen, if
    * one did.
    */

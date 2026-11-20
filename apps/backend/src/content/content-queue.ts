@@ -32,8 +32,8 @@ const adminActor = (email: string): Actor => ({ kind: 'admin-user', email });
 
 /**
  * The Content queue (ADR 0090): the Агент batches to review after the fact,
- * their rollback as one publish, the open flags and the Mistake Reports
- * (ADR 0056). Every write is one transaction with its Action log row.
+ * their rollback as one publish, the open flags and the Mistake Reports.
+ * Every write is one transaction with its Action log row.
  */
 export function createContentQueue({ database, clock }: { database: Database; clock: Clock }) {
   const { db } = database;
@@ -333,7 +333,7 @@ export function createContentQueue({ database, clock }: { database: Database; cl
   /**
    * The Mistake Reports still to check, oldest first, each with the Entry it
    * names as the content database keeps it now and the email of a signed-in
-   * reader's Account (ADR 0159).
+   * reader's Account.
    */
   async function reports(editionId?: string) {
     const { accountId: _accountId, ...columns } = getTableColumns(mistakeReports);
@@ -395,7 +395,7 @@ export function createContentQueue({ database, clock }: { database: Database; cl
     return found;
   }
 
-  /** «Вирішено»: deletes the Mistake Report (ADR 0056), keeping it in the Action log row. */
+  /** «Вирішено»: deletes the Mistake Report, keeping it in the Action log row. */
   async function resolveReport(email: string, id: string, reason: string) {
     return db.transaction(async (tx) => {
       const [deleted] = await tx
@@ -403,7 +403,7 @@ export function createContentQueue({ database, clock }: { database: Database; cl
         .where(eq(mistakeReports.id, id))
         .returning();
       if (deleted === undefined) return { ok: false } as const;
-      // The Action log keeps what the report said, not who sent it (ADR 0159).
+      // The Action log keeps what the report said, not who sent it.
       const { accountId: _accountId, ...report } = deleted;
       await tx.insert(actionLog).values({
         who: adminActor(email),

@@ -46,7 +46,7 @@ export type NotificationTimeBucket = z.infer<typeof NotificationTimeBucketSchema
 const DeltaSchema = z.literal([-1, 0, 1]);
 
 /**
- * What one Entry's counts change by, as the device counted it (ADR 0060): a
+ * What one Entry's counts change by, as the device counted it: a
  * mark added or removed, a move Known ↔ Unknown, a Favorite added or
  * removed. An Entry holds at most one mark, so known and unknown never change
  * the same way at once, and an event changes something.
@@ -77,7 +77,7 @@ const CountersSchema = z.object({
 });
 
 /** A procedure of Community Counters, for one Edition. */
-/** The answer of `counters.communityWord`: the Community Word of the last ISO week, or none (ADR 0060). */
+/** The answer of `counters.communityWord`: the Community Word of the last ISO week, or none. */
 export const CommunityWordOutputSchema = z.object({
   communityWord: z.object({ entryId: EntryIdSchema, adds: z.int().positive() }).nullable(),
 });
@@ -88,7 +88,7 @@ const ofCounters = procedure.errors({
 });
 
 /**
- * The Community Counters procedures (ADR 0060). They need no Account, send no
+ * The Community Counters procedures. They need no Account, send no
  * Session and carry no device id: no input has a field for either.
  */
 export const countersContract = {
@@ -99,7 +99,7 @@ export const countersContract = {
       successStatus: 202,
       summary: 'Count the changes of marks and Favorites a device made',
       description:
-        'Each event names an Entry once and changes its known, unknown and saved counts by −1, 0 or +1; a saved +1 also adds to the Entry’s Favorites adds of the current ISO week (UTC). A request names 1 to 100 Entries and is counted whole or not at all. The backend keeps the totals only: no Account, no device id, no IP address (ADR 0060).',
+        'Each event names an Entry once and changes its known, unknown and saved counts by −1, 0 or +1; a saved +1 also adds to the Entry’s Favorites adds of the current ISO week (UTC). A request names 1 to 100 Entries and is counted whole or not at all. The backend keeps the totals only: no Account, no device id, no IP address.',
       tags: ['counters'],
     })
     .errors({
@@ -156,7 +156,7 @@ export const countersContract = {
       path: '/community/week',
       summary: 'The Community Word of the last ISO week',
       description:
-        'The Entry most added to Favorites in the last full ISO week (UTC), with its adds, the lower Entry id winning a tie; none when nobody added anything (ADR 0060).',
+        'The Entry most added to Favorites in the last full ISO week (UTC), with its adds, the lower Entry id winning a tie; none when nobody added anything.',
       tags: ['counters'],
     })
     .input(z.strictObject({ edition: EditionIdSchema }))

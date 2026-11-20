@@ -16,7 +16,7 @@ function png(width: number, height: number, length = 64): Uint8Array {
 
 const rulesOf = (bytes: Uint8Array) => illustrationRefusals(bytes).map(({ rule }) => rule);
 
-describe('the Illustration rules (ADR 0055)', () => {
+describe('the Illustration rules', () => {
   it('takes a square PNG of at most 150 KB', () => {
     expect(illustrationRefusals(png(512, 512, MAX_ILLUSTRATION_BYTES))).toEqual([]);
   });

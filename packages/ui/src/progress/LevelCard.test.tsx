@@ -45,7 +45,7 @@ describe('LevelCard', () => {
     },
   );
 
-  // ADR 0188: the card stands on the Theme's tile, not as an inverted ink patch.
+  // The card stands on the Theme's tile, not as an inverted ink patch.
   it.each(['light', 'dark'] as const)(
     'takes the tile surface and the ink text of the %s Theme',
     async (colorScheme) => {

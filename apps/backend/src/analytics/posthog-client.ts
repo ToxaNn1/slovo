@@ -17,7 +17,7 @@ const FEATURE = /^[a-zA-Z][a-zA-Z0-9]*$/;
 
 /**
  * The HogQL of a query and its values. Each answers a key and a count per
- * row: people are only ever counted, never selected (ADR 0060).
+ * row: people are only ever counted, never selected.
  */
 function hogQlOf(query: AnalyticsQuery): { sql: string; values: Record<string, unknown> } {
   const editions = [...query.editionIds];

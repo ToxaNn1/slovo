@@ -5,8 +5,8 @@ import { sourceNamesOf } from './source-names';
 /**
  * What a Tip card shows, decided by the Core: the UI draws it and never picks
  * sections itself. It carries data and keys only; the UI turns the kind into
- * the Edition's chip «порада» and labels the forms as on a Correction card
- * (ADR 0051). A section without data is left out: `undefined`.
+ * the Edition's chip «порада» and labels the forms as on a Correction card.
+ * A section without data is left out: `undefined`.
  */
 export interface TipCardModel {
   readonly kind: 'tip';
@@ -21,7 +21,7 @@ export interface TipCardModel {
   readonly standardForm: string;
   readonly explanation: string;
   readonly example: Example | undefined;
-  /** Where the rule does not hold, for the tab «Винятки» (ADR 0120); nothing for a Tip without. */
+  /** Where the rule does not hold, for the tab «Винятки»; nothing for a Tip without. */
   readonly exceptions: TipExceptions | undefined;
   /** The names of the Tip's sources, in their order: each one's short name, or its title without one; the card names them in a line. */
   readonly sourceNames: readonly string[];

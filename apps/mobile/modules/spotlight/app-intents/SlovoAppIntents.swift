@@ -1,7 +1,7 @@
 import AppIntents
 import UIKit
 
-// The App Intents only open the app on a route (ADR 0057). The prebuild
+// The App Intents only open the app on a route. The prebuild
 // (plugins/app-intents.ts) copies this file into the app's target, beside
 // the App Shortcuts it makes from the Edition's strings with each intent's
 // `route`; the titles are keys of the app's Localizable.strings.

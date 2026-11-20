@@ -22,7 +22,7 @@ export type CalendarDay = {
 export type CalendarWeek = readonly CalendarDay[];
 
 const DAYS_IN_WEEK = 7;
-/** The weeks of the calendar: 35 days (ADR 0085). */
+/** The weeks of the calendar: 35 days. */
 const WEEKS = 5;
 
 /** What a day of the calendar is drawn from: the XP log's days and today. */
@@ -63,7 +63,7 @@ function dayOf({ activeDays, frozen, breaks, today }: CalendarDays, first: 'toda
 /**
  * The Active Days calendar on the local date `today`: the 35 days ending
  * with the Sunday of today's week, in five weeks, Monday first, across
- * months (ADR 0085). The Break and frozen days come from the XP log's
+ * months. The Break and frozen days come from the XP log's
  * records; a Break day reads as one before every state but today's.
  */
 export function calendarWeeks(days: CalendarDays): readonly CalendarWeek[] {
@@ -96,7 +96,7 @@ export function breakStrip({
 
 /**
  * The 7 days ending with today, as the Streak freeze card shows them, in the
- * calendar's states (ADR 0085).
+ * calendar's states.
  */
 export function lastWeek(days: CalendarDays): readonly CalendarDay[] {
   const todayNumber = dayNumber(parseLocalDate(days.today));

@@ -318,7 +318,7 @@ describe('the Badges', () => {
     });
   });
 
-  // Spec #1641, ticket #1644, ADR 0085: a flawless Game and a run of right answers.
+  // Spec #1641, ticket #1644: a flawless Game and a run of right answers.
   const flawless: Badge = {
     id: 'flawless',
     name: 'Flawless',
@@ -384,7 +384,7 @@ describe('the Badges', () => {
     );
     const { app } = await run({ records: broken, catalogue: [rightRun] });
     expect(earned(app)).toEqual({});
-    // The progress is the best run, 2, not the run since the wrong answer (ADR 0188).
+    // The progress is the best run, 2, not the run since the wrong answer.
     expect(progressOf(app, 'run-3')).toMatchObject({ progress: { current: 2, target: 3 } });
 
     expect(
@@ -426,7 +426,7 @@ describe('the Badges', () => {
   });
 });
 
-// Ticket #1645, ADR 0085: an earned Badge is new («НОВА») until a
+// Ticket #1645: an earned Badge is new («НОВА») until a
 // `badge-opened` record exists, and that record merges by id across devices.
 describe('the new Badges', () => {
   const level1 = (app: Awaited<ReturnType<typeof run>>['app']) => progressOf(app, 'level-1');

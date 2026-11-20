@@ -5,7 +5,7 @@ import { type FeedCard } from './feed-card';
  * for `openFeed`, which keeps the async work. The session holds its cards
  * oldest first, also the ones dropped because their Entry stopped being
  * eligible: a dropped card keeps its place and goes back to it when its
- * Entry is eligible again (ADR 0015). Places count in every card of the
+ * Entry is eligible again. Places count in every card of the
  * session; positions count in `cards`. A change never edits an array: it
  * makes a new one, and leaves telling the subscribers to the Feed.
  */

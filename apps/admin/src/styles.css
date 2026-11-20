@@ -139,7 +139,7 @@ body {
 }
 
 /*
- * A Service's window (ADR 0173): it fades and grows in over a fading scrim,
+ * A Service's window: it fades and grows in over a fading scrim,
  * its columns rise one after another, each usage bar fills from the left.
  * With reduced motion everything is simply there.
  */

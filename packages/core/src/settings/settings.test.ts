@@ -542,7 +542,7 @@ describe('settings: «Менше руху»', () => {
   });
 });
 
-describe('settings: the three-step text size (ADR 0134)', () => {
+describe('settings: the three-step text size', () => {
   it("uses the user's text size over the Edition's default", async () => {
     const settings = await settingsOver();
 

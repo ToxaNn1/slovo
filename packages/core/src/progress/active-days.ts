@@ -72,7 +72,7 @@ export async function openActiveDays({
   const inTurn = createInTurn();
 
   function daysOf(): ReadonlySet<string> {
-    // A day recorded on or before the latest Progress reset counts no more (ADR 0133).
+    // A day recorded on or before the latest Progress reset counts no more.
     const resetOn = xpLog.resetMarker?.date;
     const days = new Set([...recorded].filter((date) => resetOn === undefined || date > resetOn));
     for (const date of xpLog.days.active) days.add(date);

@@ -5,7 +5,7 @@ import { editionRoute } from '../edition/edition-link';
 /**
  * One result of the iPhone search as the native module writes it into
  * CoreSpotlight (`modules/spotlight`). A tap on it opens `route` as a link
- * from outside the app (ADR 0057).
+ * from outside the app.
  */
 export interface SpotlightItem {
   /** The route a tap opens, also the item's identifier in the index. */

@@ -7,7 +7,7 @@ import type { Favorites } from '../saved/favorites';
 import type { WordOfTheDayArchive } from '../saved/word-of-the-day-archive';
 import { eligibleWidgetEntries } from '../widget/widget';
 
-/** What the iPhone search finds of SLOVO, decided by the Core, so native code only writes it (ADR 0057). */
+/** What the iPhone search finds of SLOVO, decided by the Core, so native code only writes it. */
 export interface Spotlight {
   /**
    * The Spotlight Snapshot of the user state as it is now, for the app's

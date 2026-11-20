@@ -27,7 +27,7 @@ export const FeedNoticesStringsSchema = z.strictObject({
     goalDays: TextSchema,
     /** The number on the goal days' tile, the days of the week that met their Daily Goal out of 7. */
     goalDaysOfWeek: templateOf('count'),
-    /** «Готово», which folds the card away for its week (ADR 0130). */
+    /** «Готово», which folds the card away for its week. */
     done: TextSchema,
     /** The toast once the card is folded away. */
     folded: TextSchema,
@@ -47,7 +47,7 @@ export const FeedNoticesStringsSchema = z.strictObject({
       goalDays: pluralOf(),
     }),
   }),
-  /** Asks about yesterday's Word of the Day: which of three meanings is its own (ADR 0130). */
+  /** Asks about yesterday's Word of the Day: which of three meanings is its own. */
   yesterday: z.strictObject({
     /** «Пам’ятаєш учорашнє слово?» */
     title: TextSchema,
@@ -64,7 +64,7 @@ export const FeedNoticesStringsSchema = z.strictObject({
     /** Hides the card until tomorrow. */
     keepGoing: TextSchema,
   }),
-  /** «Ціль дня виконано!», once the reader meets the day's Daily Goal (ADR 0129). */
+  /** «Ціль дня виконано!», once the reader meets the day's Daily Goal. */
   goalReached: z.strictObject({
     /** Over the card, beside the plate. */
     label: TextSchema,
@@ -86,7 +86,7 @@ export const FeedNoticesStringsSchema = z.strictObject({
     /** Turns to the next card. */
     next: TextSchema,
   }),
-  /** The pre-permission explainer, after the first met Daily Goal and by day 3; «Так» asks the device (ADR 0067). */
+  /** The pre-permission explainer, after the first met Daily Goal and by day 3; «Так» asks the device. */
   notificationExplainer: z.strictObject({
     title: TextSchema,
     message: TextSchema,
@@ -122,7 +122,7 @@ export const FeedNoticesStringsSchema = z.strictObject({
     message: TextSchema,
   }),
   /**
-   * The later questions of the questionnaire (ADR 0067), each a Feed Notice
+   * The later questions of the questionnaire, each a Feed Notice
    * offered once: the Daily Goal, the interests, the self-rating, the Rarity
    * Test offer and the Mix review. The goals, the Categories and the
    * self-rating options come from the Edition.

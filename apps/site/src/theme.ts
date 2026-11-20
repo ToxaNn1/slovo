@@ -1,8 +1,8 @@
 import type { ColorTokens } from '@slovo/contracts';
 
 /**
- * The page's colour variables for one Theme, from the Edition's colour tokens
- * (ADR 0070). Tailwind's theme (styles/global.css) names them.
+ * The page's colour variables for one Theme, from the Edition's colour tokens.
+ * Tailwind's theme (styles/global.css) names them.
  */
 export function themeVariables(colors: ColorTokens): string {
   const vars: Record<string, string> = {

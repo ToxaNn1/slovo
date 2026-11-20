@@ -90,7 +90,7 @@ export const AppConfigSchema = z
     domain: DomainSchema,
     /** The app icon, a 1024×1024 PNG. */
     icon: RepoFileSchema,
-    /** The native splash, a `splash.json` of its colour in each Theme (ADR 0014). */
+    /** The native splash, a `splash.json` of its colour in each Theme. */
     splash: RepoFileSchema,
     /**
      * The Edition the app bundles and opens when no Edition matches the
@@ -109,7 +109,7 @@ export const AppConfigSchema = z
       }),
     }),
   })
-  // The App Group the app shares with its widget (ADR 0026), derived from the
+  // The App Group the app shares with its widget, derived from the
   // bundle id, never authored.
   .transform((config) => ({ ...config, appGroup: `group.${config.bundleId}` }));
 

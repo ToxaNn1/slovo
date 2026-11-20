@@ -1,6 +1,6 @@
 // `pnpm collection-links delete <id>`: deletes the Collection Link of the id
 // from the database DATABASE_URL names, so the owner can take down an abusive
-// name (ADR 0058). No API route deletes links.
+// name. No API route deletes links.
 import { MigrateConfigSchema, readConfig } from '../config';
 import { createDatabase } from '../database/database';
 import { createLogger } from '../logger';

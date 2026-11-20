@@ -12,7 +12,7 @@ import { renderStress, withoutStress } from './stress';
 
 /**
  * What indexes the Edition's label of a row: the kind of a Word, a
- * Correction, a Synonym Row or a Tip, or an Idiom's Idiom Type (ADR 0046).
+ * Correction, a Synonym Row or a Tip, or an Idiom's Idiom Type.
  */
 type EntryLabelKey = 'word' | 'correction' | 'synonymRow' | 'tip' | IdiomType;
 
@@ -47,7 +47,7 @@ interface EntryRowText {
 /**
  * What one row of a list shows for an Entry (Favorites, Collections, History,
  * the Hidden screen, the «Вчу» list and the widget), decided by the Core: how
- * the Entry is named and read, the same on every surface (ADR 0017). It
+ * the Entry is named and read, the same on every surface. It
  * carries data and keys only; the UI adds the Edition's words and what each
  * screen puts on the right (a date, a kind, a time).
  */
@@ -59,7 +59,7 @@ export type EntryRowModel =
       /** Only a noun has one. */
       readonly gender: Gender | undefined;
       readonly registers: readonly Register[];
-      /** The Word's rarity, which the confirmed-Entry counts go by (ADR 0043). */
+      /** The Word's rarity, which the confirmed-Entry counts go by. */
       readonly rarity: Rarity;
     })
   | (EntryRowText & {

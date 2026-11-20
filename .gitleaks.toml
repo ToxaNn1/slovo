@@ -5,5 +5,5 @@
 useDefault = true
 
 [allowlist]
-description = "Public by design: the Cloudflare Web Analytics beacon token, every visitor's page carries it (ADR 0147); Sync record keys such as favorites.w_a1 in tests"
+description = "Public by design: the Cloudflare Web Analytics beacon token, every visitor's page carries it; Sync record keys such as favorites.w_a1 in tests"
 regexes = ['''16c43b5d7a574645a3632769bc7e0084''', '''^[a-zA-Z]+\.([a-z0-9]+\.)?w_[a-z0-9]+$''']

@@ -12,7 +12,7 @@ export const onboardingRecords = {
    * The local date `YYYY-MM-DD` a reader finished or skipped the onboarding
    * with 0.8.13 or later, from which their first week counts its Active Days;
    * without the record, as for a reader who finished it before, there is no
-   * first week. It stays on the device, like the onboarding finished (ADR 0054).
+   * first week. It stays on the device, like the onboarding finished.
    */
   firstWeekFrom: declareRecord('firstWeek.from', LocalDateKeySchema, { sync: 'device-only' }),
 };

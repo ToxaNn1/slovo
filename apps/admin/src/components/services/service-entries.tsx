@@ -43,7 +43,7 @@ function refusalOf(error: unknown): string {
 }
 
 /**
- * The entries of a Service in its window (ADR 0164, 0173): a login and a link
+ * The entries of a Service in its window: a login and a link
  * in the open, a password, token or recovery codes masked, since no read
  * brings their value. Every write goes through the confirmation with a reason.
  * A new entry's form opens with «Додати запис». Without `VAULT_KEY` the
@@ -197,7 +197,7 @@ export function ServiceEntries({ service }: { readonly service: Service }) {
 }
 
 /**
- * A sealed value, masked (ADR 0164). «Показати» shows it for 30 s and
+ * A sealed value, masked. «Показати» shows it for 30 s and
  * «Копіювати» puts it on the clipboard without rendering it; on a locked
  * Vault either asks for the TOTP first, and then runs.
  */

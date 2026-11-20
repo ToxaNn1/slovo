@@ -6,7 +6,7 @@ import { sourceNamesOf } from './source-names';
  * What an Idiom card shows, decided by the Core: the UI draws it and never
  * picks sections itself. It carries data and keys only; the UI turns the
  * Idiom Type key into the Edition's string, the chip «фразеологізм»,
- * «топонім» or «прислів’я» (ADR 0046). A section without data is left out: `undefined` or
+ * «топонім» or «прислів’я». A section without data is left out: `undefined` or
  * an empty list.
  */
 export interface IdiomCardModel {

@@ -26,7 +26,7 @@ export function accountSummary(
 
 /**
  * The line under the field of the SLOVO ID screen for the last request's
- * problem, if any; none for no connection, which the offline plate says (ADR 0158).
+ * problem, if any; none for no connection, which the offline plate says.
  */
 export function accountProblemLine({
   state,
@@ -39,6 +39,6 @@ export function accountProblemLine({
 }): string | undefined {
   if (state.problem === undefined || state.problem === 'offline') return undefined;
   if (state.problem !== 'wrong-code') return strings.problems[state.problem];
-  // A wrong code always comes with its tries left (ADR 0037).
+  // A wrong code always comes with its tries left.
   return count(strings.problems['wrong-code'], state.triesLeft ?? 0);
 }

@@ -67,7 +67,7 @@ export function contentSetOf(
 
 /**
  * Every content rule over a whole set of records, as a build or an import
- * checks it. `today` is the day the public domain is judged on (ADR 0045).
+ * checks it. `today` is the day the public domain is judged on.
  */
 export function checkContentSet(
   config: EditionConfig,

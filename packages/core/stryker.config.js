@@ -1,8 +1,8 @@
-// Mutation testing over the Core (ADR 0097): Stryker changes the Core's code
+// Mutation testing over the Core: Stryker changes the Core's code
 // one mutant at a time and runs the Vitest tests that cover it, so a mutant
 // that survives is a wrong result no test catches. `pnpm mutation` runs it;
 // .github/workflows/mutation.yml runs it weekly. A score under the break floor
-// of 85 fails the run (ADR 0141); a run stopped at its time limit fails nothing.
+// of 85 fails the run; a run stopped at its time limit fails nothing.
 /** @type {import('@stryker-mutator/core').PartialStrykerOptions} */
 export default {
   testRunner: 'vitest',

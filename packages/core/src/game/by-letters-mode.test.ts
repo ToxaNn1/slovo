@@ -312,7 +312,7 @@ describe('a Round of «За літерами»', () => {
     });
   });
 
-  // ADR 0190: the weak Entries take places drawn at random among the first 15 Rounds.
+  // The weak Entries take places drawn at random among the first 15 Rounds.
   it('asks about the Words the reader marked «Не знаю» at places drawn among the first 15 Rounds', async () => {
     const weak = ['кобза', 'ослін', 'пугач'];
     const places: number[] = [];

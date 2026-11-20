@@ -13,8 +13,8 @@ import { dashboard, feedHeader, fontScaleCap, space, typeStyle, wedges } from '.
  * wordmark as the screen's header. The Dashboard's header (`logo` `plate`)
  * sets the name in the background colour on a slanted ink plate instead.
  * Given `onLogo`, the logo is also a button VoiceOver reads by its label: the
- * Feed's leads to the Dashboard (ADR 0079), the Dashboard's plays the daily
- * splash (ADR 0105).
+ * Feed's leads to the Dashboard, the Dashboard's plays the daily
+ * splash.
  */
 export function FeedHeader({
   wordmark,

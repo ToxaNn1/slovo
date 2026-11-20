@@ -26,7 +26,7 @@ const TipGameQuestionOutputSchema = z.object(tipGameQuestionShape);
 export type TipGameQuestion = z.infer<typeof TipGameQuestionSchema>;
 
 /**
- * Where a Tip's rule does not hold (ADR 0120): a short text in reading prose
+ * Where a Tip's rule does not hold: a short text in reading prose
  * («Не ставимо перед «о»…») and the words it names, which its card shows in
  * chips under the tab «Винятки».
  */
@@ -66,9 +66,9 @@ const tipShape = (
  * rule of good speech with a title («Котра година?»), its standard form, an
  * explanation of at most 300 characters, at least one source and its own Game
  * question; optionally the non-standard form it replaces, an example and its
- * exceptions (ADR 0120). A
+ * exceptions. A
  * Tip with no non-standard form shows only the right way. It has no Category,
- * rarity or Pronunciation (ADR 0051).
+ * rarity or Pronunciation.
  *
  * `kind` tells Entries apart. Authored files may leave it out, because the
  * folder already says what they hold. `retired` defaults to false; a Retired

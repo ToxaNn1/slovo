@@ -19,7 +19,7 @@ export type RecordingOutcome =
 /** What one run of the generator made: one outcome per request, in request order. */
 export interface RecordingBatch {
   readonly outcomes: RecordingOutcome[];
-  /** The run hit its time limit before it reached every request (ADR 0172). */
+  /** The run hit its time limit before it reached every request. */
   readonly timedOut: boolean;
 }
 
@@ -38,7 +38,7 @@ const ResultsSchema = z.array(
 /**
  * The threads torch and its maths libraries (OpenMP, MKL, OpenBLAS) may use:
  * by default they take one per core of the whole Railway host, which the
- * service's 2 vCPU cannot run, and the engine crawls (ADR 0172).
+ * service's 2 vCPU cannot run, and the engine crawls.
  */
 const GENERATOR_THREADS = 2;
 
@@ -103,7 +103,7 @@ function runScript(
 const GENERATOR_TIMEOUT_MS = 25 * 60 * 1000;
 
 /**
- * The generator `recordings/generate.py` (ADR 0083) in its `--out-dir`
+ * The generator `recordings/generate.py` in its `--out-dir`
  * mode: one run of the script for the whole batch, the engine loaded once.
  */
 export function scriptGenerator({

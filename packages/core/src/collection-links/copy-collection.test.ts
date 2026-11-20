@@ -104,7 +104,7 @@ async function preview(app: Composition, id: string) {
 const entryIdsOf = (app: Composition, collectionId: string) =>
   app.collections.entries(collectionId).map(({ entryId }) => entryId);
 
-// Spec #937, Collection Links: the recipient sheet and «Додати собі» (ADR 0058).
+// Spec #937, Collection Links: the recipient sheet and «Додати собі».
 describe('a Collection Link', () => {
   it('previews the name, how many Entries it holds and its first 5 the Language Pack has', async () => {
     const { app, api, share } = await reader();

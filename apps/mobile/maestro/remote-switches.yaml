@@ -1,4 +1,4 @@
-# The app obeys the remote Feature Switches (ADR 0040): the Game tab goes once
+# The app obeys the remote Feature Switches: the Game tab goes once
 # `game` is turned off remotely and the app comes back to the foreground, and
 # comes back once the switch is cleared, without a restart. Maestro can't run
 # the switch commands, so the flow runs in three steps around them, on the

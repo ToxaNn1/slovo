@@ -25,7 +25,7 @@ function falls(rule: HolidayRule, date: LocalDate): boolean {
 
 /**
  * The Holiday of a local date by the Edition's rules, or `undefined` on an
- * ordinary day (ADR 0055). It follows the local date alone, so it changes at
+ * ordinary day. It follows the local date alone, so it changes at
  * local midnight.
  */
 export function holidayOf(date: LocalDate, holidays: readonly Holiday[]): Holiday | undefined {
@@ -38,7 +38,7 @@ export interface SeasonalMotifs {
   readonly holidays: readonly Holiday[];
 }
 
-/** The motif of a local date: its Holiday's if it has one, else its Season's (ADR 0055). */
+/** The motif of a local date: its Holiday's if it has one, else its Season's. */
 export function motifOf(date: LocalDate, { seasons, holidays }: SeasonalMotifs): SeasonalMotif {
   return holidayOf(date, holidays)?.motif ?? seasons[seasonOf(date)];
 }

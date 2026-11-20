@@ -76,7 +76,7 @@ const appleSignInSheet =
 
 /**
  * Opens the reader's Account over the device ports, once per app run apart
- * from the composition (ADR 0036, 0037); the Shell opens it only when the
+ * from the composition; the Shell opens it only when the
  * Edition's `account` switch is on. Its Session is in the Keychain, or in
  * memory while the binary lacks it. When the Keychain can't be read, the
  * opening fails with a retry, so a Session kept there is never shadowed by

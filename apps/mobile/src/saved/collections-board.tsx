@@ -37,7 +37,7 @@ type Cell =
   | { readonly kind: 'collection'; readonly index: number; readonly row: CollectionRowModel };
 
 /**
- * Collections in the board style (board 09, ADR 0132): two columns of cards,
+ * Collections in the board style (board 09): two columns of cards,
  * the dashed «Нова колекція» first, then the Collections newest first in the
  * tones by position. A tap opens a Collection; a long press (or VoiceOver's
  * action) opens its menu: share while Collection Links are on, rename in the

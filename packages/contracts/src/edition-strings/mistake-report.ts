@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { TextSchema } from '../shared';
 import { templateOf } from './shared';
 
-/** The texts of a Mistake Report: the card menu's action, the sheet and its toasts (ADR 0056). */
+/** The texts of a Mistake Report: the card menu's action, the sheet and its toasts. */
 export const MistakeReportStringsSchema = z.strictObject({
   /** The sheet's title, as the card menu's action names it, e.g. «Повідомити про помилку». */
   action: TextSchema,

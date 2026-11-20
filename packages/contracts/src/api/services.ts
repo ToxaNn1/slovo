@@ -5,7 +5,7 @@ import { procedure } from './procedure';
 import { ReasonSchema } from './reason';
 
 /**
- * What a Service's block shows (ADR 0164): a Railway service its Online or
+ * What a Service's block shows: a Railway service its Online or
  * Offline, a Cron its last and next run, any other Service its usage bar.
  */
 export const SERVICE_KINDS = ['railway', 'cron', 'metered'] as const;
@@ -49,7 +49,7 @@ export const ServiceSchema = z.object({
 });
 export type Service = z.infer<typeof ServiceSchema>;
 
-/** The types of a Service entry: a login and a link stay open, the rest are sealed in the Vault (ADR 0164). */
+/** The types of a Service entry: a login and a link stay open, the rest are sealed in the Vault. */
 export const OPEN_ENTRY_TYPES = ['login', 'link'] as const;
 export const SEALED_ENTRY_TYPES = ['password', 'token', 'recovery-codes'] as const;
 export const ServiceEntryTypeSchema = z.enum([...OPEN_ENTRY_TYPES, ...SEALED_ENTRY_TYPES]);
@@ -111,7 +111,7 @@ const UNLOCK_ERRORS = {
 /** One entry's value as a reveal or a copy answers it. */
 const EntryValueAnswerSchema = z.object({ value: z.string() });
 
-/** The Service entries of «Сервіси»: a Власник only, every write with a reason (ADR 0122, 0164). */
+/** The Service entries of «Сервіси»: a Власник only, every write with a reason. */
 const serviceEntriesContract = {
   entries: procedure
     .route({
@@ -223,7 +223,7 @@ const serviceEntriesContract = {
 /** A block's size on the canvas in CSS pixels: a new Service takes a place where it overlaps none. */
 export const SERVICE_BLOCK = { width: 230, height: 115 } as const;
 
-/** What SLOVO pays: the monthly total and the next charge, by the Kyiv day (ADR 0164). */
+/** What SLOVO pays: the monthly total and the next charge, by the Kyiv day. */
 export const ServiceCostsSchema = z.object({
   /** The monthly prices summed, the Services with no price left out. */
   monthlyTotalUsdCents: z.number().int().min(0),
@@ -296,7 +296,7 @@ const serviceMoneyContract = {
     .input(z.strictObject({ id: ServiceIdSchema, ...ServiceMoneyFields, reason: ReasonSchema }))
     .output(z.object({ service: ServiceSchema, changed: z.array(ServiceMoneyFieldSchema) })),
 };
-/** How much of one limit of its plan a Service used in the current period (ADR 0164). */
+/** How much of one limit of its plan a Service used in the current period. */
 export const LimitUsageSchema = z.object({
   name: z.string().min(1),
   unit: z.string().min(1),
@@ -305,14 +305,14 @@ export const LimitUsageSchema = z.object({
 });
 export type LimitUsage = z.infer<typeof LimitUsageSchema>;
 
-/** The share of a limit from which a Service is near it: a yellow mark and an Alert (ADR 0164). */
+/** The share of a limit from which a Service is near it: a yellow mark and an Alert. */
 export const NEAR_LIMIT_SHARE = 0.9;
 
 /** Whether a limit is used to `NEAR_LIMIT_SHARE` or more. */
 export const nearLimit = ({ used, limit }: { readonly used: number; readonly limit: number }) =>
   used >= limit * NEAR_LIMIT_SHARE;
 
-/** What Railway bills a month by: the vCPU, the memory, the egress and the volume (ADR 0173). */
+/** What Railway bills a month by: the vCPU, the memory, the egress and the volume. */
 export const RailwaySpendPartSchema = z.enum(['cpu', 'memory', 'egress', 'disk']);
 export type RailwaySpendPart = z.infer<typeof RailwaySpendPartSchema>;
 
@@ -323,7 +323,7 @@ export const ServiceReadingSchema = z.discriminatedUnion('kind', [
     kind: z.literal('railway'),
     state: z.enum(['online', 'offline']),
     usage: z.array(LimitUsageSchema),
-    /** This month's spend of each part Railway bills, in USD (ADR 0173). */
+    /** This month's spend of each part Railway bills, in USD. */
     spendParts: z.array(z.object({ part: RailwaySpendPartSchema, usd: z.number().min(0) })),
   }),
   z.object({
@@ -353,7 +353,7 @@ export const ServiceUsageSchema = z.object({
 });
 export type ServiceUsage = z.infer<typeof ServiceUsageSchema>;
 
-/** The official NBU rate of the dollar the UAH figures are counted at (ADR 0164). */
+/** The official NBU rate of the dollar the UAH figures are counted at. */
 export const UsdRateSchema = z.object({
   /** Hryvnias for one dollar, as the NBU sets it. */
   uahPerUsd: z.number().positive(),
@@ -379,7 +379,7 @@ const serviceRateContract = {
     .output(z.object({ rate: UsdRateSchema.nullable() })),
 };
 
-/** The «Сервіси» procedures of the admin API: a Власник only (ADR 0164). */
+/** The «Сервіси» procedures of the admin API: a Власник only. */
 export const servicesContract = {
   list: procedure
     .route({

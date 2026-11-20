@@ -7,7 +7,7 @@ export const savedRecords = {
   /**
    * The Word of the Day archive, one record per local date `YYYY-MM-DD`, by
    * that date: the id of the Word of the Day whose card the reader Seen on it,
-   * written in the same write as the Seen mark (ADR 0054). It syncs last write
+   * written in the same write as the Seen mark. It syncs last write
    * wins (ADR 0041); a new key, so no migration.
    */
   wordOfTheDayArchive: declareRecords('wordOfTheDayArchive.', z.string().min(1)),
@@ -16,7 +16,7 @@ export const savedRecords = {
   /** The Collections, one record per Collection, by Collection id: its name and the instant it was created. */
   collections: declareRecords(
     'collections.',
-    // `source`: the Curated Collection a copy was made of (ADR 0076).
+    // `source`: the Curated Collection a copy was made of.
     z.object({ name: z.string(), createdAt: InstantSchema, source: z.string().optional() }),
   ),
   /**

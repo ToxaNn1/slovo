@@ -29,7 +29,7 @@ const XpSourceSchema = z.literal([
  * consumed for its date, a missed day it covers, a Break started on its
  * date, with its length in days, a Break ended early, the Daily Goal the reader set from that
  * day on, a Badge earned on its date, a Badge the reader first opened, or a
- * Game Round answered wrong (ADR 0085). The kinds the ADR names besides these come with their own
+ * Game Round answered wrong. The kinds the ADR names besides these come with their own
  * tickets. The stored XP entry keeps the fields of every source; it reads as
  * the form of its own source by the rule of `xpEntryOf`.
  */
@@ -44,12 +44,12 @@ const StoredXpRecordSchema = z.discriminatedUnion('kind', [
     mode: z.string().optional(),
     /** The rarity of the Word a Round answered right asked about, for the Badges; left out for other Entries. */
     rarity: RaritySchema.optional(),
-    /** A finished Game's right answers and Rounds played, for the Badges (ADR 0085); left out before them. */
+    /** A finished Game's right answers and Rounds played, for the Badges; left out before them. */
     right: z.number().int().nonnegative().optional(),
     played: z.number().int().nonnegative().optional(),
-    /** A Daily Crossword solve's Solve time in seconds (ADR 0087); left out before it, read as no time. */
+    /** A Daily Crossword solve's Solve time in seconds; left out before it, read as no time. */
     solveSeconds: z.number().int().nonnegative().optional(),
-    /** Whether a Daily Crossword solve used the Crossword Hint (ADR 0087); left out, no hint. */
+    /** Whether a Daily Crossword solve used the Crossword Hint; left out, no hint. */
     hinted: z.boolean().optional(),
   }),
   z.object({ kind: z.literal('freeze'), date: LocalDateKeySchema, at: InstantSchema }),
@@ -61,7 +61,7 @@ const StoredXpRecordSchema = z.discriminatedUnion('kind', [
     days: z.number().int().min(1).max(BREAK_DAYS_AT_MOST),
   }),
   /**
-   * The reader ended the Break that starts on `start` early, on `date` (ADR 0180):
+   * The reader ended the Break that starts on `start` early, on `date`:
    * the Break started at `startedAt` covers the days before `date` only, and
    * one started again later on that day is not ended; one per Break by its id.
    */
@@ -73,7 +73,7 @@ const StoredXpRecordSchema = z.discriminatedUnion('kind', [
     startedAt: InstantSchema,
   }),
   /**
-   * A Daily Goal in XP, set before the Daily Goal counted Words (ADR 0074):
+   * A Daily Goal in XP, set before the Daily Goal counted Words:
    * kept so the log still reads, and counted for nothing.
    */
   z.object({
@@ -82,14 +82,14 @@ const StoredXpRecordSchema = z.discriminatedUnion('kind', [
     at: InstantSchema,
     goal: z.number(),
   }),
-  /** The Daily Goal in Words set from a local day on, or `null` where «Без цілі» turned it off (ADR 0074). */
+  /** The Daily Goal in Words set from a local day on, or `null` where «Без цілі» turned it off. */
   z.object({
     kind: z.literal('word-goal'),
     date: LocalDateKeySchema,
     at: InstantSchema,
     goal: DailyGoalSchema.nullable(),
   }),
-  /** The day's Seen Words reached its Daily Goal; one per local date by its id (ADR 0074). */
+  /** The day's Seen Words reached its Daily Goal; one per local date by its id. */
   z.object({ kind: z.literal('goal-met'), date: LocalDateKeySchema, at: InstantSchema }),
   z.object({
     kind: z.literal('badge'),
@@ -97,21 +97,21 @@ const StoredXpRecordSchema = z.discriminatedUnion('kind', [
     at: InstantSchema,
     badge: z.string(),
   }),
-  /** The reader opened an earned Badge's sheet or stamp, which ends its «НОВА» mark; one per Badge by its id (ADR 0085). */
+  /** The reader opened an earned Badge's sheet or stamp, which ends its «НОВА» mark; one per Badge by its id. */
   z.object({
     kind: z.literal('badge-opened'),
     date: LocalDateKeySchema,
     at: InstantSchema,
     badge: z.string(),
   }),
-  /** A Game Round answered wrong in its Game Mode, which earns no XP and breaks a run of right answers (ADR 0085). */
+  /** A Game Round answered wrong in its Game Mode, which earns no XP and breaks a run of right answers. */
   z.object({
     kind: z.literal('wrong-answer'),
     date: LocalDateKeySchema,
     at: InstantSchema,
     mode: z.string(),
   }),
-  // The reset marker of «Скинути прогрес»: every progress value folds only the records after the latest one (ADR 0133).
+  // The reset marker of «Скинути прогрес»: every progress value folds only the records after the latest one.
   z.object({ kind: z.literal('reset'), date: LocalDateKeySchema, at: InstantSchema }),
 ]);
 

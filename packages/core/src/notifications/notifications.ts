@@ -64,7 +64,7 @@ export type NotificationTimeRefusal = 'order';
 
 /**
  * Notifications: the reader's Notification times, whether notifications play
- * their sound, and the plan of which Word comes at which time (ADR 0021). All
+ * their sound, and the plan of which Word comes at which time. All
  * of it stays on this device. Read from the user state once, when it opens,
  * so open one per app session (the Core composition does). A change is made
  * in memory only once it is written, and the plan follows every change. A
@@ -130,8 +130,7 @@ const earlier = (one: string, other: string) =>
 
 /**
  * The Notification times of a stored list: off with none, else the Word at
- * its first time and the Reminder at its last, as the plan takes them (ADR
- * 0176). A list from before ADR 0200 may hold more; the ones between count
+ * its first time and the Reminder at its last, as the plan takes them. A list from before ADR 0200 may hold more; the ones between count
  * for nothing.
  */
 function timesOf(list: readonly string[]): NotificationTimes {

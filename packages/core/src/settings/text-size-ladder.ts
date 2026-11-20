@@ -1,7 +1,7 @@
 import type { TextSize } from '@slovo/contracts';
 
 /**
- * The text sizes as one ordered ladder, the smallest first (ADR 0134). A
+ * The text sizes as one ordered ladder, the smallest first. A
  * setting value names the step a text starts from; «Як у системі» follows the
  * OS text size within a cap, and «Більший» and «Найбільший» sit above it.
  */

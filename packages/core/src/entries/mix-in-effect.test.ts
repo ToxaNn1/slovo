@@ -57,7 +57,7 @@ describe('the hide options of an Entry', () => {
     ]);
   });
 
-  it('leave out the last Category of Words in the Mix (ADR 0019)', async () => {
+  it('leave out the last Category of Words in the Mix', async () => {
     const { mix } = await run();
     await mix.takeOut(speech.id);
     expect(mix.hideOptions({ kind: 'word', entryId: 'w_nature', categoryId: nature.id })).toEqual([
@@ -185,7 +185,7 @@ describe('the Mix screen', () => {
     });
   });
 
-  it('gives the last Category of each list in the Mix as the last one, whose chip can’t be turned off (ADR 0019)', async () => {
+  it('gives the last Category of each list in the Mix as the last one, whose chip can’t be turned off', async () => {
     const { mix } = await run();
     await mix.takeOut(speech.id);
     await mix.takeOut(work.id, 'correction');

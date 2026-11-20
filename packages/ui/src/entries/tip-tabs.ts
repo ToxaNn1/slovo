@@ -1,11 +1,10 @@
 import type { TipCardModel } from '@slovo/core';
 
 /**
- * One tab of a Tip's Entry card (ADR 0091, board e9), made only from what a
+ * One tab of a Tip's Entry card (board e9), made only from what a
  * Tip has: «Правило» the explanation, the chips of its standard form and its
  * Example, and the sources; «Винятки» the text of its exceptions and their
- * words in chips, for a Tip with exceptions while `tipExceptions` is on
- * (ADR 0120).
+ * words in chips, for a Tip with exceptions while `tipExceptions` is on.
  */
 export type TipTab =
   | {

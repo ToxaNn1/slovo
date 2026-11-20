@@ -40,8 +40,7 @@ const WholeLinesContext = createContext<
 >(undefined);
 
 /**
- * The lines drawn in content that may be clamped at whole lines only (ADR
- * 0091), which every `WholeLinesText` and `useWholeBlock` in a
+ * The lines drawn in content that may be clamped at whole lines only, which every `WholeLinesText` and `useWholeBlock` in a
  * `WholeLinesView` given `report` gives, where they are in that view.
  */
 export function useDrawnLines() {
@@ -143,7 +142,7 @@ function useReport() {
   return { ref, report };
 }
 
-/** A `Text` whose lines clamped content is cut between, never through (ADR 0091). */
+/** A `Text` whose lines clamped content is cut between, never through. */
 export function WholeLinesText({ onTextLayout, ...props }: TextProps) {
   const { ref, report } = useReport();
   return (
@@ -159,8 +158,7 @@ export function WholeLinesText({ onTextLayout, ...props }: TextProps) {
 }
 
 /**
- * A view, such as a chip, that clamped content shows whole or not at all (ADR
- * 0091), with `below` more under it that it draws past its bottom (a shadow).
+ * A view, such as a chip, that clamped content shows whole or not at all, with `below` more under it that it draws past its bottom (a shadow).
  */
 export function useWholeBlock(below = 0): {
   ref: RefObject<HostRef | null>;

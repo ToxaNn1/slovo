@@ -13,7 +13,7 @@ export function stressedVowelsOf({ lemma, stress }: Pick<Word, 'lemma' | 'stress
 
 /**
  * The stressed vowels of a text that writes its Stress, such as a stress
- * trap's form (ADR 0045), in order: each character a Stress mark follows.
+ * trap's form, in order: each character a Stress mark follows.
  * Empty for a text without marks.
  */
 export function markedStressedVowelsOf(text: string): string[] {

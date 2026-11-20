@@ -1,5 +1,5 @@
-// `pnpm app-pass`: the full Maestro app pass, `apps/mobile/maestro/app-pass.yaml`
-// (ADR 0177). It opens every screen route of the app and the sheets a tap
+// `pnpm app-pass`: the full Maestro app pass, `apps/mobile/maestro/app-pass.yaml`.
+// It opens every screen route of the app and the sheets a tap
 // opens, keeping a screenshot of each, and ends with the steps that passed and
 // the first that failed.
 //

@@ -41,7 +41,7 @@ export interface RarityTestResult {
   readonly total: number;
 }
 
-/** The Rarity Test (ADR 0054, 0156, 0182): «Перевірка рівня», which sets the Rarity Range. */
+/** The Rarity Test (ADR 0156): «Перевірка рівня», which sets the Rarity Range. */
 export interface RarityTest {
   /**
    * Draws the Words to ask about: 2 of each rarity, the commonest first, from

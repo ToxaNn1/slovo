@@ -25,13 +25,13 @@ import { useCardFeatures } from './card-features';
  * red kicker «ПОРАДА», the title, the rule in a few words, over the red bar,
  * the non-standard form under «Так часто кажуть» when the Tip has one (kept
  * though the board has none, owner 13.11), then the rest: the one tab
- * «Правило» (ADR 0091), so no tab bar: the
+ * «Правило», so no tab bar: the
  * explanation, the standard form and the Example's text in chips, and the
- * source line; with the card's `sourceTab` the sources leave it for a last tab «Джерело»
- * (ADR 0116), and with its `tipExceptions` a Tip with exceptions gets «Винятки»
- * after it, their text and words in chips (ADR 0120). VoiceOver reads the title as «Порада: …», then each form with
+ * source line; with the card's `sourceTab` the sources leave it for a last tab «Джерело»,
+ * and with its `tipExceptions` a Tip with exceptions gets «Винятки»
+ * after it, their text and words in chips. VoiceOver reads the title as «Порада: …», then each form with
  * its label. Under Self-check it keeps the kicker, the title and the
- * non-standard form (ADR 0051); the Entry card draws the button that reveals
+ * non-standard form; the Entry card draws the button that reveals
  * the rest under them.
  */
 export function TipCardBody({
@@ -83,7 +83,7 @@ export function TipCardBody({
               typeRole="tipTitle"
               size={titleSize('tipTitle', lemmaSize)}
               stepped
-              // A title of 36 or more keeps its size at every OS text size (ADR 0157).
+              // A title of 36 or more keeps its size at every OS text size.
               allowFontScaling={false}
               lines={3}
               style={[typeStyle('tipTitle', tokens), { color: colors.ink }]}

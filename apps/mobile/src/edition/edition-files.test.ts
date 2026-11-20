@@ -44,8 +44,8 @@ describe('Edition UI strings', () => {
     expect(EditionStringsSchema.safeParse(readJson(edition, 'strings')).error).toBeUndefined();
   });
 
-  // The contracts require only `other`, since the forms differ by language
-  // (ADR 0020), so a missing form of the Edition's language is caught here.
+  // The contracts require only `other`, since the forms differ by language,
+  // so a missing form of the Edition's language is caught here.
   it.each(editions)('the %s Edition gives every count the plural forms its language has', (id) => {
     const edition = openEditionWithoutRecords(EDITIONS_DIR, id);
     const categories = new Intl.PluralRules(edition.config.locale).resolvedOptions()
@@ -1137,7 +1137,7 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
   });
 });
 
-describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
+describe('the UA Edition addresses the reader with «ти»', () => {
   /** Every text of a value with its path. */
   const textsOf = (value: unknown, path: string): [string, string][] =>
     typeof value === 'string'
@@ -1151,8 +1151,7 @@ describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
    * The «ви» forms, as whole words: the pronouns, the plural imperatives
    * («оберіть», «спробуйте», «торкніться», «позначте», «перевірте») and the plural present and future
    * («знаєте», «оберете», «торкнетеся»). Only words that merely end like a verb
-   * («навіть», «відкрите») are not «ви» forms. No text is an exception
-   * (ADR 0075, 0092).
+   * («навіть», «відкрите») are not «ви» forms. No text is an exception.
    */
   const vyWord =
     /(?<![а-яіїєґʼ'’])(ви|вас|вам|вами|ваш[а-яіїє]*|[а-яіїєґʼ'’]+(іть|їть|йте|ьте|ете|єте|ите|їте|[бвгґджзклмнпрфхцчшщ]те)(ся|сь)?)(?![а-яіїєґʼ'’])/giu;
@@ -1209,7 +1208,7 @@ describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
 });
 
 describe('the Categories of Corrections', () => {
-  // Every Edition groups its Corrections in a list of its own (ADR 0033).
+  // Every Edition groups its Corrections in a list of its own.
   it.each(editions)('the %s Edition lists its Categories of Corrections', (edition) => {
     const config = readJson(edition, 'config') as Record<string, unknown>;
     const { correctionCategories: _removed, ...without } = config;
@@ -1323,7 +1322,7 @@ describe('the Categories that require history', () => {
 });
 
 describe('the origin languages', () => {
-  // Every Edition lists them (ADR 0052), an empty list when it gives no Word an origin.
+  // Every Edition lists them, an empty list when it gives no Word an origin.
   it.each(editions)('the %s Edition lists the languages Words come from', (edition) => {
     const config = readJson(edition, 'config') as Record<string, unknown>;
     const { originLanguages: _removed, ...without } = config;
@@ -1353,7 +1352,7 @@ describe('the origin languages', () => {
 });
 
 describe('the Search letters', () => {
-  // Every Edition names the letters Search reads as another (ADR 0054), none when it reads each as itself.
+  // Every Edition names the letters Search reads as another, none when it reads each as itself.
   it.each(editions)('the %s Edition names its Search letters', (edition) => {
     const config = readJson(edition, 'config') as Record<string, unknown>;
     const { searchLetters: _removed, ...without } = config;
@@ -1373,7 +1372,7 @@ describe('the Search letters', () => {
 });
 
 describe('the moods', () => {
-  // Every Edition lists its moods (ADR 0054), an empty list when it has none.
+  // Every Edition lists its moods, an empty list when it has none.
   it.each(editions)('the %s Edition lists its moods', (edition) => {
     const config = readJson(edition, 'config') as Record<string, unknown>;
     const { moods: _removed, ...without } = config;
@@ -1950,7 +1949,7 @@ const textPairs: readonly (readonly [text: keyof ColorTokens, behind: keyof Colo
   // The Pronunciation message on ink, and the speaker while it plays on accent.
   ['surface', 'ink'],
   ['surface', 'accent'],
-  // Small red text (ADR 0070): links, counts, refusals on every ground.
+  // Small red text: links, counts, refusals on every ground.
   ['accentText', 'background'],
   ['accentText', 'surface'],
   ['accentText', 'surfaceSunken'],

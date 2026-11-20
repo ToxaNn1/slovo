@@ -25,7 +25,7 @@ services:
       timeout: 5s
       retries: 15
 
-  # Catches every email the backend sends over its send API (ADR 0115); read
+  # Catches every email the backend sends over its send API; read
   # them at http://localhost:8025.
   mailpit:
     image: axllent/mailpit:v1.31

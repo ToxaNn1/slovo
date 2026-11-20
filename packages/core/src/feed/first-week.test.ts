@@ -64,7 +64,7 @@ async function newReader(on: string): Promise<Map<string, string>> {
   return records;
 }
 
-// Spec #832, ADR 0054: one intro card a day on the first 7 Active Days after onboarding.
+// Spec #832: one intro card a day on the first 7 Active Days after onboarding.
 describe('The first week', () => {
   it('gives a new reader the card of day 1 on the second card of the day they finish the onboarding', async () => {
     const records = await newReader('2026-11-02');

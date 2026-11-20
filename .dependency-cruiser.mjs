@@ -88,7 +88,7 @@ export default {
     {
       name: 'site-reaches-no-app-or-ui-components',
       comment:
-        'ADR 0086: the site is a static web build. Nothing it imports, directly or through a ' +
+        'The site is a static web build. Nothing it imports, directly or through a ' +
         'package, may reach the mobile app, and of the UI it takes the tokens alone, as the ' +
         'rest of packages/ui is React Native components.',
       severity: 'error',
@@ -104,7 +104,7 @@ export default {
     },
     {
       name: 'site-imports-no-react-native',
-      comment: 'ADR 0086: the site is a static web build, with no React Native or Expo in it.',
+      comment: 'The site is a static web build, with no React Native or Expo in it.',
       severity: 'error',
       from: { path: '^apps/site/' },
       // A prefix: react-native-*, expo-* and their scopes match too. The bare
@@ -153,7 +153,7 @@ export default {
     {
       name: 'only-tests-import-the-core-testing-entry',
       comment:
-        "ADR 0027: the fakes of the Core's ports are test doubles, so only a test or a " +
+        "The fakes of the Core's ports are test doubles, so only a test or a " +
         'test-support module imports `@slovo/core/testing`, and no app or package ships them.',
       severity: 'error',
       from: { pathNot: ['\\.test\\.tsx?$', '(^|/)test-support\\.tsx?$'] },
@@ -162,7 +162,7 @@ export default {
     {
       name: 'ui-does-not-reach-up-or-sideways',
       comment:
-        'ADR 0065, 0017: the UI draws what the Core models (ADR 0017), so it may import ' +
+        'ADR 0065: the UI draws what the Core models, so it may import ' +
         'core and contracts, but not the Language Pack, an app, a tool or an Edition: ' +
         'the app hands it content.',
       severity: 'error',
@@ -172,7 +172,7 @@ export default {
     {
       name: 'ui-layers-import-no-domain-folder',
       comment:
-        "ADR 0027: the UI's providers/, decor/ and primitives/ sit below its domain " +
+        "The UI's providers/, decor/ and primitives/ sit below its domain " +
         'folders, so a button or a sheet never depends on the Entries, the Game or ' +
         'any other domain it is used in. index.ts counts too, as it re-exports them all. ' +
         'The tokens/ folder is the shared base below every layer, not a domain folder. ' +
@@ -222,9 +222,9 @@ export default {
     {
       name: 'workspace-parts-import-through-the-entry-point',
       comment:
-        'ADR 0013, 0018: a part reaches another through its package entry points ' +
+        'ADR 0013: a part reaches another through its package entry points ' +
         '(package.json "exports"), so the Core owns what is public: the user-state schema ' +
-        'stays behind its port (ADR 0013) and the shell uses the composition (ADR 0018), ' +
+        'stays behind its port (ADR 0013) and the shell uses the composition, ' +
         'not the modules inside it.',
       severity: 'error',
       from: { path: '^(apps|packages|tools)/([^/]+)/' },
@@ -256,7 +256,7 @@ export default {
     {
       name: 'no-circular',
       comment:
-        'ADR 0018: the modules of the Core depend on each other in one direction (the ' +
+        'The modules of the Core depend on each other in one direction (the ' +
         'composition on top), and a cycle hides which one decides. Type-only imports ' +
         'count, so a cycle is cut by moving the shared type out.',
       severity: 'error',

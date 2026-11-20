@@ -11,8 +11,8 @@ export interface ResolveOutcome {
 }
 
 /**
- * Deletes the Mistake Report of the id once the owner has checked it
- * (ADR 0056), so `reports list` no longer prints it. An id the database
+ * Deletes the Mistake Report of the id once the owner has checked it,
+ * so `reports list` no longer prints it. An id the database
  * doesn't keep, a malformed one included, resolves nothing and says so.
  */
 export async function resolveReport({ db }: Database, id: string): Promise<ResolveOutcome> {

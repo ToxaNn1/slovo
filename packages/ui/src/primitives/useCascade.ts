@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
+// Reanimated code: the React Compiler skips this module.
 
 import { useEffect } from 'react';
 import {
@@ -32,8 +32,7 @@ export interface Cascade {
 
 /**
  * The entrance of the item at `index` of a list, as an animated style: it
- * enters after `index` items, or under Reduce Motion only fades in at once
- * (ADR 0055).
+ * enters after `index` items, or under Reduce Motion only fades in at once.
  */
 export function useCascade(index: number, { variant, stagger, duration, delay = 0 }: Cascade) {
   const reduceMotion = useReduceMotion();

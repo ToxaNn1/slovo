@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * What a push to main has to deploy (ADR 0151, amending 0104). Writes two
+ * What a push to main has to deploy (amending 0104). Writes two
  * `true`/`false` flags to GITHUB_OUTPUT when it is set, and prints them:
  *
  * - `deploy`: a file changed that a Railway service is built from or

@@ -7,7 +7,7 @@ import type {
 } from '@slovo/core';
 
 /**
- * One tab of a Word's Entry card (ADR 0091, 0186), with what it shows:
+ * One tab of a Word's Entry card, with what it shows:
  * «Суть» every Definition, the primary one first and the other ones under
  * it, and the Word History, «Приклад» the Examples, «Зв’язки» the Synonyms
  * and antonyms, «Історія» the etymology alone.
@@ -95,7 +95,7 @@ const OPENING = '([{«';
 const CLOSING = ')]}»';
 
 /**
- * One tab of a Correction's Entry card (ADR 0091), under its struck
+ * One tab of a Correction's Entry card, under its struck
  * non-standard form: «Як краще» the standard equivalents and the Category,
  * «Чому» the explanation and its sources, «Приклади» the example pair and the
  * literary uses.
@@ -119,7 +119,7 @@ export const correctionTabs: readonly [CorrectionTab, ...CorrectionTab[]] = [
 ];
 
 /**
- * One tab of an Idiom's Entry card (ADR 0091), with what it shows: «Суть» the
+ * One tab of an Idiom's Entry card, with what it shows: «Суть» the
  * Definitions and the sources, «Звідки» where the expression comes from,
  * «Приклад» the Examples.
  */
@@ -158,7 +158,7 @@ export function idiomTabsOf(card: IdiomCardModel): readonly [IdiomTab, ...IdiomT
 }
 
 /**
- * One page of a Synonym Row's Entry card (ADR 0114), a tab «Ряд · 1/2»: up to
+ * One page of a Synonym Row's Entry card, a tab «Ряд · 1/2»: up to
  * `synonymRowMembersPerPage` members in the row's order, its number among the
  * `pages`, and where its first member stands in the whole row.
  */

@@ -48,7 +48,7 @@ export type {
   Round,
 } from './round-machine';
 
-/** How many Lives a Game starts with, in a Game Mode that sets no Lives of its own (ADR 0137). */
+/** How many Lives a Game starts with, in a Game Mode that sets no Lives of its own. */
 export const GAME_LIVES = 3;
 
 /** The Lives a Game in the mode starts with; none in a mode without Lives. */
@@ -142,11 +142,11 @@ export interface GameState {
  * different eligible Entries of the kinds its mode asks about as the mode's
  * Round limit, 15 by default (`roundsToPlanOf`), each pair of a grid
  * counted: up to 5 the reader is weak on, at places drawn at random among
- * its first 15 Rounds (ADR 0043, 0052, 0190), the rest
- * those in History when there are at least 15, else any (ADR 0024). A mode
- * with no Round limit asks them again, reshuffled, once it has asked them all. A mode may set its own Lives too, or none, and a time limit (ADR 0052). Playing never writes Seen, History or Active Days; a Round
+ * its first 15 Rounds, the rest
+ * those in History when there are at least 15, else any. A mode
+ * with no Round limit asks them again, reshuffled, once it has asked them all. A mode may set its own Lives too, or none, and a time limit. Playing never writes Seen, History or Active Days; a Round
  * answered right writes its XP, and a finished Game its mode's Best result,
- * when it beats it (ADR 0052), with the XP of the finished Game and of the
+ * when it beats it, with the XP of the finished Game and of the
  * new Best result (ADR 0066).
  */
 export interface Game {

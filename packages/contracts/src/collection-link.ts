@@ -10,13 +10,13 @@ export const COLLECTION_LINK_NAME_LENGTH = 60;
 /** How many Entries a Collection Link holds at most. */
 export const COLLECTION_LINK_SIZE = 200;
 
-/** A Collection Link's id: 10 random letters and digits, the `<id>` of `c/<id>` (ADR 0058). */
+/** A Collection Link's id: 10 random letters and digits, the `<id>` of `c/<id>`. */
 export const CollectionLinkIdSchema = z
   .string()
   .regex(/^[A-Za-z0-9]{10}$/, 'Expected a Collection Link id: 10 letters and digits');
 
 /**
- * A Collection as a Collection Link holds it (ADR 0058): its Edition, its name
+ * A Collection as a Collection Link holds it: its Edition, its name
  * and its Entry ids in the Collection's order, as it was when it was shared.
  * It carries no Account and no device id: the body has no field for either.
  */

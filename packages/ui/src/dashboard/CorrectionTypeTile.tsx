@@ -9,7 +9,7 @@ import { useTokens } from '../providers/TokensProvider';
 import { correctionTile, typeStyle } from '../tokens';
 
 /**
- * One Correction Type's tile (ADR 0076): its name under a red glyph, the
+ * One Correction Type's tile: its name under a red glyph, the
  * glyph by the tile's place, on the sunken surface, the name drawn small
  * enough to fit whole, never split. The rail gives it its `width`; in a grid
  * it fills its column. It opens its type.

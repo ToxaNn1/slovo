@@ -164,7 +164,7 @@ describe('the gestures hint sheet on the Feed', () => {
     await openApp();
     await settle();
     expect(screen.getByTestId('gestures-hint')).toBeOnTheScreen();
-    // The board's texts in «ти» (ADR 0092).
+    // The board's texts in «ти».
     expect(screen.getByText('ГОРТАЙ ПАЛЬЦЕМ')).toBeOnTheScreen();
     expect(screen.getByText('Вправо — знаю')).toBeOnTheScreen();
     expect(screen.getByText('Вліво — не знаю')).toBeOnTheScreen();
@@ -224,7 +224,7 @@ describe('the gestures hint sheet on the Feed', () => {
   });
 });
 
-// Board XSwipeV: the hint plays the Feed's real card under a finger (ADR 0112).
+// Board XSwipeV: the hint plays the Feed's real card under a finger.
 describe("the swipe hint's demo on the Feed", () => {
   beforeEach(() => {
     motionPlays = true;

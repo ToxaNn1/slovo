@@ -27,7 +27,7 @@ export default function CorrectionTypeRoute() {
 
 /**
  * The type's red hero over its Corrections, each revealed in place with
- * «Відповідь» (ADR 0076), as the board's «fix» screen draws it.
+ * «Відповідь», as the board's «fix» screen draws it.
  */
 function CorrectionTypeScreen({ type }: { type: CorrectionType }) {
   const { title, description, place, rows, reveal } = useCorrectionTypeScreen(type);

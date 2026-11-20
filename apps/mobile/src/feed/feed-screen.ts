@@ -10,7 +10,7 @@ export interface TurnedTo {
  * The position of the card the Feed is told is on screen when it comes in
  * sight: the page the reader turned to while it was out of sight, in this
  * Feed, or else the reader's place as the Feed keeps it, which is the card it
- * opens on until a card is on screen (ADR 0036). A turn in the Feed of a
+ * opens on until a card is on screen. A turn in the Feed of a
  * composition a reopen replaced is not this Feed's.
  */
 export function cardOnReturn(

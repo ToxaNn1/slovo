@@ -11,7 +11,7 @@ const KeptRateSchema = z.object({ uahPerUsd: z.number().positive(), on: z.iso.da
 
 /**
  * The NBU reads in the sourcing cache, a row a Kyiv day under the day's NBU
- * page (ADR 0164): a found rate is a 200 with the rate as its body, a failed
+ * page: a found rate is a 200 with the rate as its body, a failed
  * read a 0 with none.
  */
 export function createUsdRateStore(database: Database, clock: Clock): UsdRateStore {

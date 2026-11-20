@@ -11,7 +11,7 @@ export interface NbuRate {
   readonly on: string;
 }
 
-/** The NBU's rates (ADR 0164): the rate of the dollar for a day, or that it can't answer. */
+/** The NBU's rates: the rate of the dollar for a day, or that it can't answer. */
 export interface NbuPort {
   usdRate(day: string): Promise<{ ok: true; rate: NbuRate } | { ok: false }>;
 }

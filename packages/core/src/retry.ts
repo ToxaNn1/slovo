@@ -12,7 +12,7 @@ export type Answer = { readonly ok: true } | { readonly ok: false; readonly reas
 /**
  * The reasons of the failures that may pass while the tries wait. Too many
  * requests is not one: a limit of the backend holds for minutes, and a spent
- * Sign-in code until a new one is sent (ADR 0037).
+ * Sign-in code until a new one is sent.
  */
 const mayPass: ReadonlySet<string> = new Set<RequestFailure['reason']>(['offline', 'server-error']);
 
@@ -21,7 +21,7 @@ const mayPass: ReadonlySet<string> = new Set<RequestFailure['reason']>(['offline
  * tries it again, at most `REQUEST_RETRIES` times, and answers the last
  * answer. The waits back off exponentially with jitter: before the nth try
  * again it waits between half and all of 1 s times 2ⁿ⁻¹, drawn from `random`,
- * through `schedule`. Any other answer comes back at once (ADR 0037).
+ * through `schedule`. Any other answer comes back at once.
  */
 export async function withRetries<A extends Answer>(
   request: () => Promise<A>,

@@ -8,7 +8,7 @@ const SIZE_NAME = `/(^|_)(${SIZE_WORDS.toUpperCase()})(_|$)|(^|[a-z0-9])(${SIZE_
 const NON_ZERO = 'Literal[raw=/^[0-9.]*[1-9]/]';
 const MESSAGE = 'Take sizes from `@slovo/ui` tokens (docs/react-native.md)';
 const TYPE_ROLE_MESSAGE =
-  'Take the font and its weight from a type role: `typeStyle(role, tokens)` (ADR 0070)';
+  'Take the font and its weight from a type role: `typeStyle(role, tokens)`';
 
 /**
  * The files the token rule covers: the `tokens/` folder defines the tokens and a test
@@ -23,7 +23,7 @@ export const tokenScope = {
  * `no-restricted-syntax` selectors that ban sizes, spacings, radii and colours
  * written as literals instead of taken from the `@slovo/ui` tokens
  * (docs/react-native.md), and a font family or weight written by hand instead
- * of taken from a type role (ADR 0070): only the `tokens/` folder sets them. The one
+ * of taken from a type role: only the `tokens/` folder sets them. The one
  * exception is Google's sign-in label, whose system font and weight Google's
  * branding rules set: `googleSignInButton.labelType` in `tokens/chrome.ts` holds it.
  *

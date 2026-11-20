@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
+// Reanimated code: the React Compiler skips this module.
 
 import { useEffect, useRef } from 'react';
 import { interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';

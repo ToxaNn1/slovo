@@ -95,7 +95,7 @@ export function CalendarDayTile({
 
 /**
  * The Active Days calendar: the 35 days ending with the current week, five
- * rows Monday first under the weekday names, across months (ADR 0085). Each
+ * rows Monday first under the weekday names, across months. Each
  * day reads its date and state. With `onDayText`, a tap on a day hands its
  * text to the caller to show in a toast (board `SlovoApp` profile): an Active
  * Day, a day missed and a day to come by the board's texts, today with its

@@ -4,8 +4,8 @@ import { getCollection } from 'astro:content';
 import { siteWords } from '../site-words';
 
 /**
- * The sitemap Search Console reads (ADR 0147): the landing, every Edition's
- * legal pages and every live Word's page (ADR 0149).
+ * The sitemap Search Console reads: the landing, every Edition's
+ * legal pages and every live Word's page.
  */
 export const GET: APIRoute = async ({ site }) => {
   const legal = await getCollection('legal');

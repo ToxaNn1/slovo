@@ -47,7 +47,7 @@ function pathsOf(shapes: readonly MascotShape[], paints: Paints): MascotPath[] {
 }
 
 /**
- * The Mascot (ADR 0070) as the app's Mascot puts it together from the
+ * The Mascot as the app's Mascot puts it together from the
  * Edition's vector: which parts each state shows, the turn and the hat drop.
  */
 export function drawMascot(

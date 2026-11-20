@@ -47,7 +47,7 @@ const DAY = 24 * HOUR;
 const learningOf = (app: Composition) =>
   app.knowledge.state.learning.map(({ entryId, daysUntilReview }) => [entryId, daysUntilReview]);
 
-// Spec #461, ADR 0043: the knowledge module the cards and the Game mark through.
+// Spec #461: the knowledge module the cards and the Game mark through.
 describe('Knowledge Marks', () => {
   it('marks a Word and a Correction, and keeps the marks for the next launch', async () => {
     const records = new Map<string, string>();
@@ -396,7 +396,7 @@ async function reviewKnown(
   }
 }
 
-// Spec #1358, ADR 0043 as amended: Review at 1, 3, 7, 30 and 90 local days.
+// Spec #1358: Review at 1, 3, 7, 30 and 90 local days.
 describe('Review 1–3–7–30–90', () => {
   it('brings an Entry back after 1, 3, 7, 30 and 90 days, and Known on the 90-day Review makes it Learned', async () => {
     const records = new Map<string, string>();
@@ -466,7 +466,7 @@ describe('Review 1–3–7–30–90', () => {
 /** The confirmed-Entry counts as the Profile and the Badges read them. */
 const confirmedOf = (app: Composition) => app.knowledge.state.confirmed;
 
-// Spec #1358, ADR 0043: an Entry is confirmed on Known at a Review of 7 days
+// Spec #1358: an Entry is confirmed on Known at a Review of 7 days
 // or later, or answered right in a Game or a Quick Question, and stays so.
 describe('Confirmed Entries', () => {
   const pack = createMemoryContentPort({

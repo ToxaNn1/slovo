@@ -29,7 +29,7 @@ export function useBlockCategories(of: CategoryKind): readonly Category[] {
   });
 }
 
-/** Whether a Category draws quiet, its k3 screen and quiet tile: its tone is `quiet` (ADR 0081). */
+/** Whether a Category draws quiet, its k3 screen and quiet tile: its tone is `quiet`. */
 export function isQuiet(category: Category): boolean {
   return category.tone === 'quiet';
 }

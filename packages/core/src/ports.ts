@@ -20,12 +20,12 @@ export interface ContentReadPort {
   /**
    * Every Category of the pack, with its display name, in the pack's order
    * (the order the Edition declares them in), also one whose Words are all Retired. The pack is the runtime source of
-   * Categories, so a content update may add one (ADR 0033).
+   * Categories, so a content update may add one.
    */
   listCategories(): Promise<readonly Category[]>;
   /**
-   * Every Category of Corrections of the pack, a list apart from the Words'
-   * (ADR 0033), with its display name, in the pack's order, also one whose
+   * Every Category of Corrections of the pack, a list apart from the Words',
+   * with its display name, in the pack's order, also one whose
    * Corrections are all Retired.
    */
   listCorrectionCategories(): Promise<readonly Category[]>;
@@ -34,7 +34,7 @@ export interface ContentReadPort {
    * order; of a kind with Categories, only those of the Category when one is
    * given, so the Mix costs one query per Category. A Retired Entry is left
    * out, so nothing new picks it. One method for every kind: the Entries
-   * module's kind table says which kinds there are (ADR 0015).
+   * module's kind table says which kinds there are.
    */
   listIds(kind: EntryKind): Promise<readonly string[]>;
   listIds(kind: CategoryKind, categoryId: string): Promise<readonly string[]>;
@@ -63,7 +63,7 @@ export interface ContentReadPort {
    * only as plain text, doesn't link it.
    */
   listLinkingSynonymRowIds(wordId: string): Promise<readonly string[]>;
-  /** Every Curated Collection of the pack, in id order, whatever its publication date (ADR 0076). */
+  /** Every Curated Collection of the pack, in id order, whatever its publication date. */
   listCuratedCollections(): Promise<readonly CuratedCollection[]>;
 }
 
@@ -118,7 +118,7 @@ export type Schedule = (run: () => void, delay: number) => () => void;
  * per procedure, which the shell builds with `createApiClient` and a test
  * builds over the contract served in process (ADR 0064). The Core
  * calls it only through `answerOf`, which turns every answer into a value,
- * and `withRetries`, the one retry rule (ADR 0037). A call that acts on an
+ * and `withRetries`, the one retry rule. A call that acts on an
  * Account names its Session as `context.token`.
  */
 export type Backend = ApiClient;
@@ -129,7 +129,7 @@ export type Backend = ApiClient;
  * of the answer's `Retry-After`, none when it has no such header), or an
  * answer the request never expects (`unexpected`), such as a request the
  * backend refuses (400) or an Edition it doesn't serve (404). The first two
- * may pass by themselves, and they alone are tried again (ADR 0037).
+ * may pass by themselves, and they alone are tried again.
  */
 export type RequestFailure =
   | { readonly ok: false; readonly reason: 'offline' | 'server-error' | 'unexpected' }
@@ -154,8 +154,8 @@ export type PlannedSound = { readonly file: string } | 'system' | 'silent';
 export type EveningMessage = 'streakWarning' | 'goalNotMet';
 
 /**
- * One notification of the plan: a Word at a local date and time, floating
- * (ADR 0021). It has no time zone: it comes at that wall-clock time in
+ * One notification of the plan: a Word at a local date and time, floating.
+ * It has no time zone: it comes at that wall-clock time in
  * whatever time zone the device is in when it is due.
  */
 export type PlannedNotification = {
@@ -185,7 +185,7 @@ export type PlannedNotification = {
       readonly body: string;
     }
   | {
-      /** The farewell of the polite pause: no title, under which the device shows the app's name, and no Word (ADR 0054). */
+      /** The farewell of the polite pause: no title, under which the device shows the app's name, and no Word. */
       readonly kind: 'farewell';
       /** The Edition's farewell. */
       readonly body: string;
@@ -197,7 +197,7 @@ export type NotificationKind = PlannedNotification['kind'];
 
 /**
  * Schedules the Core's notification plan on the device. The Core plans; the
- * shell implements this port on the platform's notifications (ADR 0021).
+ * shell implements this port on the platform's notifications.
  */
 export interface NotificationSchedulerPort {
   /** Whether the device lets the app notify. */
@@ -288,7 +288,7 @@ export const systemClock: Clock = {
 export const systemRandom: Random = { next: () => Math.random() };
 
 /**
- * Which Language Pack it is: its content version (ADR 0011) and its pack
+ * Which Language Pack it is: its content version and its pack
  * format, as the pack's metadata records them.
  */
 export type PackVersion = Readonly<Pick<PackMetadata, 'contentVersion' | 'packFormat'>>;
@@ -356,15 +356,14 @@ export interface ContentStore {
 
 /**
  * The Community Word the backend answers for the running Edition: the Entry
- * readers most added to Favorites in the last full ISO week, with its adds
- * (ADR 0060).
+ * readers most added to Favorites in the last full ISO week, with its adds.
  */
 export interface CommunityWordAnswer {
   readonly entryId: string;
   readonly adds: number;
 }
 
-/** The Community Counters of one Entry, as the backend answers them (ADR 0060). */
+/** The Community Counters of one Entry, as the backend answers them. */
 export interface EntryCounters {
   readonly entryId: string;
   readonly known: number;
@@ -382,7 +381,7 @@ export interface CounterDelta {
   readonly saved: CounterChange;
 }
 
-/** One Entry's change of its Community Counters, as the device sends it (ADR 0060). */
+/** One Entry's change of its Community Counters, as the device sends it. */
 export interface CounterEvent extends CounterDelta {
   readonly entryId: string;
 }

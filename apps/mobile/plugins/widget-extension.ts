@@ -19,7 +19,7 @@ export interface WidgetEdition {
   readonly config: EditionConfig;
   /** The app's URL scheme, which the widget's links open. */
   readonly scheme: string;
-  /** The App Group the app shares with its widget (ADR 0026). */
+  /** The App Group the app shares with its widget. */
   readonly appGroup: string;
   readonly strings: EditionStrings['widget'];
   readonly tokens: DesignTokens;
@@ -62,7 +62,7 @@ function withOpacity(color: string, opacity: number): string {
 }
 
 /**
- * The widget's backgrounds («Тло», ADR 0026), each with the colours the
+ * The widget's backgrounds («Тло»), each with the colours the
  * widget draws on it in the light and the dark appearance. Авто is the
  * design's widget, one per family: the small one red in both appearances,
  * with the key ink and a giant letter in the on-accent colour; the medium one
@@ -159,7 +159,7 @@ function svgPaint(attribute: 'fill' | 'stroke', color: string, opacity = 1): str
  * The Mascot as the medium widget draws it on its red wedge, as an SVG
  * document, waiting or, once the Word of the Day is Seen, asleep with its
  * sleep marks, as the design's boards draw it, in the on-red variant
- * the app draws in one Theme (ADR 0070): the body in cream and its ink and
+ * the app draws in one Theme: the body in cream and its ink and
  * accent in ink, both taken from `key`, the light Theme, which the design
  * keeps on red.
  */

@@ -16,7 +16,7 @@ export type ServiceMoney = Pick<Service, ServiceMoneyField>;
 /** A Service as the Власник adds it: its links and limits come later. */
 export type NewService = Pick<Service, 'name' | 'kind'> & ServiceMoney;
 
-/** Where a Service's money and a new Service are written (ADR 0164). */
+/** Where a Service's money and a new Service are written. */
 export interface ServiceMoneyStore {
   /** Adds a Service with no limits and no links at the place; `taken` when a Service has the name. */
   add(service: NewService & Pick<Service, 'position'>): Promise<Service | 'taken'>;

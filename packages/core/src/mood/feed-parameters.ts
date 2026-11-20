@@ -10,7 +10,7 @@ import type {
 import type { MixKindWeights } from '../entries/mix';
 
 /**
- * Whether a Word of the rarity is in the Mood's rarity band (ADR 0076, 0156):
+ * Whether a Word of the rarity is in the Mood's rarity band (ADR 0156):
  * `upper` is the Rarity Range's top and the rarity below it, `lower` its
  * bottom and the rarity above it, `whole` every rarity. The bands lie within
  * the range, so in «від 1 до 2» `lower` is `whole`; a Word outside the range
@@ -35,7 +35,7 @@ const SHIFTED: Readonly<Record<MoodShift, Readonly<Record<MixKindWeight, MixKind
 };
 
 /**
- * The reader's Mix kind weights shifted by the Mood (ADR 0076); the weights
+ * The reader's Mix kind weights shifted by the Mood; the weights
  * as they are without a Mood. A kind turned off in the Mix has no Entries in
  * the Cycle, so its weight turns nothing on.
  */

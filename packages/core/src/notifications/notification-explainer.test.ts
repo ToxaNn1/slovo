@@ -18,7 +18,7 @@ const onboarded: [string, string] = [
 ];
 
 /** The record of XP earned on a local date. */
-/** The records of a Daily Goal in Words set and met on a local date (ADR 0074). */
+/** The records of a Daily Goal in Words set and met on a local date. */
 const goalMetOn = (date: string): [string, string][] => [
   [
     `xp.word-goal-${date}`,
@@ -92,7 +92,7 @@ async function asksOn(
   return asks;
 }
 
-// Spec #1358, ticket #1381, ADR 0067: the explainer right after the first met Daily Goal, no later than day 3.
+// Spec #1358, ticket #1381: the explainer right after the first met Daily Goal, no later than day 3.
 describe('the notification explainer', () => {
   it('comes on the day the Daily Goal is first met', async () => {
     const records = new Map([onboarded, ...goalMetOn('2026-10-11')]);

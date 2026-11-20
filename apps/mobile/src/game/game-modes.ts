@@ -35,8 +35,8 @@ export interface GameModeCardLook {
 
 /**
  * The card of a Game Mode on offer, in the Edition's texts: its one line and
- * its record («Рекорд: 12 з 15», «Ще жодної гри»), read as it stands
- * (ADR 0139); a mode still planned can't start yet and says no reason. With
+ * its record («Рекорд: 12 з 15», «Ще жодної гри»), read as it stands;
+ * a mode still planned can't start yet and says no reason. With
  * the toast, a mode that can't start looks like one that can. It throws for a
  * mode without texts, or without a text for the reason it can't start.
  */

@@ -21,7 +21,7 @@ export default {
     // the ticket and PR numbers, so the header gets more room than 100.
     'header-max-length': [2, 'always', 150],
     // Subjects may start with a glossary term or a name: "feat: Synonym Rows …",
-    // "docs: ADR 0052 …".
+    // "docs: ADR 0197 …".
     'subject-case': [0],
     // Bodies hold prose, lists and links that are not wrapped by hand.
     'body-max-line-length': [0],

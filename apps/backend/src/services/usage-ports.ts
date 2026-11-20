@@ -26,7 +26,7 @@ export interface UsageKeys {
   readonly R2_BUCKET?: string | undefined;
 }
 
-/** Each Service's usage port by the Service's name (ADR 0164): «Сервіси» and the alerts Cron read the same. */
+/** Each Service's usage port by the Service's name: «Сервіси» and the alerts Cron read the same. */
 export function usagePortsOf(
   keys: UsageKeys,
   { clock, logger }: { readonly clock: Clock; readonly logger: Logger },

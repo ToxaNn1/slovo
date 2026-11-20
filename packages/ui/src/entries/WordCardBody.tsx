@@ -12,13 +12,13 @@ import { WordTabs } from './WordTabs';
 /**
  * The Word card's blocks inside the Entry card's frame: the Lemma with Stress,
  * part of speech, register chips and the Category chip, and the Word's tabs
- * under them (ADR 0091). It draws only the sections the Core put in the card,
+ * under them. It draws only the sections the Core put in the card,
  * at the user's font size. Under Self-check it keeps the Lemma,
  * part of speech and Category; the Entry card draws the button that reveals
  * the rest under them. While the card's sources tab is on, the sources leave
- * the other tabs for «Джерело» (ADR 0116). Where the Stress falls, the Lemma's Stress mark falls
+ * the other tabs for «Джерело». Where the Stress falls, the Lemma's Stress mark falls
  * onto its vowel each time the card comes on screen, unless the reader turned
- * on Reduce Motion (ADR 0055).
+ * on Reduce Motion.
  */
 export function WordCardBody({
   card,
@@ -44,7 +44,7 @@ export function WordCardBody({
   concealed: boolean;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The card's kicker beside its corner, such as its place in a Category's Feed (ADR 0110). */
+  /** The card's kicker beside its corner, such as its place in a Category's Feed. */
   kicker?: string | undefined;
 }) {
   const { sourceTab } = useCardFeatures();

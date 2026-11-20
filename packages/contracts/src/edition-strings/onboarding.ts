@@ -4,7 +4,7 @@ import { TextSchema } from '../shared';
 import { templateOf } from './shared';
 
 /**
- * The texts of the onboarding (ADR 0067): the welcome, the first Word, «Як
+ * The texts of the onboarding: the welcome, the first Word, «Як
  * добре ти знаєш мову?» and «Навіщо», and the Daily Goal.
  */
 export const OnboardingStringsSchema = z.strictObject({

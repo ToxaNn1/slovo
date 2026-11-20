@@ -38,7 +38,7 @@ describe('the Daily Crossword the composition opens', () => {
     expect(await kindOf(['game', 'dailyCrossword'], [])).toBe('none');
   });
 
-  it('is none while the Daily Crossword is off, no older crossword in its place (ADR 0176)', async () => {
+  it('is none while the Daily Crossword is off, no older crossword in its place', async () => {
     expect(await kindOf(['game'])).toBe('none');
   });
 });

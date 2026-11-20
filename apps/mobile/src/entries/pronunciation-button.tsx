@@ -51,7 +51,7 @@ const subscribe = (listener: () => void) => pronunciation.subscribe(listener);
 
 /**
  * The Narrator Voice that reads the Words: the reader's choice while its
- * switch is on in effect, else the Edition's default (ADR 0083).
+ * switch is on in effect, else the Edition's default.
  */
 function useNarratorVoice(): NarratorVoice {
   const chosen = useSettings().current.narratorVoice;

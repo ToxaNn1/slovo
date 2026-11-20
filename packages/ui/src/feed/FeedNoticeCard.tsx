@@ -180,7 +180,7 @@ function NotificationMark() {
 
 /**
  * «Може, на сьогодні досить?» after 50 distinct Seen Entries, its board text
- * under it with those 50 (ADR 0092), and «Гортати далі», which turns to the next card as a swipe would, and so closes the
+ * under it with those 50, and «Гортати далі», which turns to the next card as a swipe would, and so closes the
  * card for the day; it never locks the Feed (ADR 0066).
  */
 export function EnoughForTodayCard() {
@@ -212,7 +212,7 @@ export function EnoughForTodayCard() {
 /**
  * The notification explainer, or its one re-ask, with «Так», which asks the
  * device for permission to notify and turns to the next card; the iOS prompt
- * comes only after it (ADR 0067). A swipe past it is a refusal.
+ * comes only after it. A swipe past it is a refusal.
  */
 export function NotificationAskCard({
   notice,
@@ -282,7 +282,7 @@ export function SaveProgressCard({ onSave }: { onSave: () => void }) {
  * The first-week card of its day: what the app offers that day, and on day 7
  * «Тиждень із нами» with the Streak, or with no Streak named while the reader
  * doesn't see it. «Зрозуміло» turns to the next card as a swipe would, and so
- * closes the card; no later day brings it back (ADR 0054).
+ * closes the card; no later day brings it back.
  */
 export function FirstWeekCard({
   day,

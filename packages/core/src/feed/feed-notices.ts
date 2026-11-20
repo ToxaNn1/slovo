@@ -19,11 +19,11 @@ import { seededRandomOf } from '../game/seeded-random';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
-/** A day of the first week, the first Active Day after the onboarding day 1 (ADR 0054). */
+/** A day of the first week, the first Active Day after the onboarding day 1. */
 export type FirstWeekDay = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 /**
- * The Yesterday quiz (ADR 0130): three distinct meanings, the Word's own
+ * The Yesterday quiz: three distinct meanings, the Word's own
  * primary Definition and two of other Words, in the order the card shows
  * them; `answered` is the meaning the reader picked, once they did.
  */
@@ -39,7 +39,7 @@ export interface YesterdayContent {
 }
 
 /**
- * The Weekly Recap's page (ADR 0130): `folded` once the reader tapped
+ * The Weekly Recap's page: `folded` once the reader tapped
  * «Готово», and the day's Yesterday under it when both are due.
  */
 export interface WeeklyRecapContent {
@@ -103,7 +103,7 @@ export const noFeedNotices: FeedNotices = { forDay: () => Promise.resolve([]) };
 
 /**
  * The Feed Notices as the Feed asks for them: one at a time, in the order of
- * `FEED_NOTICES`, each closed for its local day once swiped past (ADR 0054).
+ * `FEED_NOTICES`, each closed for its local day once swiped past.
  */
 export interface FeedNoticeQueue {
   /**
@@ -126,7 +126,7 @@ export interface FeedNoticeQueue {
   close(content: FeedNoticeContent, date: string): Promise<UserStateChanges>;
   /**
    * The change that folds the Weekly Recap of the local day `date` away
-   * («Готово»): it is closed for that Monday, the only day it comes (ADR 0130).
+   * («Готово»): it is closed for that Monday, the only day it comes.
    */
   fold(date: string): Promise<UserStateChanges>;
   /** The change that brings the Weekly Recap folded on the local day `date` back («Повернути»). */
@@ -228,7 +228,7 @@ export function openFeedNotices({
 }): FeedNoticeQueue {
   const on = (feature: FeatureSwitch) => edition.isFeatureEnabled(feature);
 
-  /** «Твій тиждень» on the first open of a local Monday, when the week before has one (ADR 0054). */
+  /** «Твій тиждень» on the first open of a local Monday, when the week before has one. */
   const weeklyRecapRule: NoticeRule = async (day) =>
     (await weeklyRecap().of(day)) === undefined
       ? undefined
@@ -239,7 +239,7 @@ export function openFeedNotices({
    * finished the onboarding, the first-week card of that day, so a missed
    * calendar day eats no card. A reader who finished the onboarding before
    * 0.8.13 has no first week. No later day has the number of a closed card,
-   * so it never comes back (ADR 0054).
+   * so it never comes back.
    */
   const firstWeek: NoticeRule = async (day) => {
     const from = await userState.read(firstWeekFrom);
@@ -286,7 +286,7 @@ export function openFeedNotices({
    * nor Retired, and its quiz, while the other Words give two more meanings.
    * The archive keeps a Word only once its card was Seen. It reads the
    * archive, so it needs the Feature Switches `yesterday` and
-   * `wordOfTheDayArchive` both on (ADR 0054, 0130).
+   * `wordOfTheDayArchive` both on.
    */
   const yesterday: NoticeRule = async (day) => {
     if (!on('yesterday') || !on('wordOfTheDayArchive')) return undefined;
@@ -362,7 +362,7 @@ export function openFeedNotices({
   };
 
   /**
-   * «Ціль дня виконано!» (ADR 0129): once today's Daily Goal is met, or is
+   * «Ціль дня виконано!»: once today's Daily Goal is met, or is
    * met by the Word the card follows, which the reader leaves to reach it;
    * closed, it is gone for the day, and the goal is met once a day.
    */
@@ -419,7 +419,7 @@ export function openFeedNotices({
       );
       const first = due[0];
       if (first?.notice !== 'weeklyRecap') return first;
-      // The Weekly Recap and Yesterday share one page, the week first (ADR 0130).
+      // The Weekly Recap and Yesterday share one page, the week first.
       const yesterday = due.find((each): each is YesterdayContent => each.notice === 'yesterday');
       return { ...first, yesterday };
     },

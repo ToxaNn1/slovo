@@ -65,25 +65,25 @@ export interface AnalyticsEvents {
   /**
    * The reader answered a Quick Question in the Feed, right or not, about the
    * Entry it asked: `mode` is the id of the Game Mode its Round came from, or
-   * `word-meaning` for the Word Meaning question (ADR 0128).
+   * `word-meaning` for the Word Meaning question.
    */
   readonly quickQuestionAnswered: EntryEventProperties & {
     readonly right: boolean;
     readonly mode: string;
   };
-  /** The reader chose a Mood in the Dashboard's Mood check-in, or changed it (ADR 0076). */
+  /** The reader chose a Mood in the Dashboard's Mood check-in, or changed it. */
   readonly moodChosen: { readonly mood: string };
-  /** The reader unpicked today's Mood with a second tap on it (ADR 0185). */
+  /** The reader unpicked today's Mood with a second tap on it. */
   readonly moodUnpicked: { readonly mood: string };
   /** The reader skipped the Mood check-in with «Не сьогодні». */
   readonly moodSkipped: Record<string, never>;
   /** The reader reached a new Level (ADR 0066). */
   readonly levelReached: { readonly level: number };
-  /** The reader changed the Daily Goal (ADR 0074): `null` where «Без цілі» turned it off. */
+  /** The reader changed the Daily Goal: `null` where «Без цілі» turned it off. */
   readonly dailyGoalChanged: { readonly goal: number | null };
   /** Today's Daily Goal was met. */
   readonly dailyGoalMet: { readonly goal: number };
-  /** An onboarding step came on screen (ADR 0067). */
+  /** An onboarding step came on screen. */
   readonly onboardingStepViewed: { readonly step: OnboardingStepKind | 'rarityTest' };
   /** The onboarding finished, past its last step or skipped. */
   readonly onboardingFinished: { readonly skipped: boolean };
@@ -99,7 +99,7 @@ export interface AnalyticsEvents {
   /** The reader opened the app from a notification of this kind. */
   readonly notificationOpened: { readonly kind: NotificationKind };
   /**
-   * The reader answered a later question's Feed Notice (ADR 0067): an option's
+   * The reader answered a later question's Feed Notice: an option's
    * id, the Daily Goal, the chosen Category ids joined by commas, `open` for
    * the Rarity Test or the Mix opened, or `later` when put off.
    */

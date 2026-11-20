@@ -5,7 +5,7 @@ import { asc } from 'drizzle-orm';
 import type { Database } from '../database/database';
 import { services } from '../database/schema';
 
-/** The Services in their own table (ADR 0164); a link names the other Service, answered by its id. */
+/** The Services in their own table; a link names the other Service, answered by its id. */
 export function createServiceStore({ db }: Database): ServiceStore {
   return {
     async list() {

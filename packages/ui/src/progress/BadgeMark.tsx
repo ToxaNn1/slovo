@@ -157,7 +157,7 @@ export type BadgeMarkState =
   | { readonly kind: 'earned'; readonly isNew: boolean };
 
 /**
- * A Badge as its family's mark, its `shape` at every size (`XBadges`, ADR 0145).
+ * A Badge as its family's mark, its `shape` at every size (`XBadges`).
  * Locked: a ring in `silhouette` round a face half as dark, no symbol. In
  * progress: the same, the face (inside the ring only, test ID
  * `${testID}-progress`) filling from the bottom in half-transparent red by its

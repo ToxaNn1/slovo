@@ -25,7 +25,7 @@ export type EntryKind = Entry['kind'];
 
 /**
  * A kind of Entry that is in or out of the Mix as a whole: every kind but the
- * Word, whose Categories are in or out one by one (ADR 0019, 0051).
+ * Word, whose Categories are in or out one by one.
  */
 export type MixKind = Exclude<EntryKind, 'word'>;
 

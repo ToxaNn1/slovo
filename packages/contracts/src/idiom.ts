@@ -12,7 +12,7 @@ export const IdiomIdSchema = recordIdSchema('idiom', 'an Idiom');
 /**
  * What kind of fixed expression an Idiom is: an idiom proper («фразеологізм»),
  * a place name («топонім»), whose story is its etymology, or a proverb
- * («прислів’я») (ADR 0046). The Edition strings name each type.
+ * («прислів’я»). The Edition strings name each type.
  */
 export const IdiomTypeSchema = z.enum(['idiom', 'placeName', 'proverb']);
 
@@ -55,7 +55,7 @@ const idiomRules = (
  * An Idiom as authored in an Edition's content and as returned by the Core:
  * a fixed expression whose meaning is not the sum of its words, with its
  * Definitions, Examples and, where known, its origin. It has no Lemma,
- * Stress, part of speech, Category, rarity or Pronunciation (ADR 0046).
+ * Stress, part of speech, Category, rarity or Pronunciation.
  *
  * The expression is in Unicode NFC; which letters it may hold depends on the
  * Edition, so the Language Pack build checks them. A place name requires its

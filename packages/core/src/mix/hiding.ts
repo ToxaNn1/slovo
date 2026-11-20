@@ -11,7 +11,7 @@ export type HidingChange =
 /**
  * The undo a toast offers, run in the composition open when the reader taps
  * it: a reopen in the toast's seconds replaces the composition that changed
- * something, and closes it (ADR 0018).
+ * something, and closes it.
  */
 export type HidingUndo = (open: {
   readonly hide: Hiding['hide'];

@@ -5,8 +5,8 @@ import { PluralSchema, templateOf } from './shared';
 
 /**
  * The line under the field for each problem the Account can meet. The keys are
- * the problems the Core gives but `offline`, which the offline plate says
- * (ADR 0158), so a problem without a line, or a line for a problem the Core
+ * the problems the Core gives but `offline`, which the offline plate says,
+ * so a problem without a line, or a line for a problem the Core
  * never gives, is refused.
  */
 const AccountProblemsSchema = z.strictObject({

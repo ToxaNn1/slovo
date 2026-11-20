@@ -5,8 +5,7 @@ import { shuffled } from '../shuffled';
 import type { TextComparison } from '../text/text-comparison';
 
 /**
- * A quiz of three meanings, as Yesterday (ADR 0130) and the Due Quiz (ADR
- * 0131) ask it: the Word's own primary Definition and two of other Words, in
+ * A quiz of three meanings, as Yesterday and the Due Quiz ask it: the Word's own primary Definition and two of other Words, in
  * the order the quiz shows them.
  */
 export interface MeaningQuiz {
@@ -20,7 +19,7 @@ const QUIZ_MEANINGS = 3;
 
 /**
  * The Words a Distractor may be, best first: the Words of the answer's part
- * of speech in a random order, then the others in a random order (ADR 0101).
+ * of speech in a random order, then the others in a random order.
  */
 const distractorOrder = (answer: Word, others: readonly Word[], random: Random): Word[] => [
   ...shuffled(
@@ -37,8 +36,7 @@ const distractorOrder = (answer: Word, others: readonly Word[], random: Random):
  * The quiz of `word` over the `others` Words, in the order `random` gives:
  * its meaning and the first two distinct meanings of other Words, those of
  * its part of speech first; a homonym's never, since the quiz shows the one
- * Lemma. Meanings are distinct by their Comparison Key for a Definition (ADR
- * 0101). Nothing when the others have no two such meanings.
+ * Lemma. Meanings are distinct by their Comparison Key for a Definition. Nothing when the others have no two such meanings.
  */
 export function meaningQuiz(
   word: Word,

@@ -21,7 +21,7 @@ interface CompositionSources {
   languagePack: Opening<LaunchPack<PackReader>>;
   /** The device ports, the Edition in effect among them. */
   ports: Opening<DevicePorts>;
-  /** The Account, which opens apart (ADR 0037); undefined when the Edition has none. */
+  /** The Account, which opens apart; undefined when the Edition has none. */
   account: Opening<Account> | undefined;
 }
 
@@ -62,12 +62,12 @@ async function openOver(
 /**
  * The Core composition over the Language Pack and the Edition as the app runs
  * it, opened once per app run and shared by every screen, since its Cycle and
- * Word of the Day keep their state in memory (ADR 0013, 0018). Every screen
+ * Word of the Day keep their state in memory (ADR 0013). Every screen
  * sees the same state, so a retry from its gate opens it again for all. It
- * reopens when an effective value of a Feature Switch changes (ADR 0040) or a
+ * reopens when an effective value of a Feature Switch changes or a
  * sync changed the user state, and the composition it replaced closes, so
  * what still holds that one, such as a Feed effect's cleanup, changes
- * nothing; an undo toast undoes in the composition open at the tap (ADR 0018).
+ * nothing; an undo toast undoes in the composition open at the tap.
  */
 export function compositionOpening(sources: CompositionSources): Opening<Composition> {
   const visit = createVisit();

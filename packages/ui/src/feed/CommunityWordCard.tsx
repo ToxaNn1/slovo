@@ -8,7 +8,7 @@ import { noticeCard, typeStyle } from '../tokens';
 import { FeedNoticeCard } from './FeedNoticeCard';
 
 /**
- * The Community Word («Слово тижня спільноти», ADR 0060): the Feed Notice
+ * The Community Word («Слово тижня спільноти»): the Feed Notice
  * named by its eyebrow, with how many readers added the Entry to Favorites
  * last week, «додали 12 читачів» in the Edition's plural forms, and the mini
  * card of the Entry, its title large over its second line as its row says

@@ -9,7 +9,7 @@ import { shuffled } from '../shuffled';
  * The Words that may share a grid with the answer, best first: the Words of
  * the answer's part of speech, then the others, each group kept in the
  * Game's order so that the Words it would ask next, the weak ones at their
- * places (ADR 0190), come first.
+ * places, come first.
  */
 const gridOrder = (answer: Word, others: readonly Word[]): Word[] => [
   ...others.filter((word) => word.partOfSpeech === answer.partOfSpeech),
@@ -30,7 +30,7 @@ function pairOf(word: Word): GridPair {
 }
 
 /**
- * «Пари», the Core's pairs mode (ADR 0052), on when the Edition turns it on:
+ * «Пари», the Core's pairs mode, on when the Edition turns it on:
  * a Round is a grid of up to 4 Words and their primary Definitions, each
  * shuffled apart, whose every pair is a Round of its own, so that a Game's 15
  * Rounds are grids of 4, 4, 4 and 3 pairs. A grid holds the answer and the

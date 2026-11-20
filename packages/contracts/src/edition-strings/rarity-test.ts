@@ -26,7 +26,7 @@ export const RarityTestStringsSchema = z.strictObject({
   /** The question above each Word, e.g. «Чи знаєш ти це слово?». */
   question: TextSchema,
   /**
-   * The result's heading when the test changed the Rarity Range (ADR 0182).
+   * The result's heading when the test changed the Rarity Range.
    * Takes `{range}`, the range now in force in the words of `settings.rarity`,
    * e.g. «від 1 до 3».
    */

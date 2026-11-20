@@ -15,13 +15,13 @@ import { moodRecords } from './records';
 const SKIPPED = 'skipped';
 
 /**
- * The choice an unpicked day keeps (ADR 0185): the day reads as asking again,
+ * The choice an unpicked day keeps: the day reads as asking again,
  * and the record stays so the unpick wins on the reader's other devices.
  */
 const UNPICKED = 'unpicked';
 
 /**
- * Today's Mood check-in (ADR 0076): asking while the local day has no record,
+ * Today's Mood check-in: asking while the local day has no record,
  * chosen with the Mood, or skipped («Не сьогодні»), which hides the block
  * until tomorrow.
  */
@@ -30,7 +30,7 @@ export type MoodCheckIn =
   | { readonly state: 'chosen'; readonly mood: Mood }
   | { readonly state: 'skipped' };
 
-/** What today's Mood asks of the Feed (ADR 0076); the Feed as it is without one. */
+/** What today's Mood asks of the Feed; the Feed as it is without one. */
 export interface MoodFeedParameters {
   /**
    * Whether a Word of the rarity is in today's rarity band, clipped to the
@@ -59,7 +59,7 @@ export interface MoodCheckIns {
   /** Chooses the mood for today, or changes it; an id not among `moods` is ignored. */
   choose(moodId: string): Promise<void>;
   /**
-   * Unpicks today's Mood (ADR 0185): no Mood today, so the check-in asks
+   * Unpicks today's Mood: no Mood today, so the check-in asks
    * again and the Feed is back on its plain parameters. Ignored on a day
    * without a chosen Mood and with `moodEffect` off.
    */
@@ -95,7 +95,7 @@ export async function openMoodCheckIns({
   const moods = edition.dashboardMoods;
   /** A Mood the Dashboard offers, the only kind a reader chooses. */
   const offeredMoodOf = (id: string) => moods.find((mood) => mood.id === id);
-  /** Any Mood of the Edition: a saved one still reads once the Dashboard hides it (ADR 0192). */
+  /** Any Mood of the Edition: a saved one still reads once the Dashboard hides it. */
   const moodOf = (id: string) => edition.moods.find((mood) => mood.id === id);
 
   async function checkInOn(date: string): Promise<MoodCheckIn> {

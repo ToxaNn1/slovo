@@ -178,7 +178,7 @@ function withWidgetExtension(
 
 /**
  * Compiles the App Intents and their App Shortcuts, made from the Edition's
- * strings, into the app's target at prebuild (ADR 0057).
+ * strings, into the app's target at prebuild.
  */
 function withAppIntents(config: ExpoConfig, edition: AppIntents.AppIntentsEdition): ExpoConfig {
   return withXcodeProject(config, (modConfig) => {
@@ -409,7 +409,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     userInterfaceStyle: 'automatic',
     icon: relative(projectRoot, app.path('icon')),
     // Memoises components and hooks at build time; modules with Reanimated or
-    // gesture code opt out with 'use no memo' (ADR 0059).
+    // gesture code opt out with 'use no memo'.
     experiments: { reactCompiler: true },
     ...updates(build, projectRoot),
     ios: {
@@ -421,20 +421,20 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
         CFBundleDevelopmentRegion: language,
         CFBundleLocalizations: [language],
         ITSAppUsesNonExemptEncryption: false,
-        // The local Spotlight module (`modules/spotlight`, ADR 0057) opens a
+        // The local Spotlight module (`modules/spotlight`) opens a
         // tapped search result as the link `<scheme>://<route>`.
         SlovoLinkScheme: scheme,
       },
       entitlements: {
         // The widget extension gets the same App Group from the Apple targets plugin.
         'com.apple.security.application-groups': [appGroup],
-        // Collection Links, https://<domain>/<edition>/c/<id>, open in the app (ADR 0058).
+        // Collection Links, https://<domain>/<edition>/c/<id>, open in the app.
         'com.apple.developer.associated-domains': [`applinks:${domain}`],
         // «Увійти через Apple» on the SLOVO ID screen (ADR 0047).
         'com.apple.developer.applesignin': ['Default'],
       },
     },
-    // The App Intents' titles, which their Swift code names by key (ADR 0057).
+    // The App Intents' titles, which their Swift code names by key.
     locales: {
       [language ?? edition.config.locale]: {
         ios: { 'Localizable.strings': appIntentTitles(appIntents.strings) },
@@ -454,7 +454,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       ],
       '@react-native-community/datetimepicker',
       ['expo-build-properties', { ios: { deploymentTarget: '17.0' } }],
-      // The widget extension, from apps/widget/expo-target.config.json (ADR 0026).
+      // The widget extension, from apps/widget/expo-target.config.json.
       ['@bacons/apple-targets', { root: '..', match: 'widget' }],
       ...googleSignIn(),
     ],

@@ -1,5 +1,5 @@
 /**
- * A named subject of the composition (ADR 0018): the composition creates it
+ * A named subject of the composition: the composition creates it
  * before any module opens, a module publishes to it what happened and the
  * modules that follow subscribe, so no module returns a callback for the
  * composition to route. Internal: `index.ts` does not export it.

@@ -6,7 +6,7 @@ import type { ServiceVault } from '@slovo/server-core';
 export const VAULT_OFF: ServiceVault = { state: 'off' };
 
 /**
- * The Vault (ADR 0164): seals a Service entry's value with AES-256-GCM under
+ * The Vault: seals a Service entry's value with AES-256-GCM under
  * `VAULT_KEY`, a fresh 12-byte IV each time, as `iv.tag.body` in base64url.
  * A sealed value opens only under the same key; a changed one is refused.
  */

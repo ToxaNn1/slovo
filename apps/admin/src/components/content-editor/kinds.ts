@@ -34,7 +34,7 @@ export type FieldControl =
   | { readonly type: 'category'; readonly of: 'categories' | 'correctionCategories' }
   /**
    * A Curated Collection's pictogram: a Category or Correction Category whose
-   * pictogram its tile draws (ADR 0178); empty means the Edition's default.
+   * pictogram its tile draws; empty means the Edition's default.
    */
   | { readonly type: 'pictogram' }
   | { readonly type: 'chips'; readonly options: readonly Option[] }
@@ -76,7 +76,7 @@ type Named = readonly { readonly id: string; readonly displayName: string }[];
 
 /**
  * An Edition's Categories as options, each by the display name the app shows
- * for it (ADR 0033); none while the Edition card is loading.
+ * for it; none while the Edition card is loading.
  */
 export function categoryOptionsOf(
   card: { readonly categories: Named; readonly correctionCategories: Named } | undefined,

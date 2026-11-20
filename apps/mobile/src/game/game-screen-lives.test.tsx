@@ -13,7 +13,7 @@ import {
 
 beforeEach(resetGameScreen);
 
-describe('the Games boards’ Lives and time (ADR 0137)', () => {
+describe('the Games boards’ Lives and time', () => {
   it('ends «Виживання» on the third mistake with its 3 Lives', async () => {
     await open({ corrections: 15 });
     await renderScreen();

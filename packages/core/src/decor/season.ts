@@ -7,7 +7,7 @@ export type Season = keyof SeasonMotifs;
 
 /**
  * The Season of a local date: December–February winter, March–May spring,
- * June–August summer, September–November autumn (ADR 0055). It follows the
+ * June–August summer, September–November autumn. It follows the
  * local date alone, so it changes at local midnight.
  */
 export function seasonOf({ month }: LocalDate): Season {

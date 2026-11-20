@@ -28,7 +28,7 @@ const card = editionStrings.settings.profile.breakCard;
 const plural = pluralCount(edition.locale);
 
 /**
- * Settings › Перерва (ADR 0066, 0180, board 11, 90): what a Break does, and
+ * Settings › Перерва (ADR 0066, board 11, 90): what a Break does, and
  * either its length on a − N + stepper from 1 to the Break days left, with a
  * line saying so at its top, and the button that starts it; or, while one
  * runs, the Break card of board 10 p1 (the paused Streak, its last day, its

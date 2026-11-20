@@ -2,11 +2,11 @@ import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import type { TextComparison } from '../text/text-comparison';
 
-/** The most queries Search remembers (ADR 0054). */
+/** The most queries Search remembers. */
 const RECENT_LIMIT = 10;
 
 /**
- * The recent queries of Search (ADR 0054): the last 10 queries a result was
+ * The recent queries of Search: the last 10 queries a result was
  * opened from, newest first, kept on the device only.
  */
 export interface RecentQueries {

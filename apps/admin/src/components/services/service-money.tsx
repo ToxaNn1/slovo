@@ -158,7 +158,7 @@ export function ServiceCostsHeader({
   );
 }
 
-/** The parts of Railway's spend as the owner reads them (ADR 0173). */
+/** The parts of Railway's spend as the owner reads them. */
 const SPEND_PART_LABELS: Readonly<Record<RailwaySpendPart, string>> = {
   cpu: 'Процесор',
   memory: 'Пам’ять',

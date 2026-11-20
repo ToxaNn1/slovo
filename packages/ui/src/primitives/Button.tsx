@@ -26,7 +26,7 @@ const tones: Record<ButtonVariant, TileTone> = {
 
 const InSheetContext = createContext(false);
 
-/** Marks its content as a sheet's, so a `large` Button in it takes the sheet's height (ADR 0145). */
+/** Marks its content as a sheet's, so a `large` Button in it takes the sheet's height. */
 export function ButtonsInSheet({ children }: { children: ReactNode }) {
   return <InSheetContext.Provider value>{children}</InSheetContext.Provider>;
 }
@@ -37,7 +37,7 @@ export function ButtonsInSheet({ children }: { children: ReactNode }) {
  * as SLOVO ID's, goes before the label, and VoiceOver skips it. While its
  * request is on the way it shows a spinner beside the label and takes no
  * press; disabled, it is dimmed and takes none either. Its height is the
- * boards' on every screen (ADR 0145), a little lower inside a sheet.
+ * boards' on every screen, a little lower inside a sheet.
  */
 export function Button({
   variant = 'primary',

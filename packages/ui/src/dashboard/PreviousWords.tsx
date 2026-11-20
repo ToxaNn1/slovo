@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
+// Reanimated code: the React Compiler skips this module.
 
 import {
   dateKeyOf,
@@ -18,10 +18,10 @@ import { dashboard, pressedFade, previousWordRow, typeStyle } from '../tokens';
 import { BlockTitle } from './BlockTitle';
 
 /**
- * «Минулі Слова дня» on the Dashboard (ADR 0076): the archive's newest days
+ * «Минулі Слова дня» on the Dashboard: the archive's newest days
  * before today, each a row of the day over the month's short form, the Lemma
  * over its Definition on one line each, and a chevron, rising in one after
- * another (ADR 0105). A tap opens the Entry card, which makes nothing Seen.
+ * another. A tap opens the Entry card, which makes nothing Seen.
  */
 export function PreviousWords({
   block,

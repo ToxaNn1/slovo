@@ -2,7 +2,7 @@ import { EditionStringsSchema, EditionTokensSchema, MascotFigureSchema } from '@
 import { EDITIONS_DIR, openEditionWithoutRecords } from '@slovo/language-pack/edition';
 import { z } from 'zod';
 
-/** The Edition the landing belongs to: the UA Edition (ADR 0071). */
+/** The Edition the landing belongs to: the UA Edition. */
 export const LANDING_EDITION = 'uk';
 
 /**
@@ -22,7 +22,7 @@ export const LandingEditionSchema = z.object({
 export type LandingEdition = z.output<typeof LandingEditionSchema>;
 
 /**
- * Reads the landing's Edition through the Edition folder module (ADR 0035),
+ * Reads the landing's Edition through the Edition folder module,
  * where it enters the site. Runs in Node, at the content sync: a page reads
  * the result from the `edition` collection.
  */

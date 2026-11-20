@@ -93,10 +93,10 @@ function takesOthers(others: unknown): boolean {
   );
 }
 
-/** The change of a field added to a strict output, which an admin output may make (ADR 0170). */
+/** The change of a field added to a strict output, which an admin output may make. */
 const NEW_IN_STRICT_OBJECT = 'is new in a strict object';
 
-/** A retired Feature Switch gone from an Edition's `states`, which an admin output may lose (ADR 0176). */
+/** A retired Feature Switch gone from an Edition's `states`, which an admin output may lose. */
 const RETIRED_SWITCH = /body\.states\.\w+ is gone$/;
 
 /** Whether an admin output may make the change: gain a field in a strict object or lose a retired Feature Switch. */
@@ -359,9 +359,9 @@ function responseChanges(promised: Part, described: Part): string[] {
 /**
  * Whether a path is the admin's. `apps/admin` and the Агент tooling ship with
  * the backend, so no caller in the field sends an old request: an admin input
- * may narrow (ADR 0122), an admin procedure may go (ADR 0162), an admin
- * strict output may gain a field (ADR 0170) and a retired Feature Switch may
- * leave an admin `states` (ADR 0176). Its outputs are otherwise held as every
+ * may narrow, an admin procedure may go, an admin
+ * strict output may gain a field and a retired Feature Switch may
+ * leave an admin `states`. Its outputs are otherwise held as every
  * other.
  */
 function isAdmin(path: string): boolean {
@@ -375,9 +375,9 @@ function isAdmin(path: string): boolean {
  * successful answer and an error code stay, nothing optional becomes
  * required, and no type or constraint changes, save an input bound or enum
  * that widens and an output one that narrows (ADR 0031); an admin input may
- * narrow (ADR 0122), an admin procedure may go (ADR 0162), an admin strict
- * output may gain a field (ADR 0170) and a retired Feature Switch may leave an
- * admin `states` (ADR 0176).
+ * narrow, an admin procedure may go, an admin strict
+ * output may gain a field and a retired Feature Switch may leave an
+ * admin `states`.
  */
 export function breakingChanges(promised: object, described: object): string[] {
   const changes: string[] = [];

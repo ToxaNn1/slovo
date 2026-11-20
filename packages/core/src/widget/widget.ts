@@ -28,18 +28,18 @@ import { withoutStress } from '../entries/stress';
 
 /**
  * What the home-screen widget shows, decided by the Core, so the widget holds
- * no rule of its own, and what opening an Entry from it does (ADR 0026).
+ * no rule of its own, and what opening an Entry from it does.
  */
 export interface Widget {
   /**
    * The Widget Snapshot of the user state as it is now, for the app to write
-   * into the App Group: every Widget Mode with only Eligible Entries in it
-   * (ADR 0015), and each of those Entries once, with its text ready to show:
+   * into the App Group: every Widget Mode with only Eligible Entries in it,
+   * and each of those Entries once, with its text ready to show:
    * a Synonym Row's and a Tip's in the Edition's `strings`, as their
    * notification reads. Pure data; the contracts serialize it. Nothing while
    * the widget's Feature Switch is off, by its effective value at the time of
    * the call: the app writes no new snapshot and the widget just stops
-   * updating, with no placeholder (ADR 0026). It carries the local date of
+   * updating, with no placeholder. It carries the local date of
    * the newest Entry History keeps as Seen as the Word of the Day, in the
    * clock's time zone, while the Edition has the Word of the Day. It carries
    * the goal ring while the widget goal ring, the XP log and the Daily Goal
@@ -83,7 +83,7 @@ function widgetEntry(entry: ShownEntry): WidgetEntry {
 /**
  * A Synonym Row or a Tip as the widget shows it: the title and the body its
  * notification would have, cut like a notification body, and both as VoiceOver
- * reads them. Notifications themselves carry Words only (ADR 0051).
+ * reads them. Notifications themselves carry Words only.
  */
 function widgetRowOrTip(
   entry: SynonymRow | Tip,
@@ -131,7 +131,7 @@ async function goalRingOf({
   const { dailyGoal } = xpLog.state;
   if (!on('widgetGoalRing') || !on('xpLog') || dailyGoal === null) return undefined;
   if ((await userState.read(userStateRecords.noCounters)) === true) return undefined;
-  // `xp` carries the Words Seen toward the Daily Goal (ADR 0074).
+  // `xp` carries the Words Seen toward the Daily Goal.
   const ring = {
     // The date `dailyGoal` was derived for, which lags today till the day change reaches the log.
     on: xpLog.days.date,

@@ -18,9 +18,9 @@ export const CorrectionIdSchema = recordIdSchema('correction', 'a Correction');
 /**
  * Why a form is non-standard. A `wrongStress` Correction, a stress trap,
  * writes its Stress into its texts with the combining acute mark after the
- * stressed vowel (ADR 0045). A `paronym` Correction swaps a word for its
+ * stressed vowel. A `paronym` Correction swaps a word for its
  * look-alike, such as «ефективна сукня» for «ефектна сукня». The order is
- * the board's, the order of the Dashboard's Correction Types rail (ADR 0105).
+ * the board's, the order of the Dashboard's Correction Types rail.
  */
 export const CorrectionTypeSchema = z.enum([
   'surzhyk',
@@ -34,7 +34,7 @@ export const CorrectionTypeSchema = z.enum([
 
 export type CorrectionType = z.infer<typeof CorrectionTypeSchema>;
 
-/** The mark around the standard form in a standard example sentence (ADR 0117). */
+/** The mark around the standard form in a standard example sentence. */
 const STANDARD_FORM_MARK = '**';
 
 /**
@@ -52,7 +52,7 @@ export type ParsedStandardExample =
 
 /**
  * Reads the standard form out of a standard example sentence, where the
- * Edition's content marks it `**like this**` (ADR 0117). A standard form
+ * Edition's content marks it `**like this**`. A standard form
  * split by other words is marked in parts: «**Взяти** це **до уваги**».
  */
 export function parseStandardExample(text: string): ParsedStandardExample {
@@ -77,7 +77,7 @@ export function parseStandardExample(text: string): ParsedStandardExample {
 /**
  * The same sentence said the common, non-standard way and the standard way.
  * The standard sentence marks its standard form `**like this**`, the part the
- * card shows bold (ADR 0117); the marks stay in the text wherever it is kept.
+ * card shows bold; the marks stay in the text wherever it is kept.
  */
 const examplePairShape = {
   nonStandard: EntryTextSchema,
@@ -96,7 +96,7 @@ export type ExamplePair = z.infer<typeof ExamplePairSchema>;
 /**
  * A real use of a Correction's standard form in literature, quoted with its
  * author and work. Only public-domain texts: the build refuses one before
- * 1 January of the 71st year after the author's death (ADR 0045).
+ * 1 January of the 71st year after the author's death.
  */
 const literaryUseShape = {
   text: EntryTextSchema,
@@ -135,7 +135,7 @@ const correctionShape = (
     .refine(hasNoRepeats, 'Standard equivalents must not repeat'),
   explanation: EntryTextSchema,
   examplePair,
-  /** One of the Edition's Categories of Corrections, a list apart from the Words' (ADR 0033). */
+  /** One of the Edition's Categories of Corrections, a list apart from the Words'. */
   categoryId: z.string().min(1),
   sources: z.array(source).min(1),
   /** Real uses of the standard form in literature, in the order the card shows them. */

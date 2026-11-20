@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
+// Reanimated or gesture code: the React Compiler skips this module.
 
 import {
   useCallback,
@@ -67,7 +67,7 @@ const SLIDE_OUT = { duration: 220, easing: Easing.in(Easing.quad), ...never };
 
 /**
  * What follows a drag: a critically damped spring that settles in about
- * 300 ms, so the sheet neither bounces nor stops dead (ADR 0055). It takes
+ * 300 ms, so the sheet neither bounces nor stops dead. It takes
  * the release velocity.
  */
 const DRAG_SPRING = {

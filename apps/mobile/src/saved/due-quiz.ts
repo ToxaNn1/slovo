@@ -6,7 +6,7 @@ import { logError } from '../diagnostics/log';
 import { useSubscribed } from '../opening';
 
 /**
- * The Due Quiz «Перевір себе» over the «Вчу» list (ADR 0131): the questions
+ * The Due Quiz «Перевір себе» over the «Вчу» list: the questions
  * of today, asked again with every Knowledge Mark and every new local day, so
  * an answered Word leaves them, and `answer`, which marks the Word. No
  * questions with the `dueQuiz` Feature Switch off.

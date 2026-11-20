@@ -6,7 +6,7 @@ import { fakeClock, randomOf, testEdition, testSchedule, word } from '../test-su
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
-/** Long enough for every wait between the tries of one request (ADR 0037). */
+/** Long enough for every wait between the tries of one request. */
 const ALL_TRIES = 10_000;
 
 const MINUTE = 60_000;
@@ -74,7 +74,7 @@ async function device() {
   };
 }
 
-// Spec #886 stories 44–46; ADR 0060: the device sends what it counted, batched.
+// Spec #886 stories 44–46: the device sends what it counted, batched.
 describe('sending the Community Counters', () => {
   it('sends the unsent changes in one request with nothing but the events, and clears them', async () => {
     const phone = await device();
@@ -263,7 +263,7 @@ describe('sending the Community Counters', () => {
   });
 });
 
-// Spec #886 story 47; ADR 0060: «Ділитися анонімною статистикою».
+// Spec #886 story 47: «Ділитися анонімною статистикою».
 describe('sharing the Community Counters', () => {
   it('is on by default', async () => {
     const phone = await device();

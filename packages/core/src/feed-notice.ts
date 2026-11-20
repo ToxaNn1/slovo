@@ -1,10 +1,10 @@
 // The Feed Notice names sit at the root of the Core, beside `local-date.ts`, so
 // the user-state schema can parse them without a cycle between `feed/` and
-// `user-state/` (ADR 0027).
+// `user-state/`.
 
 /**
  * The later questions of the questionnaire, each a Feed Notice, in the order
- * they are asked, one a local day (ADR 0067): the Daily Goal for a reader who
+ * they are asked, one a local day: the Daily Goal for a reader who
  * finished the onboarding before it asked one, the interests, the vocabulary
  * self-rating, the Rarity Test offer and the Mix review.
  */
@@ -38,8 +38,7 @@ export function withoutRetired<T extends string>(
  * Recap, the Community Word, the first-week card, Yesterday, a level
  * milestone, a later question, the offer to save progress, «Ціль дня
  * виконано!» once the Daily Goal is met, «Може, на сьогодні досить?» after
- * 50 Seen Entries, and the notification explainer and its one re-ask (ADR
- * 0054, 0060, 0066, 0067, 0129).
+ * 50 Seen Entries, and the notification explainer and its one re-ask (ADR 0066).
  */
 export const FEED_NOTICES = [
   'weeklyRecap',

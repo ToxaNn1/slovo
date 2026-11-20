@@ -11,7 +11,7 @@ import type { FeedCard } from './feed-card';
  * often its turn comes (every 5th card a Correction's, every 7th an Idiom's,
  * every 9th a Synonym Row's, every 11th a Tip's), while the Cycle has unseen
  * Entries of it. When a turn falls on an earlier kind's, that kind takes the
- * card and the loser the next (ADR 0046, 0051). These are the turns at
+ * card and the loser the next. These are the turns at
  * «Звичайно»; `SPACING` turns them by the kind's Mix kind weight.
  */
 const TURNS = MIX_KINDS.map((kind) => ({
@@ -23,7 +23,7 @@ const TURNS = MIX_KINDS.map((kind) => ({
 /**
  * How a Mix kind weight spaces a kind's turn of `every` cards: «Менше» twice
  * as far apart, «Більше» twice as close, rounded up, so a Correction comes
- * every 10th or every 3rd card; Words fill the rest (ADR 0051).
+ * every 10th or every 3rd card; Words fill the rest.
  */
 const SPACING: Readonly<Record<MixKindWeight, (every: number) => number>> = {
   less: (every) => every * 2,
@@ -43,7 +43,7 @@ export type OrderedCard = Pick<FeedCard, 'kind' | 'entryId'>;
 
 /**
  * Whether the card is no Feed Notice and no Quick Question, so it counts in
- * the turns and the Review slots (ADR 0054).
+ * the turns and the Review slots.
  */
 export const takesTurns = (card: OrderedCard): boolean =>
   card.kind !== 'notice' && card.kind !== 'quick-question';
@@ -67,7 +67,7 @@ export interface CardOrder {
   readonly due: EntryIds;
   /** The Mix kind weights in effect, today's Mood applied. */
   readonly weights: MixKindWeights;
-  /** Whether a Word is in today's Mood rarity band, or nothing without one (ADR 0076). */
+  /** Whether a Word is in today's Mood rarity band, or nothing without one. */
   readonly wordInBand: ((wordId: string) => boolean) | undefined;
 }
 
@@ -79,12 +79,12 @@ export interface CardOrder {
  * Entry left, the Cycle ends after it. Each kind of `TURNS` takes its turn
  * every `feedTurn`th card of the Cycle, spaced by its Mix kind weight and
  * counted from its kind's last card; when turns fall on one card they take
- * it in the order of `TURNS` and each loser the next (ADR 0046, 0051). Any
+ * it in the order of `TURNS` and each loser the next. Any
  * kind fills in for another when it has none left. Words of the Mood's
- * rarity band go before the rest (ADR 0076). A kind's turn goes to an Entry
+ * rarity band go before the rest. A kind's turn goes to an Entry
  * of the kind due for Review before a new one, and every `REVIEW_EVERY`th
  * card of the session that is no other kind's turn goes to a Word due for
- * Review, if any (ADR 0043).
+ * Review, if any.
  */
 export function nextEntryId({
   session,

@@ -24,7 +24,7 @@ export const notificationRecords = {
     sync: 'device-only',
   }),
   /**
-   * The title templates of the notifications (ADR 0054), by their index in
+   * The title templates of the notifications, by their index in
    * the Edition's list: `last`, the template of the last notification that
    * came, and `planned`, each planned notification's, by the id of its plan
    * record. The plan reads them so no template comes twice in a row.
@@ -38,7 +38,7 @@ export const notificationRecords = {
     { sync: 'device-only' },
   ),
   /**
-   * How far the Feed has asked for permission to notify (ADR 0067): the local
+   * How far the Feed has asked for permission to notify: the local
    * date `YYYY-MM-DD` the explainer was first offered, then the date of its
    * one re-ask; or `onboarding`, the reader answered «Коли нагадати?» on the
    * onboarding, so the Feed never asks. It stays on the device, like the

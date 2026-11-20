@@ -15,7 +15,7 @@ function componentModules(): string[] {
   );
 }
 
-describe('React Compiler scope (ADR 0059)', () => {
+describe('React Compiler scope', () => {
   it("opts every component with Reanimated or gesture code out with 'use no memo'", () => {
     const animated = componentModules().filter((file) =>
       animationImport.test(readFileSync(join(sourceDir, file), 'utf8')),

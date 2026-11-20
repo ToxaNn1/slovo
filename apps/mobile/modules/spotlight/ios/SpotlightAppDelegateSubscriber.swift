@@ -2,7 +2,7 @@ import CoreSpotlight
 import ExpoModulesCore
 
 /// Turns a tap on a search result into the link of its route, `<scheme>://<route>`,
-/// and opens it as the app opens every link from outside (ADR 0057). The scheme
+/// and opens it as the app opens every link from outside. The scheme
 /// is the Edition's, which the app config writes into Info.plist.
 public class SpotlightAppDelegateSubscriber: ExpoAppDelegateSubscriber {
   public func application(

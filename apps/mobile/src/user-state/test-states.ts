@@ -516,7 +516,7 @@ async function factsOf(name: TestStateName, sources: TestStateSources): Promise<
           markedAt: at(index + 2),
         })),
         history: each(week, (_, index) => ({ seenAt: at(index + 1), wordOfTheDay: false })),
-        // Yesterday's Word of the Day, so Yesterday shares the page (ADR 0130).
+        // Yesterday's Word of the Day, so Yesterday shares the page.
         ...(words[7] === undefined ? {} : { wordOfTheDayArchive: { [date(1)]: words[7] } }),
       };
     }

@@ -9,7 +9,7 @@ import { ResultButtons, ResultPanel } from './ResultPanel';
 const { mini } = dailyCrosswordCard;
 
 /**
- * The solved screen of the crossing Daily Crossword (ADR 0087, spec #1674),
+ * The solved screen of the crossing Daily Crossword (spec #1674),
  * over the red halftone panel of the result screen: «Розгадано!», the Solve
  * time and the Mascot celebrating; then «Поділитися без спойлера» over the
  * grid in red and blocks with no letter, the share line, «Поділитися» and

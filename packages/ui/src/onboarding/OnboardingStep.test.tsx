@@ -96,7 +96,7 @@ function reduceMotion(on: boolean) {
   jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(on);
 }
 
-// ADR 0055 and the animation audit (O5): an onboarding step comes in within 300 ms.
+// The animation audit (O5): an onboarding step comes in within 300 ms.
 describe('An onboarding step', () => {
   beforeEach(() => {
     jest.useFakeTimers();

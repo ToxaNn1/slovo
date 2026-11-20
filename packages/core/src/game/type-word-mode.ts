@@ -2,12 +2,12 @@ import { mainEquivalentOf, plays } from './correction-mode';
 import type { GameMode } from './game-mode';
 
 /**
- * «Впиши слово», the Core's typed Correction mode (ADR 0052), on while the
+ * «Впиши слово», the Core's typed Correction mode, on while the
  * Edition turns Corrections on: a Round shows a Correction's «people often
  * say» sentence, its non-standard form marked where the sentence holds it as
  * written, and the reader types the Correction's main standard equivalent,
  * compared by its Comparison Key as a typed answer. It asks about no stress trap,
- * since the comparison ignores Stress marks (ADR 0045). Its sheet shows the
+ * since the comparison ignores Stress marks. Its sheet shows the
  * main standard equivalent and the Correction's explanation.
  */
 export const typeWordMode: GameMode = {

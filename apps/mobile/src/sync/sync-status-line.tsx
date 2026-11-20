@@ -17,7 +17,7 @@ import { useEditionInEffect } from '../edition/remote-switches';
  * VoiceOver reads the email and the line together. Nothing
  * while Sync opens, when the Edition has none or it is turned off remotely, or
  * before a first sync has gone through. While the offline plate is on in
- * effect, a sync that finds no network shows the plate once (ADR 0158) and the
+ * effect, a sync that finds no network shows the plate once and the
  * line keeps the last sync.
  */
 export function SyncStatusLine() {

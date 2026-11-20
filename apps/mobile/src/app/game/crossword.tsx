@@ -35,7 +35,7 @@ const wheelTexts = {
 
 /**
  * Today's Daily Crossword, opened from its card on the Game's mode screen:
- * the crossing one played on the Letter Wheel (ADR 0087, 0176). The progress stays on the device,
+ * the crossing one played on the Letter Wheel. The progress stays on the device,
  * so «Назад» and the card's «Продовжити» find it; a day solved on another
  * device opens solved. On a day no pattern fills, when it cannot open, or
  * with the crossword turned off while the reader is on it, the screen goes
@@ -94,7 +94,7 @@ function CrosswordFrame({
 }
 
 /**
- * The crossing Daily Crossword (ADR 0087), as board 08 orders it: the grid,
+ * The crossing Daily Crossword, as board 08 orders it: the grid,
  * the current Word's clue bar with «next» under it, the line on how to trace,
  * long until a Word is solved, and the Letter Wheel at the foot; a trace that spells no Word shakes in ink under
  * «Десь закралася помилка. Шукай уважніше!»; «Розв’язано!» once every Word is solved.
@@ -217,7 +217,7 @@ function CrossingCrosswordScreen({ opened }: { opened: CrossingCrossword }) {
 }
 
 /**
- * The solved screen of the crossing Daily Crossword (ADR 0087): «Розгадано!»
+ * The solved screen of the crossing Daily Crossword: «Розгадано!»
  * with the Solve time and the Mascot celebrating, the grid with no letter and
  * the share line. «Поділитися» opens the share sheet with the share line and
  * the grid in squares, then says «Скопійовано. Жодної літери — тільки клини.»;

@@ -81,7 +81,7 @@ async function renderCalendar(calendar: readonly CalendarWeek[]) {
   );
 }
 
-describe('the Active Days calendar (ADR 0085)', () => {
+describe('the Active Days calendar', () => {
   it('shows the 35 days across months under the weekday names, with no month title', async () => {
     await renderCalendar(weeks);
 

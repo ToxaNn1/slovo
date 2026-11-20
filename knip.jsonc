@@ -7,7 +7,7 @@
   // A type or an interface that a file uses in its own signatures is part of
   // that file's contract, even when no other file names it. A function or a
   // constant used only in its own file is not: take the `export` off.
-  // The videos are left out of every check (ADR 0102).
+  // The videos are left out of every check.
   "ignoreWorkspaces": ["apps/video"],
   "ignoreExportsUsedInFile": { "interface": true, "type": true },
   "workspaces": {
@@ -72,7 +72,7 @@
     // the content snapshot of the Deployment's backend). Knip treats the exports of a
     // package entry as used: `index.ts` of contracts is a deliberate public
     // API for future Editions, and that of core exports only what the non-test
-    // code of other parts imports (ADR 0027, `scripts/core-exports.mjs` checks
+    // code of other parts imports (`scripts/core-exports.mjs` checks
     // it), so none is listed as ignored.
   },
 }

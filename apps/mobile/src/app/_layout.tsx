@@ -34,7 +34,7 @@ export default function RootLayout() {
   return (
     // The one gesture root of the app: swipe rows, sheets and the pager rely on it.
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {/* Every opening of the app run, for every screen (ADR 0036). */}
+      {/* Every opening of the app run, for every screen. */}
       <AppProviders shell={appShell} decor={editionDecor}>
         <Tabs />
       </AppProviders>
@@ -51,7 +51,7 @@ function Tabs() {
   return (
     <>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      {/* Outside the gates: each of its listeners waits for its own opening (ADR 0036, 0037). */}
+      {/* Outside the gates: each of its listeners waits for its own opening. */}
       <Lifecycle />
       <ScreenViews />
       {/* Below the hard minimum no screen mounts: the force update waits for the remote switches alone (ADR 0089). */}

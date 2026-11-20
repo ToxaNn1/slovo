@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
+// Reanimated code: the React Compiler skips this module.
 
 import { stressLabel, type WordCardModel, type YesterdayQuiz } from '@slovo/core';
 import { useEffect, useRef, useState } from 'react';
@@ -18,8 +18,7 @@ import { FeedNoticeCard } from './FeedNoticeCard';
 
 /**
  * Yesterday «Пам’ятаєш учорашнє слово?» (board f5): the day before's Word of
- * the Day, its Lemma in red, and three meanings to pick its own from (ADR
- * 0130). A right pick lights its option red with a check and pops it,
+ * the Day, its Lemma in red, and three meanings to pick its own from. A right pick lights its option red with a check and pops it,
  * «Влучно!» under the options; a wrong one turns its option ink, struck
  * through with a cross, sunk and shaken, the right one lights a moment
  * later, the rest fade, «Майже. Наступне вийде.». A second tap on the picked

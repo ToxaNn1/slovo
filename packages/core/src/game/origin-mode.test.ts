@@ -298,7 +298,7 @@ describe('a Round of «Звідки слово»', () => {
     expect(app.knowledge.state.shown.size).toBe(0);
   });
 
-  // ADR 0190: the weak Entries take places drawn at random among the first 15 Rounds.
+  // The weak Entries take places drawn at random among the first 15 Rounds.
   it('asks about the Words the reader marked «Не знаю» at places drawn among the first 15 Rounds, never about weak Words without an origin', async () => {
     const weak = ['кобза', 'амвон', 'рахуба'];
     const places: number[] = [];

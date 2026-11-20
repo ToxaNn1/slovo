@@ -43,7 +43,7 @@ const categories = [nature, speech, crafts];
  */
 const wordIdsOf = (category: Category) =>
   [0, 1, 2].map((index) => `w_${category.id}${String(index)}`);
-/** The Language Pack's Categories of Corrections, in its order (ADR 0033). */
+/** The Language Pack's Categories of Corrections, in its order. */
 const work: Category = {
   id: 'work',
   displayName: 'At work',
@@ -340,7 +340,7 @@ describe('the Mix', () => {
       const app = await run({ records, pack: updated, defaultCategoryIds: 'all' });
 
       expect(app.mix.state.allCategories).toEqual([...categories, military]);
-      // A Category the user never touched follows the Edition's default (ADR 0019).
+      // A Category the user never touched follows the Edition's default.
       expect(app.mix.state.categoryIds).toEqual(['nature', 'crafts', 'military']);
       expect(app.mix.state.hiddenCategories).toEqual([speech]);
       const offered = await walk(app.feed);

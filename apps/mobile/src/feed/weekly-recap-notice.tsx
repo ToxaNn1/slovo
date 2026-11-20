@@ -14,7 +14,7 @@ import { useWeeklyRecap } from './weekly-recap';
 import { useEditionInEffect } from '../edition/remote-switches';
 
 /**
- * The Weekly Recap's Feed page (board f5, ADR 0130): «Твій тиждень» on top,
+ * The Weekly Recap's Feed page (board f5): «Твій тиждень» on top,
  * unless it is `folded`, and the day's Yesterday under it. «Готово» folds
  * the card away through `onFold`, and a toast offers «Повернути», which
  * brings it back through `onRestore`.

@@ -323,7 +323,7 @@ describe('Sync runs one sync at a time', () => {
   });
 });
 
-// Spec #378: failures follow ADR 0037's one rule.
+// Spec #378: failures follow one rule.
 describe('Sync tries a sync again', () => {
   it.each(['offline', 'server-error'] as const)(
     'when it fails with `%s`, with backoff and jitter',

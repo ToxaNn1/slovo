@@ -38,7 +38,7 @@ import { bezier, REDUCED_FADE } from './timing';
 type Paints = Readonly<Record<'body' | 'ink' | 'accent', string>>;
 
 /**
- * The Mascot (ADR 0070) in a state, drawn from the Edition's vector with its
+ * The Mascot in a state, drawn from the Edition's vector with its
  * design motion, and the Edition's short line for it under it. `onRed` draws
  * the variant for a red ground; `width` sets a smaller figure, such as the
  * Round's. `plate` sets the line on an ink plate in the surface colour, for
