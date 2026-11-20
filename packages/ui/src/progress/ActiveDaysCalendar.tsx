@@ -145,12 +145,14 @@ export function ActiveDaysCalendar({
     }
   }
   return (
-    <View testID="stats-calendar" accessibilityLabel={words.label} style={styles.calendar}>
-      {/* Each day reads its own date, so VoiceOver skips the weekday names. */}
+    <View testID="stats-calendar" style={styles.calendar}>
+      {/* Each day reads its own date, so VoiceOver reads the calendar's name over the weekday names. */}
       <View
         style={styles.week}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
+        accessible
+        accessibilityRole="header"
+        accessibilityLabel={words.label}
+        {...voice}
       >
         {words.weekdays.map((weekday) => (
           <Text

@@ -92,6 +92,8 @@ describe('the Active Days calendar', () => {
     await renderCalendar(weeks);
 
     expect(screen.getByText('Mo', { includeHiddenElements: true })).toBeOnTheScreen();
+    // VoiceOver reads the calendar's name over its weekday names, and each day its own date.
+    expect(screen.getByRole('header', { name: 'Active days' })).toBeOnTheScreen();
     expect(screen.queryByText(/2026/)).not.toBeOnTheScreen();
     expect(screen.getByLabelText('28 Sep., missed')).toBeOnTheScreen();
     expect(screen.getByLabelText('30 Sep., active')).toBeOnTheScreen();
