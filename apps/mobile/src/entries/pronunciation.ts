@@ -48,8 +48,11 @@ export type PronunciationMessageReason = 'no-voice' | 'other-voices' | 'no-recor
 export type PronunciationState = 'idle' | 'playing' | PronunciationMessageReason;
 
 export interface Pronunciation {
-  /** Reads the Word, or stops it when it is already being read. */
-  toggle(word: PronouncedWord): Promise<void>;
+  /**
+   * Reads the Word, or stops it when it is already being read. `onPlayed`
+   * runs once the Word starts playing, never for a tap that ends silent.
+   */
+  toggle(word: PronouncedWord, onPlayed?: () => void): Promise<void>;
   /** The state of the Word with this id. */
   stateOf(id: string): PronunciationState;
   /** Stops whatever is being read. */
@@ -129,10 +132,11 @@ export function createPronunciation({
   }
 
   /** Marks the Word playing; the returned function ends this reading alone. */
-  function start(id: string): () => void {
+  function start(id: string, onPlayed: () => void): () => void {
     const reading = {};
     current = reading;
     set({ id, state: 'playing' });
+    onPlayed();
     return () => {
       if (current !== reading) return;
       current = undefined;
@@ -141,7 +145,7 @@ export function createPronunciation({
   }
 
   return {
-    async toggle({ id, lemma }) {
+    async toggle({ id, lemma }, onPlayed = () => undefined) {
       if ((state?.id === id && state.state === 'playing') || !soundsOn()) {
         await stop();
         return;
@@ -166,7 +170,7 @@ export function createPronunciation({
           // A later tap or a stop came while the voice stopped.
           if (!stillAsked()) return;
         }
-        if (recording.kind === 'found') player.play(recording.source, start(id));
+        if (recording.kind === 'found') player.play(recording.source, start(id, onPlayed));
         else set({ id, state: recording.reason });
         return;
       }
@@ -196,7 +200,7 @@ export function createPronunciation({
         // A later tap or a stop came while the voice stopped.
         if (!stillAsked()) return;
       }
-      const finish = start(id);
+      const finish = start(id, onPlayed);
       speech.speak(lemma.replace(STRESS_MARK, ''), {
         language: voice.language,
         onDone: finish,

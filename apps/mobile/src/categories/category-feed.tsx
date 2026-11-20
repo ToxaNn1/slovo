@@ -3,7 +3,7 @@ import { categoryFeedPage, type Composition } from '@slovo/core';
 import { useCallback } from 'react';
 
 import { editionStrings } from '../edition/edition';
-import { ListFeedScreen, readCards, type ListFeedRead } from './list-feed';
+import { ListFeedScreen, type ListFeedRead } from './list-feed';
 
 /** A Category's live Words, in the Language Pack's order, opened on `from`. */
 async function readWords(
@@ -15,7 +15,6 @@ async function readWords(
   return {
     name: category.displayName,
     pageAt: (position) => categoryFeedPage(entryIds, from, position),
-    cards: await readCards(composition, entryIds),
   };
 }
 

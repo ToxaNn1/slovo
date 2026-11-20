@@ -3,6 +3,7 @@ import { PixelRatio, Share } from 'react-native';
 import { nativeModules } from '../device/device-native-modules';
 import type { ShareCard, ShareFile } from '../shell-value';
 import { shareCardImage } from './share-card';
+import { shareTextFile } from './share-file';
 
 /**
  * `react-native-view-shot` and `expo-file-system`, or undefined when the
@@ -63,15 +64,32 @@ const fileModules = nativeModules.load('dataExport', () => ({
   fileSystem: require('expo-file-system') as typeof import('expo-file-system'),
 }));
 
-/** Writes a file to the cache and hands it to the iOS share sheet: the Data export's only way off the device (ADR 0135). */
+/**
+ * Writes a file to the cache, hands it to the iOS share sheet and deletes it
+ * once the sheet closes: the Data export's only way off the device (ADR 0135).
+ */
 export const shareFileOnDevice: ShareFile | undefined =
   fileModules === undefined
     ? undefined
-    : async ({ name, text, title }) => {
+    : (file) => {
         const { fileSystem } = fileModules;
-        const file = new fileSystem.File(fileSystem.Paths.cache, name);
-        file.create({ overwrite: true });
-        await file.write(text);
-        const { action } = await Share.share({ url: file.uri, title });
-        return action === Share.sharedAction ? 'shared' : 'cancelled';
+        return shareTextFile(
+          {
+            async writeToCache(name, text) {
+              const cached = new fileSystem.File(fileSystem.Paths.cache, name);
+              cached.create({ overwrite: true });
+              await cached.write(text);
+              return cached.uri;
+            },
+            async openShareSheet(url, title) {
+              const { action } = await Share.share({ url, title });
+              return action === Share.sharedAction ? 'shared' : 'cancelled';
+            },
+            deleteFromCache(url) {
+              const cached = new fileSystem.File(url);
+              if (cached.exists) cached.delete();
+            },
+          },
+          file,
+        );
       };

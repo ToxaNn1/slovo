@@ -38,7 +38,16 @@ export interface MediaDisk {
  */
 export function createIndexedMediaCache(disk: MediaDisk): MediaCache {
   let index: Promise<Index> | undefined;
-  const read = () => (index ??= disk.readIndex().then(parseIndex));
+  // A read that failed is dropped, so the next one reads the disk again.
+  function read(): Promise<Index> {
+    if (index !== undefined) return index;
+    const reading = disk.readIndex().then(parseIndex);
+    index = reading;
+    reading.catch(() => {
+      if (index === reading) index = undefined;
+    });
+    return reading;
+  }
 
   /** The last change queued; each change waits for it, then saves the index it answers. */
   let changes: Promise<unknown> = Promise.resolve();

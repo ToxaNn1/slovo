@@ -41,7 +41,7 @@ let editionInEffect: Edition;
 let composition: Composition;
 let shellOf: () => ReturnType<typeof testShell>;
 
-/** Opens the composition over two Categories of Words, «Емоції» with three live Words and a Retired one, «Порожня» with none. */
+/** Opens the composition over Categories of Words: «Емоції» with three live Words and a Retired one, «Порожня» with none, «Природа» with five. */
 async function open({
   categoryFeed = true,
 }: {
@@ -78,6 +78,10 @@ async function open({
         word('w_lahidnyi', 'лагідний', 'emotions-character'),
         word('w_tykhyi', 'тихий', 'emotions-character'),
         word('w_lis', 'гайовий', 'nature'),
+        word('w_bir', 'бір', 'nature'),
+        word('w_luh', 'луг', 'nature'),
+        word('w_dibrova', 'діброва', 'nature'),
+        word('w_yar', 'яр', 'nature'),
         word('w_vtrata', 'втрата', 'war'),
       ],
     }),
@@ -349,6 +353,39 @@ describe("the Category's Feed", () => {
     for (let at = page.getByTestId('word-card-kicker').parent; at !== null; at = at.parent)
       if (at.type === 'RCTScrollView') scrolls.push(String(at.props['testID']));
     expect(scrolls).toEqual([]);
+  });
+
+  it('reads the cards of the pages it draws, not of every Word of the Category at once', async () => {
+    await open();
+    await renderCategory('nature');
+    const reads = jest.spyOn(composition, 'entryCard');
+
+    await settle(() => fireEvent.press(screen.getByTestId('category-entry-w_lis')));
+    await layOut();
+
+    expect(cardAt(0).meaning).toHaveTextContent('Значення слова гайовий.');
+    const read = () => new Set(reads.mock.calls.map(([id]) => id));
+    expect(read()).toEqual(new Set(['w_lis', 'w_bir']));
+    await swipeUp();
+    expect(cardAt(1).meaning).toHaveTextContent('Значення слова бір.');
+    expect(read()).toEqual(new Set(['w_lis', 'w_bir', 'w_luh']));
+  });
+
+  it('shows the error with a retry, under a back tile, when its read fails, and the retry reads again', async () => {
+    await open();
+    await renderCategory('emotions-character');
+    jest.spyOn(composition, 'categoryEntries').mockRejectedValueOnce(new Error('The pack is busy'));
+
+    await settle(() => fireEvent.press(screen.getByTestId('category-entry-w_lahidnyi')));
+
+    const error = screen.getByTestId('category-feed-error');
+    expect(within(error).getByText(editionStrings.loadFailed.title)).toBeOnTheScreen();
+    expect(screen.getByTestId('category-feed-back')).toHaveTextContent(editionStrings.back);
+
+    await settle(() => fireEvent.press(within(error).getByText(editionStrings.loadFailed.retry)));
+    await layOut();
+    expect(screen.queryByTestId('category-feed-error')).not.toBeOnTheScreen();
+    expect(cardAt(0).meaning).toHaveTextContent('Значення слова лагідний.');
   });
 
   it('leads back to the Category screen by its back tile, named for the Category', async () => {

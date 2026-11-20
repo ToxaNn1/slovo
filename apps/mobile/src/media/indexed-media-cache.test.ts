@@ -71,4 +71,20 @@ describe('the device media cache', () => {
 
     expect(await cache.get('a')).toBeUndefined();
   });
+
+  it('reads the index again after a read that failed, instead of failing for the whole session', async () => {
+    const saved = memoryDisk();
+    await createIndexedMediaCache(saved.disk).put('a', new Uint8Array(5), at(0));
+    let failures = 1;
+    const cache = createIndexedMediaCache({
+      ...saved.disk,
+      readIndex: () =>
+        failures-- > 0 ? Promise.reject(new Error('The disk is busy')) : saved.disk.readIndex(),
+    });
+
+    await expect(cache.files()).rejects.toThrow('The disk is busy');
+
+    expect(await cache.files()).toEqual([{ path: 'a', size: 5, usedAt: at(0) }]);
+    expect(await cache.get('a')).toBe('file://a');
+  });
 });

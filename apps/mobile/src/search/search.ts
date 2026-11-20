@@ -23,10 +23,12 @@ export interface SearchGroup {
  * nothing while it searches; «Продовжуй вводити» for a query Search does not
  * answer, or one too short for «За значенням» that found nothing; under
  * «Знайдено» the groups that found anything, in the order of the kinds,
- * «За значенням» last; «Нічого не знайдено» for a longer query that found nothing.
+ * «За значенням» last; «Нічого не знайдено» for a longer query that found nothing;
+ * the error with a retry for a search that failed.
  */
 export type SearchScreenModel =
   | { readonly state: 'searching' }
+  | { readonly state: 'failed'; readonly retry: () => void }
   | { readonly state: 'keepTyping' }
   | { readonly state: 'found'; readonly groups: readonly SearchGroup[] }
   | { readonly state: 'nothingFound' };
@@ -100,6 +102,7 @@ export function useSearchScreen(query: string): SearchScreenModel {
     [query],
   );
   const reading = useCompositionRead(read, 'Could not search');
+  if (reading.status === 'failed') return { state: 'failed', retry: reading.retry };
   // The results of an earlier query, kept until this one's come, or of one that failed, are not this query's.
   return reading.status === 'ready' && reading.value.query === query
     ? reading.value.model

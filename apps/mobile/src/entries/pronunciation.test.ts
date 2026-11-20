@@ -559,7 +559,12 @@ describe('Pronunciation', () => {
               download = resolve;
             })
           : Promise.resolve(lookupOf(id));
-      return { recordingOf, finish: () => { download(found(11)); } };
+      return {
+        recordingOf,
+        finish: () => {
+          download(found(11));
+        },
+      };
     }
 
     it('plays nothing it was stopped from while the Recording downloads', async () => {
