@@ -458,8 +458,12 @@ Anonymous counts of how many readers know an Entry, don't know it and saved it, 
 _Avoid_: Stats, statistics (the reader's own numbers), ratings
 
 **Analytics**:
-Reader-consented product events (onboarding steps, Games, Review, goals, Streak events, settings, screens) sent with the Install id as the distinct id through one port of the Core, to measure retention and goal completion. No advertising id, no location, no contacts, no session recording and no tracking prompt. One Settings switch, «Ділитися анонімною статистикою», turns off both Analytics and Community Counters. Distinct from Community Counters, which count Entries and never events.
+Reader-consented product events (onboarding steps, Games, Review, goals, Streak events, settings, screens) sent with the Install id as the distinct id through one port of the Core, to measure retention and goal completion. No advertising id, no location, no contacts, no session recording and no tracking prompt. One Settings switch, «Ділитися анонімною статистикою», turns off both Analytics and Community Counters; it starts on, or off until the Statistics consent where one is needed. Distinct from Community Counters, which count Entries and never events.
 _Avoid_: Tracking, telemetry, stats (the reader's own numbers)
+
+**Statistics consent**:
+The question a new reader answers before anything is sent, where the phone's region is in the EEA (the EU, Iceland, Liechtenstein, Norway) or names no country: an onboarding step after the welcome with two equal choices, allow or don't allow. Until the answer «Ділитися анонімною статистикою» is off; the answer sets it. A reader elsewhere is not asked: the switch starts on and the welcome says so in one line. Settled once per install (ADR 0204).
+_Avoid_: Cookie banner, tracking prompt, opt-in
 
 **Mistake Report**:
 «Повідомлення про помилку»: what a reader sends from an Entry card's menu about a mistake in that Entry: its type (typo, Stress, Definition or other), an optional comment of at most 500 characters (required for other), the Edition, the Entry id, the app version and the content version. It carries no device id and no Install id; a signed-in reader's report names their Account, an anonymous one nothing. It waits on the device until it can be sent, and is kept on the server until the owner resolves it in the Owner admin's Content queue.
