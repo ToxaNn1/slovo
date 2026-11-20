@@ -13,6 +13,7 @@ const BASE_ENV = {
   ZEPTOMAIL_TOKEN: 'a-send-mail-token',
   MAIL_FROM: 'no-reply@example.com',
   MEDIA_BASE: 'https://media.example.com',
+  TRUSTED_PROXY_HOPS: '1',
 };
 
 const POSTHOG_ENV = { POSTHOG_PERSONAL_API_KEY: 'phx_key', POSTHOG_PROJECT_ID: '12345' };
@@ -103,6 +104,14 @@ describe('the Staging Deployment', () => {
     );
   });
 
+  it('refuses a VAULT_KEY that is the AUTH_SECRET, as the Deployment does', () => {
+    const secret = Buffer.alloc(32, 7).toString('base64');
+
+    expect(refusalsOf({ ...STAGING_ENV, AUTH_SECRET: secret, VAULT_KEY: secret })).toEqual([
+      'VAULT_KEY: must not be the AUTH_SECRET',
+    ]);
+  });
+
   it('tags its Sentry reports with the environment `staging`', () => {
     expect(portsOf(STAGING_ENV).sentryEnvironment).toBe('staging');
   });
@@ -123,6 +132,15 @@ describe('the Deployment', () => {
         method: 'PUT',
         url: 'https://account.r2.cloudflarestorage.com/media/illustrations/1-abc.png',
       },
+    ]);
+  });
+
+  it('refuses to start in production with no trusted proxy hop, which would put every reader behind one IP', () => {
+    const { TRUSTED_PROXY_HOPS: _hops, ...unset } = PRODUCTION_ENV;
+
+    expect(refusalsOf(unset)).toEqual(['TRUSTED_PROXY_HOPS: must be 1 or more in production']);
+    expect(refusalsOf({ ...PRODUCTION_ENV, TRUSTED_PROXY_HOPS: '0' })).toEqual([
+      'TRUSTED_PROXY_HOPS: must be 1 or more in production',
     ]);
   });
 
