@@ -1,5 +1,5 @@
 import { ScreenStack } from '@/entries/screen-stack';
-import { useShown } from '@/shown-in-effect';
+import { useEditionInEffect } from '@/edition/remote-switches';
 
 /**
  * The fourth tab's own stack. While the Profile is shown, the tab is the
@@ -7,5 +7,9 @@ import { useShown } from '@/shown-in-effect';
  * the tab is Settings itself. Screens draw their own header.
  */
 export default function SettingsLayout() {
-  return <ScreenStack initialRouteName={useShown().profile ? 'profile' : 'index'} />;
+  return (
+    <ScreenStack
+      initialRouteName={useEditionInEffect().isFeatureEnabled('profile') ? 'profile' : 'index'}
+    />
+  );
 }

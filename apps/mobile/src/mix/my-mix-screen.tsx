@@ -4,9 +4,9 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
-import { useShown } from '@/shown-in-effect';
 import { MixChoices } from './mix-choices';
 import { useRarityRange } from './rarity-range';
+import { useEditionInEffect } from '@/edition/remote-switches';
 
 const strings = editionStrings.mix;
 
@@ -25,7 +25,7 @@ export function MyMixScreen({
   back?: { label: string; onPress: () => void } | undefined;
 }) {
   const { colors } = useTokens();
-  const shown = useShown();
+  const inEffect = useEditionInEffect();
   const { range, setRange } = useRarityRange();
 
   return (
@@ -42,7 +42,7 @@ export function MyMixScreen({
         />
       </View>
       <ScrollView testID="mix-scroll" contentContainerStyle={styles.content}>
-        {shown.rarity && (
+        {inEffect.isFeatureEnabled('rarityCeiling') && (
           <View style={styles.rarity}>
             <RarityRangePicker
               testID="mix-rarity"

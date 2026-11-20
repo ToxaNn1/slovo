@@ -25,7 +25,7 @@ import { useCrossingCrossword, type CrossingCrosswordPlay } from '@/game/crossin
 import { useDailyCrossword } from '@/game/daily-crossword';
 import { useScreenReader } from '@/game/screen-reader';
 import { MascotAs } from '@/mascot/mascot';
-import { useShown } from '@/shown-in-effect';
+import { useEditionInEffect } from '@/edition/remote-switches';
 
 const { game: strings } = editionStrings;
 const wheelTexts = {
@@ -108,7 +108,8 @@ function CrossingCrosswordScreen({ opened }: { opened: CrossingCrossword }) {
   const { solve, miss } = crossword;
   const solved = solve !== undefined;
   const texts = strings.dailyCrossword;
-  const { crosswordSolvedScreen: solvedScreen, crosswordSolveTime } = useShown();
+  const inEffect = useEditionInEffect();
+  const solvedScreen = inEffect.isFeatureEnabled('crosswordSolvedScreen');
   const solvedText = solvedScreen ? texts.solvedScreen.title : texts.solved;
   // While the finger traces the wheel the screen holds still, and the grid shrinks to leave the
   // Letter Wheel whole on a short screen; with VoiceOver on or once solved, it scrolls instead.
@@ -130,7 +131,7 @@ function CrossingCrosswordScreen({ opened }: { opened: CrossingCrossword }) {
         <CrossingCrosswordSolved
           crossword={crossword}
           solve={solve}
-          withTime={crosswordSolveTime}
+          withTime={inEffect.isFeatureEnabled('crosswordSolveTime')}
         />
       </UndoToastProvider>
     );

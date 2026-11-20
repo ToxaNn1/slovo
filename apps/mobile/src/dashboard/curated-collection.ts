@@ -12,8 +12,8 @@ import { useComposition, useCompositionRead } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { keep } from '../keep';
 import { useSubscribed } from '../opening';
-import { useShown } from '../shown-in-effect';
 import { useOpenScreen } from '../use-open-screen';
+import { useEditionInEffect } from '../edition/remote-switches';
 
 /**
  * A tile of the «SLOVO пропонує» rail or of its grid: marks the collection
@@ -66,7 +66,7 @@ export interface CuratedCollectionScreen {
 export function useCuratedCollectionScreen(collectionId: string): CuratedCollectionScreen {
   const { curatedCollections, collections } = useComposition();
   const openScreen = useOpenScreen();
-  const { curatedCollectionFeed } = useShown();
+  const curatedCollectionFeed = useEditionInEffect().isFeatureEnabled('curatedCollectionFeed');
   const showToast = useUndoToast();
   const read = useCallback(
     async (open: Composition) => (await open.curatedCollections.screen(collectionId)) ?? null,

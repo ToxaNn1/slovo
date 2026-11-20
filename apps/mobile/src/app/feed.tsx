@@ -42,13 +42,13 @@ import {
 } from '@/feed/feed-page';
 import { ShownCardFeatures } from '@/entries/card-features';
 import { StatsPillAndSheet } from '@/progress/progress';
-import { useShown } from '@/shown-in-effect';
 import { useGesturesHint } from '@/feed/gestures-hint';
 import { todayText } from '@/feed/today-text';
 import { WeeklyRecapPage } from '@/feed/weekly-recap-notice';
 import { CommunityWordNotice } from '@/feed/community-word-notice';
 import { useNotificationsChanges } from '@/notifications/notifications';
 import { LaterQuestionNotice } from '@/feed/later-question-notice';
+import { useEditionInEffect } from '@/edition/remote-switches';
 
 const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
@@ -71,11 +71,13 @@ function FeedScreen() {
   const voice = useSettings().current.narratorVoice;
   const feed = useFeed(pager, { clock: deviceClock, landing: wordOfTheDayLanding, voice });
   const { colors } = useTokens();
-  const shown = useShown();
+  const inEffect = useEditionInEffect();
   const header = useFeedHeaderRows();
-  const gesturesHint = useGesturesHint(shown.entryButtons.knowledge);
+  const gesturesHint = useGesturesHint(inEffect.isFeatureEnabled('knowledge'));
   // While the hint is open the Feed's own card plays the gestures (board XSwipeV, ADR 0112).
-  const gesturesDemo = useGesturesDemo(gesturesHint.visible && shown.gesturesHintDemo);
+  const gesturesDemo = useGesturesDemo(
+    gesturesHint.visible && inEffect.isFeatureEnabled('gesturesHintDemo'),
+  );
   const openScreen = useOpenScreen();
 
   const {
@@ -129,7 +131,7 @@ function FeedScreen() {
     <View testID="home" style={[styles.screen, { backgroundColor: colors.background }]}>
       {/* Each time the Feed comes back in sight, its first card plays the full reveal again. */}
       <SwipeDemoStage demo={gesturesDemo}>
-        <RevealPace fast={shown.fastReveal} visiting={feed.inSight}>
+        <RevealPace fast={inEffect.isFeatureEnabled('fastReveal')} visiting={feed.inSight}>
           <ShownCardFeatures place="feed">
             <VerticalPager
               ref={pager}
@@ -150,7 +152,7 @@ function FeedScreen() {
         streak={<StatsPillAndSheet />}
         // The Feed opened from the Dashboard leads back to it by its wordmark (ADR 0079).
         onLogo={
-          shown.dashboardWordmark
+          inEffect.isFeatureEnabled('dashboardWordmark')
             ? {
                 label: editionStrings.dashboard.open,
                 onPress: () => {
