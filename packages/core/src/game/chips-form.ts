@@ -96,6 +96,8 @@ const drawnFrom = (chips: readonly string[], expected: readonly string[]): boole
 
 /** The chips tapped in order: the answer's chips, reordered, are right. */
 export const chipsForm: AnswerForm<ChipsContent, ChipsRound, ChipsGiven, ChipsAnswer> = {
+  bannerAfterAnswer: true,
+  openLetter: () => undefined,
   wellFormed: ({ chips, expected }) =>
     expected.length > 0 && drawnFrom(chips, expected) && chips.length === expected.length,
   roundsIn: () => 1,

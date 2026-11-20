@@ -54,13 +54,8 @@ const canOpenLetterIn = (blanks: readonly RoundBlank[] | undefined) =>
   blanks !== undefined && blanks.filter(isEmpty).length > 1;
 
 /** The typed text: any text that compares as the answer is right. */
-export const typedForm: AnswerForm<TypedContent, TypedRound, TypedGiven, TypedAnswer> & {
-  /**
-   * The Round with «Відкрити літеру»: its first blank opened, at no cost.
-   * Nothing unless more than one blank is left.
-   */
-  openLetter(content: TypedContent, shown: TypedRound): TypedRound | undefined;
-} = {
+export const typedForm: AnswerForm<TypedContent, TypedRound, TypedGiven, TypedAnswer> = {
+  bannerAfterAnswer: true,
   wellFormed: ({ expected }) => expected.length > 0,
   roundsIn: () => 1,
   entriesIn: () => [],
@@ -84,6 +79,7 @@ export const typedForm: AnswerForm<TypedContent, TypedRound, TypedGiven, TypedAn
       },
     };
   },
+  /** Its first blank opened; nothing unless more than one blank is left. */
   openLetter({ expected }, shown) {
     if (!shown.canOpenLetter) return undefined;
     const letters = Array.from(expected);
