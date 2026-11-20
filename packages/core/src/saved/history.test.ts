@@ -12,7 +12,7 @@ import {
 import { SEEN_DWELL_MS } from '../feed/feed';
 import { type UserStateChanges } from '../ports';
 import { createMemoryContentPort } from '../testing';
-import { correction, fakeClock, testEdition, word } from '../test-support';
+import { correction, fakeClock, settle, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
@@ -326,6 +326,46 @@ describe('History', () => {
       expect(records).toEqual(others);
       expect(app.favorites.has('w_three')).toBe(true);
       expect((await run({ records, clock: time.clock })).history.list).toEqual([]);
+    });
+
+    it('keeps memory as the user state when the Feed records an Entry while it runs', async () => {
+      const records = new Map<string, string>();
+      const port = createMemoryUserStatePort(records);
+      const time = fakeClock();
+      // The clear's write is kept on disk at once but reported done only when released.
+      let release: (() => void) | undefined;
+      let holding = false;
+      const app = await run({
+        records,
+        clock: time.clock,
+        port: {
+          ...port,
+          async write(changes) {
+            await port.write(changes);
+            if (holding && [...changes.values()].every((value) => value === undefined))
+              await new Promise<void>((resolve) => {
+                release = resolve;
+              });
+          },
+        },
+      });
+      // A record this app run never read, as sync may keep, of the Entry the Feed marks Seen next.
+      const next = idAt(app, app.feed.cards.length - 1);
+      records.set(
+        `history.${next}`,
+        JSON.stringify({ seenAt: '2026-10-10T08:00:00.000Z', wordOfTheDay: false }),
+      );
+      holding = true;
+
+      const clearing = app.history.clear();
+      const looking = readLastCard(app, time);
+      await settle();
+      release?.();
+      await Promise.all([clearing, looking]);
+
+      expect(idsOf(app)).toEqual(idsUnder(records, 'history.'));
+      expect(idsOf(app)).toEqual([next]);
+      expect(idsOf(await run({ records, clock: time.clock }))).toEqual(idsOf(app));
     });
 
     it('lets the Feed record again after it', async () => {
