@@ -1,8 +1,14 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
+import {
+  loadEdition,
+  openComposition,
+  systemRandom,
+  type Composition,
+  type Edition,
+  type Haptics,
+} from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { fill, type Category } from '@slovo/contracts';
-import type { Edition, Haptics } from '@slovo/core';
 import { EditionProvider, HapticsProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
