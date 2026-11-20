@@ -76,6 +76,13 @@ describe('launch.sh --dry-run', () => {
     }
   });
 
+  it('tells every implementer to write in the Edition own words, never verbatim (ADR 0146)', () => {
+    const run = launch(samplePlan);
+
+    expect(run.stdout).toContain('own words, never verbatim (ADR 0146)');
+    expect(run.stdout).not.toContain('word for word');
+  });
+
   it('prints the cloud start and one waiter per implementer and starts nothing', () => {
     const run = launch(samplePlan);
 
