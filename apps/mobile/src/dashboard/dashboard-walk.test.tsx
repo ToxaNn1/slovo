@@ -240,9 +240,8 @@ describe('the whole Dashboard', () => {
     expect(composition.onboarding.state).toEqual({ status: 'finished', finishedAt: clock.now() });
     expect(screen.getByTestId('dashboard')).toBeTruthy();
 
-    // The hero: «Розкрити» reveals the Word of the Day in place and makes it Seen.
-    expect(screen.queryByText('Значення слова сумирний.')).toBeNull();
-    await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.reveal)));
+    // The hero: «Беру!» took the first Word, so it is revealed and Seen already (ticket #2062).
+    expect(screen.queryByText(editionStrings.dashboard.reveal)).toBeNull();
     expect(screen.getByText('Значення слова сумирний.')).toBeTruthy();
     expect(composition.history.list.map(({ entryId }) => entryId)).toEqual(['w_sumyrnyi']);
 
@@ -353,7 +352,6 @@ describe('a landing on the Word of the Day card', () => {
     const app = await renderApp(FeedWithoutTheCard);
     const onboarding = ['start', 'next', 'next', 'answer-good', 'later', 'done', 'time-20:30'];
     for (const step of onboarding) await press(`onboarding-${step}`);
-    await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.reveal)));
     await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.toCard)));
     expect(app.pathname()).toBe('/feed');
     screenSettled();

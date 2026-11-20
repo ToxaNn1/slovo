@@ -146,7 +146,8 @@ function HeroOfTheDay({
 
 /**
  * The open hero's Lemma, and under it the cream card: its Stress and part of
- * speech beside the rarity bars, the short Definition and «Рідкість N з 5».
+ * speech beside the rarity bars, the short Definition and «Рідкість N/5»,
+ * which VoiceOver reads as «Рідкість N з 5».
  * While `plays`, the Lemma flies in over itself and the card rises in.
  */
 function RevealedWord({
@@ -163,6 +164,7 @@ function RevealedWord({
   // card's content box, so the cream ended `paddingHorizontal` short on the right.
   const [cardSize, setCardSize] = useState<{ width: number; height: number }>();
   const rarity = fill(strings.dashboard.rarity, { rarity: String(hero.rarity) });
+  const rarityLabel = fill(strings.dashboard.rarityLabel, { rarity: String(hero.rarity) });
   const lemma = withoutStress(hero.lemmaWithStress);
   const lemmaStyle = [typeStyle('dashboardLemma', tokens), { color: keyInk }];
   const room = capitalMarkRoom('dashboardLemma');
@@ -200,7 +202,7 @@ function RevealedWord({
         <View
           testID="dashboard-hero-rarity"
           accessible
-          accessibilityLabel={rarity}
+          accessibilityLabel={rarityLabel}
           style={styles.bars}
         >
           {RARITY_BARS.map((bar) => (

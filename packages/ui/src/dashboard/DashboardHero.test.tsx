@@ -20,7 +20,8 @@ const strings = testStrings({
     kickerNumber: 'Word of the day · №{number}',
     subtitle: 'Rare. Fresh. Yours for a day.',
     wordLine: '{stress} · {partOfSpeech}',
-    rarity: 'Rarity {rarity} of 5',
+    rarity: 'Rarity {rarity}/5',
+    rarityLabel: 'Rarity {rarity} of 5',
   },
   wordCard: {
     stress: 'stress on {vowels}',
@@ -133,6 +134,7 @@ describe('DashboardHero', () => {
     expect(screen.getByTestId('dashboard-hero-lemma')).toHaveTextContent('harbour');
     expect(screen.getByText('ha\u0301rbour · n., f.')).toBeTruthy();
     expect(screen.getByLabelText('Rarity 4 of 5')).toBeTruthy();
+    expect(screen.getByText('Rarity 4/5', { includeHiddenElements: true })).toBeTruthy();
     expect(screen.getAllByTestId('dashboard-hero-rarity-full')).toHaveLength(4);
     expect(screen.getAllByTestId('dashboard-hero-rarity-empty')).toHaveLength(1);
     expect(screen.getByText('A safe place for ships.')).toBeTruthy();
