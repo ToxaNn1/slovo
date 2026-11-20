@@ -18,7 +18,7 @@ export const activeEditionFiles = bundledEditions.files(activeEditionId);
 
 const { config, strings, tokens, decor } = activeEditionFiles;
 
-/** The active Edition as the build shipped it, validated by the Core at startup; the Shell gives the one in effect (ADR 0202). */
+/** The active Edition as the build shipped it, validated by the Core at startup; the Shell gives the one in effect (ADR 0203). */
 export const edition = loadShippedEdition(config);
 
 const app = AppConfigSchema.parse(appConfig);

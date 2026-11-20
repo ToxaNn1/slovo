@@ -108,7 +108,7 @@ export interface Edition {
    */
   readonly curatedCollectionPictogram: string | undefined;
   /**
-   * Whether the given Core feature is in effect (ADR 0202): by the remote
+   * Whether the given Core feature is in effect (ADR 0203): by the remote
    * Rules the device read last, else as the Edition shipped it (ADR 0089),
    * and every switch it depends on in effect.
    */
@@ -116,7 +116,7 @@ export interface Edition {
 }
 
 /**
- * The Edition as the build shipped it (ADR 0202): everything of the Edition
+ * The Edition as the build shipped it (ADR 0203): everything of the Edition
  * but the answer in effect. A reader that asks it takes the shipped answer on
  * purpose; every other reader asks the `Edition` the remote Feature Switches
  * give (`openRemoteSwitches`), and the compiler refuses one for the other.
@@ -139,7 +139,7 @@ export class InvalidEditionConfigError extends Error {
 /**
  * The Edition in effect where no remote Rule is read: each Feature Switch as
  * the Edition shipped it. The Shell runs on it until the Rules the device
- * kept are read (ADR 0202).
+ * kept are read (ADR 0203).
  */
 export function inEffectWithoutRules(shipped: ShippedEdition): Edition {
   const { featureSwitches: _shippedStates, isShippedOn, ...edition } = shipped;

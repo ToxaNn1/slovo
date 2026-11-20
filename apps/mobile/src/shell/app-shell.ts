@@ -44,11 +44,11 @@ function deviceSources(editionId: string): DeviceSources {
 
 /**
  * How long the Account and Sync wait for the remote Rules the device kept to
- * be read before they open by the shipped states (ADR 0202).
+ * be read before they open by the shipped states (ADR 0203).
  */
 export const KEPT_RULES_WAIT_MS = 2000;
 
-/** Why an opening stays closed: its Feature Switch is off in effect (ADR 0202). No failure, so nothing logs it. */
+/** Why an opening stays closed: its Feature Switch is off in effect (ADR 0203). No failure, so nothing logs it. */
 class SwitchedOffError extends Error {
   override readonly name = 'SwitchedOffError';
   constructor(feature: FeatureSwitch) {
@@ -85,7 +85,7 @@ function over<S, T>(
  * apart from it too, and nothing waits for them. The Shell has an Account and
  * a Sync when the build shipped them on, the one reader here that takes the
  * shipped answer on purpose; each opens only while it is on in effect by the
- * Rules the device kept, and never waits for the backend (ADR 0202).
+ * Rules the device kept, and never waits for the backend (ADR 0203).
  */
 export function createShell(
   editionId: string,
@@ -129,7 +129,7 @@ export function createShell(
     },
   };
   /**
-   * The launch-time choice (ADR 0202): settles once the Rules the device kept
+   * The launch-time choice (ADR 0203): settles once the Rules the device kept
    * are read, so what opens after it opens by the Edition in effect. A read
    * that fails or outlasts `KEPT_RULES_WAIT_MS` leaves the shipped states,
    * and the backend is never waited for.
