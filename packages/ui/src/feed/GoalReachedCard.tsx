@@ -20,7 +20,7 @@ import { goalReachedCard as card, motion, tightLineDrop, typeStyle } from '../to
 import { HalftoneGround } from '../primitives/HalftoneGround';
 import { Mascot } from '../primitives/Mascot';
 import { REDUCED_FADE, bezierFn } from '../primitives/timing';
-import { useIsPageOnScreen, useTurnToNextPage } from '../primitives/VerticalPager';
+import { useIsInPager, useIsPageOnScreen, useTurnToNextPage } from '../primitives/VerticalPager';
 
 /** The most Word plates the card shows before «+ ще …» takes the last place. */
 const PLATES = 3;
@@ -144,6 +144,7 @@ export function GoalReachedCard({
     next,
   } = strings.feedNotices.goalReached;
   const turnToNext = useTurnToNextPage();
+  const inPager = useIsInPager();
   const [size, setSize] = useState<{ width: number; height: number }>();
   const [head, setHead] = useState<number>();
   const [foot, setFoot] = useState<number>();
@@ -332,43 +333,49 @@ export function GoalReachedCard({
                   </Animated.View>
                 )}
               </View>
-              <Animated.View testID="goal-reached-button" style={[styles.buttonPlace, buttonStyle]}>
-                <Pressable
-                  testID="goal-reached-next"
-                  accessibilityRole="button"
-                  accessibilityLabel={next}
-                  onPress={() => turnToNext?.()}
-                  style={({ pressed }) => [
-                    styles.button,
-                    {
-                      backgroundColor: ink,
-                      boxShadow: [
-                        {
-                          offsetX: 0,
-                          offsetY: pressed ? 1 : card.button.shadow,
-                          blurRadius: 0,
-                          color: card.button.shadowColor,
-                        },
-                      ],
-                      transform: [{ translateY: pressed ? card.button.shadow - 1 : 0 }],
-                    },
-                  ]}
+              {/* Without the Feed's pager there is no next card to turn to, so no button. */}
+              {inPager ? (
+                <Animated.View
+                  testID="goal-reached-button"
+                  style={[styles.buttonPlace, buttonStyle]}
                 >
-                  <Text
-                    style={[typeStyle('goalReachedButton', tokens), labelLevel, { color: cream }]}
+                  <Pressable
+                    testID="goal-reached-next"
+                    accessibilityRole="button"
+                    accessibilityLabel={next}
+                    onPress={() => turnToNext?.()}
+                    style={({ pressed }) => [
+                      styles.button,
+                      {
+                        backgroundColor: ink,
+                        boxShadow: [
+                          {
+                            offsetX: 0,
+                            offsetY: pressed ? 1 : card.button.shadow,
+                            blurRadius: 0,
+                            color: card.button.shadowColor,
+                          },
+                        ],
+                        transform: [{ translateY: pressed ? card.button.shadow - 1 : 0 }],
+                      },
+                    ]}
                   >
-                    {next}
-                  </Text>
-                  <Svg
-                    width={card.button.arrow.width}
-                    height={card.button.arrow.height}
-                    viewBox="0 0 14 18"
-                    accessible={false}
-                  >
-                    <Polygon points="7,0 14,7 10,7 10,18 4,18 4,7 0,7" fill={cream} />
-                  </Svg>
-                </Pressable>
-              </Animated.View>
+                    <Text
+                      style={[typeStyle('goalReachedButton', tokens), labelLevel, { color: cream }]}
+                    >
+                      {next}
+                    </Text>
+                    <Svg
+                      width={card.button.arrow.width}
+                      height={card.button.arrow.height}
+                      viewBox="0 0 14 18"
+                      accessible={false}
+                    >
+                      <Polygon points="7,0 14,7 10,7 10,18 4,18 4,7 0,7" fill={cream} />
+                    </Svg>
+                  </Pressable>
+                </Animated.View>
+              ) : null}
             </View>
           </View>
         </Animated.View>

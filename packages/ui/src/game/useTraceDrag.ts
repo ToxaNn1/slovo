@@ -15,6 +15,8 @@ export interface TraceHit<P> {
 /**
  * The drag of a trace: each target the finger reaches is handed to `onExtend`
  * once, until it moves on to another, and lifting the finger calls `onRelease`.
+ * A drag the system cancels or that fails, such as for a call or Control
+ * Centre, calls `onCancel` instead: the trace is not the reader's answer.
  * `hit` is a memoised worklet that finds the target under a point, if any.
  */
 export function useTraceDrag<P>({
@@ -23,23 +25,28 @@ export function useTraceDrag<P>({
   testID,
   onExtend,
   onRelease,
+  onCancel,
 }: {
   hit: (x: number, y: number) => TraceHit<P> | undefined;
   enabled: boolean;
   testID: string;
   onExtend: (place: P) => void;
   onRelease: () => void;
+  onCancel: () => void;
 }) {
   const last = useSharedValue(-1);
-  const handlers = useRef({ onExtend, onRelease });
+  const handlers = useRef({ onExtend, onRelease, onCancel });
   useEffect(() => {
-    handlers.current = { onExtend, onRelease };
+    handlers.current = { onExtend, onRelease, onCancel };
   });
   const extend = useCallback((place: P) => {
     handlers.current.onExtend(place);
   }, []);
   const release = useCallback(() => {
     handlers.current.onRelease();
+  }, []);
+  const cancel = useCallback(() => {
+    handlers.current.onCancel();
   }, []);
 
   // Gesture Handler asks for a memoised config: a new one on each render
@@ -70,14 +77,14 @@ export function useTraceDrag<P>({
         'worklet';
         reach(x, y);
       },
-      onFinalize: () => {
+      onFinalize: ({ canceled }) => {
         'worklet';
         last.value = -1;
-        scheduleOnRN(release);
+        scheduleOnRN(canceled ? cancel : release);
       },
       // How a component test finds the drag; Gesture Handler reads it in Jest only.
       testID: `${testID}-trace`,
     };
-  }, [enabled, testID, hit, last, extend, release]);
+  }, [enabled, testID, hit, last, extend, release, cancel]);
   return usePanGesture(config);
 }

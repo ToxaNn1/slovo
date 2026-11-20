@@ -205,6 +205,17 @@ describe('the first-week card', () => {
     expect(screen.queryByText(/streak/)).toBeNull();
   });
 
+  it('has no «Got it» outside the Feed’s pager, where there is no next card', async () => {
+    await render(
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+        <FirstWeekCard day={1} streak={undefined} />
+      </EditionProvider>,
+    );
+
+    expect(screen.getByText('Know it or not?')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Got it' })).toBeNull();
+  });
+
   it('turns to the next card on «Got it», as a swipe would, so it closes', async () => {
     const onIndexChange = jest.fn();
     await renderFeed(<FirstWeekCard day={1} streak={undefined} />, onIndexChange);

@@ -19,6 +19,8 @@ import {
   type AccessibilityActionEvent,
   type AccessibilityActionInfo,
   type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
@@ -558,6 +560,14 @@ export function useTurnToNextPageOnUI(): (() => void) | undefined {
 }
 
 /**
+ * Whether the element is on a page of a `VerticalPager`, current or not: a
+ * card's button that turns to the next card is only drawn there.
+ */
+export function useIsInPager(): boolean {
+  return useContext(PagerContext) !== undefined;
+}
+
+/**
  * Turns a `VerticalPager` back to this page in 300 ms, from whichever page is
  * current, such as an undo that brings back a card the reader left. None
  * outside a pager.
@@ -645,9 +655,19 @@ function forget(scrolls: SharedValue<Record<number, PageScroll>>, index: number)
  */
 export function PagerScrollView(props: PagerScrollViewProps) {
   const pager = useContext(PagerContext);
+  const { onScrolledTo } = props;
   return pager === undefined ? (
     <ScrollView
       testID={props.testID}
+      onLayout={(event: LayoutChangeEvent) => {
+        onScrolledTo?.(event.nativeEvent.layout.height);
+      }}
+      onScrollEndDrag={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        onScrolledTo?.(reachOf(event));
+      }}
+      onMomentumScrollEnd={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
+        onScrolledTo?.(reachOf(event));
+      }}
       keyboardShouldPersistTaps="handled"
       // Android scrolls a scroll view inside another only when it is asked to.
       nestedScrollEnabled
@@ -664,6 +684,17 @@ interface PagerScrollViewProps {
   contentContainerStyle?: StyleProp<ViewStyle>;
   children: ReactNode;
   testID?: string;
+  /**
+   * How far down the content the scroll reaches once laid out and each time
+   * a scroll comes to rest: the bottom of the view, in the content's points.
+   */
+  onScrolledTo?: ((depth: number) => void) | undefined;
+}
+
+/** The bottom of a scroll view's viewport, in its content's points. */
+function reachOf(event: NativeSyntheticEvent<NativeScrollEvent>): number {
+  const { contentOffset, layoutMeasurement } = event.nativeEvent;
+  return contentOffset.y + layoutMeasurement.height;
 }
 
 /**
@@ -676,6 +707,7 @@ function PageScrollView({
   contentContainerStyle,
   children,
   testID,
+  onScrolledTo,
   pager,
 }: PagerScrollViewProps & { pager: PagerContextValue }) {
   const { pan, scrolls, turning } = pager;
@@ -739,6 +771,13 @@ function PageScrollView({
         onLayout={(event: LayoutChangeEvent) => {
           viewport.current = event.nativeEvent.layout.height;
           measure();
+          onScrolledTo?.(viewport.current);
+        }}
+        onScrollEndDrag={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
+          onScrolledTo?.(reachOf(event));
+        }}
+        onMomentumScrollEnd={(event: NativeSyntheticEvent<NativeScrollEvent>) => {
+          onScrolledTo?.(reachOf(event));
         }}
         onContentSizeChange={(_width: number, height: number) => {
           content.current = height;
