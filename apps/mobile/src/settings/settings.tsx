@@ -2,10 +2,12 @@ import {
   colorSchemeFor,
   createAnalytics,
   createSettings,
+  settleStatisticsConsent,
   type AnalyticsSink,
   type Backend,
   type ColorScheme,
   type Edition,
+  type RegionReader,
   type Settings,
   type SettingsDefaults,
   type TrackedUserState,
@@ -44,6 +46,7 @@ export function settingsOpening({
   edition: inEffect,
   analytics,
   backend,
+  region,
 }: {
   userState: Opening<TrackedUserState>;
   /**
@@ -55,9 +58,13 @@ export function settingsOpening({
   analytics: Opening<AnalyticsSink>;
   /** Where switching sharing off sends its one anonymous unit (ADR 0163). */
   backend: Pick<Backend, 'counters'>;
+  /** Reads the phone's region for the statistics consent (ADR 0204); without it no one is asked. */
+  region: RegionReader | undefined;
 }): Opening<OpenedSettings> {
   async function settingsOverUserState(): Promise<Settings> {
     const opened = await userState.opened();
+    // The settings are read before the composition opens: a new EEA reader's switch reads off from the start.
+    await settleStatisticsConsent({ edition: inEffect, userState: opened, region });
     const sink = await analytics.opened().catch(() => undefined);
     return createSettings({
       userState: opened,

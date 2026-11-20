@@ -31,7 +31,10 @@ import { storedUserStateOpening } from '../user-state/stored-user-state';
 import type { DevicePorts, DeviceSources, EditionSwitches, Shell } from '../shell-value';
 import { editionAtLaunch } from '../edition/edition-at-launch';
 
-/** The device's own sources for an Edition: its backend, clock, schedule, randomness and stored user state. */
+/** The phone's two-letter region, when its locale names one: what the Rules and the statistics consent read. */
+const deviceRegion = (): string | undefined => getLocales().at(0)?.regionCode ?? undefined;
+
+/** The device's own sources for an Edition: its backend, clock, schedule, randomness, stored user state and region. */
 function deviceSources(editionId: string): DeviceSources {
   return {
     backend,
@@ -39,6 +42,7 @@ function deviceSources(editionId: string): DeviceSources {
     schedule: systemSchedule,
     random: systemRandom,
     userState: storedUserStateOpening(editionId),
+    region: deviceRegion,
   };
 }
 
@@ -102,7 +106,7 @@ export function createShell(
     (id: string): (() => ReaderFacts) =>
     () => ({
       ...deviceFacts,
-      region: getLocales().at(0)?.regionCode ?? undefined,
+      region: deviceRegion(),
       signedIn: openAccount?.state.status === 'signed-in',
       installId: id,
     });
@@ -236,6 +240,7 @@ export function createShell(
       edition: editionInEffect,
       analytics,
       backend: sources.backend,
+      region: sources.region,
     }),
     remoteSwitches,
     languagePack,

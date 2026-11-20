@@ -28,6 +28,7 @@ import { editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { keep } from '../keep';
 import { useSubscribed } from '../opening';
+import { useSettings } from '../settings/settings';
 import { rarityTestQuestionOf, useApplyRarityTest } from '../mix/rarity-test';
 import { deviceClock } from '../device/device-clock';
 import { timeOfDay } from '../notifications/notification-scheduler';
@@ -43,6 +44,7 @@ const { onboarding: strings } = editionStrings;
 export function Onboarding() {
   const { onboarding } = useComposition();
   const state = useSubscribed(onboarding, (module) => module.state);
+  const { update } = useSettings();
   if (state.status === 'finished') return null;
   const { step } = state;
   const skip = () => {
@@ -64,7 +66,21 @@ export function Onboarding() {
         total={total}
         hero={undefined}
         mascot={mascot}
+        statisticsNote={onboarding.statisticsNote}
         onStart={next}
+        onSkip={skip}
+      />
+    );
+  } else if (step.kind === 'statisticsConsent') {
+    shown = (
+      <StatisticsConsentStep
+        step={step}
+        mascot={mascot}
+        onChoose={(allowed) => {
+          // The settings in memory follow the choice, so «Конфіденційність» shows it at once.
+          update({ shareCounters: allowed });
+          void keep('the onboarding', onboarding.chooseStatistics(allowed));
+        }}
         onSkip={skip}
       />
     );
@@ -129,6 +145,7 @@ export function Onboarding() {
 /** The Mascot's state on each step, as the design poses it. */
 const mascotState: Readonly<Record<Step['kind'], MascotState>> = {
   welcome: 'shouts',
+  statisticsConsent: 'waits',
   firstWord: 'happy',
   playStep: 'happy',
   level: 'waits',
@@ -205,6 +222,59 @@ function Subtitle({ children }: { children: string }) {
     >
       {children}
     </Text>
+  );
+}
+
+/**
+ * The statistics consent of an EEA reader (ADR 0204): what is shared, and two
+ * equal buttons, neither drawn as the main one.
+ */
+function StatisticsConsentStep({
+  step,
+  mascot,
+  onChoose,
+  onSkip,
+}: {
+  step: Step;
+  mascot: ReactNode;
+  onChoose: (allowed: boolean) => void;
+  onSkip: () => void;
+}) {
+  const { statisticsConsent: consent } = strings;
+  return (
+    <OnboardingStep
+      testID="onboarding-statistics-consent"
+      step={step.number}
+      total={step.total}
+      shout={consent.shout}
+      mascot={mascot}
+      onSkip={onSkip}
+      footer={
+        <View style={styles.options}>
+          <Button
+            testID="onboarding-statistics-allow"
+            variant="neutral"
+            label={consent.allow}
+            onPress={() => {
+              onChoose(true);
+            }}
+          />
+          <Button
+            testID="onboarding-statistics-deny"
+            variant="neutral"
+            label={consent.deny}
+            onPress={() => {
+              onChoose(false);
+            }}
+          />
+        </View>
+      }
+    >
+      <View style={stepStyles.heading}>
+        <Title>{consent.title}</Title>
+        <Subtitle>{consent.text}</Subtitle>
+      </View>
+    </OnboardingStep>
   );
 }
 

@@ -9,6 +9,7 @@ import type {
   openCounterSending,
   openRemoteSwitches,
   Random,
+  RegionReader,
   Schedule,
   Settings,
   Sync,
@@ -36,6 +37,11 @@ export interface DeviceSources {
   readonly schedule: Schedule;
   readonly random: Random;
   readonly userState: Opening<TrackedUserState>;
+  /**
+   * Reads the phone's region for the statistics consent (ADR 0204), as the
+   * Rules read it; a test's fakes without it ask no one.
+   */
+  readonly region?: RegionReader;
 }
 
 /**

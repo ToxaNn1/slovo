@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import { openComposition, type Composition, type Edition } from '@slovo/core';
+import { createSettings, openComposition, type Composition, type Edition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
@@ -40,10 +40,17 @@ function word(id: string, lemma: string): Word {
 }
 
 let composition: Composition;
+/** Reads «Ділитися анонімною статистикою» as the reader's device keeps it. */
+let readShared: () => Promise<boolean>;
 
 /** Draws the onboarding of a new reader over the Edition given, on 2026-10-28 in Kyiv. */
-async function renderOnboarding(shipped: Edition = loadEdition(activeEditionFiles.config)) {
+async function renderOnboarding(
+  shipped: Edition = loadEdition(activeEditionFiles.config),
+  region?: () => string | undefined,
+) {
   const userState = await seedUserState({}, { clock });
+  const settings = createSettings({ userState, defaults: shipped.userSettingDefaults });
+  readShared = async () => (await settings.read()).shareCounters;
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [
@@ -57,6 +64,7 @@ async function renderOnboarding(shipped: Edition = loadEdition(activeEditionFile
     userState,
     clock,
     random: { next: () => 0 },
+    ...(region === undefined ? {} : { region }),
   });
   const shell = testShell({
     userState: opened(userState),
@@ -236,5 +244,43 @@ describe('the onboarding', () => {
 
     expect(screen.queryByText(strings.level.title)).toBeNull();
     expect(screen.getByText(strings.dailyGoal.title)).toBeTruthy();
+  });
+});
+
+describe('the statistics consent', () => {
+  it('tells a reader outside the EEA on the welcome that statistics are on, and shows no step', async () => {
+    await renderOnboarding(undefined, () => 'UA');
+    expect(screen.getByTestId('onboarding-statistics-note')).toHaveTextContent(
+      strings.welcome.statisticsNote,
+    );
+    await press('onboarding-start');
+    expect(screen.queryByTestId('onboarding-statistics-consent')).toBeNull();
+    expect(screen.getByTestId('onboarding-first-word')).toBeOnTheScreen();
+    expect(await readShared()).toBe(true);
+  });
+
+  it('asks an EEA reader after the welcome with two equal buttons, and «Не дозволяти» keeps the switch off', async () => {
+    await renderOnboarding(undefined, () => 'DE');
+    expect(screen.queryByTestId('onboarding-statistics-note')).toBeNull();
+    await press('onboarding-start');
+    const step = within(screen.getByTestId('onboarding-statistics-consent'));
+    expect(step.getByRole('header')).toHaveTextContent(strings.statisticsConsent.title);
+    expect(step.getByText(strings.statisticsConsent.text)).toBeOnTheScreen();
+    expect(step.getByRole('button', { name: strings.statisticsConsent.allow })).toBeOnTheScreen();
+    expect(step.getByRole('button', { name: strings.statisticsConsent.deny })).toBeOnTheScreen();
+    expect(await readShared()).toBe(false);
+
+    await press('onboarding-statistics-deny');
+    expect(screen.queryByTestId('onboarding-statistics-consent')).toBeNull();
+    expect(screen.getByTestId('onboarding-first-word')).toBeOnTheScreen();
+    expect(await readShared()).toBe(false);
+  });
+
+  it('turns the switch on when an EEA reader allows, as an unknown region does too', async () => {
+    await renderOnboarding(undefined, () => undefined);
+    await press('onboarding-start');
+    await press('onboarding-statistics-allow');
+    expect(screen.getByTestId('onboarding-first-word')).toBeOnTheScreen();
+    expect(await readShared()).toBe(true);
   });
 });

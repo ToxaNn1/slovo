@@ -9,7 +9,13 @@ const strings = testStrings({
   onboarding: {
     skip: 'Skip',
     stepLabel: 'Step {step} of {total}',
-    welcome: { shout: 'WORD', start: 'Start', title: 'Rare words', subtitle: 'One a day' },
+    welcome: {
+      shout: 'WORD',
+      start: 'Start',
+      title: 'Rare words',
+      subtitle: 'One a day',
+      statisticsNote: 'Statistics are on',
+    },
   },
 });
 
@@ -24,12 +30,18 @@ const hero: HeroWord = {
   definition: 'The line where the sky meets the earth.',
 };
 
-async function renderWelcome(word: HeroWord | undefined) {
+async function renderWelcome(word: HeroWord | undefined, statisticsNote?: boolean) {
   const handlers = { onStart: jest.fn(), onSkip: jest.fn() };
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <OnboardingWelcome step={1} total={4} hero={word} {...handlers} />
+        <OnboardingWelcome
+          step={1}
+          total={4}
+          hero={word}
+          {...(statisticsNote === undefined ? {} : { statisticsNote })}
+          {...handlers}
+        />
       </EditionProvider>
     </SafeAreaProvider>,
   );
@@ -54,6 +66,14 @@ describe('OnboardingWelcome', () => {
     expect(screen.queryByTestId('onboarding-hero-lemma')).toBeNull();
     expect(screen.queryByTestId('onboarding-hero-definition')).toBeNull();
     expect(screen.getByRole('header', { name: 'Rare words' })).toBeTruthy();
+  });
+
+  it('says statistics are on only when told to', async () => {
+    await renderWelcome(hero);
+    expect(screen.queryByText('Statistics are on')).toBeNull();
+
+    await renderWelcome(hero, true);
+    expect(screen.getByText('Statistics are on')).toBeTruthy();
   });
 
   it('starts on «start» and finishes on «skip»', async () => {
