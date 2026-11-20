@@ -15,7 +15,15 @@ import {
   type DesignTokens,
 } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render, screen, userEvent, waitFor, within } from '@testing-library/react-native';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  userEvent,
+  waitFor,
+  within,
+} from '@testing-library/react-native';
 import { useState } from 'react';
 import { AccessibilityInfo, Platform, StyleSheet, type ViewStyle } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
@@ -881,7 +889,9 @@ describe('GameRound', () => {
       await renderRound(onAnswer, jest.fn(), trapVowelRound);
 
       await fireEvent.press(screen.getByRole('button', { name: 'o, fifth letter' }));
-      await userEvent.setup().press(screen.getByRole('button', { name: 'a, second letter, Right' }));
+      await userEvent
+        .setup()
+        .press(screen.getByRole('button', { name: 'a, second letter, Right' }));
 
       expect(onAnswer).toHaveBeenCalledTimes(1);
       expect(onAnswer).toHaveBeenCalledWith({ form: 'vowel', position: 4 });
@@ -1288,9 +1298,77 @@ describe('GameRound', () => {
     });
   });
 
+  it('announces a second answer with the same verdict while the sheet of the first still leaves', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockReturnValue();
+    announce.mockClear();
+    const next: PlayingGame = { ...first, round: { ...first.round, number: 2 } };
+    const round = (game: PlayingGame) => (
+      <SafeAreaProvider initialMetrics={metrics}>
+        <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+          <HapticsProvider haptics={haptics}>
+            <InterfaceSoundsProvider sounds={{ play }}>
+              <GameRound
+                game={game}
+                title="Definitions"
+                label="Definition"
+                onAnswer={jest.fn()}
+                onNext={jest.fn()}
+                onLeave={jest.fn()}
+                onOpenLetter={jest.fn()}
+              />
+            </InterfaceSoundsProvider>
+          </HapticsProvider>
+        </EditionProvider>
+      </SafeAreaProvider>
+    );
+    const view = await render(round(answered(first, { form: 'pick', option: CORRECT })));
+    await view.rerender(round(next));
+    await view.rerender(round(answered(next, { form: 'pick', option: CORRECT })));
+
+    expect(announce.mock.calls.filter(([said]) => said === 'Spot on!')).toHaveLength(2);
+    announce.mockRestore();
+  });
+
   describe('VoiceOver reading the answer banner', () => {
     afterEach(() => {
       jest.restoreAllMocks();
+    });
+
+    /** An answered Round under its banner, handing what the banner waits for to `onWaitFor`. */
+    async function renderBanner(onWaitFor: (done: Promise<unknown>) => void) {
+      const shown = answeredPick(first, { form: 'pick', option: CORRECT });
+      if (shown.status !== 'answered') throw new Error('Not answered');
+      await render(
+        <SafeAreaProvider initialMetrics={metrics}>
+          <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+            <HapticsProvider haptics={haptics}>
+              <InterfaceSoundsProvider sounds={{ play }}>
+                <GameRound
+                  game={{ ...shown, banner: true }}
+                  title="Definitions"
+                  label="Definition"
+                  onAnswer={jest.fn()}
+                  onNext={jest.fn()}
+                  onLeave={jest.fn()}
+                  onOpenLetter={jest.fn()}
+                  onWaitFor={onWaitFor}
+                />
+              </InterfaceSoundsProvider>
+            </HapticsProvider>
+          </EditionProvider>
+        </SafeAreaProvider>,
+      );
+    }
+
+    it('lets the Round move on when the check for VoiceOver fails', async () => {
+      jest.spyOn(AccessibilityInfo, 'isScreenReaderEnabled').mockRejectedValue(new Error('no'));
+      const waited: Promise<unknown>[] = [];
+      await renderBanner((done) => {
+        waited.push(done);
+      });
+
+      expect(waited).toHaveLength(1);
+      await expect(waited[0]).resolves.toBeUndefined();
     });
 
     it('holds the Round until VoiceOver has finished reading this banner, not another announcement', async () => {
@@ -1306,33 +1384,12 @@ describe('GameRound', () => {
         }
         return { remove: () => undefined };
       });
-      const shown = answeredPick(first, { form: 'pick', option: CORRECT });
-      if (shown.status !== 'answered') throw new Error('Not answered');
       let read = false;
-      await render(
-        <SafeAreaProvider initialMetrics={metrics}>
-          <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-            <HapticsProvider haptics={haptics}>
-              <InterfaceSoundsProvider sounds={{ play }}>
-                <GameRound
-                  game={{ ...shown, banner: true }}
-                  title="Definitions"
-                  label="Definition"
-                  onAnswer={jest.fn()}
-                  onNext={jest.fn()}
-                  onLeave={jest.fn()}
-                  onOpenLetter={jest.fn()}
-                  onWaitFor={(done) => {
-                    void done.then(() => {
-                      read = true;
-                    });
-                  }}
-                />
-              </InterfaceSoundsProvider>
-            </HapticsProvider>
-          </EditionProvider>
-        </SafeAreaProvider>,
-      );
+      await renderBanner((done) => {
+        void done.then(() => {
+          read = true;
+        });
+      });
       await waitFor(() => {
         expect(finished).toHaveLength(1);
       });
