@@ -316,6 +316,13 @@ appId: ${APP_ID || 'app.slovo.uk'}
       ROUTE: '/settings/about'
       LINK_PATH: 'settings/about'
       SCREEN: about
+# A development build's own; the pass opens it and loads no profile.
+- runFlow:
+    file: app-pass/open.yaml
+    env:
+      ROUTE: '/settings/test-profile'
+      LINK_PATH: 'settings/test-profile'
+      SCREEN: test-profile
 # With no sign-in on offer Settings opens instead.
 - runFlow:
     file: app-pass/open.yaml
