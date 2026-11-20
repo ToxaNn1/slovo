@@ -135,9 +135,7 @@ function useStopsWhenGone(id: string, sounds: boolean) {
 
   useEffect(
     () => () => {
-      const left = pronunciation.stateOf(id);
-      if (left === 'playing') void pronunciation.stop();
-      else if (left !== 'idle') pronunciation.dismiss();
+      pronunciation.leave(id);
     },
     [id],
   );

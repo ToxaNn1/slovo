@@ -550,6 +550,82 @@ describe('Pronunciation', () => {
       expect(pronunciation.stateOf('w_0002')).toBe('playing');
     });
 
+    /** A Recording of `w_0001` that downloads until the returned function is called. */
+    function slowDownload() {
+      let download: (lookup: RecordingLookup) => void = () => undefined;
+      const recordingOf = (id: string) =>
+        id === 'w_0001'
+          ? new Promise<RecordingLookup>((resolve) => {
+              download = resolve;
+            })
+          : Promise.resolve(lookupOf(id));
+      return { recordingOf, finish: () => { download(found(11)); } };
+    }
+
+    it('plays nothing it was stopped from while the Recording downloads', async () => {
+      const slow = slowDownload();
+      const { player, pronunciation } = setUp({ recordingOf: slow.recordingOf });
+
+      const tap = pronunciation.toggle(VEREMIIA_WORD);
+      await pronunciation.stop();
+      slow.finish();
+      await tap;
+
+      expect(player.played).toEqual([]);
+      expect(pronunciation.stateOf('w_0001')).toBe('idle');
+    });
+
+    it('plays nothing once «Звуки» go off while the Recording downloads', async () => {
+      const slow = slowDownload();
+      const { player, pronunciation, turnSoundsOff } = setUp({ recordingOf: slow.recordingOf });
+
+      const tap = pronunciation.toggle(VEREMIIA_WORD);
+      turnSoundsOff();
+      slow.finish();
+      await tap;
+
+      expect(player.played).toEqual([]);
+    });
+
+    it('plays nothing for a Word that left the screen while its Recording downloads', async () => {
+      const slow = slowDownload();
+      const { player, pronunciation } = setUp({ recordingOf: slow.recordingOf });
+
+      const tap = pronunciation.toggle(VEREMIIA_WORD);
+      pronunciation.leave('w_0002');
+      pronunciation.leave('w_0001');
+      slow.finish();
+      await tap;
+
+      expect(player.played).toEqual([]);
+    });
+
+    it('goes on with a Word whose Recording downloads when another Word leaves the screen', async () => {
+      const slow = slowDownload();
+      const { player, pronunciation } = setUp({ recordingOf: slow.recordingOf });
+
+      const tap = pronunciation.toggle(VEREMIIA_WORD);
+      pronunciation.leave('w_0002');
+      slow.finish();
+      await tap;
+
+      expect(player.played).toEqual([11]);
+    });
+
+    it('stops a playing Word that leaves the screen, and hides the message of one that leaves', async () => {
+      const { player, pronunciation } = setUp({ recordedOnly: true });
+
+      await pronunciation.toggle(VEREMIIA_WORD);
+      pronunciation.leave('w_0001');
+      expect(player.playing()).toBeUndefined();
+      expect(pronunciation.stateOf('w_0001')).toBe('idle');
+
+      await pronunciation.toggle({ id: 'w_0003', lemma: VEREMIIA });
+      expect(pronunciation.stateOf('w_0003')).toBe('no-recording');
+      pronunciation.leave('w_0003');
+      expect(pronunciation.stateOf('w_0003')).toBe('idle');
+    });
+
     it('stops the device voice to play a Recording, and the Recording to speak', async () => {
       const { fake, player, pronunciation } = setUp();
 
