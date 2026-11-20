@@ -439,7 +439,7 @@ export async function openComposition({
   eligibility.subscribe(() => cycle.readEligibleAgain());
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
   const analytics = createAnalytics({ edition, userState, sink: analyticsSink });
-  const { history, recorder } = await openHistory({ rows, userState });
+  const { history, recorder } = await openHistory({ rows, userState, clock });
   const xpLog = await openXpLog({
     edition,
     userState,

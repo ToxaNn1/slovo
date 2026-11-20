@@ -488,6 +488,34 @@ describe('the Daily Goal', () => {
     expect(xpKeys(records)).toEqual([]);
   });
 
+  it('keeps today’s Words Seen when History is cleared, also after a restart', async () => {
+    const time = fakeClock('2026-10-14T08:00:00+03:00');
+    const { app, records } = await run({
+      on: dailyGoal,
+      time,
+      records: seen(['w_00', '2026-10-14T04:00:00.000Z'], ['w_01', '2026-10-13T20:00:00.000Z']),
+    });
+    await app.xpLog.setDailyGoal(3);
+    await look(app, time);
+    expect(app.xpLog.state.dailyGoal).toEqual({ goal: 3, seen: 2, met: false });
+
+    await app.history.clear();
+    await settle();
+    expect(app.history.list).toEqual([]);
+    expect(app.xpLog.state.dailyGoal).toEqual({ goal: 3, seen: 2, met: false });
+
+    const again = await run({ on: dailyGoal, time, records });
+    expect(again.app.xpLog.state.dailyGoal).toEqual({ goal: 3, seen: 2, met: false });
+    // The first card is the Word of the Day again, Seen before the clear; the next one is new.
+    await look(again.app, time);
+    await look(again.app, time);
+    expect(again.app.xpLog.state.dailyGoal).toEqual({ goal: 3, seen: 3, met: true });
+    // A second clear the same day adds to the first.
+    await again.app.history.clear();
+    await settle();
+    expect(again.app.xpLog.state.dailyGoal).toEqual({ goal: 3, seen: 3, met: true });
+  });
+
   it('counts today’s Words Seen, is met once they reach it, records it and fires the celebration once', async () => {
     const time = fakeClock('2026-10-14T08:00:00+03:00');
     const { app, records } = await run({

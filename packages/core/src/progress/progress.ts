@@ -104,7 +104,7 @@ export function openProgress({
   edition: Pick<Edition, 'isFeatureEnabled'>;
   clock: Clock;
   activeDays: Pick<ActiveDays, 'days' | 'frozen' | 'breaks' | 'streak' | 'subscribe'>;
-  history: Pick<History, 'list'>;
+  history: Pick<History, 'list' | 'cleared'>;
   favorites: Favorites;
   collections: Collections;
   game: Pick<Game, 'state' | 'subscribe'>;
@@ -114,12 +114,13 @@ export function openProgress({
   const milestones = new Set<(streak: number) => void>();
 
   /**
-   * The History entries Seen on today's local date. History is newest first,
-   * so the count stops at the first one Seen before today.
+   * The Entries Seen on today's local date: those in History and those a
+   * clear took out of it. History is newest first, so the count stops at the
+   * first one Seen before today.
    */
   function seenTodayIn(list: History['list']): number {
     const { start, end } = todayBounds(clock);
-    let seenToday = 0;
+    let seenToday = history.cleared(todayKey(clock)).entries;
     for (const { seenAt } of list) {
       const time = seenAt.getTime();
       if (time < start) break;
