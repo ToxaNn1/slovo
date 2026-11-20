@@ -7,7 +7,7 @@ import type { Backend, Json, RecordChange, RequestFailure, UserStateChanges } fr
 import { HISTORY_CAP } from '../saved/history';
 import type { PendingChange, TrackedUserState } from '../user-state/tracked-user-state';
 import { declareRecords } from '../user-state/user-state-record';
-import { syncMarkOf, syncs, userStateRecords } from '../user-state-schema';
+import { isDropped, syncMarkOf, syncs, userStateRecords } from '../user-state-schema';
 
 /**
  * A request of Sync that failed as any request does, because the Session it
@@ -247,7 +247,7 @@ export function createSyncExchange({
       const read = await Promise.all(
         records.flatMap((record) => {
           const mark = syncMarkOf(record.key);
-          if (mark === 'device-only') return [];
+          if (mark === 'device-only' || isDropped(record.key)) return [];
           return [mineOf(record.key).then((kept) => ({ ...record, ...kept, mark }))];
         }),
       );
