@@ -19,6 +19,7 @@ import type { WordOfTheDay } from '../feed/word-of-the-day';
 import { createSubscribers } from '../in-turn';
 import { todayKey } from '../local-date';
 import type { Backend, Clock } from '../ports';
+import { needsStatisticsConsent, type RegionReader } from '../settings/statistics-consent';
 import type { XpLog } from '../progress/xp-log';
 import {
   applyAnswer,
@@ -54,6 +55,8 @@ interface StepPlace {
  */
 export type OnboardingStep =
   | (StepPlace & { readonly kind: 'welcome' })
+  /** The statistics consent of an EEA reader (ADR 0204): allow or don't, two equal choices. */
+  | (StepPlace & { readonly kind: 'statisticsConsent' })
   /** Today's Word of the Day, the reader's first Word, with its Pronunciation on the card. */
   | (StepPlace & { readonly kind: 'firstWord'; readonly word: WordCardModel })
   /** «ГРАЙ!», which shows the Games; it asks nothing. */
@@ -86,7 +89,8 @@ export type OnboardingState =
   | { readonly status: 'finished'; readonly finishedAt: Date };
 
 /**
- * The onboarding: the welcome, the first Word, «ГРАЙ!», «Рівень» (whose
+ * The onboarding: the welcome, the statistics consent where it is pending
+ * (ADR 0204), the first Word, «ГРАЙ!», «Рівень» (whose
  * «Не знаю» opens the Rarity Test) and «Навіщо», the Daily Goal, «Коли
  * нагадати?», then the Feed; and whether the reader finished
  * it, which is also when they skipped it. It opens on launch until then, at
@@ -107,6 +111,12 @@ export interface Onboarding {
    */
   readonly state: OnboardingState;
   /**
+   * Whether the welcome tells that anonymous statistics are on and where to
+   * turn them off (ADR 0204): for a reader who is not asked, here outside the
+   * EEA, while they share. The same for the whole run.
+   */
+  readonly statisticsNote: boolean;
+  /**
    * Goes on to the next step without an answer, so a question skipped keeps
    * the defaults and the Daily Goal stays as it is. Past the last step it finishes.
    * Going on from the first Word («Беру!») makes that Word Seen then, whether
@@ -121,6 +131,15 @@ export interface Onboarding {
    * lost. An id that is no option, or another step on screen, does nothing.
    */
   answer(answerId: string): Promise<void>;
+  /**
+   * Answers the statistics consent: sets «Ділитися анонімною статистикою» to
+   * the choice, after which the reader is never asked again, and goes on.
+   * Nothing was sent before it, and nothing is after a refusal. Going on
+   * without an answer, or the skip, leaves the switch off and the question
+   * open for the next run of an unfinished onboarding. Another step on screen
+   * does nothing.
+   */
+  chooseStatistics(allowed: boolean): Promise<void>;
   /**
    * Sets the Daily Goal the reader picked on its step and goes on. The goal is
    * counted as `answer` is, and a goal step left unanswered as `none`. Another
@@ -146,7 +165,8 @@ export interface Onboarding {
   subscribe(listener: () => void): () => void;
 }
 
-const { onboardingFinished, firstWeekFrom, shareCounters } = userStateRecords;
+const { onboardingFinished, firstWeekFrom, shareCounters, statisticsConsentPending } =
+  userStateRecords;
 
 /**
  * Opens the onboarding over the user state, for the Core composition, once
@@ -165,6 +185,7 @@ export async function openOnboarding({
   analytics,
   backend,
   notifications,
+  region,
 }: {
   edition: Pick<
     Edition,
@@ -184,6 +205,8 @@ export async function openOnboarding({
   analytics: Pick<Analytics, 'track'>;
   backend: Pick<Backend, 'counters'> | undefined;
   notifications: Pick<Notifications, 'chooseOnboardingTime'>;
+  /** Reads the phone's region for the welcome's line about statistics; without it, no line. */
+  region: RegionReader | undefined;
 }): Promise<Onboarding> {
   const subscribers = createSubscribers();
   const finished = await userState.read(onboardingFinished);
@@ -197,10 +220,19 @@ export async function openOnboarding({
   const wordId = wordOfTheDay.chosen()?.wordId;
   const word = wordId === undefined ? undefined : await entries.get(wordId);
   const firstWord = word?.kind === 'word' ? await buildWordCard({ word, entries }) : undefined;
+  const consent = edition.isFeatureEnabled('statisticsConsent');
+  const consentPending = consent && (await userState.read(statisticsConsentPending)) === true;
+  const statisticsNote =
+    consent &&
+    region !== undefined &&
+    !consentPending &&
+    !needsStatisticsConsent(region()) &&
+    (await userState.read(shareCounters)) !== false;
   const steps = STEPS.filter((kind) => {
     const feature = STEP_SWITCH[kind];
     return (
       (kind !== 'firstWord' || firstWord !== undefined) &&
+      (kind !== 'statisticsConsent' || consentPending) &&
       (feature === undefined || edition.isFeatureEnabled(feature))
     );
   });
@@ -209,7 +241,8 @@ export async function openOnboarding({
     const place = { number: index + 1, total: steps.length };
     const kind = steps[index];
     if (kind === undefined) return undefined;
-    if (kind === 'welcome' || kind === 'playStep') return { kind, ...place };
+    if (kind === 'welcome' || kind === 'playStep' || kind === 'statisticsConsent')
+      return { kind, ...place };
     if (kind === 'firstWord' && firstWord !== undefined) return { kind, ...place, word: firstWord };
     if (kind === 'dailyGoal') {
       return {
@@ -318,6 +351,18 @@ export async function openOnboarding({
     get state() {
       return state;
     },
+    statisticsNote,
+    chooseStatistics: (allowed) =>
+      endStep(async ({ kind }) => {
+        if (kind !== 'statisticsConsent') return;
+        await userState.write(
+          new Map([
+            ...shareCounters.change(allowed),
+            ...statisticsConsentPending.change(undefined),
+          ]),
+        );
+        await goOn(kind);
+      }),
     next: () =>
       endStep(async ({ kind }) => {
         // «Беру!» takes the first Word, so it is Seen: XP, History and the Daily Goal count it.

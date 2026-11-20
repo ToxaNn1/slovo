@@ -9304,6 +9304,14 @@
                           ],
                           "type": "string"
                         },
+                        "statisticsConsent": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "laterQuestions": {
                           "enum": [
                             "on",
@@ -9699,6 +9707,7 @@
                         "notificationFarewell",
                         "notificationExplainer",
                         "notificationTimeStep",
+                        "statisticsConsent",
                         "laterQuestions",
                         "interestsQuestion",
                         "profile",
@@ -11103,6 +11112,14 @@
                           ],
                           "type": "string"
                         },
+                        "statisticsConsent": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "laterQuestions": {
                           "enum": [
                             "on",
@@ -11498,6 +11515,7 @@
                         "notificationFarewell",
                         "notificationExplainer",
                         "notificationTimeStep",
+                        "statisticsConsent",
                         "laterQuestions",
                         "interestsQuestion",
                         "profile",
@@ -12826,6 +12844,14 @@
                           ],
                           "type": "string"
                         },
+                        "statisticsConsent": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "laterQuestions": {
                           "enum": [
                             "on",
@@ -13221,6 +13247,7 @@
                         "notificationFarewell",
                         "notificationExplainer",
                         "notificationTimeStep",
+                        "statisticsConsent",
                         "laterQuestions",
                         "interestsQuestion",
                         "profile",

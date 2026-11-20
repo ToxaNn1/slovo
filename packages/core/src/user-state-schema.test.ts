@@ -265,6 +265,7 @@ const storedIn1_0: readonly (readonly [
   ['seasonalDecor', undefined, 'settings.seasonalDecor', 'false'],
   ['narratorVoice', undefined, 'settings.narratorVoice', '"taras"'],
   ['shareCounters', undefined, 'settings.shareCounters', 'false'],
+  ['statisticsConsentPending', undefined, 'settings.statisticsConsentPending', 'true'],
   ['reduceMotion', undefined, 'settings.reduceMotion', 'true'],
   ['dailyLimit', undefined, 'settings.dailyLimit', '20'],
   ['swipeHintShown', undefined, 'feed.swipeHintShown', 'true'],

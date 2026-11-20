@@ -676,6 +676,12 @@ export const FEATURE_SWITCHES = catalogue({
     group: 'notifications',
     dependsOn: ['notifications'],
   },
+  /** The statistics consent (ADR 0204): a new reader whose phone region is in the EEA, or unknown, starts with «Ділитися анонімною статистикою» off and is asked on an onboarding step; elsewhere the welcome says statistics are on. Off, every reader starts with sharing on and none is asked. */
+  statisticsConsent: {
+    name: 'Згода на статистику',
+    line: 'У країнах ЄЕЗ вступ питає згоди на анонімну статистику, деінде каже, що вона ввімкнена.',
+    group: 'onboarding',
+  },
   /** The later questions through Feed Notices (the interests, the self-rating, the Mix review, the Rarity Test offer and, for an existing reader, the Daily Goal) and the questionnaire retake in Settings. */
   laterQuestions: {
     name: 'Запитання згодом',

@@ -85,6 +85,15 @@ export const settingsRecords = {
    */
   shareCounters: declareRecord('settings.shareCounters', z.boolean(), { sync: 'device-only' }),
   /**
+   * That the statistics consent waits for this reader's answer (ADR 0204):
+   * `shareCounters` was written off for a new reader of the EEA, and the
+   * onboarding asks until they choose. It stays on the device, like the
+   * switch it stands beside; without it, nothing is asked.
+   */
+  statisticsConsentPending: declareRecord('settings.statisticsConsentPending', z.literal(true), {
+    sync: 'device-only',
+  }),
+  /**
    * Whether the user has «Менше руху» on. It stays on the device,
    * like the system's Reduce Motion it joins; a new key needs no migration,
    * since without it the full motion plays.

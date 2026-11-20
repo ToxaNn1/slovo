@@ -192,6 +192,7 @@ export {
   type OutOfMix,
 } from './entries/mix';
 export { type OnboardingStep } from './onboarding/onboarding';
+export { settleStatisticsConsent, type RegionReader } from './settings/statistics-consent';
 export type { OptionQuestion, QuestionnaireOption } from './questionnaire/questionnaire';
 export {
   type RarityTestAnswer,

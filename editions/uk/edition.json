@@ -113,6 +113,7 @@
     "notificationFarewell": "on",
     "notificationExplainer": "on",
     "notificationTimeStep": "on",
+    "statisticsConsent": "on",
     "laterQuestions": "on",
     "interestsQuestion": "off",
     "profile": "on",

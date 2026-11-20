@@ -650,10 +650,12 @@ export const EditionIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a
  * them, so a step that joins changes the count everywhere. The first Word
  * comes only with a Word of the Day, «ГРАЙ!» only with `playStep`, the two
  * questions only with the `questionnaire` Feature Switch, the Daily Goal only
- * with `dailyGoal`, «Коли нагадати?» only with `notificationTimeStep`.
+ * with `dailyGoal`, «Коли нагадати?» only with `notificationTimeStep`, the
+ * statistics consent only for a reader it is pending for (ADR 0204).
  */
 export const ONBOARDING_STEPS = [
   'welcome',
+  'statisticsConsent',
   'firstWord',
   'playStep',
   'level',

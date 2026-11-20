@@ -41,12 +41,15 @@ async function run({
   api = createFakeBackend(),
   overrides = {},
   scheduler,
+  region,
 }: {
   records?: Map<string, string>;
   on?: readonly FeatureSwitch[];
   api?: FakeBackend;
   overrides?: TestEditionOverrides;
   scheduler?: NotificationSchedulerPort;
+  /** The phone's region as the device reads it; without it the composition has none to ask. */
+  region?: () => string | undefined;
 } = {}) {
   const events: unknown[][] = [];
   const analytics: AnalyticsPort = {
@@ -68,6 +71,7 @@ async function run({
     random: { next: () => 0.25 },
     analytics: analyticsInto(analytics),
     backend: api.backend,
+    ...(region === undefined ? {} : { region }),
     ...(scheduler === undefined
       ? {}
       : {
@@ -563,5 +567,151 @@ describe('the onboarding', () => {
         expect(app.notifications.state.times).toEqual(before);
       }
     });
+  });
+});
+
+describe('the statistics consent of an EEA reader', () => {
+  const WITH_CONSENT: readonly FeatureSwitch[] = [...ALL_ON, 'statisticsConsent'];
+  const inGermany = () => 'DE';
+  const inUkraine = () => 'UA';
+
+  it('asks after the welcome, sends nothing before the choice, and «allow» turns the switch on', async () => {
+    const { app, events, api, settings } = await run({ on: WITH_CONSENT, region: inGermany });
+    expect(stepOf(app)).toEqual({ kind: 'welcome', number: 1, total: 7 });
+    expect(app.onboarding.statisticsNote).toBe(false);
+    expect((await settings.read()).shareCounters).toBe(false);
+    await app.onboarding.next();
+    expect(stepOf(app)).toEqual({ kind: 'statisticsConsent', number: 2, total: 7 });
+    await app.analytics.screenViewed('/feed');
+    expect(events).toEqual([]);
+
+    await app.onboarding.chooseStatistics(true);
+    expect((await settings.read()).shareCounters).toBe(true);
+    expect(kinds(app)).toBe('firstWord');
+    expect(events).toEqual([['onboardingStepViewed', { step: 'firstWord' }]]);
+    await app.onboarding.next();
+    await app.onboarding.answer('starting');
+    await vi.waitFor(() => {
+      expect(api.counters.answers).toEqual([
+        { editionId: 'test', question: 'level', answer: 'starting' },
+      ]);
+    });
+  });
+
+  it("keeps the switch off after «don't allow», and nothing is ever sent or counted", async () => {
+    const records = new Map<string, string>();
+    const { app, events, api, settings } = await run({
+      records,
+      on: WITH_CONSENT,
+      region: inGermany,
+    });
+    await app.onboarding.next();
+    await app.onboarding.chooseStatistics(false);
+    expect((await settings.read()).shareCounters).toBe(false);
+    expect(kinds(app)).toBe('firstWord');
+    await app.onboarding.next();
+    await app.onboarding.answer('starting');
+    expect(kinds(app)).toBe('why');
+    await app.onboarding.finish();
+    expect(events).toEqual([]);
+    expect(api.counters.answers).toEqual([]);
+    expect(api.counters.statisticsOff).toEqual([]);
+
+    // The choice is made: the next run never asks again.
+    const again = await run({ records, on: WITH_CONSENT, region: inGermany });
+    expect((await again.settings.read()).shareCounters).toBe(false);
+  });
+
+  it('treats an unknown region as the EEA', async () => {
+    for (const region of [() => undefined, () => '150', () => '']) {
+      const { app, events } = await run({ on: WITH_CONSENT, region });
+      await app.onboarding.next();
+      expect(kinds(app)).toBe('statisticsConsent');
+      expect(events).toEqual([]);
+    }
+  });
+
+  it('asks in every country of the EEA, in either letter case', async () => {
+    for (const code of ['IS', 'LI', 'NO', 'FR', 'pl']) {
+      const { app } = await run({ on: WITH_CONSENT, region: () => code });
+      await app.onboarding.next();
+      expect(kinds(app)).toBe('statisticsConsent');
+    }
+  });
+
+  it('asks no reader elsewhere: the welcome says statistics are on, and events go from the first step', async () => {
+    const { app, events, settings } = await run({ on: WITH_CONSENT, region: inUkraine });
+    expect(stepOf(app)).toEqual({ kind: 'welcome', number: 1, total: 6 });
+    expect(app.onboarding.statisticsNote).toBe(true);
+    expect((await settings.read()).shareCounters).toBe(true);
+    await app.onboarding.next();
+    expect(kinds(app)).toBe('firstWord');
+    expect(events).toEqual([
+      ['onboardingStepViewed', { step: 'welcome' }],
+      ['onboardingStepViewed', { step: 'firstWord' }],
+    ]);
+    // No step is on screen to answer.
+    await app.onboarding.chooseStatistics(false);
+    expect((await settings.read()).shareCounters).toBe(true);
+  });
+
+  it('says nothing on the welcome to a reader elsewhere who turned statistics off', async () => {
+    const records = new Map<string, string>();
+    const first = await run({ records, on: WITH_CONSENT, region: inUkraine });
+    await first.settings.update({ shareCounters: false });
+    const { app } = await run({ records, on: WITH_CONSENT, region: inUkraine });
+    expect(app.onboarding.statisticsNote).toBe(false);
+  });
+
+  it('asks again a reader who closed the app before choosing, still sending nothing', async () => {
+    const records = new Map<string, string>();
+    const first = await run({ records, on: WITH_CONSENT, region: inGermany });
+    await first.app.onboarding.next();
+    // The phone's region changed meanwhile: the question asked once stays asked.
+    const { app, events } = await run({ records, on: WITH_CONSENT, region: inUkraine });
+    await app.onboarding.next();
+    expect(kinds(app)).toBe('statisticsConsent');
+    expect(events).toEqual([]);
+  });
+
+  it('does not ask a reader who already chose, in Settings or on the step', async () => {
+    for (const shareCounters of [true, false]) {
+      const records = new Map<string, string>();
+      const first = await run({ records, on: WITH_CONSENT, region: inUkraine });
+      await first.settings.update({ shareCounters });
+      const { app, settings } = await run({ records, on: WITH_CONSENT, region: inGermany });
+      await app.onboarding.next();
+      expect(kinds(app)).toBe('firstWord');
+      expect((await settings.read()).shareCounters).toBe(shareCounters);
+    }
+  });
+
+  it('leaves a reader who finished the onboarding before the rule as they were', async () => {
+    const records = new Map<string, string>();
+    const first = await run({ records });
+    await first.app.onboarding.finish();
+    const { app, events, settings } = await run({ records, on: WITH_CONSENT, region: inGermany });
+    expect(app.onboarding.state.status).toBe('finished');
+    expect((await settings.read()).shareCounters).toBe(true);
+    await app.analytics.screenViewed('/feed');
+    expect(events).toEqual([['screenViewed', { screen: '/feed' }]]);
+  });
+
+  it('leaves the switch off for an EEA reader who skips the onboarding without choosing', async () => {
+    const { app, events, settings } = await run({ on: WITH_CONSENT, region: inGermany });
+    await app.onboarding.finish();
+    expect((await settings.read()).shareCounters).toBe(false);
+    expect(events).toEqual([]);
+  });
+
+  it('asks no one with its Feature Switch off or with no region to read', async () => {
+    const off = await run({ region: inGermany });
+    expect(stepOf(off.app)).toEqual({ kind: 'welcome', number: 1, total: 6 });
+    expect(off.app.onboarding.statisticsNote).toBe(false);
+    expect((await off.settings.read()).shareCounters).toBe(true);
+    const noRegion = await run({ on: WITH_CONSENT });
+    expect(stepOf(noRegion.app)).toEqual({ kind: 'welcome', number: 1, total: 6 });
+    expect(noRegion.app.onboarding.statisticsNote).toBe(false);
+    expect((await noRegion.settings.read()).shareCounters).toBe(true);
   });
 });

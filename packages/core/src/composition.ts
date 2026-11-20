@@ -52,6 +52,7 @@ import { openEligibility } from './mix/open-eligibility';
 import type { NotificationScheduling } from './notifications/notification-plan';
 import { openNotifications, type Notifications } from './notifications/notifications';
 import { openOnboarding, type Onboarding } from './onboarding/onboarding';
+import { settleStatisticsConsent, type RegionReader } from './settings/statistics-consent';
 import { openQuestionnaire, type Questionnaire } from './questionnaire/questionnaire';
 import type { LocalDate } from './local-date';
 import type { Backend, Clock, ContentReadPort, NotificationKind, Random, Schedule } from './ports';
@@ -376,6 +377,7 @@ export async function openComposition({
   analytics: analyticsSink,
   visit = createVisit(),
   signedIn,
+  region,
   ...ports
 }: {
   content: ContentReadPort;
@@ -413,8 +415,16 @@ export async function openComposition({
    * features, the Feed offers no saving of progress.
    */
   signedIn?: () => boolean;
+  /**
+   * Reads the phone's region for the statistics consent (ADR 0204), where a
+   * region it cannot name counts as the EEA; without the reader, as in tools
+   * and tests of other features, no one is asked and sharing starts on.
+   */
+  region?: RegionReader;
 }): Promise<Composition> {
   const { userState, scheduling, schedule, close } = closable(ports);
+  // Before any module reads the privacy switch, so nothing is sent ahead of the answer.
+  await settleStatisticsConsent({ edition, userState, region });
   /** The Edition's text comparison, built once and handed to every module that compares text. */
   const comparison = createTextComparison(edition);
   // The named subjects the modules link through, made before any
@@ -726,6 +736,7 @@ export async function openComposition({
     analytics,
     backend,
     notifications,
+    region,
   });
   async function entryCard(entryId: string): Promise<AnyEntryCard | undefined> {
     const entry = await entries.get(entryId);
