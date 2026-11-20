@@ -399,7 +399,7 @@ describe('the onboarding', () => {
 
     // Owner decision 20.11: «Беру!» takes the Word then and there, not the end of the onboarding.
     it('is Seen the moment «Беру!» goes on from it, the onboarding still open: the Dashboard, History and the Daily Goal count it', async () => {
-      const { app } = await run();
+      const { app } = await run({ on: [...ALL_ON, 'seenWordXp'] });
       await app.onboarding.next();
       const first = stepOf(app);
       if (first?.kind !== 'firstWord') throw new Error('The first Word is not on screen');
@@ -420,15 +420,18 @@ describe('the onboarding', () => {
       expect(app.onboarding.state.status).toBe('finished');
       expect(app.history.list.map(({ entryId }) => entryId)).toEqual([first.word.wordId]);
       expect(app.xpLog.state.dailyGoal).toMatchObject({ goal: 3, seen: 1 });
+      // ADR 0196: the goal set after «Беру!» earns the first Word its XP.
+      expect(app.xpLog.state.today).toBe(1);
     });
 
     it('stays Seen when the app closes before the onboarding finishes, and «Беру!» in the next run counts it once', async () => {
       const records = new Map<string, string>();
-      const { app: closed } = await run({ records });
+      const on: readonly FeatureSwitch[] = [...ALL_ON, 'seenWordXp'];
+      const { app: closed } = await run({ records, on });
       await closed.onboarding.next();
       await closed.onboarding.next();
 
-      const { app } = await run({ records });
+      const { app } = await run({ records, on });
       expect(kinds(app)).toBe('welcome');
       expect(heroOf(app)?.state).toBe('revealed');
       expect(app.history.list).toHaveLength(1);
@@ -440,6 +443,7 @@ describe('the onboarding', () => {
       await app.onboarding.chooseDailyGoal(3);
       expect(app.history.list).toHaveLength(1);
       expect(app.xpLog.state.dailyGoal).toMatchObject({ goal: 3, seen: 1 });
+      expect(app.xpLog.state.today).toBe(1);
     });
 
     it('stays unseen when the reader skips the rest on its step without «Беру!»', async () => {
