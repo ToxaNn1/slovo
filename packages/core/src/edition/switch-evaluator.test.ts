@@ -236,9 +236,9 @@ describe('the switch evaluator', () => {
       (_, i) => evaluate(rules, statesWith(), facts({ installId: `install-${String(i)}` })).tips,
     );
 
-    expect(
-      new Set(verdicts.flatMap((verdict) => (verdict.on ? [verdict.variant] : []))),
-    ).toEqual(new Set(['a', 'b', 'c']));
+    expect(new Set(verdicts.flatMap((verdict) => (verdict.on ? [verdict.variant] : [])))).toEqual(
+      new Set(['a', 'b', 'c']),
+    );
   });
 
   it('matches no Rule that targets an app version when the app version cannot be read', () => {

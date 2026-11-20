@@ -623,13 +623,13 @@ describe('Sync and the end of a Session', () => {
   });
 
   it('syncs no next Account from the cursor of a Session that failed to be forgotten', async () => {
-    const { sync, account, server, userState, disk, advance, syncs, pulledAfter } =
-      await device();
+    const { sync, account, server, userState, disk, advance, syncs, pulledAfter } = await device();
     sync.foreground();
     await advance(0);
     expect(syncs()).toBe(1);
     // The store refuses to forget the cursor, and nothing else.
-    disk.refuses = (changes) => changes.has(syncCursor.key) && changes.get(syncCursor.key) === undefined;
+    disk.refuses = (changes) =>
+      changes.has(syncCursor.key) && changes.get(syncCursor.key) === undefined;
     await account.signOut();
     await advance(0);
     expect(await userState.cursor()).toBe(CURSOR_AFTER_FIRST_PULL);

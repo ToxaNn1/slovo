@@ -469,7 +469,10 @@ describe('a Quick Question of a Game Mode that cannot ask every Entry', () => {
     const on: readonly FeatureSwitch[] = ['game', 'quickQuestion', 'gameOrigin'];
     const app = await openComposition({
       content: packOf(fewWithOrigin),
-      edition: testEdition({ isFeatureEnabled: (feature) => on.includes(feature), originLanguages }),
+      edition: testEdition({
+        isFeatureEnabled: (feature) => on.includes(feature),
+        originLanguages,
+      }),
       userState: await openUserState({ port: createMemoryUserStatePort() }),
       clock: time.clock,
       random: seededRandom(7),
