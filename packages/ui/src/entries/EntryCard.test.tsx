@@ -4,6 +4,7 @@ import { EditionProvider, EntryCard, PronunciationButton } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
 import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useConcealed } from './self-check';
 import { testStrings } from '../test-strings';
 import { tightLineDrop, typeRoles } from '../tokens';
@@ -1074,28 +1075,48 @@ describe('the frame of a tabbed Entry card (board XEntry2)', () => {
 });
 
 describe('the page an Entry card lays itself out on', () => {
-  /** Draws the card inside a marker that names whether it is a fixed frame. */
-  const page = (entry: React.ReactNode, framed: boolean) => (
-    <View testID={framed ? 'framed-page' : 'scrolled-page'}>{entry}</View>
-  );
+  /** Names the card's fixed frame `page-frame` and its scroll `page-scroll`. */
+  const page = { testID: 'page', clearance: { framed: 54, scrolled: 62 } };
   const wordOfTheDay = { ...wordWithEverything, wordOfTheDay: { year: 2026, month: 11, day: 5 } };
 
   it('is a fixed frame for an Entry card', async () => {
-    await render(inEdition(<EntryCard card={wordCard} page={page} />));
+    await render(onPager(<EntryCard card={wordCard} page={page} />));
 
-    expect(within(screen.getByTestId('framed-page')).getByTestId('word-card')).toBeTruthy();
+    expect(within(screen.getByTestId('page-frame')).getByTestId('word-card')).toBeTruthy();
   });
 
   it('scrolls the red Word of the Day card while Self-check keeps it closed, and frames it once revealed', async () => {
-    await render(inEdition(<EntryCard card={wordOfTheDay} selfCheck page={page} />));
+    await render(onPager(<EntryCard card={wordOfTheDay} selfCheck page={page} />));
 
-    expect(screen.getByTestId('scrolled-page')).toBeTruthy();
+    expect(screen.getByTestId('page-scroll')).toBeTruthy();
 
     await fireEvent.press(screen.getByTestId('word-reveal'));
 
-    expect(screen.getByTestId('framed-page')).toBeTruthy();
+    expect(screen.getByTestId('page-frame')).toBeTruthy();
+  });
+
+  it('starts the card under the room its page leaves above it, framed or scrolled', async () => {
+    await render(onPager(<EntryCard card={wordOfTheDay} selfCheck page={page} />));
+
+    expect(screen.getByTestId('page-scroll')).toHaveProp(
+      'contentContainerStyle',
+      expect.arrayContaining([{ paddingTop: 62 }]),
+    );
+
+    await fireEvent.press(screen.getByTestId('word-reveal'));
+
+    expect(screen.getByTestId('page-frame')).toHaveStyle({
+      paddingTop: 54,
+      paddingHorizontal: 12,
+      paddingBottom: 24,
+    });
   });
 });
+
+/** The card in the Edition, under the root its page's scroll needs. */
+function onPager(children: React.ReactNode) {
+  return <GestureHandlerRootView>{inEdition(children)}</GestureHandlerRootView>;
+}
 
 describe('the Source tab of a tabbed Entry card (ADR 0116)', () => {
   const sourceStrings = testStrings({

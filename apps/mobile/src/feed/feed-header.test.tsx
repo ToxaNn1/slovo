@@ -16,7 +16,7 @@ import type { ColorScheme } from '@slovo/ui';
 import HomeScreen from '../app/feed';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { activeEditionFiles, editionTokens } from '../edition/edition';
-import { LOGO_ROW } from '../edition/feed-loading';
+import { LOGO_ROW } from './feed-page';
 import { screenSettled } from '../use-open-screen';
 
 const { config } = activeEditionFiles;
