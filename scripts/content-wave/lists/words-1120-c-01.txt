@@ -1,1 +1,15 @@
 протиснарядний military 5
+літораль nature-weather 4
+марал nature-weather 3
+мектеб history-antiquity 5
+нонконформізм emotions-character 3
+овчина old-crafts 4
+піддавки arts-culture 3
+платан nature-weather 2
+подичавіти emotions-character 4
+позаочі language-speech 3
+полик household-crafts 4
+лацкан household-crafts 4
+малоросійство history-antiquity 2
+матрона history-antiquity 2
+мужикуватість emotions-character 4

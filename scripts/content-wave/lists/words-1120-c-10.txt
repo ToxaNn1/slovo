@@ -1,0 +1,15 @@
+панагія arts-culture 3
+піднебесся nature-weather 4
+піленгас nature-weather 4
+прамова language-speech 3
+мурахоїд nature-weather 4
+нанду nature-weather 3
+неситий emotions-character 4
+парабелум military 4
+поплін household-crafts 4
+онде language-speech 2
+оружно military 4
+пачулі nature-weather 3
+плащаниця arts-culture 2
+покрій household-crafts 3
+приділ arts-culture 3

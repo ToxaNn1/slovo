@@ -1,0 +1,15 @@
+патисон nature-weather 4
+образок arts-culture 3
+омофор arts-culture 2
+піддувало household-crafts 3
+поросль nature-weather 3
+монодрама arts-culture 4
+памолодь nature-weather 4
+пищик arts-culture 2
+піддячий history-antiquity 4
+підлива household-crafts 3
+політура household-crafts 4
+пуританин emotions-character 4
+наложниця history-antiquity 3
+негоціант history-antiquity 4
+ондатра nature-weather 3

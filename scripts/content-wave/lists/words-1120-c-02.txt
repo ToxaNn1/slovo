@@ -1,0 +1,15 @@
+навкулачки language-speech 4
+навперейми language-speech 3
+насліддя language-speech 3
+неофіт emotions-character 2
+повідати language-speech 2
+неоген science 4
+лобань nature-weather 3
+мірабель nature-weather 3
+москвофільство history-antiquity 3
+муніципій history-antiquity 4
+нельма nature-weather 3
+остійність technology 4
+охранка history-antiquity 4
+політикан witty-insults 4
+пригорща household-crafts 4

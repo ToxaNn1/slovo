@@ -1,0 +1,15 @@
+недорід old-crafts 4
+ненастанно language-speech 4
+останець nature-weather 4
+прясло old-crafts 4
+печериця nature-weather 2
+набрід witty-insults 4
+навпомацки language-speech 2
+навсправжки language-speech 4
+наутилус nature-weather 2
+пестощі emotions-character 3
+поспільство history-antiquity 3
+первак household-crafts 2
+пустельник history-antiquity 2
+муксун nature-weather 4
+пампа nature-weather 3

@@ -1,0 +1,15 @@
+ніхром technology 4
+отаманщина history-antiquity 3
+панцирник military 4
+підшерстя nature-weather 3
+плішка human-body 3
+полуторка technology 4
+попадя history-antiquity 3
+приозер'я nature-weather 4
+лантан science 3
+лимонник nature-weather 3
+мульча household-crafts 4
+нагель old-crafts 3
+облатка history-antiquity 4
+падіж old-crafts 3
+пікулі household-crafts 4

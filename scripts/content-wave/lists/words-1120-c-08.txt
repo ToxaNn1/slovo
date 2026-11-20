@@ -1,0 +1,15 @@
+поплавець old-crafts 3
+мажара old-crafts 4
+маловоддя nature-weather 4
+навипуск household-crafts 4
+палісандр household-crafts 3
+путівець nature-weather 3
+мамуня folk-names 4
+матроска household-crafts 4
+маузер military 3
+мікориза science 3
+мулистий nature-weather 4
+нерадо language-speech 4
+опосум nature-weather 2
+пиятика emotions-character 3
+пресвітер history-antiquity 2

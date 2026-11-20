@@ -1,0 +1,15 @@
+похватом language-speech 5
+псалмоспівець arts-culture 4
+маар nature-weather 4
+неповерненець history-antiquity 4
+панотець history-antiquity 2
+потир arts-culture 3
+прихвостень witty-insults 4
+пуп'янок nature-weather 4
+ленчик old-crafts 4
+масон history-antiquity 2
+мойва nature-weather 3
+мусковіт science 4
+мучник old-crafts 4
+пармен nature-weather 3
+проторенесанс arts-culture 4

@@ -1,0 +1,15 @@
+металофон arts-culture 4
+морилка household-crafts 4
+міщанство emotions-character 2
+олениця nature-weather 4
+повагом language-speech 4
+правцем language-speech 4
+прокламація history-antiquity 4
+підпоручник military 2
+лелія nature-weather 3
+лонжерон technology 3
+мангольд nature-weather 3
+мотанка arts-culture 3
+навперебій language-speech 3
+нічогенький language-speech 4
+панталони household-crafts 2

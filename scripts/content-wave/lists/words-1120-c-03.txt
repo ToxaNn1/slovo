@@ -1,0 +1,15 @@
+пріор history-antiquity 3
+пшеничище old-crafts 5
+ландтаг history-antiquity 4
+лафа language-speech 3
+мерлуза nature-weather 4
+опліч language-speech 4
+пажитниця nature-weather 4
+перестрахувальник witty-insults 4
+покуняти human-body 4
+постоялий history-antiquity 3
+проскура history-antiquity 2
+лишенько emotions-character 2
+медальєр arts-culture 4
+милозвучність language-speech 3
+напівжартома language-speech 3

@@ -1,0 +1,15 @@
+напереріз language-speech 3
+нараз language-speech 3
+недбальство emotions-character 3
+нуга household-crafts 3
+прожогом language-speech 3
+махра household-crafts 3
+неня folk-names 4
+маркшейдер technology 4
+мотиль nature-weather 2
+мракобісся emotions-character 3
+однолюб emotions-character 4
+оселище household-crafts 4
+панкратіон history-antiquity 3
+пляцок household-crafts 2
+подоляночка arts-culture 3
