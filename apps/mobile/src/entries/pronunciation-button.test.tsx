@@ -2,6 +2,7 @@ import { describe, expect, it, jest } from '@jest/globals';
 import type { RecordingRow } from '@slovo/contracts';
 import { type Edition, type FeatureSwitch, type UserSettings } from '@slovo/core';
 import { loadEdition } from '@slovo/core/testing';
+import * as Speech from 'expo-speech';
 import { Pressable, Text } from 'react-native';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 
@@ -179,6 +180,40 @@ describe('A Word card › Recordings only (ADR 0195)', () => {
     await screen.findByTestId('word-pronunciation');
 
     expect(screen.queryByRole('button', { disabled: true })).toBeNull();
+  });
+});
+
+describe('A Word card › Analytics (ADR 0068)', () => {
+  /** Taps the card of `entryId` once; gives the Words sent as a Pronunciation played. */
+  async function tapAndCount(entryId: string): Promise<readonly string[]> {
+    const composition = await testShell().composition.opened();
+    const sent = jest.spyOn(composition.analytics, 'pronunciationPlayed');
+    const shell = testShell({
+      composition: opened(composition),
+      languagePack: pack(),
+      remoteSwitches: switchedTo(editionWith({})),
+      settings: await settingsAt({}),
+    });
+    await renderApp(<LemmaPronunciation lemma="заграва" entryId={entryId} />, { shell });
+    played.length = 0;
+    await fireEvent.press(await screen.findByTestId('word-pronunciation'));
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    const words = sent.mock.calls.map(([id]) => id);
+    await act(() => {
+      played[0]?.end();
+    });
+    return words;
+  }
+
+  it('counts a Pronunciation played once its Word starts playing', async () => {
+    expect(await tapAndCount(word)).toEqual([word]);
+  });
+
+  it('counts nothing for a tap whose Word does not play: no Recording and no device voice', async () => {
+    jest.spyOn(Speech, 'getAvailableVoicesAsync').mockResolvedValueOnce([]);
+    expect(await tapAndCount('w_silent')).toEqual([]);
   });
 });
 
