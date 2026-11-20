@@ -36,9 +36,41 @@ export const testStateNames = [
   'full-saved',
   'crossword-solved',
   'crossword-7-in-a-row',
+  'clean',
+  'week',
+  'half-year',
 ] as const;
 
 export type TestStateName = (typeof testStateNames)[number];
+
+/**
+ * The test profiles «Тестовий профіль» in Settings offers (owner, 20.11): a
+ * guest's whole device state at once, for a check on the phone. Each turns
+ * the Community Counters off, so a profile sends nothing to the server.
+ */
+export const testProfiles = [
+  {
+    name: 'clean',
+    label: 'Чистий',
+    about: 'Перший запуск: нічого не збережено, онбординг спочатку.',
+  },
+  {
+    name: 'week',
+    label: 'Тиждень',
+    about: 'Тиждень: 30 слів, 5 улюблених, 1 добірка, серія 4, 2 гри.',
+  },
+  {
+    name: 'half-year',
+    label: 'Пів року',
+    about: 'Пів року: сотні слів, 60 улюблених, 25 прихованих, 5 добірок, серія 63, 60 ігор.',
+  },
+] as const satisfies readonly {
+  readonly name: TestStateName;
+  readonly label: string;
+  readonly about: string;
+}[];
+
+export type TestProfileName = (typeof testProfiles)[number]['name'];
 
 function isTestStateName(name: string): name is TestStateName {
   return testStateNames.some((each) => each === name);
@@ -227,6 +259,167 @@ function fullSaved(calendar: Calendar, words: readonly string[]): UserStateFacts
   };
 }
 
+/** What every test profile holds: the Community Counters off, so nothing is counted or sent. */
+const SENDS_NOTHING: UserStateFacts = { shareCounters: false };
+
+/**
+ * The Game Modes the profiles' Games were played in, the Profile's own first:
+ * those the UA Edition has on. A mode off keeps its Best result, unread.
+ */
+const GAME_MODES = ['guess-word', 'stress', 'timed', 'correction', 'idiom-meaning', 'anglicism'];
+
+/** A finished Game `days` ago: its Round XP and its finish XP, as the Game awards them. */
+function game(calendar: Calendar, id: string, days: number, mode: string, right: number) {
+  const { date, at } = calendar;
+  const played = right + 3;
+  const records: Record<string, XpRecord> = {
+    [`dev-game-${id}-rounds`]: {
+      kind: 'xp',
+      date: date(days),
+      at: at(days),
+      source: 'game-round',
+      amount: right,
+      mode,
+    },
+  };
+  if (right * 2 >= played) {
+    records[`dev-game-${id}-finished`] = {
+      kind: 'xp',
+      date: date(days),
+      at: at(days),
+      source: 'game-finished',
+      amount: 5,
+      mode,
+      right,
+      played,
+    };
+  }
+  return records;
+}
+
+/** A Known mark set `days` ago, the Entry Learned. */
+function known({ at }: Calendar, days: number): KnowledgeRecord {
+  return { mark: 'known', step: null, reviewDay: null, learned: true, markedAt: at(days) };
+}
+
+/** The Collections named, each of `size` Words from `words` in turn, created `days` ago and later. */
+function ownCollections(
+  { at }: Calendar,
+  names: readonly string[],
+  words: readonly string[],
+  size: (index: number) => number,
+): UserStateFacts {
+  const collectionEntries: Record<string, string> = {};
+  let from = 0;
+  names.forEach((_, index) => {
+    for (const id of words.slice(from, from + size(index))) {
+      collectionEntries[`own${String(index + 1)}.${id}`] = at(index + 1);
+    }
+    from += size(index);
+  });
+  return {
+    collections: each(
+      names.map((_, index) => `own${String(index + 1)}`),
+      (_, index) => ({ name: names[index] ?? '', createdAt: at(20 + index * 25) }),
+    ),
+    collectionEntries,
+  };
+}
+
+/** The Word of the Day of each of the last `days` days, yesterday first, from `words`. */
+function archive({ date }: Calendar, words: readonly string[], days: number) {
+  const archived: Record<string, string> = {};
+  for (let day = 1; day <= days; day += 1) {
+    const id = words[day - 1];
+    if (id !== undefined) archived[date(day)] = id;
+  }
+  return archived;
+}
+
+/** A week of a guest's use: Seen Words, Favorites, one own Collection, a short Streak, two Games. */
+async function week(calendar: Calendar, sources: TestStateSources): Promise<UserStateFacts> {
+  const { date, at, activeDays, unknown } = calendar;
+  const { words } = await entryIds(sources);
+  const seen = words.slice(0, 30);
+  return {
+    ...SENDS_NOTHING,
+    onboardingFinished: at(7),
+    firstWeekFrom: date(7),
+    cycle: { id: 1, seed: 0 },
+    seen: each(seen, () => 1),
+    history: each(seen, (_, index) => ({ seenAt: at(index / 5), wordOfTheDay: index % 5 === 0 })),
+    wordOfTheDayArchive: archive(calendar, seen, 6),
+    favorites: each(seen.slice(0, 5), (_, index) => at(index + 1)),
+    knowledge: {
+      ...each(seen.slice(5, 11), (_, index) => known(calendar, index)),
+      ...each(seen.slice(11, 14), (_, index) => unknown(index + 1, 2)),
+    },
+    ...ownCollections(calendar, ['Мої слова'], seen.slice(2, 8), () => 6),
+    // A Streak of 4 up to today, after an Active Day at the start of the week.
+    xpLog: {
+      ...activeDays(6, 6),
+      ...activeDays(3),
+      ...game(calendar, 'w1', 5, 'guess-word', 9),
+      ...game(calendar, 'w2', 2, 'stress', 6),
+    },
+    gameBest: { 'guess-word': 9, stress: 6 },
+  };
+}
+
+/**
+ * Half a year of a guest's use: hundreds of Seen Words, many Favorites and
+ * Hidden Entries, five own Collections, a Streak of 63 after a run of 80,
+ * History full, sixty Games and Level 12 or so.
+ */
+async function halfYear(calendar: Calendar, sources: TestStateSources): Promise<UserStateFacts> {
+  const { date, at, activeDays, xp, unknown } = calendar;
+  const { levels } = sources.edition;
+  const { words } = await entryIds(sources);
+  // Fifty Words stay unseen, so the Cycle goes on.
+  const seen = words.slice(0, Math.max(0, Math.min(450, words.length - 50)));
+  const hidden = seen.slice(60, 85);
+  const notHidden = seen.filter((id) => !hidden.includes(id));
+  let games: Record<string, XpRecord> = {};
+  for (let n = 0; n < 60; n += 1) {
+    const mode = GAME_MODES[n % GAME_MODES.length] ?? 'guess-word';
+    games = { ...games, ...game(calendar, `h${String(n)}`, 2 + n * 2, mode, 4 + (n % 9)) };
+  }
+  return {
+    ...SENDS_NOTHING,
+    onboardingFinished: at(180),
+    firstWeekFrom: date(180),
+    cycle: { id: 1, seed: 0 },
+    seen: each(seen, () => 1),
+    history: each(seen.slice(0, 250), (_, index) => ({
+      seenAt: at(index * 0.7),
+      wordOfTheDay: index % 3 === 0,
+    })),
+    wordOfTheDayArchive: archive(calendar, seen, 179),
+    favorites: each(seen.slice(0, 60), (_, index) => at(index * 3 + 1)),
+    hiddenEntries: each(hidden, (_, index) => at(index * 7 + 2)),
+    knowledge: {
+      ...each(notHidden.slice(100, 190), (_, index) => known(calendar, index * 2)),
+      ...each(notHidden.slice(190, 205), (_, index) => unknown(index + 3, 3)),
+      ...each(notHidden.slice(205, 210), () => unknown(4, -1)),
+    },
+    confirmed: each(notHidden.slice(100, 170), (_, index) => at(index * 2 + 1)),
+    ...ownCollections(
+      calendar,
+      ['Улюблене', 'Для листів', 'Діалекти', 'На каву', 'Для подкасту'],
+      notHidden.slice(20, 120),
+      (index) => [15, 12, 9, 7, 6][index] ?? 5,
+    ),
+    // A run of 80 Active Days, a month and more missed, then 63 days up to today.
+    xpLog: {
+      ...activeDays(179, 100),
+      ...activeDays(62),
+      ...games,
+      ...xp('half-year', 150, totalFor(levels, 12)),
+    },
+    gameBest: Object.fromEntries(GAME_MODES.map((mode, index) => [mode, 9 + index])),
+  };
+}
+
 /** The user state each test state holds. */
 async function factsOf(name: TestStateName, sources: TestStateSources): Promise<UserStateFacts> {
   const calendar = calendarOf(sources.clock);
@@ -236,6 +429,12 @@ async function factsOf(name: TestStateName, sources: TestStateSources): Promise<
   switch (name) {
     case 'fresh':
       return {};
+    case 'clean':
+      return SENDS_NOTHING;
+    case 'week':
+      return week(calendar, sources);
+    case 'half-year':
+      return halfYear(calendar, sources);
     case 'empty-saved':
       return base;
     case 'day-3-streak':

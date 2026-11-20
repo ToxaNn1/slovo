@@ -95,6 +95,18 @@ export function shownRound(content: RoundForm, answered: readonly RoundAnswer[])
   );
 }
 
+/** Whether the answer shows the answer banner, as its form says. */
+export const showsBanner = (answer: RoundAnswer): boolean => formOf(answer.form).bannerAfterAnswer;
+
+/**
+ * The Round with «Відкрити літеру», as its form opens a letter. Nothing when
+ * the Round is of another form than the content, or has no letter to open.
+ */
+export function openLetter(content: RoundForm, shown: ShownRound): ShownRound | undefined {
+  if (shown.form !== content.form) return undefined;
+  return formOf(content.form).openLetter(content, shown);
+}
+
 /**
  * The answer judged against the Round's content, with the Entry it asked
  * about: the Round's own unless the form names another. Nothing when the

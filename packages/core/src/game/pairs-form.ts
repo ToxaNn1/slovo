@@ -74,6 +74,8 @@ const sortedPlaces = (order: readonly number[]) => [...order].sort().join();
  * right or wrong, is found or missed and takes no more taps.
  */
 export const pairsForm: AnswerForm<PairsContent, PairsRound, PairsGiven, PairsAnswer> = {
+  bannerAfterAnswer: false,
+  openLetter: () => undefined,
   wellFormed({ pairs, wordOrder, definitionOrder }) {
     const places = sortedPlaces(pairs.map((_, place) => place));
     return (

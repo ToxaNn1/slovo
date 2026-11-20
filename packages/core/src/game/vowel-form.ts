@@ -36,6 +36,8 @@ export interface VowelAnswer {
 
 /** The tap on a vowel: any stressed vowel of the prompt is right. */
 export const vowelForm: AnswerForm<VowelContent, VowelRound, VowelGiven, VowelAnswer> = {
+  bannerAfterAnswer: true,
+  openLetter: () => undefined,
   wellFormed: ({ vowels, stressed }) =>
     stressed.length > 0 && stressed.every((vowel) => vowels.includes(vowel)),
   roundsIn: () => 1,

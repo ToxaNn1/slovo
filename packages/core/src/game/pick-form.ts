@@ -35,6 +35,8 @@ export interface PickAnswer {
 
 /** The pick of options: one of `ROUND_OPTIONS` is right. */
 export const pickForm: AnswerForm<PickContent, PickRound, PickGiven, PickAnswer> = {
+  bannerAfterAnswer: true,
+  openLetter: () => undefined,
   wellFormed: ({ options, correct }) =>
     options.length === ROUND_OPTIONS && options[correct] !== undefined,
   roundsIn: () => 1,

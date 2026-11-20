@@ -17,7 +17,7 @@ import HomeScreen from '../app/feed';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { activeEditionFiles, editionStrings, editionTokens } from '../edition/edition';
 import { entryCardFrame, linkChip, textSizeSteps } from '@slovo/ui/tokens';
-import { LOGO_ROW } from '../edition/feed-loading';
+import { LOGO_ROW } from './feed-page';
 import { screenSettled } from '../use-open-screen';
 
 const { config } = activeEditionFiles;

@@ -429,6 +429,25 @@ function SettingsList() {
             />
           </SettingsGroup>
         </View>
+        {/* Development builds alone: a production bundle drops the branch (owner, 20.11). */}
+        {__DEV__ && (
+          <View style={styles.section}>
+            <SettingsGroup>
+              <SettingsRow
+                testID="settings-row-test-profile"
+                icon="square"
+                label="Тестовий профіль"
+                subtitle="Чистий · Тиждень · Пів року"
+                end={{
+                  kind: 'chevron',
+                  onPress: () => {
+                    openScreen('/settings/test-profile');
+                  },
+                }}
+              />
+            </SettingsGroup>
+          </View>
+        )}
         {edition.isFeatureEnabled('progressReset') && (
           <View style={styles.section}>
             <SettingsActionCard

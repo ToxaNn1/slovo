@@ -3,7 +3,6 @@ import type { AnyEntryCard, CategoryFeedPage, Composition } from '@slovo/core';
 import {
   BackLink,
   EntryCard,
-  PagerScrollView,
   Placeholder,
   space,
   UndoToastProvider,
@@ -169,15 +168,8 @@ function ListFeedPageView({
         stressFalls={stressFall}
         sourceTab={sourceTab}
         tipExceptions={tipExceptions}
-        // A tabbed card is a fixed frame the page's height, as in the Feed: only
-        // an opened tab inside it scrolls (ADR 0091, ADR 0113). Any other card scrolls.
-        page={(entry, framed) =>
-          framed ? (
-            <View style={[styles.page, styles.content]}>{entry}</View>
-          ) : (
-            <PagerScrollView contentContainerStyle={styles.content}>{entry}</PagerScrollView>
-          )
-        }
+        // Right under the back tile's row, on the same page as in the Feed.
+        page={{ testID, clearance: { framed: 0, scrolled: 0 } }}
       />
     </View>
   );
@@ -188,5 +180,4 @@ const styles = StyleSheet.create({
   header: { paddingLeft: space[3], paddingBottom: space[2] },
   pager: { flex: 1, overflow: 'hidden' },
   page: { flex: 1 },
-  content: { flexGrow: 1, paddingHorizontal: space[3], paddingBottom: space[6] },
 });
