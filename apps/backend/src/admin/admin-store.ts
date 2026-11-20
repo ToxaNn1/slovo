@@ -72,18 +72,27 @@ export function createAdminStore({ db }: Database): AdminStore {
       await db.delete(adminSignInCodes).where(eq(adminSignInCodes.email, email));
     },
 
-    async setPendingTotp(adminUserId, sealedSecret, codeHashes) {
-      await db.transaction(async (tx) => {
-        await tx
+    setPendingTotp: (adminUserId, replacing, sealedSecret, codeHashes) =>
+      db.transaction(async (tx) => {
+        const set = await tx
           .update(adminUsers)
           .set({ totpSecret: sealedSecret, totpConfirmedAt: null, totpLastStep: null })
-          .where(eq(adminUsers.id, adminUserId));
+          .where(
+            and(
+              eq(adminUsers.id, adminUserId),
+              replacing === null
+                ? isNull(adminUsers.totpSecret)
+                : eq(adminUsers.totpSecret, replacing),
+            ),
+          )
+          .returning({ id: adminUsers.id });
+        if (set.length === 0) return false;
         await tx.delete(recoveryCodes).where(eq(recoveryCodes.adminUserId, adminUserId));
         await tx
           .insert(recoveryCodes)
           .values(codeHashes.map((codeHash) => ({ codeHash, adminUserId })));
-      });
-    },
+        return true;
+      }),
 
     async confirmTotp(adminUserId, at) {
       await db
@@ -317,10 +326,15 @@ export function createSecretVault(secret: string): SecretVault {
       const [iv = '', tag = '', body = ''] = sealed.split('.');
       const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(iv, 'base64url'));
       decipher.setAuthTag(Buffer.from(tag, 'base64url'));
-      return Buffer.concat([
-        decipher.update(Buffer.from(body, 'base64url')),
-        decipher.final(),
-      ]).toString('utf8');
+      try {
+        return Buffer.concat([
+          decipher.update(Buffer.from(body, 'base64url')),
+          decipher.final(),
+        ]).toString('utf8');
+      } catch {
+        // The tag fails: another key sealed it, as before `AUTH_SECRET` was rotated.
+        return undefined;
+      }
     },
   };
 }

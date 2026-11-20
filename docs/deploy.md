@@ -226,7 +226,7 @@ DATABASE_URL='<the Neon connection string>' pnpm admin check add <version> <text
 DATABASE_URL='<the Neon connection string>' pnpm admin check import <file> [--version <version>]
 ```
 
-`agent add` prints the token once; the database keeps its SHA-256 only. The Агент sends it as `Authorization: Bearer <token>`, and only the content-writing procedures of the admin API take it. A person signs in to `/admin` with a code emailed by the mailer above and a TOTP; the TOTP secrets are sealed with a key derived from `AUTH_SECRET`, so rotating it makes every Admin user set up the TOTP again.
+`agent add` prints the token once; the database keeps its SHA-256 only. The Агент sends it as `Authorization: Bearer <token>`, and only the content-writing procedures of the admin API take it. A person signs in to `/admin` with a code emailed by the mailer above and a TOTP; the TOTP secrets are sealed with a key derived from `AUTH_SECRET`, so after a rotation every Admin user's next sign-in shows the TOTP set-up again after the emailed code, with new recovery codes.
 
 ## Checking «Сервіси» by hand
 

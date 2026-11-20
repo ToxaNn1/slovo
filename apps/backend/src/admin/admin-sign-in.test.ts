@@ -3,8 +3,11 @@ import { randomUUID } from 'node:crypto';
 import { totpOf } from '@slovo/server-core';
 import { describe, expect, it } from 'vitest';
 
+import { eq } from 'drizzle-orm';
+
+import { adminUsers } from '../database/schema';
 import { adminHeaders, passTime, signedInAdmin, testApp } from '../test-support';
-import { createAdminStore, hmacSha1 } from './admin-store';
+import { createAdminStore, createSecretVault, hmacSha1 } from './admin-store';
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -189,6 +192,82 @@ describe('the admin sign-in', () => {
 
     await expect(backend.anonymous.admin.requestCode({ email })).resolves.toEqual({ sent: true });
     expect(sent()).toBe(before);
+  });
+
+  it('answers the TOTP set-up it showed again to a repeated request, which then signs in', async () => {
+    const backend = await adminOn();
+    const email = `admin-${randomUUID()}@example.com`;
+    await createAdminStore(backend.database).addAdminUser({
+      email,
+      role: 'admin',
+      createdAt: new Date(),
+    });
+    await backend.anonymous.admin.requestCode({ email });
+    const code = backend.mailer.codeSentTo(email);
+    const verify = () => backend.anonymous.admin.verifyCode({ email, code });
+
+    const together = await Promise.all([verify(), verify()]);
+    const again = await verify();
+
+    expect(together[0]).toMatchObject({ next: 'enrol' });
+    expect(together[1]).toEqual(together[0]);
+    expect(again).toEqual(together[0]);
+    if (again.next !== 'enrol') throw new Error('no TOTP set-up shown');
+    const [recoveryCode] = again.recoveryCodes;
+    if (recoveryCode === undefined) throw new Error('no recovery code shown');
+    const signIn = await backend.request('/v1/admin/sign-in', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...adminHeaders() },
+      body: JSON.stringify({
+        email,
+        code,
+        factor: { kind: 'totp', totp: totpOf(hmacSha1, again.secret, new Date()) },
+      }),
+    });
+    expect(signIn.status).toBe(200);
+    expect((await signInAgain(backend, email, { kind: 'recovery', recoveryCode })).status).toBe(
+      200,
+    );
+  });
+
+  it('sets up the TOTP again once the secret it was sealed under is rotated', async () => {
+    const backend = await adminOn();
+    const { email, enrolment } = await signedInAdmin(backend, 'admin');
+    // The TOTP as sealed under the `AUTH_SECRET` before the rotation.
+    await backend.database.db
+      .update(adminUsers)
+      .set({ totpSecret: createSecretVault('the secret before').seal(enrolment.secret) })
+      .where(eq(adminUsers.email, email));
+    await backend.anonymous.admin.requestCode({ email });
+    const code = backend.mailer.codeSentTo(email);
+
+    const stale = await backend.request('/v1/admin/sign-in', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...adminHeaders() },
+      body: JSON.stringify({
+        email,
+        code,
+        factor: { kind: 'totp', totp: totpOf(hmacSha1, enrolment.secret, new Date()) },
+      }),
+    });
+    const set = await backend.anonymous.admin.verifyCode({ email, code });
+
+    expect(stale.status).toBe(401);
+    expect(set).toMatchObject({ next: 'enrol' });
+    if (set.next !== 'enrol') throw new Error('no TOTP set-up shown');
+    expect(set.secret).not.toBe(enrolment.secret);
+    const signIn = await backend.request('/v1/admin/sign-in', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...adminHeaders() },
+      body: JSON.stringify({
+        email,
+        code,
+        factor: { kind: 'totp', totp: totpOf(hmacSha1, set.secret, new Date()) },
+      }),
+    });
+    expect(signIn.status).toBe(200);
+    const next = totpOf(hmacSha1, set.secret, new Date(Date.now() + 30_000));
+    expect((await signInAgain(backend, email, { kind: 'totp', totp: next })).status).toBe(200);
   });
 
   it('refuses a write without the admin header', async () => {

@@ -36,7 +36,8 @@ export type AdminTotp =
 /** Seals a secret the store keeps, and opens it again. */
 export interface SecretVault {
   seal(plain: string): string;
-  open(sealed: string): string;
+  /** The plain secret; undefined for a seal this vault's key did not make. */
+  open(sealed: string): string | undefined;
 }
 
 /** An active Admin user, as the sign-in knows them. */
@@ -65,12 +66,17 @@ export interface AdminStore {
   /** The email's emailed code, by hash. */
   signInCode(email: string): Promise<{ codeHash: string; expiresAt: Date } | undefined>;
   deleteSignInCode(email: string): Promise<void>;
-  /** Sets a sealed TOTP secret not yet used, and the recovery codes by hash, in place of any before. */
+  /**
+   * Sets a sealed TOTP secret not yet used, and the recovery codes by hash, in
+   * place of the sealed secret `replacing` (`null`: none); `false`, setting
+   * nothing, when the user's secret is no longer that one.
+   */
   setPendingTotp(
     adminUserId: string,
+    replacing: string | null,
     sealedSecret: string,
     recoveryCodeHashes: readonly string[],
-  ): Promise<void>;
+  ): Promise<boolean>;
   /** Turns the pending TOTP on: it has signed in once. */
   confirmTotp(adminUserId: string, at: Date): Promise<void>;
   /**
