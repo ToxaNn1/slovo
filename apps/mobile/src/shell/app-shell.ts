@@ -46,7 +46,7 @@ function deviceSources(editionId: string): DeviceSources {
  * How long the Account and Sync wait for the remote Rules the device kept to
  * be read before they open by the shipped states (ADR 0203).
  */
-export const KEPT_RULES_WAIT_MS = 2000;
+const KEPT_RULES_WAIT_MS = 2000;
 
 /** Why an opening stays closed: its Feature Switch is off in effect (ADR 0203). No failure, so nothing logs it. */
 class SwitchedOffError extends Error {

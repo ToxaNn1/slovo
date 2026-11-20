@@ -39,14 +39,7 @@ export type { RoundBlank } from './typed-form';
 export type { GivenAnswer, RoundAnswer } from './answer-forms';
 export type { GridCell, GridCellState } from './pairs-form';
 export { answerBannerDelay } from './move-on';
-export type {
-  AnsweredRound,
-  GameStatus,
-  GameTime,
-  PlayedRound,
-  PlayingGame,
-  Round,
-} from './round-machine';
+export type { GameTime, PlayedRound, PlayingGame, Round } from './round-machine';
 
 /** How many Lives a Game starts with, in a Game Mode that sets no Lives of its own. */
 export const GAME_LIVES = 3;

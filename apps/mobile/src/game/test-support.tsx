@@ -53,7 +53,7 @@ const MODES_UNDER_TEST = [
  * The UA Edition with the Games boards' switches off, the hidden modes and
  * the Daily Crossword on, the given Feature Switches turned off, and the others given turned on.
  */
-export function editionWithout(
+function editionWithout(
   switchedOff: readonly string[],
   switchedOn: readonly string[] = [],
   outOfMix: readonly string[] = [],
@@ -89,8 +89,8 @@ export let editionInEffect: Edition;
 export let composition: Composition;
 
 /** Whether the app is in the foreground, as a test moves it, and who listens to it. */
-export let mockInForeground = true;
-export const mockForegroundListeners = new Set<() => void>();
+let mockInForeground = true;
+const mockForegroundListeners = new Set<() => void>();
 
 jest.mock('../foreground/in-foreground', () => ({
   useInForeground: () =>
@@ -139,7 +139,7 @@ jest.mock('expo-router', () => ({
  * A Word of one Category, with nothing but what the Game reads: «слово» and
  * its number, stressed on its first vowel, in an Example of its own.
  */
-export const word = (index: number): Word => ({
+const word = (index: number): Word => ({
   kind: 'word',
   id: `w_test${String(index)}`,
   lemma: `слово${String(index)}`,
@@ -163,7 +163,7 @@ export const word = (index: number): Word => ({
  * nothing but what the Game reads: the non-standard «хибне» and its number in
  * a sentence of its own, the standard «добре» and its number.
  */
-export const correction = (
+const correction = (
   index: number,
   correctionType: Correction['correctionType'] = 'calque',
 ): Correction => ({
@@ -188,7 +188,7 @@ export const correction = (
  * «друге» and «третє» after a comma and a dash, which are no chips, its
  * Definition «The sense of idiom{n}.».
  */
-export const idiom = (index: number, longSense = false): Idiom => ({
+const idiom = (index: number, longSense = false): Idiom => ({
   kind: 'idiom',
   id: `i_test${String(index)}`,
   expression: `перше${String(index)}, друге — третє`,
@@ -213,9 +213,6 @@ const mockHaptics: Haptics = {
   warning,
 };
 
-/** The haptics the app plays, each a mock. */
-export const haptics = mockHaptics;
-
 // The app's haptics play on these instead of the device's motor; read late, once they stand.
 jest.mock('./haptics', () => ({
   get hapticEngine() {
@@ -230,7 +227,7 @@ const { originLanguages } = config as { originLanguages: { code: string; name: s
 export const originOf = (index: number) => originLanguages[index % originLanguages.length];
 
 /** The Word «слово{n}» with its origin and an etymology that names it. */
-export const withOrigin = (index: number): Word => ({
+const withOrigin = (index: number): Word => ({
   ...word(index),
   origin: originOf(index)?.code,
   etymology: `Від test${String(index)}.`,
@@ -316,9 +313,9 @@ export async function open({
 }
 
 /** The Analytics events the Core sent, by name and properties. */
-export let events: unknown[][] = [];
+let events: unknown[][] = [];
 
-export const analytics: AnalyticsPort = {
+const analytics: AnalyticsPort = {
   track: (event, properties) => void events.push([event, properties]),
   stop: () => undefined,
 };

@@ -160,7 +160,7 @@ export type SaveSource = 'authored' | 'restored';
  * by it: an appeared collection keeps its publish date; one not
  * appeared yet appears anew by the date it is saved with.
  */
-export function authoredAppearance(
+function authoredAppearance(
   publishedOn: string,
   before: Appearance | undefined,
   now: Date,
