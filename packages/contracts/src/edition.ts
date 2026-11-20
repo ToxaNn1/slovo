@@ -259,14 +259,33 @@ export const FeatureSwitchStateSchema = z.enum(['on', 'off', 'unavailable']);
 
 export type FeatureSwitchState = z.infer<typeof FeatureSwitchStateSchema>;
 
+/** A shape holding `value` under every key of `record`; each key keeps its JSDoc there. */
+function everyKeyOf<Record extends object, Value>(
+  record: Record,
+  value: Value,
+): { readonly [Key in keyof Record]: Value } {
+  const shape: object = Object.fromEntries(Object.keys(record).map((key) => [key, value]));
+  if (!holdsEveryKey(shape, record, value)) throw new Error('a key of the record is missing');
+  return shape;
+}
+
+/** Whether the shape holds `value` under every key of `record`. */
+function holdsEveryKey<Record extends object, Value>(
+  shape: object,
+  record: Record,
+  value: Value,
+): shape is { readonly [Key in keyof Record]: Value } {
+  return Object.keys(record).every(
+    (key) => Object.getOwnPropertyDescriptor(shape, key)?.value === value,
+  );
+}
+
 /**
  * The Edition's state of every Core feature's Feature Switch (ADR 0089): one
  * key per switch of the catalogue (ADR 0199), each required.
  */
 export const FeatureSwitchesSchema = z.strictObject(
-  Object.fromEntries(
-    Object.keys(FEATURE_SWITCHES).map((feature) => [feature, FeatureSwitchStateSchema]),
-  ) as Record<keyof typeof FEATURE_SWITCHES, typeof FeatureSwitchStateSchema>,
+  everyKeyOf(FEATURE_SWITCHES, FeatureSwitchStateSchema),
 );
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
