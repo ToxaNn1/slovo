@@ -36,6 +36,7 @@ describe('FeedLoading', () => {
   it('writes no text', async () => {
     await renderLoading();
 
+    expect(screen.getAllByTestId('feed-loading-bar')).toHaveLength(3);
     expect(screen.queryAllByText(/./)).toHaveLength(0);
   });
 });

@@ -166,6 +166,7 @@ describe('the goal-reached card', () => {
 
   it('names no Streak while the reader doesn’t see it', async () => {
     await renderFeed({ goal: 3, words: ['dawn'], streak: undefined });
+    expect(screen.getByText('dawn')).toBeTruthy();
     expect(screen.queryByTestId('goal-reached-streak')).toBeNull();
   });
 

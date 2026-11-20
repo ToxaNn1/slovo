@@ -333,6 +333,7 @@ describe('StatsSheet', () => {
       'uk',
     );
 
+    expect(screen.getByTestId('stats-streak')).toBeOnTheScreen();
     expect(screen.queryByTestId('stats-moods')).not.toBeOnTheScreen();
   });
 });
