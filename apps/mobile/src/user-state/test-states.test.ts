@@ -15,7 +15,12 @@ import { afterAll, describe, expect, it } from 'vitest';
 
 import { ukrainian } from '../test-support';
 import { nodeDriver, type NodeDriver } from './node-sqlite-driver';
-import { loadTestState, reopenedByTestState, type TestStateName } from './test-states';
+import {
+  loadTestState,
+  reopenedByTestState,
+  testProfiles,
+  type TestStateName,
+} from './test-states';
 import { openSqliteUserState } from './user-state-sqlite';
 
 /** A Monday morning in Kyiv, so the Weekly Recap of the week before is due. */
@@ -65,11 +70,11 @@ async function storedPort() {
 }
 
 /** The app as it opens after the reload: the Core composition over the stored state the link loaded. */
-async function opened(name: TestStateName): Promise<Composition> {
+async function opened(name: TestStateName, from = content): Promise<Composition> {
   const port = await storedPort();
-  await loadTestState(name, port, { clock, edition: ukrainian, content });
+  await loadTestState(name, port, { clock, edition: ukrainian, content: from });
   return openComposition({
-    content,
+    content: from,
     edition: ukrainian,
     userState: await openTrackedUserState({ port, clock }),
     clock,
@@ -197,6 +202,80 @@ describe('a test state loaded from its link', () => {
 
     expect(app.xpLog.milestones.crosswords.size).toBe(7);
   });
+});
+
+describe('a test profile loaded from «Тестовий профіль»', () => {
+  /** Content of an Edition big enough for half a year of reading. */
+  const library = createMemoryContentPort({
+    words: Array.from({ length: 600 }, (_, index) => word(index + 1)),
+  });
+  const sources = { clock, edition: ukrainian, content: library };
+
+  it('offers the three profiles in order', () => {
+    expect(testProfiles.map(({ name, label }) => [name, label])).toEqual([
+      ['clean', 'Чистий'],
+      ['week', 'Тиждень'],
+      ['half-year', 'Пів року'],
+    ]);
+  });
+
+  it('clean: a first launch, nothing saved, the onboarding from its first step', async () => {
+    const app = await opened('clean', library);
+
+    expect(app.onboarding.state).toMatchObject({ status: 'open', step: { number: 1 } });
+    expect(app.favorites.list).toEqual([]);
+    expect(app.history.list).toEqual([]);
+    expect(app.collections.list).toEqual([]);
+    expect(app.xpLog.state.total).toBe(0);
+  });
+
+  it('week: a week of use on the Dashboard, the Profile and in Collections', async () => {
+    const app = await opened('week', library);
+
+    expect(app.onboarding.state.status).toBe('finished');
+    expect(app.history.list).toHaveLength(30);
+    expect(app.favorites.list).toHaveLength(5);
+    expect(app.collections.list.map(({ name }) => name)).toEqual(['Мої слова']);
+    expect(app.progress.state.streak).toBe(4);
+    expect(app.game.state.bestResults).toMatchObject({ 'guess-word': 9, stress: 6 });
+    expect(app.dashboard.blocks.find((block) => block.kind === 'previousWords')).toBeDefined();
+  });
+
+  it('half-year: half a year of use, a long Streak and a high Level', async () => {
+    const app = await opened('half-year', library);
+
+    expect(app.history.list.length).toBeGreaterThanOrEqual(200);
+    expect(app.favorites.list).toHaveLength(60);
+    expect(app.hiddenEntries.list).toHaveLength(25);
+    expect(app.collections.list).toHaveLength(5);
+    expect(app.progress.state.streak).toBe(63);
+    expect(app.progress.state.bestStreak).toBe(80);
+    expect(app.xpLog.state.level?.level).toBeGreaterThanOrEqual(10);
+    expect(app.game.state.bestResults).toMatchObject({ 'guess-word': 9, stress: 10, timed: 11 });
+    expect(app.dashboard.blocks.find((block) => block.kind === 'previousWords')).toBeDefined();
+  });
+
+  it.each(testProfiles.map(({ name }) => name))(
+    '%s: leaves nothing to sync or send, the Community Counters off',
+    async (name) => {
+      const port = await storedPort();
+      // A change waiting for Sync and the installed marker, kept so the Account tells the server nothing.
+      await port.write(
+        new Map([
+          [
+            'sync.pending.favorites.w_40',
+            JSON.stringify({ changedAt: '2026-10-11T10:00:00.000Z', value: null }),
+          ],
+          ['app.installed', 'true'],
+        ]),
+      );
+      await loadTestState(name, port, sources);
+
+      expect([...(await port.list('sync.')).keys()]).toEqual([]);
+      expect(await port.get('settings.shareCounters')).toBe('false');
+      expect(await port.get('app.installed')).toBe('true');
+    },
+  );
 });
 
 describe('the app reopened by the reload a test state asks for', () => {
