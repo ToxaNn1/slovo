@@ -2,6 +2,7 @@ import type { EntryFeedCard, SynonymRowFeedCard, TipFeedCard } from '@slovo/core
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { CardPage, type EntryCardPage } from './CardPage';
 import { CorrectionCardBody } from './CorrectionCard';
 import { IdiomCardBody } from './IdiomCard';
 import { CardKicker } from './EntryKicker';
@@ -72,12 +73,11 @@ export interface EntryCardProps {
   /** The card's place in a Category's or a Curated Collection's Feed (ADR 0110, 0178); none in the Feed. */
   kicker?: string | undefined;
   /**
-   * Lays the card out on its page, told whether it is a fixed frame the
-   * page's height (ADR 0091) or the red card of the Word of the Day that
-   * Self-check keeps closed. None: the
-   * card alone.
+   * The page the card lays itself out on, a fixed frame the page's height
+   * (ADR 0091) or, for the red card of the Word of the Day that Self-check
+   * keeps closed, a scroll. None: the card alone.
    */
-  page?: ((card: ReactNode, framed: boolean) => ReactNode) | undefined;
+  page?: EntryCardPage | undefined;
 }
 
 /**
@@ -114,7 +114,7 @@ export function EntryCard({
   sourceTab = false,
   tipExceptions = false,
   kicker,
-  page = (entry) => entry,
+  page,
 }: EntryCardProps) {
   const { concealed, reveal } = useSelfCheck(selfCheck);
   const framed = fixedFrame(card, concealed);
@@ -135,17 +135,24 @@ export function EntryCard({
       reveal={reveal}
     />
   );
-  if (slots?.swipe === undefined) return page(face, framed);
-  return page(
-    <SwipeMarks
-      swipe={slots.swipe}
-      concealed={concealed}
-      correction={card.kind === 'correction'}
-      fill={framed}
-    >
-      {face}
-    </SwipeMarks>,
-    framed,
+  const entry =
+    slots?.swipe === undefined ? (
+      face
+    ) : (
+      <SwipeMarks
+        swipe={slots.swipe}
+        concealed={concealed}
+        correction={card.kind === 'correction'}
+        fill={framed}
+      >
+        {face}
+      </SwipeMarks>
+    );
+  if (page === undefined) return entry;
+  return (
+    <CardPage page={page} framed={framed}>
+      {entry}
+    </CardPage>
   );
 }
 
