@@ -135,9 +135,7 @@ function useStopsWhenGone(id: string, sounds: boolean) {
 
   useEffect(
     () => () => {
-      const left = pronunciation.stateOf(id);
-      if (left === 'playing') void pronunciation.stop();
-      else if (left !== 'idle') pronunciation.dismiss();
+      pronunciation.leave(id);
     },
     [id],
   );
@@ -155,18 +153,13 @@ function PlayingLemma({ lemma, entryId }: { lemma: string; entryId: string }) {
   useStopsWhenGone(entryId, sounds);
 
   const toggle = useCallback(() => {
-    const opened = composition.state;
-    if (
-      sounds &&
-      !unrecorded &&
-      pronunciation.stateOf(entryId) !== 'playing' &&
-      opened.status === 'ready'
-    )
-      void opened.value.analytics.pronunciationPlayed(entryId);
     recordedOnly = only;
     tapped = { shell, voice: voice.id };
-    void pronunciation.toggle({ id: entryId, lemma });
-  }, [shell, composition, sounds, unrecorded, only, voice, lemma, entryId]);
+    void pronunciation.toggle({ id: entryId, lemma }, () => {
+      const opened = composition.state;
+      if (opened.status === 'ready') void opened.value.analytics.pronunciationPlayed(entryId);
+    });
+  }, [shell, composition, only, voice, lemma, entryId]);
 
   return (
     <PronunciationButton

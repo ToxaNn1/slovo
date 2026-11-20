@@ -256,6 +256,23 @@ describe('The stats sheet’s numbers', () => {
     });
   });
 
+  it('keeps the Entries Seen today when History is cleared, until the next local day', async () => {
+    const time = fakeClock('2026-10-11T12:00:00+03:00');
+    const app = await run({ clock: time.clock });
+    await look(app, time, 0);
+
+    await app.history.clear();
+    expect(app.history.list).toEqual([]);
+    expect(app.progress.state.seenToday).toBe(1);
+
+    await look(app, time, 1);
+    expect(app.progress.state.seenToday).toBe(2);
+
+    time.set('2026-10-12T00:05:00+03:00');
+    await app.resume();
+    expect(app.progress.state.seenToday).toBe(0);
+  });
+
   it('counts the History entries Seen on today’s local date, in the time zone the device is in', async () => {
     // 23:50 in Kyiv on 2026-10-11.
     const time = fakeClock('2026-10-11T23:50:00+03:00');

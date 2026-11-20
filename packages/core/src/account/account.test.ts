@@ -8,6 +8,7 @@ import {
   type KeptSession,
   type Random,
   type Schedule,
+  type SessionStore,
   type UserStatePort,
 } from '../index';
 import {
@@ -43,8 +44,10 @@ async function setup({
   port,
   analytics,
   on = ['analytics'],
+  sessions = createMemorySessionStore(kept),
 }: {
   kept?: KeptSession;
+  sessions?: SessionStore;
   random?: Random;
   port?: UserStatePort;
   analytics?: AnalyticsPort;
@@ -53,7 +56,6 @@ async function setup({
   const api = createFakeBackend();
   const googleSheet = createFakeGoogleSignInSheet();
   const appleSheet = createFakeAppleSignInSheet();
-  const sessions = createMemorySessionStore(kept);
   const time = fakeClock();
   const later = atOnce();
   const installed = await installedUserState(port);
@@ -300,14 +302,59 @@ describe('the Account', () => {
 const anna: KeptSession = { token: 'session-1', email: 'anna@mail.com' };
 
 /** An Account signed in on this device as Anna, through the fake API. */
-async function signedIn() {
-  const parts = await setup();
+async function signedIn(options: Parameters<typeof setup>[0] = {}) {
+  const parts = await setup(options);
   await parts.account.requestCode(anna.email);
   await parts.account.verifyCode('100001');
   return parts;
 }
 
+/** A Session store whose `failing` step is refused, as a locked Keychain refuses it. */
+function sessionStoreFailingTo(failing: 'keep' | 'forget'): SessionStore {
+  return {
+    ...createMemorySessionStore(),
+    [failing]: () => Promise.reject(new Error(`cannot ${failing} the Session`)),
+  };
+}
+
 describe('the Account signed in', () => {
+  it('signs out even when the Session fails to be forgotten on the device', async () => {
+    const { account, api } = await signedIn({ sessions: sessionStoreFailingTo('forget') });
+
+    await account.signOut();
+
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
+    expect(api.account.sessionTokens).toEqual([]);
+  });
+
+  it('settles signed out after a delete even when the Session fails to be forgotten', async () => {
+    const { account, api } = await signedIn({ sessions: sessionStoreFailingTo('forget') });
+
+    await account.delete();
+
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
+    expect(api.account.accounts).toEqual([]);
+  });
+
+  it('signs the new Session out on the server when it fails to be kept on the device', async () => {
+    const { account, api } = await setup({ sessions: sessionStoreFailingTo('keep') });
+    await account.requestCode(anna.email);
+
+    await expect(account.verifyCode('100001')).rejects.toThrow('cannot keep the Session');
+
+    expect(account.state).toMatchObject({ status: 'code-sent', inFlight: undefined });
+    expect(api.calls).toContain('account.signOut');
+    expect(api.account.sessionTokens).toEqual([]);
+  });
+
   it('checks the Session at most once an hour', async () => {
     const { account, api, time } = await signedIn();
 

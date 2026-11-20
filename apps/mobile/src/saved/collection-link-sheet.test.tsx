@@ -218,6 +218,20 @@ describe('the recipient sheet of a Collection Link', () => {
     expect(mockReplaced).toEqual([href, href]);
   });
 
+  it('makes one copy of a fast double tap on «Додати собі»', async () => {
+    await share('Осінь', ['w_two', 'w_one']);
+    await renderSheet();
+    const add = screen.getByRole('button', { name: strings.add });
+
+    // Both taps land before the screen draws again.
+    await act(async () => {
+      await Promise.all([fireEvent.press(add), fireEvent.press(add)]);
+    });
+    await settle();
+
+    expect(composition.collections.list).toHaveLength(1);
+  });
+
   it('says when «Додати собі» could not make the copy, and opens nothing', async () => {
     await share('Осінь', ['w_two', 'w_one']);
     await renderSheet();

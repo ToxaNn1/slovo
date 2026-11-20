@@ -9,7 +9,7 @@ import {
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
-import { typeRoles } from '../tokens';
+import { dashboard, fontScaleCap, typeRoles } from '../tokens';
 
 const strings = testStrings({
   wordOfTheDay: { shout: 'Catch the word!', reveal: 'Reveal' },
@@ -176,6 +176,7 @@ describe('DashboardHero', () => {
   it('opened already revealed, shows the Lemma still, with no letters flying', async () => {
     await renderHero(revealed);
 
+    expect(screen.getByTestId('dashboard-hero-lemma')).toHaveTextContent('harbour');
     expect(
       screen.queryAllByTestId('dashboard-hero-flying-letter', { includeHiddenElements: true }),
     ).toHaveLength(0);
@@ -197,6 +198,7 @@ describe('DashboardHero', () => {
   it('throws no sparks while the sparks are off', async () => {
     await renderHero(unrevealed);
 
+    expect(screen.getByText('Catch the word!')).toBeTruthy();
     expect(
       screen.queryAllByTestId('dashboard-hero-spark', { includeHiddenElements: true }),
     ).toHaveLength(0);
@@ -205,6 +207,7 @@ describe('DashboardHero', () => {
   it("throws no sparks without the Decor's Mascot figure, which has the megaphone", async () => {
     await renderHero(unrevealed, { sparks: true, decor: coreDecor });
 
+    expect(screen.getByText('Catch the word!')).toBeTruthy();
     expect(
       screen.queryAllByTestId('dashboard-hero-spark', { includeHiddenElements: true }),
     ).toHaveLength(0);
@@ -213,12 +216,47 @@ describe('DashboardHero', () => {
   it('throws no sparks under Reduce Motion', async () => {
     await renderHero(unrevealed, { sparks: true, reduceMotion: true });
 
+    expect(screen.getByText('Catch the word!')).toBeTruthy();
     expect(
       screen.queryAllByTestId('dashboard-hero-spark', { includeHiddenElements: true }),
     ).toHaveLength(0);
   });
 
   // Owner test pass 12.11: the cream ended short of the card's right edge, under its padding.
+  it('fits a long Definition into its lines on the card, smaller, its scaling capped (audit 9.M1)', async () => {
+    const definition =
+      'A long Definition of a rare Word, longer than any four lines of the card hold at its full size, so it must draw smaller to stay above the button.';
+    await renderHero({ ...revealed, definition });
+
+    const text = screen.getByText(definition);
+    expect(text).toHaveProp('numberOfLines', dashboard.hero.card.definitionLines);
+    expect(text).toHaveProp('adjustsFontSizeToFit', true);
+    expect(text).toHaveProp('maxFontSizeMultiplier', fontScaleCap.fixed);
+    expect(screen.getByText('ha\u0301rbour · n., f.')).toHaveProp(
+      'maxFontSizeMultiplier',
+      fontScaleCap.number,
+    );
+    expect(screen.getByText('Rarity 4/5', { includeHiddenElements: true })).toHaveProp(
+      'maxFontSizeMultiplier',
+      fontScaleCap.number,
+    );
+  });
+
+  it('ends its card above «To the card →» with every line at its largest size (audit 9.M1)', () => {
+    const { height, card, button } = dashboard.hero;
+    const line = (role: keyof typeof typeRoles, cap: number) => typeRoles[role].lineHeight * cap;
+    const cardBottom =
+      card.top +
+      card.paddingTop +
+      Math.max(line('dashboardWordLine', fontScaleCap.number), card.bars.height) +
+      card.gap +
+      card.definitionLines * line('dashboardDefinition', fontScaleCap.fixed) +
+      card.gap +
+      line('dashboardRarity', fontScaleCap.number) +
+      card.paddingBottom;
+    expect(cardBottom).toBeLessThanOrEqual(height - button.bottom - button.height);
+  });
+
   it("draws the open hero's cream as wide as its card, padding and all", async () => {
     await renderHero(revealed);
     await fireEvent(screen.getByTestId('dashboard-hero-card'), 'layout', {

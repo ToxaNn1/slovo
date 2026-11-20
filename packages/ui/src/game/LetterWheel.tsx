@@ -46,7 +46,7 @@ const STEP = { easing: ease, reduceMotion: ReduceMotion.Never } as const;
  * path chips spell the trace and `help` shows while there is no trace. The drag runs on the UI
  * thread and hit-tests the tile under the finger; the wheel holds no rules: it
  * asks `onExtend` for each tile the finger reaches and `onRelease` when it
- * lifts. A trace that spelled nothing (`miss`) shows its letters in ink and
+ * lifts; a drag the system cancels steps back through its whole trace instead. A trace that spelled nothing (`miss`) shows its letters in ink and
  * shakes. A hand coach sweeps over the first tiles while `coach` holds. In
  * accessible mode the tiles are buttons: a tap extends the trace, a tap on its
  * last tile steps back, and «Перевірити» releases it. Reduce Motion calms the
@@ -111,6 +111,14 @@ export function LetterWheel({
     testID,
     onExtend,
     onRelease,
+    // A cancelled drag drops its trace unchecked, tile by tile from the last.
+    // The trace read at render can lag the drag's last tiles, so it steps back
+    // once per letter: a trace never holds more, and a step on none does nothing.
+    onCancel: () => {
+      letters.forEach(() => {
+        onStepBack();
+      });
+    },
   });
 
   const shake = useSharedValue(0);

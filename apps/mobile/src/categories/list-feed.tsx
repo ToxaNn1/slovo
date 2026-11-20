@@ -3,6 +3,7 @@ import type { AnyEntryCard, CategoryFeedPage, Composition } from '@slovo/core';
 import {
   BackLink,
   EntryCard,
+  FeedError,
   Placeholder,
   space,
   UndoToastProvider,
@@ -19,31 +20,19 @@ import { useCompositionRead } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { ShownCardFeatures } from '../entries/card-features';
 import { useEntrySlots } from '../entries/entry-actions';
+import { ReadFailed } from '../read-failed';
 
 const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
 /** The pages drawn past the one on screen, so the next swipe always has a card to turn to. */
 const AHEAD = 2;
 
-/** What a list's Feed reads once: its name, its pages and the cards they open. */
+/** What a list's Feed reads once: its name and its pages. Each page reads its own card as it is drawn. */
 export interface ListFeedRead {
   /** The list's name, on the back tile and in each kicker. */
   readonly name: string;
   /** The page at a position from the tapped Entry; `undefined` for a list with no Entries. */
   readonly pageAt: (position: number) => CategoryFeedPage | undefined;
-  readonly cards: ReadonlyMap<string, AnyEntryCard>;
-}
-
-/**
- * The cards of `entryIds`, read with `entryCard`, which writes nothing, so a
- * list's Feed makes nothing Seen and leaves History as it was.
- */
-export async function readCards(
-  composition: Composition,
-  entryIds: readonly string[],
-): Promise<ReadonlyMap<string, AnyEntryCard>> {
-  const cards = await Promise.all(entryIds.map((id) => composition.entryCard(id)));
-  return new Map(cards.flatMap((card) => (card === undefined ? [] : [[card.entryId, card]])));
 }
 
 interface ListFeedProps {
@@ -90,11 +79,10 @@ function ListFeed({ read, failure, kicker, testID }: ListFeedProps) {
     [list, drawn],
   );
   const renderPage = useCallback(
-    (page: CategoryFeedPage, position: number) => {
-      const card = list?.cards.get(page.entryId);
-      return card === undefined || list === undefined ? null : (
+    (page: CategoryFeedPage, position: number) =>
+      list === undefined ? null : (
         <ListFeedPageView
-          card={card}
+          entryId={page.entryId}
           testID={`${testID}-card-${String(position)}`}
           kicker={fill(kicker, {
             name: list.name,
@@ -102,8 +90,7 @@ function ListFeed({ read, failure, kicker, testID }: ListFeedProps) {
             of: String(page.of),
           })}
         />
-      );
-    },
+      ),
     [list, kicker, testID],
   );
   const onIndexChange = useCallback(
@@ -114,6 +101,14 @@ function ListFeed({ read, failure, kicker, testID }: ListFeedProps) {
     [closeUndoToast],
   );
 
+  if (reading.status === 'failed')
+    return (
+      <ReadFailed
+        back={{ testID: `${testID}-back`, label: editionStrings.back }}
+        onRetry={reading.retry}
+        testID={`${testID}-error`}
+      />
+    );
   // A list there is none of returns home, as its screen does.
   if (reading.status === 'ready' && reading.value === undefined) return <Redirect href="/" />;
   if (reading.status === 'ready' && pages.length === 0)
@@ -148,8 +143,43 @@ function ListFeed({ read, failure, kicker, testID }: ListFeedProps) {
   );
 }
 
-/** A page of a list's Feed: its Entry's own card, with its place in the kicker. */
+/**
+ * A page of a list's Feed: its Entry's own card, with its place in the
+ * kicker, read with `entryCard` once the page is drawn. `entryCard` writes
+ * nothing, so a list's Feed makes nothing Seen and leaves History as it was.
+ */
 function ListFeedPageView({
+  entryId,
+  testID,
+  kicker,
+}: {
+  entryId: string;
+  testID: string;
+  kicker: string;
+}) {
+  const read = useCallback((open: Composition) => open.entryCard(entryId), [entryId]);
+  const reading = useCompositionRead(read, 'Could not read a card of a list Feed');
+  const { title, message, retry } = editionStrings.loadFailed;
+  return (
+    <View testID={testID} style={styles.page}>
+      {reading.status === 'failed' && (
+        <FeedError
+          title={title}
+          message={message}
+          retry={retry}
+          onRetry={reading.retry}
+          testID={`${testID}-error`}
+        />
+      )}
+      {reading.status === 'ready' && reading.value !== undefined && (
+        <ListFeedCard card={reading.value} testID={testID} kicker={kicker} />
+      )}
+    </View>
+  );
+}
+
+/** A read card of a list's Feed, with its Entry's slots. */
+function ListFeedCard({
   card,
   testID,
   kicker,
@@ -160,15 +190,13 @@ function ListFeedPageView({
 }) {
   const slots = useEntrySlots(card);
   return (
-    <View testID={testID} style={styles.page}>
-      <EntryCard
-        card={card}
-        slots={slots}
-        kicker={kicker}
-        // Right under the back tile's row, on the same page as in the Feed.
-        page={{ testID, clearance: { framed: 0, scrolled: 0 } }}
-      />
-    </View>
+    <EntryCard
+      card={card}
+      slots={slots}
+      kicker={kicker}
+      // Right under the back tile's row, on the same page as in the Feed.
+      page={{ testID, clearance: { framed: 0, scrolled: 0 } }}
+    />
   );
 }
 

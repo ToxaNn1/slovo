@@ -83,16 +83,20 @@ export function targetedText(count: number): string | undefined {
 }
 
 /**
- * The Rules of a feature with one Rule for every reader set to the verdict:
- * kept last, so the Rules that target some readers still decide for them.
+ * The Rules of a feature with one Rule for every reader set to the verdict,
+ * in the place of the first such Rule (last when there is none): the first
+ * matching Rule decides, so the Rules before it still decide for their
+ * readers and those after it, which never matched, still do not.
  */
 export function withEveryone(rules: readonly Rule[], on: boolean) {
-  return [
-    ...rules
-      .filter((rule) => !targetsEveryone(rule.targets))
-      .map(({ id, verdict, targets }) => ({ id, verdict, targets })),
-    { id: 'everyone', verdict: on ? ('on' as const) : ('off' as const), targets: {} },
-  ];
+  const everyone = {
+    id: 'everyone',
+    verdict: on ? ('on' as const) : ('off' as const),
+    targets: {},
+  };
+  const kept = rules.map(({ id, verdict, targets }) => ({ id, verdict, targets }));
+  const at = kept.findIndex((rule) => targetsEveryone(rule.targets));
+  return at === -1 ? [...kept, everyone] : [...kept.slice(0, at), everyone, ...kept.slice(at + 1)];
 }
 
 /** What the admin reads of a refused write of the switches. */

@@ -10,12 +10,10 @@ import type { UserStateRecords } from '../user-state/user-state-record';
  * Internal: `index.ts` does not export it.
  */
 
-/** An Entry in the list: its id, the time it went in under the list's own name, and its row. */
-type ListedEntry<TimeKey extends string> = {
+/** An Entry in the list: its id and whatever else the list keeps of it. */
+interface ListedEntry {
   readonly entryId: string;
-  /** What its row in a list shows. */
-  readonly row: EntryRowModel;
-} & Readonly<Record<TimeKey, Date>>;
+}
 
 /**
  * A list of Entries the user keeps, read from the user state once, when it
@@ -23,14 +21,14 @@ type ListedEntry<TimeKey extends string> = {
  * not queued: the caller runs them one at a time, in its own queue, so it can
  * put its own steps in the same turn.
  */
-export interface EntryList<TimeKey extends string> {
+export interface EntryList<Listed extends ListedEntry> {
   /**
    * The Entries, newest first, those that went in at the same instant in a
    * stable order. An id the Language Pack doesn't have is left out. A change
    * never edits this array: it makes a new one and tells the subscribers, so
    * the array stays the same until something changes.
    */
-  readonly list: readonly ListedEntry<TimeKey>[];
+  readonly list: readonly Listed[];
   /** Whether the Entry is in the list. */
   readonly has: (entryId: string) => boolean;
   /**
@@ -52,9 +50,10 @@ export interface EntryList<TimeKey extends string> {
  * the written change even when `afterWrite` fails. `changesWith`, when given,
  * gives the changes to write together with the Entry going in or out.
  */
-export async function openEntryList<TimeKey extends string>({
+export async function openEntryList<Listed extends ListedEntry>({
   records,
-  timeKey,
+  listed,
+  timeOf,
   rows,
   userState,
   clock,
@@ -62,31 +61,29 @@ export async function openEntryList<TimeKey extends string>({
   changesWith,
 }: {
   records: UserStateRecords<string>;
-  /** The name of an Entry's time in the list. */
-  timeKey: TimeKey;
+  /** An Entry of the list: its id, what its row in a list shows, and the time it went in under the list's own name. */
+  listed: (entryId: string, row: EntryRowModel, at: Date) => Listed;
+  /** The time an Entry of the list went in. */
+  timeOf: (entry: Listed) => Date;
   rows: EntryRows;
   userState: UserState;
   clock: Clock;
   afterWrite?: () => Promise<void>;
   changesWith?: (entryId: string, isIn: boolean) => Promise<UserStateChanges>;
-}): Promise<EntryList<TimeKey>> {
-  const listed = (entryId: string, at: Date, row: EntryRowModel) =>
-    // A computed key widens to a string index; `timeKey` is the one it holds.
-    ({ entryId, row, [timeKey]: at }) as ListedEntry<TimeKey>;
-  const timeOf = (entry: ListedEntry<TimeKey>): Date => entry[timeKey];
+}): Promise<EntryList<Listed>> {
   const newest = newestFirst(timeOf, (entry) => entry.entryId);
 
   const stored = await userState.list(records);
   const rowOf = await rows.rows(stored.keys());
-  let list: readonly ListedEntry<TimeKey>[] = [...stored]
+  let list: readonly Listed[] = [...stored]
     .flatMap(([entryId, at]) => {
       const row = rowOf.get(entryId);
-      return row === undefined ? [] : [listed(entryId, new Date(at), row)];
+      return row === undefined ? [] : [listed(entryId, row, new Date(at))];
     })
     .sort(newest);
   const subscribers = createSubscribers();
 
-  async function changeList(changed: readonly ListedEntry<TimeKey>[]): Promise<void> {
+  async function changeList(changed: readonly Listed[]): Promise<void> {
     list = changed;
     try {
       await afterWrite?.();
@@ -115,7 +112,7 @@ export async function openEntryList<TimeKey extends string>({
       const row = await rows.row(entryId);
       if (row === undefined) return;
       await write(entryId, at);
-      await changeList([...list, listed(entryId, at, row)].sort(newest));
+      await changeList([...list, listed(entryId, row, at)].sort(newest));
     },
     async remove(entryId) {
       const removed = list.find((entry) => entry.entryId === entryId);

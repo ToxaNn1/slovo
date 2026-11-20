@@ -330,6 +330,35 @@ export const isList = (value: FormValue): value is readonly FormValue[] => Array
 export const isObject = (value: FormValue): value is FormObject =>
   typeof value === 'object' && !Array.isArray(value);
 
+/** The letters a Stress can fall on. */
+export const VOWEL = /[аеєиіїоуюяaeiouy]/iu;
+
+/**
+ * The fields' values with one field set to `value`: a Stress of that field's
+ * text keeps only the positions that still fall on a vowel of the new text,
+ * since a position the text no longer has cannot be drawn or removed.
+ */
+export function withFieldValue(
+  fields: readonly EditorField[],
+  values: FormObject,
+  name: string,
+  value: FormValue,
+): FormObject {
+  const letters = Array.from(typeof value === 'string' ? value : '');
+  const stresses = fields.filter(({ control }) => control.type === 'stress' && control.of === name);
+  return stresses.reduce<FormObject>(
+    (next, stress) => {
+      const positions = next[stress.name];
+      if (!isList(positions)) return next;
+      const kept = positions.filter(
+        (position) => typeof position === 'number' && VOWEL.test(letters[position] ?? ''),
+      );
+      return { ...next, [stress.name]: kept };
+    },
+    { ...values, [name]: value },
+  );
+}
+
 const isRecord = (value: unknown): value is Readonly<Record<string, unknown>> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 

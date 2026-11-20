@@ -101,6 +101,7 @@ async function open(
   const eligibility = createSubject<undefined>();
   const time = fakeClock();
   const later = testSchedule(time);
+  const awarded: string[] = [];
   function eligibleOfKind<Also extends AskableKind = never>(
     kind: ShownKind,
     alsoOf: readonly Also[] = [],
@@ -124,11 +125,14 @@ async function open(
       confirm: () => Promise.resolve(),
     },
     xp: {
-      award: ({ source }) => ({
-        changes: new Map(),
-        amount: source === 'game-round' ? roundXp : 0,
-        commit: () => undefined,
-      }),
+      award: ({ source }) => {
+        awarded.push(source);
+        return {
+          changes: new Map(),
+          amount: source === 'game-round' ? roundXp : 0,
+          commit: () => undefined,
+        };
+      },
       answeredWrong: () => ({ changes: new Map(), commit: () => undefined }),
       resetMarker: undefined,
       subscribe: () => () => undefined,
@@ -144,6 +148,8 @@ async function open(
   });
   return {
     game,
+    /** The source of every XP award the Game asked the XP log for, in order. */
+    awarded,
     /** Moves the clock on by `ms`, running what the Game scheduled. */
     advance: later.advance,
     eligibleNow: async (now: EligibleOfKind<AskableEntry>) => {
@@ -475,6 +481,45 @@ describe('the Lives and the Round limit a Game Mode sets', () => {
     expect(second.round).toMatchObject({ number: 2, answer: undefined });
     expect(second.played.map(({ number, right }) => [number, right])).toEqual([[1, false]]);
     await noMove(game, () => game.next());
+  });
+});
+
+describe('a Game ending under two moves at once', () => {
+  const finishes = (awarded: readonly string[]) =>
+    awarded.filter((source) => source === 'game-finished').length;
+
+  it('ends once on two «Далі» at once', async () => {
+    const { game, awarded } = await start(pick, { roundLimit: 1 }, undefined, { scheduled: false });
+    await game.answer(pickAnswer(true));
+
+    await Promise.all([game.next(), game.next()]);
+
+    expect(now(game).status).toBe('won');
+    expect(finishes(awarded)).toBe(1);
+  });
+
+  it('ends once on two answers at once in a mode that moves on', async () => {
+    const { game, awarded } = await start(pick, { roundLimit: 1, movesOn: true }, undefined, {
+      scheduled: false,
+    });
+
+    await Promise.all([game.answer(pickAnswer(true)), game.answer(pickAnswer(true))]);
+
+    expect(now(game).status).toBe('won');
+    expect(finishes(awarded)).toBe(1);
+  });
+
+  it('ends at a later «Далі» when the write of its awards failed', async () => {
+    let failing = true;
+    const { game } = await start(pick, { roundLimit: 1 }, undefined, {
+      scheduled: false,
+      write: () => (failing ? Promise.reject(new Error('The disk is full')) : Promise.resolve()),
+    });
+    await game.answer(pickAnswer(true)).catch(() => undefined);
+    await expect(game.next()).rejects.toThrow('The disk is full');
+    failing = false;
+
+    expect((await next(game)).status).toBe('won');
   });
 });
 

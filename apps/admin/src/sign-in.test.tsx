@@ -106,6 +106,25 @@ test('a wrong code shows the attempts left, and a blocked email when to try agai
   expect(await screen.findByText('Забагато невдалих спроб. Спробуйте за 15 хв.')).toBeDefined();
 });
 
+test('once the emailed code has expired, the TOTP step sends a new one and goes back to it', async () => {
+  const bodies = signedOut();
+  server.use(override('signIn', () => refused(401, 'UNAUTHORIZED')));
+  render(<Admin />);
+  await typeInto('Пошта', 'owner@example.com', 'Надіслати код');
+  await typeInto('Код із листа', '123456', 'Далі');
+  await typeInto('Код із застосунку', '654321', 'Увійти');
+  expect((await screen.findByRole('alert')).textContent).toContain('застарів');
+
+  await userEvent.setup().click(screen.getByRole('button', { name: 'Надіслати новий код' }));
+
+  expect(await screen.findByRole('heading', { name: 'Код з листа' })).toBeDefined();
+  expect(screen.queryByRole('alert')).toBeNull();
+  expect(bodies.at(-1)).toEqual({ email: 'owner@example.com' });
+  expect(
+    bodies.filter((body) => JSON.stringify(body) === '{"email":"owner@example.com"}'),
+  ).toHaveLength(2);
+});
+
 test('an Адмін has no Безпека in the sidebar, and its page stays closed', async () => {
   server.use(override('me', () => ({ email: 'a@example.com', role: 'admin' })));
   window.history.replaceState(null, '', '/admin/security');
@@ -132,6 +151,41 @@ test('«Мої сесії» lists the sessions, and «Вийти всюди» go
   await user.click(screen.getByRole('button', { name: 'Вийти всюди' }));
 
   expect(await screen.findByRole('heading', { name: 'Увійти' })).toBeDefined();
+});
+
+test('a sign-out drops what the signed-out user loaded, so the next one never sees it', async () => {
+  signedOut();
+  let release = () => undefined;
+  const released = new Promise<undefined>((resolve) => {
+    release = () => {
+      resolve(undefined);
+    };
+  });
+  let loads = 0;
+  server.use(
+    override('sessions', async () => {
+      loads += 1;
+      if (loads > 1) await released;
+      return FIXTURES.sessions;
+    }),
+  );
+  render(<Admin />);
+  await typeInto('Пошта', 'owner@example.com', 'Надіслати код');
+  await typeInto('Код із листа', '123456', 'Далі');
+  await typeInto('Код із застосунку', '654321', 'Увійти');
+  const user = userEvent.setup();
+  await user.click(await screen.findByRole('button', { name: 'owner@example.com Власник' }));
+  await user.click(screen.getByRole('link', { name: 'Мої сесії' }));
+  expect(await screen.findByText(/ця сесія/)).toBeDefined();
+  await user.click(screen.getByRole('button', { name: 'Вийти всюди' }));
+
+  await typeInto('Пошта', 'owner@example.com', 'Надіслати код');
+  await typeInto('Код із листа', '123456', 'Далі');
+  await typeInto('Код із застосунку', '654321', 'Увійти');
+  expect(await screen.findByRole('button', { name: 'Вийти всюди' })).toBeDefined();
+  expect(screen.queryByText(/ця сесія/)).toBeNull();
+  release();
+  expect(await screen.findByText(/ця сесія/)).toBeDefined();
 });
 
 test('a backend that fails to answer who is signed in offers to try again', async () => {

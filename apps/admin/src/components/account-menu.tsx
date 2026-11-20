@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 
 import { adminApi } from '../api';
-import { ME_KEY, type SignedInAdmin } from '../session';
+import { forgetSignedOut, type SignedInAdmin } from '../session';
 import type { Theme } from '../theme';
 
 const ROLE_LABEL = { owner: 'Власник', admin: 'Адмін' } as const;
@@ -37,7 +37,7 @@ export function AccountMenu({
   const queryClient = useQueryClient();
   const signOut = useMutation({
     mutationFn: () => adminApi.signOut(),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ME_KEY }),
+    onSuccess: () => forgetSignedOut(queryClient),
   });
 
   useEffect(() => {

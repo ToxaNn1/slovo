@@ -108,19 +108,21 @@ function checkSet(
  * takes the place of the one of its id, or joins the set. The refusals of the
  * saved record come back, and those the save newly causes in other records
  * (a retire under a Curated Collection); what the set already broke stays its own.
+ * `editionDate` is today's date in the Edition's time zone, the day a
+ * Crossword day is published on; the UTC date of `today` when not given.
  */
 export function checkRecord(
   config: EditionConfig,
   set: ContentSet,
   record: AuthoredRecord,
-  options: { today: Date },
+  options: { readonly today: Date; readonly editionDate?: string },
 ): Refusal[] {
   if (record.kind === 'crosswordDay') {
     return checkCrosswordDay(
       set.crosswordDays ?? [],
       record.entry,
       [...set.words, ...set.corrections],
-      { file: record.file, today: options.today.toISOString().slice(0, 10) },
+      { file: record.file, today: options.editionDate ?? options.today.toISOString().slice(0, 10) },
     );
   }
   // The rules of one Entry alone give the other records what they gave before, so only the record's run.

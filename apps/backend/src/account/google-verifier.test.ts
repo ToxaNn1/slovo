@@ -173,6 +173,36 @@ describe("Google's keys", () => {
   });
 
   for (const failure of ['answers 503', 'unreachable'] as const) {
+    it(`that Google cannot give (its endpoint ${failure}) are asked for again only after 30 seconds`, async () => {
+      const { key, endpoint, signIn } = await backendWithGoogle();
+      endpoint.fail(failure);
+      await expect(signIn(await tokenOf(key, newEmail()))).rejects.toMatchObject({ status: 500 });
+
+      passTime(29_000);
+      await expect(signIn(await tokenOf(key, newEmail()))).rejects.toMatchObject({ status: 500 });
+      expect(endpoint.fetched).toHaveLength(1);
+
+      endpoint.fail(undefined);
+      passTime(2_000);
+      await expect(signIn(await tokenOf(key, newEmail()))).resolves.toMatchObject({
+        token: expect.any(String) as unknown,
+      });
+      expect(endpoint.fetched).toHaveLength(2);
+    });
+
+    it(`that have expired while Google cannot give them (its endpoint ${failure}) are asked for again only after 30 seconds`, async () => {
+      const { key, endpoint, signIn } = await backendWithGoogle();
+      await signIn(await tokenOf(key, newEmail()));
+      passTime(HOUR + MINUTE);
+      endpoint.fail(failure);
+      await expect(signIn(await tokenOf(key, newEmail()))).rejects.toMatchObject({ status: 500 });
+
+      passTime(29_000);
+      await expect(signIn(await tokenOf(key, newEmail()))).rejects.toMatchObject({ status: 500 });
+
+      expect(endpoint.fetched).toHaveLength(2);
+    });
+
     it(`that Google cannot give (its endpoint ${failure}) make the sign-in a 500, reported once`, async () => {
       const { key, endpoint, signIn, reports } = await backendWithGoogle();
       endpoint.fail(failure);

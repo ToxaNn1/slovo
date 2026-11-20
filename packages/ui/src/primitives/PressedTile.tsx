@@ -36,9 +36,9 @@ export type TileTone = 'tile' | 'accent' | 'ink' | 'inverse' | 'none';
  * down and leaves a thin edge, on the UI thread; under Reduce Motion the
  * face stays and fades instead, as does a face with no edge. Disabled, it
  * is dimmed and takes no press; inert, as an answered tile, it takes no
- * press but keeps its look. A `key` stands on a shallower edge, as a
- * key of an on-screen keyboard, an `action` tile of the action row on
- * one between the two, and a `card` on a deeper one. Its face carries the test ID
+ * press but keeps its look, and VoiceOver does not read it as dimmed. A
+ * `key` stands on a shallower edge, as a key of an on-screen keyboard, an
+ * `action` tile of the action row on one between the two, and a `card` on a deeper one. Its face carries the test ID
  * `${testID}-face`.
  */
 export function PressedTile({
@@ -111,6 +111,9 @@ export function PressedTile({
       : { opacity: 1 - pressed.value * (1 - pressedFade), transform: [{ translateY: 0 }] },
   );
   const shape = { borderRadius: radius ?? radii.tile };
+  // Pressable writes its own `disabled` over the state VoiceOver reads, so
+  // it gets the one VoiceOver should hear; an inert tile only stops touches.
+  const unavailable = disabled || (accessibilityState?.disabled ?? false);
   return (
     <Pressable
       testID={testID}
@@ -118,12 +121,10 @@ export function PressedTile({
       accessibilityLabel={accessibilityLabel}
       accessibilityLanguage={accessibilityLanguage ?? voice.accessibilityLanguage}
       accessibilityHint={accessibilityHint}
-      accessibilityState={{
-        ...accessibilityState,
-        disabled: disabled || (accessibilityState?.disabled ?? false),
-      }}
-      disabled={disabled || inert}
+      accessibilityState={{ ...accessibilityState, disabled: unavailable }}
+      disabled={unavailable}
       hitSlop={hitSlop}
+      pointerEvents={inert ? 'none' : 'auto'}
       onPress={onPress}
       onPressIn={() => {
         press(1);

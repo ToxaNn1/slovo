@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createSentryApi } from './sentry-api';
+import { createSentryApi, NEW_ISSUES_MAX_PAGES } from './sentry-api';
 
 const now = new Date('2026-11-09T12:00:00.000Z');
 const window = { from: new Date('2026-11-08T12:00:00.000Z'), to: now };
@@ -61,6 +61,35 @@ describe('the Sentry API', () => {
     });
 
     expect(await sentry.read('newIssues', window)).toEqual({ ok: true, value: 105 });
+  });
+
+  it('stops counting new issues at a cap of pages, so one read never spends the API limit', async () => {
+    let fetched = 0;
+    const sentry = createSentryApi({
+      token: 'token',
+      org: 'org',
+      appProject: '1',
+      backendProject: '2',
+      clock: { now: () => now },
+      fetch: () => {
+        fetched += 1;
+        const cursor = `0:${String(fetched * 100)}:0`;
+        const body = Array.from({ length: 100 }, () => ({ count: '1' }));
+        return Promise.resolve(
+          Response.json(body, {
+            headers: {
+              link: `<https://sentry.io/api/0/organizations/org/issues/?cursor=${cursor}>; rel="next"; results="true"; cursor="${cursor}"`,
+            },
+          }),
+        );
+      },
+    });
+
+    expect(await sentry.read('newIssues', window)).toEqual({
+      ok: true,
+      value: NEW_ISSUES_MAX_PAGES * 100,
+    });
+    expect(fetched).toBe(NEW_ISSUES_MAX_PAGES);
   });
 
   it.each([

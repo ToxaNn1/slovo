@@ -163,13 +163,30 @@ function backOnTop() {
 /** The Word History events the port got. */
 const historyOpened = () => analytics.events.filter(({ event }) => event === 'wordHistoryOpened');
 
-describe('the Entry screen and the Word History', () => {
-  it('tells Analytics the Word History opened once, with the Entry, when the section is drawn', async () => {
-    await renderEntry('w_sumyrnyi');
-    // The Word History is drawn on «Суть», the tab the card opens on.
-    await settle();
+/** Draws `testID` at this height, `y` from the top of what holds it. */
+async function layout(testID: string, height: number, y = 0) {
+  await fireEvent(screen.getByTestId(testID), 'layout', {
+    nativeEvent: { layout: { x: 0, y, width: 358, height } },
+  });
+}
 
+/** Draws «Суть» so it fits its room, with the Word History in it: the reader sees it. */
+async function showHistory() {
+  await layout('word-tab-panel', 400);
+  await layout('word-tab-content', 300);
+  await layout('word-history', 60, 100);
+  await settle();
+}
+
+describe('the Entry screen and the Word History', () => {
+  it('tells Analytics the Word History opened once, with the Entry, when the reader sees it (owner, 20.11)', async () => {
+    await renderEntry('w_sumyrnyi');
+    // Drawn on «Суть», the tab the card opens on, but not seen until it is laid out in its room.
     expect(screen.getByTestId('word-history')).toBeOnTheScreen();
+    expect(historyOpened()).toEqual([]);
+
+    await showHistory();
+
     expect(historyOpened()).toEqual([
       {
         event: 'wordHistoryOpened',
@@ -178,21 +195,15 @@ describe('the Entry screen and the Word History', () => {
     ]);
   });
 
-  it('tells Analytics once per Entry, however often «Суть» is drawn again', async () => {
+  it('tells Analytics once per Entry, however often the reader sees it again', async () => {
     await renderEntry('w_sumyrnyi');
-    await settle();
-    // Another tab, then «Суть» again, and a smaller size that draws the tab anew.
+    await showHistory();
+    // Another tab, then «Суть» again, seen again.
     await fireEvent.press(screen.getByTestId('word-tab-source'));
     await settle();
     await fireEvent.press(screen.getByTestId('word-tab-essence'));
     await settle();
-    await fireEvent(screen.getByTestId('word-tab-panel'), 'layout', {
-      nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 10 } },
-    });
-    await fireEvent(screen.getByTestId('word-tab-content'), 'layout', {
-      nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 900 } },
-    });
-    await settle();
+    await showHistory();
 
     expect(historyOpened()).toHaveLength(1);
   });

@@ -35,12 +35,12 @@ const small: Metrics = {
   insets: { top: 20, left: 0, right: 0, bottom: 0 },
 };
 
-async function renderWelcome(on: Metrics = metrics) {
+async function renderWelcome(on: Metrics = metrics, step = 1) {
   await render(
     <SafeAreaProvider initialMetrics={on}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <OnboardingWelcome
-          step={1}
+          step={step}
           total={4}
           hero={undefined}
           onStart={jest.fn()}
@@ -106,6 +106,26 @@ describe('An onboarding step', () => {
   afterEach(() => {
     jest.useRealTimers();
     jest.restoreAllMocks();
+  });
+
+  it('moves VoiceOver to a later step once it has slid in, not while it is still clear', async () => {
+    const focus = jest.spyOn(AccessibilityInfo, 'sendAccessibilityEvent').mockReturnValue();
+    focus.mockClear();
+    await renderWelcome(metrics, 2);
+    await pass(150);
+
+    expect(focus).not.toHaveBeenCalled();
+
+    await pass(150);
+
+    expect(focus).toHaveBeenCalledTimes(1);
+    expect(focus.mock.calls[0]?.[1]).toBe('focus');
+  });
+
+  it('names its «Skip» to VoiceOver in the Edition’s words', async () => {
+    await renderWelcome();
+
+    expect(screen.getByTestId('onboarding-skip')).toHaveProp('accessibilityLabel', 'Skip');
   });
 
   it('slides in from the side in 300 ms', async () => {

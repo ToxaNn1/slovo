@@ -119,6 +119,7 @@ describe('BadgeGrid', () => {
 
   it('writes no name under the marks of the Profile', async () => {
     await draw(() => undefined);
+    expect(screen.getByTestId('badge-streak-3-mark-symbol')).toHaveTextContent('3');
     expect(screen.queryByTestId('badge-streak-3-name')).toBeNull();
   });
 });

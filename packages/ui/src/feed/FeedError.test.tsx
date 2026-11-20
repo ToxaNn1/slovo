@@ -36,6 +36,7 @@ describe('FeedError', () => {
   it('draws no art without it', async () => {
     await renderError(() => undefined, false);
 
+    expect(screen.getByLabelText('The thread broke. The dictionary did not open.')).toBeTruthy();
     expect(screen.queryByTestId('torn-thread')).toBeNull();
   });
 });

@@ -366,6 +366,7 @@ describe('the server', { timeout: 30_000 }, () => {
       R2_BUCKET: 'media',
       R2_ACCESS_KEY_ID: 'key',
       R2_SECRET_ACCESS_KEY: 'secret',
+      TRUSTED_PROXY_HOPS: '1',
     });
 
     await server.listening;

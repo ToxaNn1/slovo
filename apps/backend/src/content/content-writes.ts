@@ -484,7 +484,10 @@ export function createContentWrites({
           curatedCollection: fieldsOf(records.curatedCollection),
           crosswordDay: fieldsOf(records.crosswordDay),
         });
-        const refusals = checkRecord(edition.config, set, record, { today: now });
+        const refusals = checkRecord(edition.config, set, record, {
+          today: now,
+          editionDate: editionDateOf(now),
+        });
         if (refusals.length > 0) throw new Refused({ ok: false, reason: 'refused', refusals });
 
         await publishContentVersion(tx, editionId, published, now);

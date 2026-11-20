@@ -4,6 +4,7 @@ import { createFakeBackend, seedUserState } from '@slovo/core/testing';
 
 import { edition } from '../edition/edition';
 import { openOnce } from '../opening';
+import type { DeviceSources } from '../shell-value';
 import { createShell } from './app-shell';
 
 // The Language Pack opens from the device's SQLite; this Shell has one already open.
@@ -56,13 +57,18 @@ const random: Random = { next: () => 0.5 };
 
 /** A user state in memory, which a second Shell opens over as the next launch does. */
 const userStateInMemory = () =>
-  openOnce(() => seedUserState({}, { clock }), { onError: () => undefined });
+  openOnce(
+    async () => ({ kind: 'stored', userState: await seedUserState({}, { clock }) }) as const,
+    {
+      onError: () => undefined,
+    },
+  );
 
 /** The Shell of the Edition opened over the Core's fake backend and a user state in memory. */
 function shellOverFakes({
   userState = userStateInMemory(),
   rulesNeverAnswer = false,
-}: { userState?: ReturnType<typeof userStateInMemory>; rulesNeverAnswer?: boolean } = {}) {
+}: { userState?: DeviceSources['userState']; rulesNeverAnswer?: boolean } = {}) {
   const fake = createFakeBackend({ clock });
   const shell = createShell(edition.id, {
     backend: rulesNeverAnswer
@@ -116,6 +122,21 @@ describe('the Shell of the device', () => {
     expect(account?.state.status).toBe('signed-out');
     const sync = await shell.sync?.opened();
     expect(sync?.state.running).toBe(false);
+  });
+
+  it('keeps the Account and Sync closed over a user state that could only open in memory', async () => {
+    const userState = openOnce(
+      async () => ({ kind: 'in-memory', userState: await seedUserState({}, { clock }) }) as const,
+      { onError: () => undefined },
+    );
+    const { fake, shell } = shellOverFakes({ userState });
+
+    await expect(shell.userState.opened()).resolves.toEqual(
+      expect.objectContaining({ read: expect.any(Function) }),
+    );
+    await expect(shell.account?.opened()).rejects.toThrow('in memory');
+    await expect(shell.sync?.opened()).rejects.toThrow();
+    expect(fake.calls).not.toContain('account.signOut');
   });
 
   it('opens neither the Account nor Sync while the Account is switched off remotely', async () => {

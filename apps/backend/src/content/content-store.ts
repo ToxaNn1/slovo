@@ -23,6 +23,7 @@ import {
 import {
   ENTRY_KINDS,
   type EntryKind,
+  holdContentVersion,
   needsNewRecordingOf,
   RECORD_KINDS,
   restoredAppearance,
@@ -120,14 +121,24 @@ export function createContentStore({
     now: Date,
   ): Promise<ImportResult> {
     return db.transaction(async (tx) => {
-      const [held] = await tx
-        .select()
-        .from(contentVersions)
-        .where(eq(contentVersions.editionId, editionId))
-        .for('update');
+      // Under the Edition's write lock, as every other content write.
+      const held = await holdContentVersion(tx, editionId);
       if (held !== undefined && !override)
         return { ok: false, reason: 'already-imported' } as const;
-      const contentVersion = held === undefined ? content.contentVersion : held.contentVersion + 1;
+      const contentVersion = held === undefined ? content.contentVersion : held + 1;
+      // A record an override imports again goes one version on from the one it
+      // had, so a form opened before the import is still stale after it.
+      const versionsOf = new Map<RecordKind, ReadonlyMap<string, number>>();
+      for (const kind of RECORD_KINDS) {
+        const table = TABLES[kind];
+        const rows = await tx
+          .select({ id: table.id, recordVersion: table.recordVersion })
+          .from(table)
+          .where(eq(table.editionId, editionId));
+        versionsOf.set(kind, new Map(rows.map(({ id, recordVersion }) => [id, recordVersion])));
+      }
+      const recordVersionOf = (kind: RecordKind, id: string) =>
+        (versionsOf.get(kind)?.get(id) ?? 0) + 1;
       const [batch] = await tx
         .insert(contentBatches)
         .values({ editionId, changedBy: 'import', createdAt: now })
@@ -135,17 +146,18 @@ export function createContentStore({
       if (batch === undefined) throw new Error('the batch of the import was not written');
       const common = {
         editionId,
-        recordVersion: 1,
         contentVersion,
         changedBy: 'import' as const,
         changedAt: now,
         batchId: batch.id,
       };
       const rowsOf = <T extends { readonly id: string; readonly retired?: boolean }>(
+        kind: RecordKind,
         records: readonly T[],
       ) =>
         records.map((fields) => ({
           ...common,
+          recordVersion: recordVersionOf(kind, fields.id),
           id: fields.id,
           fields,
           retired: fields.retired ?? false,
@@ -165,7 +177,7 @@ export function createContentStore({
       // A snapshot names the Words that already wait for new Recordings.
       const waiting = new Set(content.needsNewRecording);
       const words = [];
-      for (const row of rowsOf(content.words)) {
+      for (const row of rowsOf('word', content.words)) {
         const needsNewRecording = await needsNewRecordingOf(tx, {
           editionId,
           word: row.fields,
@@ -177,6 +189,7 @@ export function createContentStore({
       }
       const crosswordDays = (content.crosswordDays ?? []).map((fields) => ({
         ...common,
+        recordVersion: recordVersionOf('crosswordDay', fields.date),
         id: fields.date,
         fields,
         retired: fields.retired ?? false,
@@ -223,22 +236,26 @@ export function createContentStore({
           .delete(table)
           .where(and(eq(table.editionId, editionId), inArray(table.id, [...ids])));
       }
-      // Every record starts again at version 1, checked in CI.
+      // Every imported record is checked in CI: its checks go.
       await tx.delete(quoteChecks).where(eq(quoteChecks.editionId, editionId));
       await inChunks(words, (rows) => tx.insert(contentWords).values(rows));
-      await inChunks(rowsOf(content.idioms), (rows) => tx.insert(contentIdioms).values(rows));
-      await inChunks(rowsOf(content.corrections), (rows) =>
+      await inChunks(rowsOf('idiom', content.idioms), (rows) =>
+        tx.insert(contentIdioms).values(rows),
+      );
+      await inChunks(rowsOf('correction', content.corrections), (rows) =>
         tx.insert(contentCorrections).values(rows),
       );
-      await inChunks(rowsOf(content.tips), (rows) => tx.insert(contentTips).values(rows));
-      await inChunks(rowsOf(content.synonymRows), (rows) =>
+      await inChunks(rowsOf('tip', content.tips), (rows) => tx.insert(contentTips).values(rows));
+      await inChunks(rowsOf('synonymRow', content.synonymRows), (rows) =>
         tx.insert(contentSynonymRows).values(rows),
       );
       // An imported collection is restored as new: it appears from the start of its date.
-      const collections = rowsOf(content.curatedCollections ?? []).map((row) => ({
-        ...row,
-        appearedAt: restoredAppearance(row.fields.publishedOn, undefined),
-      }));
+      const collections = rowsOf('curatedCollection', content.curatedCollections ?? []).map(
+        (row) => ({
+          ...row,
+          appearedAt: restoredAppearance(row.fields.publishedOn, undefined),
+        }),
+      );
       await inChunks(collections, (rows) => tx.insert(contentCuratedCollections).values(rows));
       await inChunks(crosswordDays, (rows) => tx.insert(contentCrosswordDays).values(rows));
       await inChunks(

@@ -238,7 +238,7 @@ function Chip({
           tone="tile"
           radius={orderedChipsLayout.chipRadius}
           accessibilityLabel={text}
-          accessibilityState={{ disabled: inert }}
+          accessibilityState={{ disabled: placed }}
           inert={inert}
           onPress={onPress}
           faceStyle={[styles.chip, kind === 'letter' ? styles.letter : styles.word]}

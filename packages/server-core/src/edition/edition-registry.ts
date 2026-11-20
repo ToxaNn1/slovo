@@ -135,23 +135,46 @@ function isFeatureSwitch(name: string): name is FeatureSwitch {
   return FeatureSwitchSchema.safeParse(name).success;
 }
 
-/** Whether a Rule's targets match every reader: none named, or a share of 100 alone. */
+/** Whether a Rule's schedule holds at the moment: both ends included, an end left out is open. */
+function holdsAt(targets: RuleTargets, now: Date): boolean {
+  const { schedule } = targets;
+  if (schedule === undefined) return true;
+  const at = now.getTime();
+  return (
+    (schedule.from === undefined || Date.parse(schedule.from) <= at) &&
+    (schedule.until === undefined || at <= Date.parse(schedule.until))
+  );
+}
+
+/**
+ * Whether a Rule whose schedule holds matches every reader: no other target
+ * named, or a share of 100 alone.
+ */
 const matchesEveryone = (targets: RuleTargets) =>
   Object.entries(targets).every(
-    ([target, value]) => value === undefined || (target === 'share' && value === 100),
+    ([target, value]) =>
+      value === undefined || target === 'schedule' || (target === 'share' && value === 100),
   );
 
 /**
- * Whether the feature is on for any reader by its own state and Rules, as the
- * backend can tell without device facts: a Rule that turns it on for a share
- * above 0 does; an off Rule for everyone ends the search, as the device
- * would; with none, the Edition's state decides.
+ * Whether the feature is on for any reader at the moment by its own state and
+ * Rules, as the backend can tell without device facts: a Rule whose schedule
+ * is over or not begun matches nobody now, as on the device, whose clock the
+ * backend's corrects; a Rule that turns it on for a share above 0 does; an
+ * off Rule for everyone ends the search, as the device would; with none, the
+ * Edition's state decides.
  */
-function onForAnyone(edition: Edition, rules: readonly Rule[], feature: FeatureSwitch): boolean {
+function onForAnyone(
+  edition: Edition,
+  rules: readonly Rule[],
+  feature: FeatureSwitch,
+  now: Date,
+): boolean {
   const state = edition.config.featureSwitches[feature];
   if (state === 'unavailable') return false;
   for (const rule of rules) {
     if (rule.feature !== feature || rule.targets.share === 0) continue;
+    if (!holdsAt(rule.targets, now)) continue;
     if (rule.verdict !== 'off') return true;
     if (matchesEveryone(rule.targets)) return false;
   }
@@ -203,7 +226,8 @@ export function createEditionRegistry({
       switchStore.rules(editionId),
       switchStore.minimums(editionId),
     ]);
-    const inEffect = switchedOn((switchName) => onForAnyone(edition, rules, switchName));
+    const now = clock.now();
+    const inEffect = switchedOn((switchName) => onForAnyone(edition, rules, switchName, now));
     // As `/v1` first answered it: what the Edition turns on and the owner turned off.
     const off = FeatureSwitchSchema.options.filter(
       (feature) => edition.config.featureSwitches[feature] === 'on' && !inEffect(feature),
@@ -244,7 +268,8 @@ export function createEditionRegistry({
       const edition = byId.get(editionId);
       if (edition === undefined) return unknownEdition;
       const rules = await switchStore.rules(editionId);
-      const inEffect = switchedOn((switchName) => onForAnyone(edition, rules, switchName));
+      const now = clock.now();
+      const inEffect = switchedOn((switchName) => onForAnyone(edition, rules, switchName, now));
       return inEffect(feature) ? { ok: true, edition } : { ok: false, reason: 'switched-off' };
     },
 
@@ -261,10 +286,14 @@ export function createEditionRegistry({
         if (edition.config.featureSwitches[feature] === 'unavailable') {
           return refused('unavailable-feature', feature);
         }
-        const current = (await switches(edition)).rules;
-        const inEffect = switchedOn((switchName) => onForAnyone(edition, current, switchName));
-        const off = (DEPENDS_ON[feature] ?? []).find((dependency) => !inEffect(dependency));
-        if (off !== undefined) return refused('dependency-off', off);
+        // Rules that only turn the feature off need no switch it depends on.
+        if (rules.some((rule) => rule.verdict !== 'off')) {
+          const current = (await switches(edition)).rules;
+          const now = clock.now();
+          const inEffect = switchedOn((name) => onForAnyone(edition, current, name, now));
+          const off = (DEPENDS_ON[feature] ?? []).find((dependency) => !inEffect(dependency));
+          if (off !== undefined) return refused('dependency-off', off);
+        }
       }
       await writeRules(editionId, feature, rules, 'switches.rules.set', by);
       return switches(edition);

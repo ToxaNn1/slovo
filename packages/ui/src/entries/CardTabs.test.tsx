@@ -262,11 +262,13 @@ describe("an Entry card's Source tab", () => {
 
   it('is not there without sources', async () => {
     await renderTabs([]);
+    expect(screen.getByTestId('word-tab-essence')).toBeOnTheScreen();
     expect(screen.queryByTestId('word-tab-source')).toBeNull();
   });
 
   it('is not there when the card is given no sources (the switch is off)', async () => {
     await renderTabs();
+    expect(screen.getByTestId('word-tab-essence')).toBeOnTheScreen();
     expect(screen.queryByTestId('word-tab-source')).toBeNull();
   });
 

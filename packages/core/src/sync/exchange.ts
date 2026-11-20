@@ -7,7 +7,7 @@ import type { Backend, Json, RecordChange, RequestFailure, UserStateChanges } fr
 import { HISTORY_CAP } from '../saved/history';
 import type { PendingChange, TrackedUserState } from '../user-state/tracked-user-state';
 import { declareRecords } from '../user-state/user-state-record';
-import { syncMarkOf, syncs, userStateRecords } from '../user-state-schema';
+import { isDropped, syncMarkOf, syncs, userStateRecords } from '../user-state-schema';
 
 /**
  * A request of Sync that failed as any request does, because the Session it
@@ -29,6 +29,21 @@ export type SyncApiFailure =
 export type SyncResult = ({ readonly ok: true } | SyncApiFailure) & { readonly changed: boolean };
 
 /**
+ * The failures of a push that no later try passes: the Account's records are
+ * at their limit, the backend serves no Sync for the Edition, or it gave an
+ * answer the app does not know.
+ */
+const REFUSED_FOR_GOOD: ReadonlySet<SyncApiFailure['reason']> = new Set([
+  'too-many-records',
+  'not-found',
+  'unexpected',
+]);
+
+/** Whether the failure of a sync is one the Account refuses the device's changes for good with. */
+export const isRefusedForGood = (reason: SyncApiFailure['reason']): boolean =>
+  REFUSED_FOR_GOOD.has(reason);
+
+/**
  * One sync (spec #378): the exchange of the reader's words and progress
  * between this device and the Account, record by record by the marks of the
  * user-state schema (ADR 0013, 0041). The Sync module decides when it runs.
@@ -48,13 +63,21 @@ export interface SyncExchange {
    *   is written again, so it wins with the push;
    * - `device-only`: the Account's record is ignored;
    * - a key the schema doesn't know is kept as it is.
+   * The pull ends with the page that says no more follow, or that leaves the
+   * cursor where it was.
    * History over `HISTORY_CAP` loses its oldest entries by Seen time in the
    * write of the last page, and those deletions sync. The push then sends the pending
    * changes in batches of `SYNC_BATCH_SIZE` and deletes each batch the
    * Account accepted. A failed call stops the sync where it is; nothing done
-   * is lost, and the next sync resumes. Call it once at a time.
+   * is lost, and the next sync resumes. A batch the Account refuses for good
+   * (`isRefusedForGood`) stays pending and is sent no more by this exchange,
+   * so until the next launch: a later sync pulls, pushes the other changes
+   * and answers that refusal while a refused change waits. A record changed
+   * again is a new change. Call it once at a time.
    */
   sync(token: string): Promise<SyncResult>;
+  /** Forgets which changes were refused, as when the Session ends: the next Session's Account may take them. */
+  forgetRefused(): void;
 }
 
 /** Every record of the user state, by key, as the JSON it keeps. */
@@ -224,7 +247,7 @@ export function createSyncExchange({
       const read = await Promise.all(
         records.flatMap((record) => {
           const mark = syncMarkOf(record.key);
-          if (mark === 'device-only') return [];
+          if (mark === 'device-only' || isDropped(record.key)) return [];
           return [mineOf(record.key).then((kept) => ({ ...record, ...kept, mark }))];
         }),
       );
@@ -280,26 +303,47 @@ export function createSyncExchange({
       .map(([id]) => history.record(id).key);
   }
 
+  /** The changes a push was refused for good, by key with the instant of the change, and the last such refusal. */
+  const refused = new Map<string, number>();
+  let refusal: SyncApiFailure | undefined;
+  const isRefused = ([key, { changedAt }]: readonly [string, PendingChange]) =>
+    refused.get(key) === changedAt.getTime();
+
   return {
+    forgetRefused() {
+      refused.clear();
+      refusal = undefined;
+    },
     async sync(token) {
       if ((await userState.cursor()) === undefined) await joinAccount();
       let changed = false;
       for (let more = true; more;) {
-        const page = await api.pull(token, await userState.cursor());
+        const after = await userState.cursor();
+        const page = await api.pull(token, after);
         if (!page.ok) return { ...page, changed };
         if (await apply(page)) changed = true;
-        more = page.more;
+        // A page that leaves the cursor where it was is the last, whatever it says: asking again would never end.
+        more = page.more && page.cursor !== after;
       }
-      const pending = [...(await userState.pendingChanges())];
+      const all = [...(await userState.pendingChanges())];
+      const pending = all.filter((change) => !isRefused(change));
       for (let start = 0; start < pending.length; start += SYNC_BATCH_SIZE) {
         const batch = new Map(pending.slice(start, start + SYNC_BATCH_SIZE));
         const answer = await api.push(
           token,
           [...batch].map(([key, change]) => changeOf(key, change)),
         );
-        if (!answer.ok) return { ...answer, changed };
+        if (!answer.ok) {
+          if (isRefusedForGood(answer.reason)) {
+            for (const [key, { changedAt }] of batch) refused.set(key, changedAt.getTime());
+            refusal = answer;
+          }
+          return { ...answer, changed };
+        }
         await userState.deleteSent(batch);
       }
+      // A refused change that still waits keeps the sync refused.
+      if (refusal !== undefined && all.some(isRefused)) return { ...refusal, changed };
       return { ok: true, changed };
     },
   };

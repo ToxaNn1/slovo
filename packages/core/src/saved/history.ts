@@ -1,5 +1,7 @@
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import { createInTurn, createSubscribers, newestFirst } from '../in-turn';
+import { dateKeyOf, localDateAfter, localDayOf, todayDate } from '../local-date';
+import type { Clock } from '../ports';
 import { staged, writeStaged, type AnyStagedPiece } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
@@ -18,6 +20,18 @@ export interface HistoryEntry {
   readonly row: EntryRowModel;
 }
 
+/** How many local days before today a clear still counts the Entries Seen on: the Weekly Recap's reach. */
+const CLEARED_DAYS = 7;
+
+/** The Entries Seen on a local date that a clear took out of History. */
+export interface ClearedSeen {
+  readonly entries: number;
+  /** How many of them are Words. */
+  readonly words: number;
+}
+
+const nothingCleared: ClearedSeen = { entries: 0, words: 0 };
+
 /**
  * History: the Entries marked Seen, newest first, one entry per Entry, the
  * last `HISTORY_CAP`. It survives Cycles. Only the Feed records it, in the
@@ -35,8 +49,17 @@ export interface History {
    * until something changes.
    */
   readonly list: readonly HistoryEntry[];
-  /** Deletes every History record at once, and nothing else. */
+  /**
+   * Deletes every History record at once. The same write keeps how many
+   * Entries of the list were Seen on each local date of the last week, so
+   * today's Words Seen and the Weekly Recap lose nothing; nothing else changes.
+   */
   clear(): Promise<void>;
+  /**
+   * The Entries Seen on the local date (its date key) that a clear took out
+   * of History; they are no longer in `list`. Kept for the last week.
+   */
+  cleared(date: string): ClearedSeen;
   /** Calls `listener` after each change of the list. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
@@ -56,7 +79,7 @@ export interface HistoryRecorder {
 /** An Entry the Feed marked Seen: a History entry without its row. */
 export type Seen = Omit<HistoryEntry, 'row'>;
 
-const { history: historyRecords } = userStateRecords;
+const { history: historyRecords, historyCleared: clearedRecords } = userStateRecords;
 
 /** A History entry as kept, with its row when the Language Pack has the Entry. */
 type Kept = Seen & { readonly row: EntryRowModel | undefined };
@@ -70,11 +93,14 @@ const newestKept = newestFirst<Kept>(
 export async function openHistory({
   rows,
   userState,
+  clock,
 }: {
   rows: EntryRows;
   userState: UserState;
+  clock: Clock;
 }): Promise<{ history: History; recorder: HistoryRecorder }> {
   const stored = await userState.list(historyRecords);
+  let cleared: ReadonlyMap<string, ClearedSeen> = await userState.list(clearedRecords);
   const rowOf = await rows.rows(stored.keys());
   // Every record counts towards the cap, also one whose Entry the Language Pack doesn't have.
   let kept: readonly Kept[] = [...stored]
@@ -134,10 +160,35 @@ export async function openHistory({
       ...kept.map((entry) => entry.entryId),
     ]);
     if (ids.size === 0) return;
+    const counted = clearedWith(list);
     await userState.write(
-      new Map([...ids].flatMap((id) => [...historyRecords.record(id).change(undefined)])),
+      new Map([
+        ...[...ids].flatMap((id) => [...historyRecords.record(id).change(undefined)]),
+        ...[...cleared.keys()].flatMap((date) =>
+          counted.has(date) ? [] : [...clearedRecords.record(date).change(undefined)],
+        ),
+        ...[...counted].flatMap(([date, count]) => [...clearedRecords.record(date).change(count)]),
+      ]),
     );
+    cleared = counted;
     changeKept([]);
+  }
+
+  /**
+   * What the clears took out once `entries` leave too, by local date in the
+   * clock's time zone: the dates of the last `CLEARED_DAYS` days, so an older
+   * date's count is dropped.
+   */
+  function clearedWith(entries: readonly HistoryEntry[]): Map<string, ClearedSeen> {
+    const oldest = dateKeyOf(localDateAfter(todayDate(clock), -CLEARED_DAYS));
+    const counted = new Map([...cleared].filter(([date]) => date >= oldest));
+    for (const { seenAt, row } of entries) {
+      const date = dateKeyOf(localDayOf(seenAt, clock).date);
+      if (date < oldest) continue;
+      const { entries: before, words } = counted.get(date) ?? nothingCleared;
+      counted.set(date, { entries: before + 1, words: words + (row.kind === 'word' ? 1 : 0) });
+    }
+    return counted;
   }
 
   return {
@@ -146,6 +197,7 @@ export async function openHistory({
         return list;
       },
       clear: () => inTurn(clear),
+      cleared: (date) => cleared.get(date) ?? nothingCleared,
       subscribe: subscribers.subscribe,
     },
     recorder: {

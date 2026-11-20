@@ -1453,7 +1453,7 @@ describe('the build of a fixture Edition from its snapshot', () => {
       const editionDir = withLiteraryUses([use(1913), use(1960)]);
       const buildOn = (today: Date) => build({ editionDir, outFile: packPath(), today });
 
-      const refused = buildOn(new Date(2030, 11, 31));
+      const refused = buildOn(new Date('2030-12-31T12:00:00Z'));
       expect(refused.ok ? [] : refused.errors).toEqual([
         expect.objectContaining({
           file: fileOf('correction', 'c_fx0001'),
@@ -1462,8 +1462,18 @@ describe('the build of a fixture Edition from its snapshot', () => {
           message: 'Not in the public domain until 1 January 2031',
         }),
       ]);
-      expect(check(editionDir, new Date(2030, 11, 31))).not.toEqual([]);
-      expect(buildOn(new Date(2031, 0, 1)).ok).toBe(true);
+      expect(check(editionDir, new Date('2030-12-31T12:00:00Z'))).not.toEqual([]);
+      expect(buildOn(new Date('2031-01-01T12:00:00Z')).ok).toBe(true);
+    });
+
+    it('judges the public domain by the day in Kyiv, the Edition day, in any host time zone', () => {
+      const editionDir = withLiteraryUses([use(1960)]);
+      const buildAt = (at: string) =>
+        build({ editionDir, outFile: packPath(), today: new Date(at) });
+
+      // 23:30 and 00:30 in Kyiv (UTC+2) on the night of 1 January 2031.
+      expect(buildAt('2030-12-31T21:30:00Z').ok).toBe(false);
+      expect(buildAt('2030-12-31T22:30:00Z').ok).toBe(true);
     });
 
     it('refuses more than three on a Correction', () => {

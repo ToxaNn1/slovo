@@ -1,6 +1,7 @@
 import { dateAfter } from '@slovo/content-rules';
 import type { Word } from '@slovo/contracts';
 import { PATCH_FORMAT, type ApiClient } from '@slovo/contracts/api';
+import { ukrainianFolder, ukrainianSnapshot } from '@slovo/language-pack/test-support';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
 import { eq, sql } from 'drizzle-orm';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
@@ -205,6 +206,30 @@ describe('the content write API', () => {
     });
   });
 
+  it('keeps refusing a stale record version after an override import: the import raises it too', async () => {
+    const { client, agent, batchId, importSnapshot } = await contentBackend();
+    const word = await wordOf(client, WORD_ID);
+    const edit = (recordVersion: number, primaryDefinition: string) =>
+      agent.admin.content.edit({
+        editionId: 'uk',
+        kind: 'word',
+        id: WORD_ID,
+        batchId,
+        recordVersion,
+        fields: { ...word, primaryDefinition },
+      });
+    await edit(1, 'Перша правка.');
+    const imported = await importSnapshot('uk', ukrainianFolder.dir, ukrainianSnapshot(), {
+      override: true,
+    });
+    expect(imported).toMatchObject({ ok: true });
+
+    await expect(edit(1, 'Правка з форми, відкритої до імпорту.')).rejects.toMatchObject({
+      code: 'STALE',
+      data: { currentVersion: 3 },
+    });
+  });
+
   it('retires a record, keeping it, and creates one under a new id of its kind', async () => {
     const { client, agent, batchId } = await contentBackend();
     const before = await snapshotOf(client);
@@ -300,6 +325,28 @@ describe('the content write API', () => {
     // Still set by a definition edit afterwards: only the narrator-voice work clears it.
     expect(await edit(3, { primaryDefinition: 'Знову тлумачення.' })).toMatchObject({
       needsNewRecording: true,
+    });
+  });
+
+  it("refuses an edit of today's Crossword day past midnight in Kyiv, while UTC is still on the day before", async () => {
+    const { client, agent, batchId } = await contentBackend();
+    const last = (await snapshotOf(client)).crosswordDays.at(-1);
+    if (last === undefined) throw new Error('no Crossword days');
+    // 00:30 or 01:30 of the day in Kyiv, 22:30 of the day before in UTC.
+    vi.setSystemTime(new Date(`${dateAfter(last.date, -1)}T22:30:00.000Z`));
+
+    await expect(
+      agent.admin.content.edit({
+        editionId: 'uk',
+        kind: 'crosswordDay',
+        batchId,
+        id: last.date,
+        recordVersion: 1,
+        fields: last,
+      }),
+    ).rejects.toMatchObject({
+      code: 'REFUSED',
+      data: { refusals: [{ rule: 'crossword-days-immutable', field: 'date' }] },
     });
   });
 

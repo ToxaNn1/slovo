@@ -114,6 +114,22 @@ describe('LetterWheel', () => {
     expect(screen.getByTestId('solved')).toBeTruthy();
   });
 
+  it('drops a trace the system cancels, unchecked, so the next trace starts afresh', async () => {
+    await renderIn(<Wheel />);
+    const [first, ...rest] = [1, 2, 0].map(centreOf);
+    await act(() => {
+      fireGestureHandler(getByGestureTestId('wheel-trace'), [
+        { state: State.BEGAN, ...first },
+        ...rest.map((point) => ({ state: State.ACTIVE, ...point })),
+        { state: State.CANCELLED, ...centreOf(0) },
+      ]);
+    });
+    expect(screen.queryByTestId('solved')).toBeNull();
+    expect(screen.queryByTestId('wheel-chip-0')).toBeNull();
+    await drag([1, 2, 0]);
+    expect(screen.getByTestId('solved')).toBeTruthy();
+  });
+
   it('shows a trace that spelled nothing as a miss in the path chips', async () => {
     await renderIn(<Wheel />);
     await drag([0, 1]);
@@ -230,6 +246,31 @@ describe('CrossingGrid and CrossingClueBar', () => {
       nativeEvent: { layout: { width: 600, height: 600 } },
     });
     expect(blockCell()).toHaveStyle({ width: side });
+  });
+
+  it('never draws a cell below the smallest legible side, and keeps the room for it', async () => {
+    const { minCell, cellGap } = crossingCrosswordLayout;
+    const edge = offsetShadow.rest.depth;
+    await renderIn(
+      <CrossingGrid
+        cells={[
+          [cell({ label: 'r0c0' }), cell({ label: 'r0c1' })],
+          [cell({ label: 'r1c0' }), cell({ label: 'r1c1' })],
+        ]}
+        onSelect={jest.fn()}
+        testID="grid"
+      />,
+    );
+    // The room never shrinks past two rows of the smallest cells, their edges and a gap.
+    expect(screen.getByTestId('grid-room')).toHaveStyle({
+      minHeight: 2 * (minCell + edge) + cellGap,
+    });
+
+    // A room squeezed to almost nothing still draws the smallest cells, never tiny or negative ones.
+    await fireEvent(screen.getByTestId('grid-room'), 'layout', {
+      nativeEvent: { layout: { width: 20, height: 10 } },
+    });
+    expect(screen.getByTestId('grid-1-1-face')).toHaveStyle({ width: minCell, height: minCell });
   });
 
   it('fits letter cells with their pressed edge into the room the screen leaves', async () => {

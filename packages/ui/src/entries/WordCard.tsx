@@ -7,8 +7,8 @@ import {
   type Example,
   type WordCardModel,
 } from '@slovo/core';
-import { useEffect, type ReactNode } from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import type { ReactNode } from 'react';
+import { Image, Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { WholeLinesText } from '../primitives/WholeLines';
 import Svg, { Path } from 'react-native-svg';
 
@@ -33,6 +33,7 @@ import { WholeWordsText } from '../primitives/WholeWordsText';
 import { RevealDetail, useFlyingText } from './reveal';
 import { capitalised } from './capitalised';
 import { useCardFeatures } from './card-features';
+import { useSeenOnce } from './seen-depth';
 import { CategoryChip } from './CategoryChip';
 
 /**
@@ -281,7 +282,8 @@ export function OftenSaid({
 /**
  * The Word History under its heading: how the Word left the language or
  * changed its meaning. The reader reaches it by scrolling, so `onShown` is
- * called once it is drawn, and the caller counts that as the history opened.
+ * called once the reader has it in view (`useSeenOnce`), and the caller counts
+ * that as the history opened (owner 20.11).
  */
 export function WordHistory({
   history,
@@ -293,11 +295,9 @@ export function WordHistory({
   const tokens = useTokens();
   const { colors } = tokens;
   const { strings, voice } = useEdition();
-  useEffect(() => {
-    onShown?.();
-  }, [onShown]);
+  const onLayout = useSeenOnce(onShown);
   return (
-    <DetailSection testID="word-history" title={strings.wordCard.history}>
+    <DetailSection testID="word-history" title={strings.wordCard.history} onLayout={onLayout}>
       <Text
         accessibilityLabel={withoutStress(history)}
         {...voice}
@@ -380,9 +380,10 @@ export function ExampleText({
       testID={testID}
       accessible
       // The Example and its author's line, as VoiceOver joins them, without the Stress marks:
-      // an Example ending in its own full stop takes no comma before the author's dash.
+      // an Example ending in its own full stop takes no comma before the author's dash. The stop
+      // is looked for in the Example itself: the quoted text ends in the closing mark.
       accessibilityLabel={withoutStress(
-        author === undefined ? text : `${text}${/[.!?…]$/.test(text) ? '' : ','} ${author}`,
+        author === undefined ? text : `${text}${/[.!?…]$/.test(example.text) ? '' : ','} ${author}`,
       )}
       {...voice}
     >
@@ -404,14 +405,16 @@ export function ExampleText({
 export function DetailSection({
   title,
   testID,
+  onLayout,
   children,
 }: {
   title: string;
   testID?: string;
+  onLayout?: (event: LayoutChangeEvent) => void;
   children: ReactNode;
 }) {
   return (
-    <View testID={testID} style={styles.detailSection}>
+    <View testID={testID} style={styles.detailSection} onLayout={onLayout}>
       <SectionLabel>{title}</SectionLabel>
       {children}
     </View>

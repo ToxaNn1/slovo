@@ -39,6 +39,8 @@ async function device({
     return Promise.reject(new TypeError('Network request failed'));
   };
   const { push, pull } = server.backend.sync;
+  /** The cursor each pull that reached the backend asked the records after. */
+  const pulledAfter: (number | undefined)[] = [];
   const googleSheet = createFakeGoogleSignInSheet();
   const appleSheet = createFakeAppleSignInSheet();
   const records = new Map<string, string>();
@@ -77,8 +79,11 @@ async function device({
       sync: {
         push: (...request: Parameters<typeof push>) =>
           network.up ? push(...request) : unanswered(),
-        pull: (...request: Parameters<typeof pull>) =>
-          network.up ? pull(...request) : unanswered(),
+        pull: (...request: Parameters<typeof pull>) => {
+          if (!network.up) return unanswered();
+          pulledAfter.push(request[0].after);
+          return pull(...request);
+        },
       },
     },
     account,
@@ -105,6 +110,7 @@ async function device({
     switchedOff,
     network,
     disk,
+    pulledAfter,
     /** How many times Sync said a pull wrote something. */
     changes: () => changes,
     /** How many syncs reached the backend: each starts with a pull. */
@@ -277,7 +283,12 @@ describe('Sync syncs nothing', () => {
     await advance(HOUR);
 
     expect(syncs()).toBe(0);
-    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: false,
+      offline: false,
+      refused: false,
+    });
   });
 
   it.each(['sync', 'account'] as const)('with `%s` off, read each time', async (feature) => {
@@ -342,7 +353,7 @@ describe('Sync tries a sync again', () => {
 
       expect(server.calls).toEqual(['sync.pull', 'sync.push', 'sync.pull', 'sync.push']);
       expect(server.sync.records.has('favorites.w_one')).toBe(true);
-      expect(sync.state).toMatchObject({ running: false, offline: false });
+      expect(sync.state).toMatchObject({ running: false, offline: false, refused: false });
     },
   );
 
@@ -354,13 +365,18 @@ describe('Sync tries a sync again', () => {
 
     expect(network.unanswered).toBe(4);
     expect(syncs()).toBe(0);
-    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: true });
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: false,
+      offline: true,
+      refused: false,
+    });
 
     network.up = true;
     sync.background();
     sync.foreground();
     await advance(0);
-    expect(sync.state).toMatchObject({ running: false, offline: false });
+    expect(sync.state).toMatchObject({ running: false, offline: false, refused: false });
   });
 
   it.each(['unexpected', 'not-found', 'too-many-records'] as const)(
@@ -373,9 +389,39 @@ describe('Sync tries a sync again', () => {
       await advance(HOUR);
 
       expect(server.calls).toEqual(['sync.pull', 'sync.push']);
-      expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
+      expect(sync.state).toEqual({
+        syncedAt: undefined,
+        running: false,
+        offline: false,
+        refused: true,
+      });
     },
   );
+
+  it('says the Account refused the changes until a sync goes through, and sends them to the next Session', async () => {
+    const { sync, server, account, addFavorite, advance } = await device();
+    sync.foreground();
+    await advance(0);
+    expect(sync.state).toMatchObject({ refused: false });
+    const syncedAt = sync.state.syncedAt;
+    await addFavorite('w_one');
+    server.failNext({ procedure: 'sync.push', reason: 'too-many-records' });
+    await advance(SYNC_AFTER_WRITE);
+    expect(sync.state).toEqual({ syncedAt, running: false, offline: false, refused: true });
+
+    // The next moment pulls, sends the refused batch no more and still says so.
+    const before = server.calls.length;
+    sync.background();
+    sync.foreground();
+    await advance(0);
+    expect(server.calls.slice(before)).toEqual(['sync.pull']);
+    expect(sync.state).toMatchObject({ refused: true });
+
+    // The Session ends: nothing is refused, and the next Session gets the changes.
+    await account.signOut();
+    await advance(0);
+    expect(sync.state).toMatchObject({ refused: false });
+  });
 });
 
 describe('Sync, when too many requests', () => {
@@ -445,7 +491,12 @@ describe('Sync, when the device fails to write a sync', () => {
     sync.foreground();
     await advance(HOUR);
     expect(syncs()).toBe(1);
-    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: false,
+      offline: false,
+      refused: false,
+    });
 
     disk.refuses = () => false;
     sync.background();
@@ -508,7 +559,12 @@ describe('Sync and the end of a Session', () => {
     expect(await userState.cursor()).toBeUndefined();
     expect([...(await userState.pendingChanges()).keys()]).toEqual(['favorites.w_one']);
     expect(records.has('favorites.w_one')).toBe(true);
-    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: false,
+      offline: false,
+      refused: false,
+    });
   });
 
   it('forgets the cursor and the time of the last sync when the Account is deleted', async () => {
@@ -537,7 +593,12 @@ describe('Sync and the end of a Session', () => {
     await advance(HOUR);
 
     expect(network.unanswered).toBe(1);
-    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: false,
+      offline: false,
+      refused: false,
+    });
   });
 
   it('forgets the cursor once a sync running at the sign-out ends', async () => {
@@ -553,7 +614,38 @@ describe('Sync and the end of a Session', () => {
 
     expect(await userState.read(theme)).toBe('dark');
     expect(await userState.cursor()).toBeUndefined();
-    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: false,
+      offline: false,
+      refused: false,
+    });
+  });
+
+  it('syncs no next Account from the cursor of a Session that failed to be forgotten', async () => {
+    const { sync, account, server, userState, disk, advance, syncs, pulledAfter } = await device();
+    sync.foreground();
+    await advance(0);
+    expect(syncs()).toBe(1);
+    // The store refuses to forget the cursor, and nothing else.
+    disk.refuses = (changes) =>
+      changes.has(syncCursor.key) && changes.get(syncCursor.key) === undefined;
+    await account.signOut();
+    await advance(0);
+    expect(await userState.cursor()).toBe(CURSOR_AFTER_FIRST_PULL);
+
+    await account.requestCode('borys@mail.com');
+    await account.verifyCode(server.account.sentCodes.at(-1)?.code ?? '');
+    await advance(0);
+    expect(account.state).toMatchObject({ status: 'signed-in', email: 'borys@mail.com' });
+    expect(syncs()).toBe(1);
+
+    disk.refuses = () => false;
+    sync.background();
+    sync.foreground();
+    await advance(0);
+    expect(syncs()).toBe(2);
+    expect(pulledAfter).toEqual([undefined, undefined]);
   });
 
   it.each([
@@ -623,7 +715,12 @@ describe('Sync and the end of a Session', () => {
       random: randomOf(0.5),
     });
 
-    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: false,
+      offline: false,
+      refused: false,
+    });
   });
 });
 
@@ -637,7 +734,12 @@ describe('Sync says how it went', () => {
 
     sync.foreground();
     await advance(0);
-    expect(sync.state).toEqual({ syncedAt: undefined, running: true, offline: false });
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: true,
+      offline: false,
+      refused: false,
+    });
     time.advance(2_000);
     release();
     await advance(0);
@@ -646,10 +748,16 @@ describe('Sync says how it went', () => {
       syncedAt: new Date('2026-10-18T09:00:02.000Z'),
       running: false,
       offline: false,
+      refused: false,
     });
     expect(told).toEqual([
-      { syncedAt: undefined, running: true, offline: false },
-      { syncedAt: new Date('2026-10-18T09:00:02.000Z'), running: false, offline: false },
+      { syncedAt: undefined, running: true, offline: false, refused: false },
+      {
+        syncedAt: new Date('2026-10-18T09:00:02.000Z'),
+        running: false,
+        offline: false,
+        refused: false,
+      },
     ]);
   });
 
@@ -670,7 +778,7 @@ describe('Sync says how it went', () => {
       random: randomOf(0.5),
     });
 
-    expect(relaunched.state).toEqual({ syncedAt, running: false, offline: false });
+    expect(relaunched.state).toEqual({ syncedAt, running: false, offline: false, refused: false });
   });
 
   it('that the user state changed, once per sync whose pull wrote something', async () => {
@@ -698,6 +806,22 @@ describe('Sync says how it went', () => {
     sync.background();
     sync.foreground();
     await advance(0);
+    expect(changes()).toBe(1);
+  });
+
+  it('brings back no record a later version of the user state dropped', async () => {
+    const { sync, pushFromElsewhere, records, advance, changes } = await device();
+    await pushFromElsewhere([
+      { key: 'mix.rarityFloor', value: 2, changedAt: 1 },
+      { key: 'mix.rarityCeiling', value: 4, changedAt: 1 },
+      { key: 'settings.theme', value: 'dark', changedAt: 1 },
+    ]);
+
+    sync.foreground();
+    await advance(0);
+
+    expect(records.get('settings.theme')).toBe(JSON.stringify('dark'));
+    expect([...records.keys()].filter((key) => key.startsWith('mix.rarity'))).toEqual([]);
     expect(changes()).toBe(1);
   });
 

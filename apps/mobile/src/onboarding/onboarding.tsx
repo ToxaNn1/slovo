@@ -19,7 +19,7 @@ import {
   type RarityTestQuestion,
   fontScaleCap,
 } from '@slovo/ui';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useEffectEvent, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { MascotAs } from '../mascot/mascot';
@@ -255,13 +255,14 @@ function RarityTestStep({
   const { rarityTest, onboarding } = useComposition();
   const applyRarityTest = useApplyRarityTest();
   const [words, setWords] = useState<readonly RarityTestQuestion[]>();
+  // Drawn once per step, from the modules as they stand: a reopen gives new ones, which draw nothing.
+  const draw = useEffectEvent(() => rarityTest.draw());
+  const onDone = useEffectEvent(() => {
+    void keep('the onboarding', onboarding.next());
+  });
   useEffect(() => {
     let open = true;
-    const onDone = () => {
-      void keep('the onboarding', onboarding.next());
-    };
-    rarityTest
-      .draw()
+    draw()
       .then((drawn) => {
         if (!open) return;
         if (drawn.length === 0) onDone();
@@ -274,7 +275,7 @@ function RarityTestStep({
     return () => {
       open = false;
     };
-  }, [rarityTest, onboarding]);
+  }, []);
   const done = () => {
     void keep('the onboarding', onboarding.next());
   };

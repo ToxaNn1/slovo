@@ -122,6 +122,7 @@ describe('The Illustration on a Word card', () => {
       </EditionProvider>,
     );
 
+    expect(screen.getByText('A frame with beads for counting.')).toBeOnTheScreen();
     expect(screen.queryByRole('image')).toBeNull();
   });
 

@@ -65,6 +65,9 @@ async function refusalOf(name: string, response: Response): Promise<string> {
   return [name, String(response.status), ...codes].join(' ');
 }
 
+/** How long the mail service may take to accept an email, so no sign-in code request hangs on it. */
+const TIMEOUT_MS = 10_000;
+
 /**
  * Sends the emails over HTTPS to ZeptoMail, or to Mailpit locally. Railway
  * blocks outbound SMTP, so no email goes over SMTP. An error names
@@ -82,6 +85,7 @@ export function createMailer(
         method: 'POST',
         headers,
         body: JSON.stringify(body),
+        signal: AbortSignal.timeout(TIMEOUT_MS),
       }).catch((error: unknown) => {
         throw new Error(`the email was not sent (${name} unreachable)`, { cause: error });
       });

@@ -38,6 +38,9 @@ export function memoryMediaStore(): MediaStore {
   };
 }
 
+/** How long one Media Store request may take before it is given up. */
+const MEDIA_TIMEOUT_MS = 30_000;
+
 /** The size a HEAD answer names, or undefined when it has no Content-Length. */
 function sizeOf(response: Response): number | undefined {
   const length = response.headers.get('content-length');
@@ -51,7 +54,10 @@ function sizeOf(response: Response): number | undefined {
  */
 export function publicMediaStore(
   mediaBase: string,
-  { fetch: send = fetch }: { fetch?: typeof fetch } = {},
+  {
+    fetch: send = fetch,
+    timeoutMs = MEDIA_TIMEOUT_MS,
+  }: { fetch?: typeof fetch; timeoutMs?: number } = {},
 ): MediaStore {
   const refuse = (key: string) =>
     Promise.reject(new Error(`The Staging Deployment writes nothing to the Media Store: ${key}`));
@@ -59,7 +65,10 @@ export function publicMediaStore(
     put: refuse,
     delete: refuse,
     async head(key) {
-      const response = await send(`${mediaBase}/${key}`, { method: 'HEAD' });
+      const response = await send(`${mediaBase}/${key}`, {
+        method: 'HEAD',
+        signal: AbortSignal.timeout(timeoutMs),
+      });
       if (response.status === 404) return undefined;
       if (!response.ok) throw new Error(`HEAD ${key} answered ${String(response.status)}`);
       return {
@@ -77,10 +86,18 @@ export interface R2Config {
   readonly secretAccessKey: string;
 }
 
-/** The Media Store in a Cloudflare R2 bucket, through R2's S3 API. */
+/**
+ * The Media Store in a Cloudflare R2 bucket, through R2's S3 API. Every
+ * request gives up after a time limit: a sweep deletes under its Edition's
+ * write lock, and a request R2 never answers must not hold that lock.
+ */
 export function r2MediaStore(
   config: R2Config,
-  { clock, fetch: send = fetch }: { clock: Clock; fetch?: typeof fetch },
+  {
+    clock,
+    fetch: send = fetch,
+    timeoutMs = MEDIA_TIMEOUT_MS,
+  }: { clock: Clock; fetch?: typeof fetch; timeoutMs?: number },
 ): MediaStore {
   const credentials = { accessKeyId: config.accessKeyId, secretAccessKey: config.secretAccessKey };
 
@@ -101,6 +118,7 @@ export function r2MediaStore(
     return send(url, {
       method,
       headers: signed,
+      signal: AbortSignal.timeout(timeoutMs),
       ...(body === undefined ? {} : { body: new Uint8Array(body) }),
     });
   }

@@ -73,19 +73,24 @@ export function CrossingGrid({
 }) {
   const { colors, radii } = useTokens();
   const columns = Math.max(0, ...cells.map((row) => row.length));
-  const { cell: boardCell, cellGap } = crossingCrosswordLayout;
+  const { cell: boardCell, minCell, cellGap } = crossingCrosswordLayout;
   // A white cell stands on its tile's edge, so each row is that much taller than its cells.
   const edge = offsetShadow.rest.depth;
   const [room, setRoom] = useState<{ width: number; height: number }>();
-  // The board's cell, or less when the room left between the header and the Letter Wheel is smaller.
+  // The board's cell, or less when the room left between the header and the Letter Wheel is
+  // smaller, but never below the smallest cell that keeps its letter legible.
   const side =
     room === undefined
       ? boardCell
-      : Math.min(
-          boardCell,
-          (room.height - (cells.length - 1) * cellGap) / Math.max(cells.length, 1) - edge,
-          (room.width - (columns - 1) * cellGap) / Math.max(columns, 1),
+      : Math.max(
+          minCell,
+          Math.min(
+            boardCell,
+            (room.height - (cells.length - 1) * cellGap) / Math.max(cells.length, 1) - edge,
+            (room.width - (columns - 1) * cellGap) / Math.max(columns, 1),
+          ),
         );
+  const span = (cell: number) => cells.length * (cell + edge) + (cells.length - 1) * cellGap;
   const size = { width: side, height: side };
   return (
     <View
@@ -93,10 +98,7 @@ export function CrossingGrid({
       onLayout={({ nativeEvent: { layout } }) => {
         setRoom({ width: layout.width, height: layout.height });
       }}
-      style={[
-        styles.room,
-        { flexBasis: cells.length * (boardCell + edge) + (cells.length - 1) * cellGap },
-      ]}
+      style={[styles.room, { flexBasis: span(boardCell), minHeight: span(minCell) }]}
     >
       <View testID={testID} style={styles.grid}>
         {cells.map((row, r) => (
@@ -292,7 +294,7 @@ export function CrossingClueBar({
 
 const styles = StyleSheet.create({
   // The room the grid may take: its full size at most, shrinking when the screen is short.
-  room: { flexShrink: 1, minHeight: 0, alignSelf: 'stretch', alignItems: 'center' },
+  room: { flexShrink: 1, alignSelf: 'stretch', alignItems: 'center' },
   grid: { gap: crossingCrosswordLayout.cellGap },
   row: { flexDirection: 'row', gap: crossingCrosswordLayout.cellGap },
   cell: {

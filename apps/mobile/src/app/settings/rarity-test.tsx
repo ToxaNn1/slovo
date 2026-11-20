@@ -7,7 +7,7 @@ import {
   type RarityTestScreen as Screen,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -31,10 +31,11 @@ export default function RarityTestScreen() {
   const [words, setWords] = useState<readonly RarityTestQuestion[]>();
   /** How many times the test was started here, so «Перевірити рівень ще раз» draws anew. */
   const [round, setRound] = useState(0);
+  /** Draws from the Rarity Test as it stands: a reopen gives a new one, which draws nothing until the next round. */
+  const draw = useEffectEvent(() => rarityTest.draw());
   useEffect(() => {
     let open = true;
-    rarityTest
-      .draw()
+    draw()
       .then((drawn) => {
         if (!open) return;
         if (drawn.length === 0) router.back();
@@ -47,7 +48,7 @@ export default function RarityTestScreen() {
     return () => {
       open = false;
     };
-  }, [rarityTest, router, round]);
+  }, [router, round]);
 
   const back = () => {
     router.back();

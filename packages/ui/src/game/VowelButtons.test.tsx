@@ -1,11 +1,12 @@
 import type { RoundAnswer } from '@slovo/core';
 import { coreTokens, EditionProvider, VowelButtons } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, userEvent } from '@testing-library/react-native';
 import type { ReactElement } from 'react';
 import { AccessibilityInfo } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
+import { minTouchTarget, vowelButtonsLayout } from '../tokens';
 
 const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh'];
 
@@ -68,6 +69,20 @@ describe('VowelButtons', () => {
     expect(labels()).toEqual(['a, second letter', 'a, fourth letter', 'a, sixth letter']);
   });
 
+  it('reaches a full touch target past a vowel narrowed for a long Word, but only half the gap towards a vowel beside it (audit 8.2)', async () => {
+    await render(<Vowels text="baoba" vowels={[1, 2, 4]} />);
+    // Five cells in 150 points: (150 - 4 gaps of 4) / 5 = 26.8, so 26 points wide.
+    await fireEvent(screen.getByTestId('vowels'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 150, height: 80 } },
+    });
+    const reach = (minTouchTarget - 26) / 2;
+    const half = vowelButtonsLayout.cellGap / 2;
+
+    expect(screen.getByTestId('vowels-1')).toHaveProp('hitSlop', { left: reach, right: half });
+    expect(screen.getByTestId('vowels-2')).toHaveProp('hitSlop', { left: half, right: reach });
+    expect(screen.getByTestId('vowels-4')).toHaveProp('hitSlop', { left: reach, right: reach });
+  });
+
   it('answers with where the vowel tapped stands', async () => {
     const onAnswer = jest.fn();
     await render(<Vowels onAnswer={onAnswer} />);
@@ -102,10 +117,11 @@ describe('VowelButtons', () => {
     const onAnswer = jest.fn();
     await render(<Vowels answer={answered(3, [3])} onAnswer={onAnswer} />);
 
-    await fireEvent.press(screen.getByRole('button', { name: 'a, second letter' }));
+    await userEvent.setup().press(screen.getByRole('button', { name: 'a, second letter' }));
 
-    expect(screen.getByRole('button', { name: 'a, fourth letter, Right' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'a, second letter' })).toBeDisabled();
+    // VoiceOver does not read the answered letters as dimmed.
+    expect(screen.getByRole('button', { name: 'a, fourth letter, Right' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'a, second letter' })).toBeEnabled();
     expect(onAnswer).not.toHaveBeenCalled();
   });
 

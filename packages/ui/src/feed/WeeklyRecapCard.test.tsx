@@ -95,6 +95,7 @@ describe('the Weekly Recap card', () => {
   it('leaves XP and goal days out when the recap has none', async () => {
     await renderCard({ recap });
 
+    expect(screen.getByLabelText('marked known: 9 entries')).toBeTruthy();
     expect(screen.queryByText('XP')).toBeNull();
     expect(screen.queryByText('goal days')).toBeNull();
   });
@@ -132,9 +133,11 @@ describe('the Weekly Recap card', () => {
 
   it('has no «Share» without sharing, or while its numbers are not read', async () => {
     await renderCard({ recap });
+    expect(screen.getByLabelText('marked known: 9 entries')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
 
     await renderCard({ recap: undefined, onShare: jest.fn() });
+    expect(screen.getByText('Your week')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
   });
 
@@ -181,9 +184,11 @@ describe('the Weekly Recap card', () => {
 
   it('has no «Done» without a way to fold it, or while its numbers are not read', async () => {
     await renderCard({ recap });
+    expect(screen.getByLabelText('marked known: 9 entries')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Done' })).toBeNull();
 
     await renderCard({ recap: undefined, onDone: jest.fn() });
+    expect(screen.getByText('Your week')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Done' })).toBeNull();
   });
 });

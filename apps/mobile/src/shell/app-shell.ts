@@ -11,6 +11,7 @@ import {
   type Edition,
   type FeatureSwitch,
   type ReaderFacts,
+  type TrackedUserState,
 } from '@slovo/core';
 import { systemSchedule } from '@slovo/ui';
 import { getLocales } from 'expo-localization';
@@ -91,7 +92,11 @@ export function createShell(
   editionId: string,
   sources: DeviceSources = deviceSources(editionId),
 ): Shell {
-  const { userState } = sources;
+  const userState: Opening<TrackedUserState> = over(
+    sources.userState,
+    'Could not open the user state',
+    (opened) => opened.userState,
+  );
   const installId = over(userState, 'Could not read the Install id', (opened) =>
     readInstallId({ userState: opened, random: sources.random }),
   );
@@ -214,6 +219,10 @@ export function createShell(
   const languagePack = languagePackOpening({ remoteSwitches });
   const account = edition.isShippedOn('account')
     ? whileOn('account', 'Could not read the Session', async (opened) => {
+        // A user state in memory lacks the installed marker, which would end the reader's Session.
+        if ((await sources.userState.opened()).kind === 'in-memory') {
+          throw new Error('The user state opened in memory; the Account stays closed');
+        }
         openAccount = await openDeviceAccount(opened);
         return openAccount;
       })

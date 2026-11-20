@@ -138,7 +138,7 @@ describe('the media rows of a Patch', () => {
     const { api, contentUpdate } = await device();
     api.content.publishPatch(
       patchOf({
-        recordings: [recording(first.id, hashOf('a')), recording(second.id, hashOf('b'))],
+        recordings: [recording(first.id, hashOf('a'))],
         illustrations: [illustration(first.id, hashOf('c'))],
       }),
     );

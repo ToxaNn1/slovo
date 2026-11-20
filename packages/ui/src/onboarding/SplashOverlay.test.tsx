@@ -45,6 +45,14 @@ describe('SplashOverlay', () => {
     expect(screen.getAllByText(/^[SLOV]$/)).toHaveLength(5);
   });
 
+  it('reads as one element to VoiceOver: the wordmark, then the tagline', async () => {
+    await renderSplash(false);
+
+    const splash = screen.getByTestId('splash');
+    expect(splash).toHaveProp('accessible', true);
+    expect(splash).toHaveAccessibleName('SLOVO, rare words');
+  });
+
   it('draws the wordmark on an engine without Intl.Segmenter, as Hermes is', async () => {
     const segmenter = Object.getOwnPropertyDescriptor(Intl, 'Segmenter');
     Reflect.deleteProperty(Intl, 'Segmenter');

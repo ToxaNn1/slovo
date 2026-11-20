@@ -18,7 +18,8 @@ import { useEditionInEffect } from '../edition/remote-switches';
  * while Sync opens, when the Edition has none or it is turned off remotely, or
  * before a first sync has gone through. While the offline plate is on in
  * effect, a sync that finds no network shows the plate once and the
- * line keeps the last sync.
+ * line keeps the last sync. While the Account refuses this device's changes
+ * for good, the line keeps the last sync with no ✓.
  */
 export function SyncStatusLine() {
   const { sync } = useShell();
@@ -46,15 +47,14 @@ function Line({ sync }: { sync: Sync }) {
     clock: deviceClock,
   });
   if (line === undefined) return null;
-  const synced = !state.running && !state.offline;
   return (
     <View testID="account-sync-line" style={styles.line}>
-      {synced && (
+      {line.synced && (
         <Svg testID="account-sync-check" width={13} height={11} viewBox="0 0 26 22">
           <Polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill={tokens.colors.accent} />
         </Svg>
       )}
-      <Text style={[typeStyle('meta', tokens), { color: tokens.colors.muted }]}>{line}</Text>
+      <Text style={[typeStyle('meta', tokens), { color: tokens.colors.muted }]}>{line.text}</Text>
     </View>
   );
 }

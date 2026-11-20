@@ -29,6 +29,12 @@ const unsetSentry: SentryReader = {
 /** How long a read waits for Sentry before it answers unavailable. */
 const TIMEOUT_MS = 10_000;
 
+/**
+ * The most pages of new issues one read follows: 1000 issues, far past any
+ * limit Якість judges, so a crash storm does not spend Sentry's API limit.
+ */
+export const NEW_ISSUES_MAX_PAGES = 10;
+
 const RowSchema = z.record(z.string(), z.unknown());
 
 /** A Discover query's rows of its fields. */
@@ -174,7 +180,7 @@ export function createSentryApi({
     return { ok: true, value: field.startsWith('crash_free') ? value * 100 : value };
   }
 
-  /** The app issues first seen in the window, a page of 100 at a time. */
+  /** The app issues first seen in the window, a page of 100 at a time, up to `NEW_ISSUES_MAX_PAGES`. */
   async function newIssues(window: Window): Promise<SentryAnswer> {
     const params = {
       project: appProject,
@@ -185,9 +191,9 @@ export function createSentryApi({
       get('issues', cursor === null ? params : { ...params, cursor }, IssuesSchema);
     let answer = await page(null);
     let count = 0;
-    while (answer.ok) {
+    for (let pages = 1; answer.ok; pages += 1) {
       count += answer.body.length;
-      if (answer.next === null) return { ok: true, value: count };
+      if (answer.next === null || pages === NEW_ISSUES_MAX_PAGES) return { ok: true, value: count };
       answer = await page(answer.next);
     }
     return answer;

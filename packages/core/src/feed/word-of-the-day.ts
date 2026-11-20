@@ -148,7 +148,12 @@ export async function openWordOfTheDay({
         const unseen = cycle.unseen();
         let next = nextWordId(unseen.words, dayBefore, avoid);
         // Every Word is Seen, but the Cycle goes on while another kind is unseen.
-        if (next === undefined && unseen.corrections.length + unseen.idioms.length > 0) {
+        const othersUnseen =
+          unseen.corrections.length +
+          unseen.idioms.length +
+          unseen.synonymRows.length +
+          unseen.tips.length;
+        if (next === undefined && othersUnseen > 0) {
           next = wordAfter(cycle.order().words, dayBefore, avoid);
         }
         // Every Entry is Seen, so the day starts a new Cycle, where nothing is Seen.

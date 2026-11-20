@@ -5,7 +5,7 @@ import type { ComponentProps } from 'react';
 import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import { testStrings } from '../test-strings';
-import { coreTokens } from '../tokens';
+import { coreTokens, fontScaleCap } from '../tokens';
 
 const strings = testStrings({
   settings: {
@@ -59,6 +59,19 @@ describe('NarratorVoicePicker', () => {
     expect(screen.getByText('Female · calm')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Anna' })).not.toBeSelected();
     expect(screen.getByRole('button', { name: 'Ben' })).toBeSelected();
+  });
+
+  it("keeps a voice's name and description to its tile at the largest text sizes", async () => {
+    await draw();
+
+    expect(screen.getByText('Female · calm')).toHaveProp(
+      'maxFontSizeMultiplier',
+      fontScaleCap.text,
+    );
+    expect(screen.getByText('Anna', { includeHiddenElements: true })).toHaveProp(
+      'maxFontSizeMultiplier',
+      fontScaleCap.text,
+    );
   });
 
   it("draws the bars in the chosen voice's own height pattern", async () => {

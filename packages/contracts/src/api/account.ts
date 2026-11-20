@@ -171,7 +171,7 @@ export const accountContract = {
       path: '/account/me',
       summary: "Delete the Session's Account at once and for good",
       description:
-        'Its Sessions and sign-in methods go with it, and so does any Sign-in code waiting for its email. There is no grace period; the same email can sign in again to a new, empty Account.',
+        'Its Sessions, sign-in methods and the records Sync keeps of it in every Edition go with it, and so does any Sign-in code waiting for its email. There is no grace period; the same email can sign in again to a new, empty Account.',
       tags: ['account'],
     })
     .input(NoInputSchema)

@@ -3,7 +3,7 @@ import { createFileRoute } from '@tanstack/react-router';
 
 import { adminApi } from '../api';
 import { Button } from '../components/ui/button';
-import { ME_KEY } from '../session';
+import { forgetSignedOut } from '../session';
 import { formatMoment } from '../format';
 
 export const Route = createFileRoute('/sessions')({
@@ -16,7 +16,7 @@ function Sessions() {
   const sessions = useQuery({ queryKey: ['sessions'], queryFn: () => adminApi.sessions() });
   const everywhere = useMutation({
     mutationFn: () => adminApi.signOutEverywhere(),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ME_KEY }),
+    onSuccess: () => forgetSignedOut(queryClient),
   });
   return (
     <section aria-label="Мої сесії" className="flex flex-col gap-4">

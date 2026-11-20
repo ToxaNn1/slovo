@@ -488,6 +488,34 @@ describe('the Daily Goal', () => {
     expect(xpKeys(records)).toEqual([]);
   });
 
+  it('keeps today’s Words Seen when History is cleared, also after a restart', async () => {
+    const time = fakeClock('2026-10-14T08:00:00+03:00');
+    const { app, records } = await run({
+      on: dailyGoal,
+      time,
+      records: seen(['w_00', '2026-10-14T04:00:00.000Z'], ['w_01', '2026-10-13T20:00:00.000Z']),
+    });
+    await app.xpLog.setDailyGoal(3);
+    await look(app, time);
+    expect(app.xpLog.state.dailyGoal).toEqual({ goal: 3, seen: 2, met: false });
+
+    await app.history.clear();
+    await settle();
+    expect(app.history.list).toEqual([]);
+    expect(app.xpLog.state.dailyGoal).toEqual({ goal: 3, seen: 2, met: false });
+
+    const again = await run({ on: dailyGoal, time, records });
+    expect(again.app.xpLog.state.dailyGoal).toEqual({ goal: 3, seen: 2, met: false });
+    // The first card is the Word of the Day again, Seen before the clear; the next one is new.
+    await look(again.app, time);
+    await look(again.app, time);
+    expect(again.app.xpLog.state.dailyGoal).toEqual({ goal: 3, seen: 3, met: true });
+    // A second clear the same day adds to the first.
+    await again.app.history.clear();
+    await settle();
+    expect(again.app.xpLog.state.dailyGoal).toEqual({ goal: 3, seen: 3, met: true });
+  });
+
   it('counts today’s Words Seen, is met once they reach it, records it and fires the celebration once', async () => {
     const time = fakeClock('2026-10-14T08:00:00+03:00');
     const { app, records } = await run({
@@ -1176,6 +1204,37 @@ describe('the Daily Crossword solve in the XP log', () => {
     expect(award.amount).toBe(15);
     expect(app.xpLog.crosswordSolveOn('2026-10-14')).toEqual({ solveSeconds: 222, hinted: false });
   });
+
+  // Audit 1.4: a crossword opened before midnight and solved after is still that date's crossword.
+  it('counts a Daily Crossword solved after midnight toward the run of its own date', async () => {
+    const time = fakeClock('2026-10-13T23:50:00+03:00');
+    const run2: Edition['badges'] = [
+      {
+        id: 'crosswords-2',
+        name: 'Two in a row',
+        symbol: '2',
+        family: 'f',
+        conditionText: 'A condition',
+        condition: { kind: 'dailyCrosswordRun', days: 2 },
+      },
+    ];
+    const { app } = await run({ time, on: ['badges', 'dailyCrossword'], badges: run2 });
+    const solve = async (date: string) => {
+      app.xpLog.award({ source: 'daily-crossword', date }).commit();
+      await settle();
+    };
+    await solve('2026-10-13');
+    time.advance((24 * 60 + 13) * 60_000);
+
+    await solve('2026-10-14');
+
+    expect(app.badges.state.filter((badge) => badge.earned).map(({ id }) => id)).toEqual([
+      'crosswords-2',
+    ]);
+    // The XP is the day's it was earned on.
+    expect(app.xpLog.dayOf('2026-10-15').xp).toBe(15);
+    expect(app.xpLog.dayOf('2026-10-14').xp).toBe(0);
+  });
 });
 
 // Ticket #1876: a Progress reset is a reset marker in the XP log.
@@ -1255,6 +1314,28 @@ describe('the Progress reset', () => {
     expect(app.badges.state.filter((badge) => badge.earned).map(({ id }) => id)).toEqual([
       'win-words',
     ]);
+  });
+
+  // Audit 1.5: the id of a day's Review answer is made anew after a reset, as a met day's is.
+  it('earns the XP of a Review answer again after a reset the same day', async () => {
+    const time = fakeClock('2026-10-14T08:00:00+03:00');
+    const { app } = await run({ time, on: RESET_ON });
+    const answer = () => {
+      const award = app.xpLog.award({ source: 'review-answer', entryId: 'word-1' });
+      award.commit();
+      return award.amount;
+    };
+    const first = answer();
+    expect(first).toBeGreaterThan(0);
+    expect(answer()).toBe(0);
+    time.advance(60_000);
+    await app.xpLog.reset();
+    await settle();
+    time.advance(60_000);
+
+    expect(answer()).toBe(first);
+    expect(answer()).toBe(0);
+    expect(app.xpLog.state.total).toBe(first);
   });
 
   it('counts only the Entries confirmed after a reset toward a Badge, and keeps the confirmed Entries', async () => {

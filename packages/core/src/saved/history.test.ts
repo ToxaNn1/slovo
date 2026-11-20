@@ -306,6 +306,30 @@ describe('History', () => {
   });
 
   describe('clear', () => {
+    it('keeps the counts of the last week only, by local date, and adds a later clear to them', async () => {
+      const seenAt = (at: string) => JSON.stringify({ seenAt: at, wordOfTheDay: false });
+      const records = new Map([
+        // 2026-10-11 in Kyiv, and eight days before it.
+        ['history.w_one', seenAt('2026-10-10T21:30:00.000Z')],
+        ['history.c_one', seenAt('2026-10-11T05:00:00.000Z')],
+        ['history.w_two', seenAt('2026-10-03T12:00:00.000Z')],
+        ['historyCleared.2026-10-11', JSON.stringify({ entries: 4, words: 3 })],
+        ['historyCleared.2026-10-02', JSON.stringify({ entries: 9, words: 9 })],
+      ]);
+      const time = fakeClock('2026-10-11T12:00:00+03:00');
+      const app = await run({ records, clock: time.clock });
+      expect(app.history.cleared('2026-10-11')).toEqual({ entries: 4, words: 3 });
+
+      await app.history.clear();
+
+      expect(app.history.cleared('2026-10-11')).toEqual({ entries: 6, words: 4 });
+      expect(app.history.cleared('2026-10-03')).toEqual({ entries: 0, words: 0 });
+      expect(app.history.cleared('2026-10-02')).toEqual({ entries: 0, words: 0 });
+      expect([...records].filter(([key]) => key.startsWith('history'))).toEqual([
+        ['historyCleared.2026-10-11', JSON.stringify({ entries: 6, words: 4 })],
+      ]);
+    });
+
     it('deletes every History record at once and nothing else', async () => {
       const records = new Map<string, string>();
       const time = fakeClock();
@@ -323,7 +347,12 @@ describe('History', () => {
       await app.history.clear();
 
       expect(app.history.list).toEqual([]);
-      expect(records).toEqual(others);
+      // Beside the deletions, the write keeps how many Entries of the list were Seen that day.
+      const day = '2026-10-11';
+      expect(records).toEqual(
+        new Map([...others, [`historyCleared.${day}`, JSON.stringify({ entries: 2, words: 2 })]]),
+      );
+      expect(app.history.cleared(day)).toEqual({ entries: 2, words: 2 });
       expect(app.favorites.has('w_three')).toBe(true);
       expect((await run({ records, clock: time.clock })).history.list).toEqual([]);
     });

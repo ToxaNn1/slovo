@@ -194,17 +194,24 @@ export function createMediaImport({
       }
     }
 
-    const illustrated = new Map(
-      [...words].flatMap(([id, { illustration }]) =>
-        illustration === undefined ? [] : [[illustration, id] as const],
-      ),
-    );
+    // Each Illustration file's Words: one file is the Illustration of one Word.
+    const illustrated = new Map<string, string[]>();
+    for (const [id, { illustration }] of words) {
+      if (illustration !== undefined) {
+        illustrated.set(illustration, [...(illustrated.get(illustration) ?? []), id]);
+      }
+    }
     const illustrations: NewIllustration[] = [];
     for (const name of filesOf(join(editionDir, ILLUSTRATIONS_DIR))) {
       const path = `${ILLUSTRATIONS_DIR}/${name}`;
-      const wordId = illustrated.get(name);
+      const [wordId, ...others] = illustrated.get(name) ?? [];
       if (wordId === undefined) {
         problems.push(`${path}: no Word names this Illustration`);
+        continue;
+      }
+      if (others.length > 0) {
+        const named = [wordId, ...others].sort().join(', ');
+        problems.push(`${path}: more than one Word names this Illustration: ${named}`);
         continue;
       }
       const bytes = new Uint8Array(readFileSync(join(editionDir, path)));

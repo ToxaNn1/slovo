@@ -154,11 +154,15 @@ export function createMonitor({
       'activity-drop': async () => {
         const active = await activeByDay(shiftDay(yesterday, -7), yesterday);
         if (active === null) return [];
-        const before = [...active].filter(([key]) => key !== yesterday).map(([, count]) => count);
-        // Over the days PostHog has: an Edition younger than a week has fewer.
-        const average = before.reduce((sum, count) => sum + count, 0) / before.length;
+        const before = [...active].filter(([key]) => key !== yesterday);
+        // Over the days from the first PostHog has, so an Edition younger than a
+        // week has fewer; a quiet day after it, with no row, counts as 0.
+        const first = before.map(([key]) => key).sort()[0];
+        if (first === undefined) return [];
+        const days = (Date.parse(yesterday) - Date.parse(first)) / DAY;
+        const average = before.reduce((sum, [, count]) => sum + count, 0) / days;
         const people = active.get(yesterday) ?? 0;
-        if (before.length === 0 || people >= (average * (100 - t.activityDrop)) / 100) return [];
+        if (people >= (average * (100 - t.activityDrop)) / 100) return [];
         return [
           [
             {

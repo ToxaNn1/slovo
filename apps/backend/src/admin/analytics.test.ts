@@ -147,6 +147,21 @@ describe('the Аналітика reads', () => {
   });
 });
 
+describe('the Якість read', () => {
+  it('answers 404 for an Edition the backend does not serve, and asks Sentry nothing', async () => {
+    const { app, client, ids } = await analyticsBackend();
+
+    await expect(
+      client.admin.quality({ editionId: 'nowhere', period: '7d' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    expect(app.sentry.asked).toEqual([]);
+    await expect(client.admin.quality({ editionId: ids[0], period: '7d' })).resolves.toMatchObject({
+      capped: false,
+    });
+    expect(app.sentry.asked).not.toEqual([]);
+  });
+});
+
 /** Every key of the value, at any depth. */
 function keysOf(value: unknown): string[] {
   if (Array.isArray(value)) return value.flatMap(keysOf);

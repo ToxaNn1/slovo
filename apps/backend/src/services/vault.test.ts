@@ -54,4 +54,12 @@ describe('the Vault', () => {
     expect(() => on(createVault(randomBytes(32))).open(sealed)).toThrow();
     expect(() => vault.open(changed)).toThrow();
   });
+
+  it('refuses a value whose tag was cut short', () => {
+    const vault = on(createVault(randomBytes(32)));
+    const [iv = '', tag = '', body = ''] = vault.seal(secret).split('.');
+    const short = Buffer.from(tag, 'base64url').subarray(0, 4).toString('base64url');
+
+    expect(() => vault.open([iv, short, body].join('.'))).toThrow();
+  });
 });

@@ -202,6 +202,23 @@ describe('the Cron service', () => {
     });
   });
 
+  it('counts a quiet day PostHog has no row for as no one active', async () => {
+    const c = cron('2026-12-06T03:00:00Z');
+    c.posthog.answer('activeByDay', [
+      { key: '2026-11-28', count: 100 },
+      { key: '2026-12-04', count: 100 },
+      { key: '2026-12-05', count: 10 },
+    ]);
+    await c.run();
+    expect(c.alerts()).toContainEqual({
+      kind: 'activity-drop',
+      day: '2026-12-05',
+      active: 10,
+      average: 200 / 7,
+      threshold: 50,
+    });
+  });
+
   it('keeps the alerts of the other checks when one check throws, and logs it', async () => {
     const run = cron('2026-11-22T03:00:00Z');
     run.sentry('crashFree', 99.4);

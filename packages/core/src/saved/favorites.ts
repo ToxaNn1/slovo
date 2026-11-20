@@ -62,7 +62,8 @@ export async function openFavorites({
 }): Promise<Favorites> {
   const favorites = await openEntryList({
     records: userStateRecords.favorites,
-    timeKey: 'addedAt',
+    listed: (entryId, row, addedAt) => ({ entryId, row, addedAt }),
+    timeOf: (entry) => entry.addedAt,
     rows,
     userState,
     clock,

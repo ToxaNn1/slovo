@@ -17,7 +17,8 @@ import type { VerticalPagerHandle } from '@slovo/ui';
 import { act, waitFor } from '@testing-library/react-native';
 
 import { renderHookInApp } from '../shell/test-app';
-import { opened, testShell } from '../shell/test-support';
+import { openOnce } from '../opening';
+import { testShell } from '../shell/test-support';
 import { useFeed } from './feed';
 import { createWordOfTheDayLanding, type WordOfTheDayLanding } from './word-of-the-day-landing';
 import { activeEditionFiles } from '../edition/edition';
@@ -108,28 +109,38 @@ function fakePager() {
  * on the given clock, with a landing of its own.
  */
 async function openFeed(clock: Clock, kept: UserStateFacts = {}) {
-  composition = await openComposition({
-    content: createMemoryContentPort({
-      categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
-      words: Array.from({ length: 10 }, (_, i) => word(i)),
-    }),
-    edition: loadEdition(config),
-    // The reader is past the onboarding, which would cover the Feed.
-    userState: await seedUserState({ onboardingFinished: '2026-10-01T09:00:00Z', ...kept }),
-    clock,
-    random: systemRandom,
+  // The reader is past the onboarding, which would cover the Feed.
+  const userState = await seedUserState({ onboardingFinished: '2026-10-01T09:00:00Z', ...kept });
+  const content = createMemoryContentPort({
+    categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
+    words: Array.from({ length: 10 }, (_, i) => word(i)),
   });
+  // A reopen, as after a sync or a Patch, opens a new composition over the same user state.
+  const compositionOpening = openOnce(
+    async () => {
+      composition = await openComposition({
+        content,
+        edition: loadEdition(config),
+        userState,
+        clock,
+        random: systemRandom,
+      });
+      return composition;
+    },
+    { onError: () => undefined },
+  );
+  await compositionOpening.opened();
   const pager = fakePager();
   const ref = { current: pager };
   const landing = createWordOfTheDayLanding();
-  const shell = testShell({ composition: opened(composition) });
+  const shell = testShell({ composition: compositionOpening });
   const feed = await renderHookInApp(() => useFeed(ref, { clock, landing, voice: 'oksana' }), {
     shell,
   });
   await waitFor(() => {
     expect(feed.result.current.cards.length).toBeGreaterThan(1);
   });
-  return { feed, pager, landing };
+  return { feed, pager, landing, reopen: () => act(() => compositionOpening.reopen()) };
 }
 
 /** The local date `YYYY-MM-DD` whose Word of the Day `card` is, if it is one. */
@@ -220,5 +231,26 @@ describe('the «Слово дня» intent', () => {
     await ask(landing);
 
     expect(pager.page).toBe(0);
+  });
+
+  it('keeps the reader on the card they read on to when the composition reopens after a landing', async () => {
+    const clock = clockAt('2026-10-26T09:00:00Z');
+    const { feed, pager, landing, reopen } = await openFeed(clock);
+    await ask(landing);
+    expect(pager.page).toBe(0);
+    await act(() => {
+      feed.result.current.onCardChange(2);
+    });
+    pager.page = 2;
+    const before = composition;
+    const readOn = feed.result.current.cards[2]?.entryId;
+
+    await reopen();
+
+    expect(composition).not.toBe(before);
+    // The new Feed opens on the reader's card, wherever its cards put it, not on the landing.
+    expect(readOn).toBeDefined();
+    expect(feed.result.current.cards[pager.page ?? -1]?.entryId).toBe(readOn);
+    expect(pager.page).not.toBe(0);
   });
 });

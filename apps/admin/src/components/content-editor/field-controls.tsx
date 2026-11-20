@@ -11,6 +11,8 @@ import {
   isList,
   isObject,
   RARITY_LINES,
+  VOWEL,
+  withFieldValue,
 } from './kinds';
 
 const INPUT = 'rounded-lg border border-border bg-background px-3 py-2 text-sm';
@@ -18,9 +20,6 @@ const PILL =
   'rounded-full border border-border px-3 py-1 text-sm aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground';
 const SMALL_BUTTON =
   'self-start rounded-lg px-2 py-1 text-sm text-muted-foreground hover:text-foreground';
-
-/** The letters a Stress can fall on. */
-const VOWEL = /[аеєиіїоуюяaeiouy]/iu;
 
 /** A control whose value is one text or choice, labelled by a `<label>` beside it. */
 const isLeaf = (control: FieldControl) =>
@@ -405,7 +404,7 @@ function SubFields({
           categories={categories}
           editionId={editionId}
           onChange={(next) => {
-            onChange({ ...value, [field.name]: next });
+            onChange(withFieldValue(fields, value, field.name, next));
           }}
         />
       ))}

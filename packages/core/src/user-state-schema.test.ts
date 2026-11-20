@@ -397,6 +397,7 @@ const storedIn1_0: readonly (readonly [
   ['checkIns', '2026-10-30', 'mood.2026-10-30', '{"date":"2026-10-30","choice":"calm"}'],
   ['correctionsWorkedThrough', 'c-1', 'correctionsWorkedThrough.c-1', 'true'],
   ['curatedCollectionsOpened', 'cc-1', 'curatedCollections.opened.cc-1', 'true'],
+  ['historyCleared', '2026-10-30', 'historyCleared.2026-10-30', '{"entries":3,"words":2}'],
 ];
 
 describe('a user state kept by 1.0', () => {

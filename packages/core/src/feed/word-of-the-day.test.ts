@@ -18,6 +18,8 @@ async function open({
   words = wordIds,
   corrections = [],
   idioms = [],
+  synonymRows = [],
+  tips = [],
 }: {
   records?: Map<string, string>;
   port?: UserStatePort;
@@ -26,6 +28,8 @@ async function open({
   words?: readonly string[];
   corrections?: readonly string[];
   idioms?: readonly string[];
+  synonymRows?: readonly string[];
+  tips?: readonly string[];
 } = {}): Promise<{
   cycle: Cycle;
   wordOfTheDay: WordOfTheDay;
@@ -34,7 +38,7 @@ async function open({
   const userState = await openUserState({ port });
   const cycle = await openCycle({
     entries: {
-      eligible: () => Promise.resolve({ words, corrections, idioms, synonymRows: [], tips: [] }),
+      eligible: () => Promise.resolve({ words, corrections, idioms, synonymRows, tips }),
     },
     userState,
     random,
@@ -56,7 +60,12 @@ async function open({
 async function readOn(
   records: Map<string, string>,
   day: number,
-  others: { corrections?: readonly string[]; idioms?: readonly string[] } = {},
+  others: {
+    corrections?: readonly string[];
+    idioms?: readonly string[];
+    synonymRows?: readonly string[];
+    tips?: readonly string[];
+  } = {},
 ) {
   const clock = fakeClock(`2026-10-${String(day)}T09:00:00+03:00`).clock;
   const run = await open({ records, clock, ...others });
@@ -156,6 +165,8 @@ describe('the Word of the Day', () => {
     it.each([
       ['an Idiom', { idioms: ['i_0'] }],
       ['a Correction', { corrections: ['c_0'] }],
+      ['a Synonym Row', { synonymRows: ['s_0'] }],
+      ['a Tip', { tips: ['t_0'] }],
     ])(
       'keeps the Cycle while %s is unseen on a new day, with a Seen Word other than the day before',
       async (_kind, others) => {

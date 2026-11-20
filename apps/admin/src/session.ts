@@ -3,7 +3,7 @@ import {
   WrongCodeSchema,
   type AdminApiOutputs,
 } from '@slovo/contracts/admin-api';
-import { useQuery } from '@tanstack/react-query';
+import { type QueryClient, useQuery } from '@tanstack/react-query';
 
 import { adminApi } from './api';
 
@@ -12,6 +12,15 @@ export type SignedInAdmin = AdminApiOutputs['me'];
 
 /** The query key of the signed-in Admin user, which a sign-in or a sign-out refreshes. */
 export const ME_KEY = ['me'] as const;
+
+/**
+ * After a sign-out: drops every page the signed-out user loaded, so the next
+ * user of the tab never sees it, and asks again who is signed in.
+ */
+export async function forgetSignedOut(queryClient: QueryClient): Promise<void> {
+  queryClient.removeQueries({ predicate: ({ queryKey }) => queryKey[0] !== ME_KEY[0] });
+  await queryClient.invalidateQueries({ queryKey: ME_KEY });
+}
 
 /** The query of the Admin user of the session cookie: `null` without a session. */
 function useMe() {

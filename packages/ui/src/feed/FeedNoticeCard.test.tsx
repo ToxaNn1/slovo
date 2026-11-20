@@ -180,6 +180,7 @@ describe('the first-week card', () => {
 
   it('shows no Mascot before day 7', async () => {
     await renderFeed(<FirstWeekCard day={6} streak={undefined} />);
+    expect(screen.getByText('Check yourself')).toBeTruthy();
     expect(screen.queryByTestId('mascot-happy')).toBeNull();
   });
 
@@ -203,6 +204,17 @@ describe('the first-week card', () => {
     expect(screen.getByText('A week with us')).toBeTruthy();
     expect(screen.getByText('Thanks for staying! Come back for new words.')).toBeTruthy();
     expect(screen.queryByText(/streak/)).toBeNull();
+  });
+
+  it('has no «Got it» outside the Feed’s pager, where there is no next card', async () => {
+    await render(
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+        <FirstWeekCard day={1} streak={undefined} />
+      </EditionProvider>,
+    );
+
+    expect(screen.getByText('Know it or not?')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Got it' })).toBeNull();
   });
 
   it('turns to the next card on «Got it», as a swipe would, so it closes', async () => {

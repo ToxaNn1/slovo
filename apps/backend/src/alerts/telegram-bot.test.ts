@@ -42,6 +42,21 @@ describe('the Telegram bot', () => {
     expect(await bot(500).telegram.sendMessage(OWNER, 'hello')).toBe('failed');
   });
 
+  it('gives up on a Telegram that does not answer, so no alert holds its caller', async () => {
+    const signals: (AbortSignal | null | undefined)[] = [];
+    const telegram = createTelegramBot({
+      token: 'test-token',
+      chatId: OWNER,
+      fetch: (_url, init) => {
+        signals.push(init?.signal);
+        return Promise.reject(new DOMException('The operation timed out.', 'TimeoutError'));
+      },
+    });
+
+    expect(await telegram.sendMessage(OWNER, 'hello')).toBe('failed');
+    expect(signals).toEqual([expect.any(AbortSignal)]);
+  });
+
   it("sends the owner chat's messages to the configured chat alone", async () => {
     const { telegram, requests } = bot();
     const chat = createOwnerChat({ telegram, chatId: OWNER }, silentLogger);

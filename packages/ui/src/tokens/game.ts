@@ -181,8 +181,9 @@ export const crosswordLayout = {
 } as const;
 
 /**
- * The crossing Daily Crossword (board 08): a grid cell's side and
- * the gap between cells; how far a solved cell pops; the room above the clue
+ * The crossing Daily Crossword (board 08): a grid cell's side, the
+ * smallest side it shrinks to on a short screen, its letter still about a
+ * path chip's, and the gap between cells; how far a solved cell pops; the room above the clue
  * bar and above the path slot, and the slot's height, where the path chips or
  * the line on how to trace show; the Letter Wheel's side, the depth of its
  * disc's inner top edge, its tiles' side and corner radius, how far their
@@ -193,6 +194,7 @@ export const crosswordLayout = {
  */
 export const crossingCrosswordLayout = {
   cell: 54,
+  minCell: 30,
   cellGap: 7,
   pop: 1.12,
   clueGap: 14,

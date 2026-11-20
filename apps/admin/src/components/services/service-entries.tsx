@@ -230,27 +230,57 @@ function SealedValue({
     [],
   );
 
-  /** Runs the read, asking for the code first when the Vault is locked. */
-  const read = (how: 'reveal' | 'copy') => {
+  /** What a refused read leaves: the code asked for first when the Vault is locked, then `retry`. */
+  const refused = (error: unknown, retry: () => void) => {
+    if (codeOf(error) === 'LOCKED') {
+      askCode(retry);
+      return;
+    }
+    setNote(refusalOf(error));
+  };
+
+  const reveal = () => {
     setNote(undefined);
-    const call = how === 'reveal' ? adminApi.services.revealEntry : adminApi.services.copyEntry;
-    call({ id: entry.id })
-      .then(async ({ value }) => {
-        if (how === 'reveal') {
-          show(value);
-          return;
-        }
-        await navigator.clipboard.writeText(value);
-        setNote('Скопійовано');
+    adminApi.services
+      .revealEntry({ id: entry.id })
+      .then(({ value }) => {
+        show(value);
       })
       .catch((error: unknown) => {
-        if (codeOf(error) === 'LOCKED') {
-          askCode(() => {
-            read(how);
-          });
-          return;
-        }
-        setNote(refusalOf(error));
+        refused(error, reveal);
+      });
+  };
+
+  /**
+   * Copies the value without showing it. The clipboard write starts in the
+   * tap itself, with the value still on its way: a browser (Safari) allows a
+   * write in the user's gesture only, never after an awaited request.
+   */
+  const copy = () => {
+    setNote(undefined);
+    const value = adminApi.services.copyEntry({ id: entry.id }).then((read) => read.value);
+    const written =
+      typeof ClipboardItem === 'undefined'
+        ? value.then((text) => navigator.clipboard.writeText(text))
+        : navigator.clipboard.write([
+            new ClipboardItem({
+              'text/plain': value.then((text) => new Blob([text], { type: 'text/plain' })),
+            }),
+          ]);
+    Promise.all([value, written])
+      .then(() => {
+        setNote('Скопійовано');
+      })
+      .catch(() => {
+        // After the code, the retry runs outside the tap: a refused write asks for one more.
+        value.then(
+          () => {
+            setNote('Натисніть «Копіювати» ще раз.');
+          },
+          (failure: unknown) => {
+            refused(failure, copy);
+          },
+        );
       });
   };
 
@@ -259,7 +289,7 @@ function SealedValue({
       {shown === null ? (
         <span aria-label="Приховано">{MASK}</span>
       ) : (
-        <span className="font-mono break-all">{shown}</span>
+        <span className="font-mono break-all whitespace-pre-wrap">{shown}</span>
       )}
       {vaultOn ? (
         <div className="flex flex-wrap items-center gap-2">
@@ -267,7 +297,7 @@ function SealedValue({
             variant="secondary"
             size="sm"
             onClick={() => {
-              if (shown === null) read('reveal');
+              if (shown === null) reveal();
               else hide();
             }}
           >
@@ -277,7 +307,7 @@ function SealedValue({
             variant="secondary"
             size="sm"
             onClick={() => {
-              read('copy');
+              copy();
             }}
           >
             Копіювати
@@ -394,15 +424,28 @@ function EntryForm({
       </label>
       <label className="flex flex-col gap-1 text-sm">
         {entry !== undefined && sealed ? 'Нове значення (порожнє — без змін)' : 'Значення'}
-        <input
-          className={inputClass}
-          type={sealed ? 'password' : 'text'}
-          autoComplete="off"
-          value={value}
-          onChange={(event) => {
-            setValue(event.target.value);
-          }}
-        />
+        {type === 'recovery-codes' ? (
+          // A password field drops line breaks: the codes keep theirs, masked as one.
+          <textarea
+            className="min-h-24 rounded-lg border border-border bg-background px-3 py-2 font-mono text-sm [-webkit-text-security:disc]"
+            autoComplete="off"
+            spellCheck={false}
+            value={value}
+            onChange={(event) => {
+              setValue(event.target.value);
+            }}
+          />
+        ) : (
+          <input
+            className={inputClass}
+            type={sealed ? 'password' : 'text'}
+            autoComplete="off"
+            value={value}
+            onChange={(event) => {
+              setValue(event.target.value);
+            }}
+          />
+        )}
       </label>
       <label className="flex flex-col gap-1 text-sm">
         Де використовується

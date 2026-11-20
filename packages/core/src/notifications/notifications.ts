@@ -310,19 +310,25 @@ export async function openNotifications({
   }
 
   const inTurn = createInTurn();
-  const replan = () => inTurn(plan);
+  /**
+   * What a listener runs: a plan that fails, as when the device refuses to
+   * schedule, never leaves the module, so the day still turns and the app
+   * opens; the next change, return or day makes the plan again.
+   */
+  const following = (work: () => Promise<void>) => inTurn(work).catch(() => undefined);
+  const replan = () => following(plan);
   eligibility.subscribe(replan);
   dayTurned.subscribe(replan);
   returned.subscribe(replan);
   // The evening notifications follow the XP and the Streak: a change of what they say plans again.
   const replanEvening = () =>
-    inTurn(async () => {
+    following(async () => {
       if ((await planner.eveningKey(planTimes())) !== eveningKey) await plan();
     });
   xpLog.subscribe(() => void replanEvening());
   activeDays.subscribe(() => void replanEvening());
   seen.subscribe((entryId) =>
-    inTurn(async () => {
+    following(async () => {
       if (await planner.isReserved(entryId)) await plan();
     }),
   );

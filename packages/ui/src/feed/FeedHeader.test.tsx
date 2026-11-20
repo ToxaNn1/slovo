@@ -79,6 +79,7 @@ describe('FeedHeader', () => {
 
   it('keeps the wordmark a plain header without a way to the Dashboard', async () => {
     await renderHeader();
+    expect(screen.getByRole('header', { name: 'SLOVO' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'SLOVO, home' })).toBeNull();
   });
 });

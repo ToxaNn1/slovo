@@ -31,8 +31,8 @@ function statesOf(editionId: string) {
 }
 
 /** A backend over three Editions whose Rules a write replaces; the bodies of the writes, in order. */
-function threeEditions() {
-  const rules = new Map<string, Rule[]>(EDITIONS.map(({ id }) => [id, []]));
+function threeEditions(ukRules: Rule[] = []) {
+  const rules = new Map<string, Rule[]>(EDITIONS.map(({ id }) => [id, id === 'uk' ? ukRules : []]));
   const writes: unknown[] = [];
   const answer = (editionId: string) => ({
     states: statesOf(editionId),
@@ -149,6 +149,45 @@ test('a switch change asks for a reason, and a refused Rule names the switch it 
   expect(sent).toMatchObject([
     { rules: [{ verdict: 'off', targets: {} }], reason: 'badges go dark' },
   ]);
+});
+
+test('a switch change replaces the Rule for every reader in its place, so no shadowed Rule starts to decide', async () => {
+  threeEditions([
+    { id: 'r1', editionId: 'uk', feature: 'badges', order: 0, verdict: 'off', targets: {} },
+    {
+      id: 'r2',
+      editionId: 'uk',
+      feature: 'badges',
+      order: 1,
+      verdict: 'off',
+      targets: { channel: 'beta' },
+    },
+  ]);
+  const sent: unknown[] = [];
+  server.use(
+    override('setRules', async ({ request }) => {
+      sent.push(await request.json());
+      return FIXTURES.setRules;
+    }),
+  );
+  const user = userEvent.setup();
+  window.history.replaceState(null, '', '/admin/switches?edition=uk');
+  render(<Admin />);
+
+  await user.click(
+    (await rowOf('badges')).getByRole('switch', { name: 'badges у Рідкісні слова' }),
+  );
+  const dialog = within(await screen.findByRole('dialog'));
+  await user.type(dialog.getByRole('textbox', { name: 'Причина' }), 'badges back');
+  await user.click(dialog.getByRole('button', { name: 'Підтвердити' }));
+
+  await vi.waitFor(() => {
+    expect(sent).toMatchObject([
+      {
+        rules: [{ targets: {} }, { verdict: 'off', targets: { channel: 'beta' } }],
+      },
+    ]);
+  });
 });
 
 /** Opens a tab of Свічі. */

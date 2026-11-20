@@ -4,7 +4,13 @@ import type { GoogleSignInSheet } from '@slovo/core';
 /** What the sheet uses of Google's sign-in SDK for React Native. */
 export type GoogleSignInSdk = Pick<
   typeof GoogleSignin,
-  'configure' | 'signIn' | 'signOut' | 'revokeAccess'
+  | 'configure'
+  | 'signIn'
+  | 'signOut'
+  | 'revokeAccess'
+  | 'getCurrentUser'
+  | 'hasPreviousSignIn'
+  | 'signInSilently'
 >;
 
 /** The domain of the errors iOS gives when a request finds no network or loses it. */
@@ -29,20 +35,30 @@ function isNetworkError(error: unknown): boolean {
  * default scopes: the iOS SDK always adds `email` and `profile`, so no
  * narrower request is possible. Forgetting the sign-in signs out of the SDK,
  * which drops the Google user it keeps in the Keychain; revoking first takes
- * back the reader's grant at Google too. A failure of either changes nothing.
+ * back the reader's grant at Google too. After a restart the SDK holds no
+ * Google user until it restores the one it kept, so a revoke restores it
+ * first. A failure of any of them changes nothing.
  */
 export function createGoogleSignInSheet(
   sdk: GoogleSignInSdk,
   iosClientId: string,
 ): GoogleSignInSheet {
   let configured = false;
+  function configure() {
+    if (configured) return;
+    sdk.configure({ iosClientId });
+    configured = true;
+  }
+  /** Revokes the grant of the Google user the SDK holds, or of the one it kept from before a restart. */
+  async function revokeGrant() {
+    configure();
+    if (sdk.getCurrentUser() === null && sdk.hasPreviousSignIn()) await sdk.signInSilently();
+    await sdk.revokeAccess();
+  }
   return {
     async signIn() {
       try {
-        if (!configured) {
-          sdk.configure({ iosClientId });
-          configured = true;
-        }
+        configure();
         const response = await sdk.signIn();
         if (response.type === 'cancelled') return { ok: false, reason: 'cancelled' };
         const { idToken } = response.data;
@@ -52,7 +68,7 @@ export function createGoogleSignInSheet(
       }
     },
     async forget({ revoke }) {
-      if (revoke) await sdk.revokeAccess().catch(() => undefined);
+      if (revoke) await revokeGrant().catch(() => undefined);
       await sdk.signOut().catch(() => undefined);
     },
   };

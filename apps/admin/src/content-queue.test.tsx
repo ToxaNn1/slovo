@@ -276,6 +276,39 @@ test('the batches ticked one by one roll back newest first and count what they s
   ]);
 });
 
+test('a bulk write that fails half-way says what went through, and its retry sends only the rest', async () => {
+  threeBatches();
+  const received: string[] = [];
+  server.use(
+    override('contentQueue.review', ({ request }) => {
+      const path = new URL(request.url).pathname;
+      received.push(path);
+      return received.length === 2
+        ? refusal(500, { code: 'INTERNAL_SERVER_ERROR', status: 500 })
+        : QUEUE.review;
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  const batches = within(await screen.findByRole('region', { name: 'Пачки Агентів' }));
+
+  await user.click(await batches.findByRole('checkbox', { name: 'Вибрати всі' }));
+  await user.click(batches.getByRole('button', { name: 'Позначити перевіреними (3)' }));
+  await confirmWith('checked', 'Позначити перевіреними');
+
+  const dialog = within(screen.getByRole('dialog'));
+  expect((await dialog.findByRole('alert')).textContent).toContain(
+    'Позначено перевіреними 1 пачку з 3',
+  );
+  expect(batches.getByRole('checkbox', { name: /wave-a/ })).toHaveProperty('checked', false);
+  await user.click(dialog.getByRole('button', { name: 'Позначити перевіреними' }));
+
+  expect(await batches.findByText('Позначено перевіреними 2 пачки.')).toBeDefined();
+  const pathOf = (index: number) =>
+    `/v1/admin/content-queue/batches/${THREE[index]?.id ?? ''}/review`;
+  expect(received).toEqual([pathOf(0), pathOf(1), pathOf(1), pathOf(2)]);
+});
+
 test('a second click on «Вибрати всі» clears the selection', async () => {
   threeBatches();
   const user = userEvent.setup();

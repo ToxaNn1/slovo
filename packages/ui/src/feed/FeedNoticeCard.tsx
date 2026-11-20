@@ -17,6 +17,7 @@ import { Mascot } from '../primitives/Mascot';
 import {
   PagerScrollView,
   usePageTurnActions,
+  useIsInPager,
   useTurnToNextPage,
 } from '../primitives/VerticalPager';
 import { Wedge } from '../primitives/Wedge';
@@ -187,6 +188,7 @@ export function EnoughForTodayCard() {
   const { strings } = useEdition();
   const { message, body, keepGoing } = strings.feedNotices.enoughForToday;
   const turnToNext = useTurnToNextPage();
+  const inPager = useIsInPager();
   return (
     <FeedNoticeCard
       notice="enoughForToday"
@@ -195,16 +197,16 @@ export function EnoughForTodayCard() {
       title={message}
       message={fill(body, { n: String(ENOUGH_FOR_TODAY_SEEN) })}
       // Without the Feed's pager there is no next card to turn to, so no button.
-      {...(turnToNext === undefined
-        ? {}
-        : {
+      {...(inPager
+        ? {
             action: {
               label: keepGoing,
               onPress: () => {
-                turnToNext();
+                turnToNext?.();
               },
             },
-          })}
+          }
+        : {})}
     />
   );
 }
@@ -296,6 +298,7 @@ export function FirstWeekCard({
   const { close, days, lastDayTitle, lastDayText, lastDayTextNoStreak } =
     strings.feedNotices.firstWeek;
   const turnToNext = useTurnToNextPage();
+  const inPager = useIsInPager();
   const [day1, day2, day3, day4, day5, day6] = days;
   const cards: Record<FirstWeekDay, { readonly title: string; readonly text: string }> = {
     1: day1,
@@ -318,7 +321,10 @@ export function FirstWeekCard({
       mascot={day === 7 ? 'happy' : undefined}
       title={title}
       message={text}
-      action={{ variant: 'onAccent', label: close, onPress: () => turnToNext?.() }}
+      // Without the Feed's pager there is no next card to turn to, so no button.
+      {...(inPager
+        ? { action: { variant: 'onAccent', label: close, onPress: () => turnToNext?.() } }
+        : {})}
     />
   );
 }

@@ -166,6 +166,7 @@ describe('the goal-reached card', () => {
 
   it('names no Streak while the reader doesn’t see it', async () => {
     await renderFeed({ goal: 3, words: ['dawn'], streak: undefined });
+    expect(screen.getByText('dawn')).toBeTruthy();
     expect(screen.queryByTestId('goal-reached-streak')).toBeNull();
   });
 
@@ -183,6 +184,21 @@ describe('the goal-reached card', () => {
     expect(onIndexChange).toHaveBeenCalledWith(1);
     expect(screen.getByText('Next')).toBeTruthy();
     expect(screen.queryByTestId('goal-reached')).toBeNull();
+  });
+
+  it('has no button outside the Feed’s pager, where there is no next card', async () => {
+    await render(
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+        <HapticsProvider haptics={haptics}>
+          <GoalReachedCard goal={3} words={['a', 'b', 'c']} streak={undefined} />
+        </HapticsProvider>
+      </EditionProvider>,
+    );
+
+    expect(screen.getByText('Goal reached!', { includeHiddenElements: true })).toBeTruthy();
+    expect(
+      screen.queryByRole('button', { name: 'SCROLL ON', includeHiddenElements: true }),
+    ).toBeNull();
   });
 
   it('sets its label level with the arrow on iOS, where the board’s CSS centres the tight line', async () => {

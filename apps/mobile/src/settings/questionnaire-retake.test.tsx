@@ -182,6 +182,24 @@ describe('Settings › «Анкета: підлаштувати Стрічку»
     expect(composition.rarityRange.state).toEqual({ from: 2, to: 3 });
   });
 
+  it('logs why the last answers could not be read, and still shows the questions', async () => {
+    jest
+      .spyOn(composition.questionnaire, 'answers')
+      .mockRejectedValue(new Error('The user state is closed'));
+    const logged = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    await render();
+    screenSettled();
+
+    await press(settings.rows.questionnaire);
+
+    expect(screen.getByTestId('questionnaire-level-good')).toBeOnTheScreen();
+    expect(logged).toHaveBeenCalledWith(
+      'Could not read the last answers of the questionnaire',
+      expect.any(Error),
+    );
+    logged.mockRestore();
+  });
+
   it('applies the answers once when «ГОТОВО» is tapped twice before they are written', async () => {
     await render();
     screenSettled();
@@ -249,6 +267,28 @@ describe('The Feed Notice of a later question', () => {
     await press(feedNotices.laterQuestions.done);
 
     expect(composition.xpLog.state.dailyGoal?.goal).toBe(50);
+  });
+
+  it('settles «Пізніше» once when it is tapped twice before it is written', async () => {
+    await openWith(shippedEdition());
+    const write = composition.questionnaire.later.bind(composition.questionnaire);
+    let written: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => {
+      written = resolve;
+    });
+    // The write is held until both taps are in.
+    const later = jest
+      .spyOn(composition.questionnaire, 'later')
+      .mockImplementation((question) => held.then(() => write(question)));
+    await render('mixReview');
+
+    const button = screen.getByTestId('later-question-mixReview-later');
+    await fireEvent.press(button);
+    await fireEvent.press(button);
+    written();
+    await settle();
+
+    expect(later).toHaveBeenCalledTimes(1);
   });
 
   it('asks the self-rating on tiles as the Game’s options, and a tile pressed is picked and answers (owner, 16.11)', async () => {

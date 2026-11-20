@@ -14,6 +14,7 @@ import {
   type KindEditor,
   recordValueOf,
   shownOf,
+  withFieldValue,
 } from './kinds';
 
 type Fields = Record<string, unknown>;
@@ -273,7 +274,7 @@ export function RecordForm({
             error={fieldErrors[field.name]}
             fixed={appeared && field.control.type === 'publish-date'}
             onChange={(value) => {
-              setValues((previous) => ({ ...previous, [field.name]: value }));
+              setValues((previous) => withFieldValue(editor.fields, previous, field.name, value));
             }}
           />
         ))}

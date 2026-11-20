@@ -3,12 +3,20 @@ import { localDayOf, localTimeOf, type Clock, type SyncState } from '@slovo/core
 
 const twoDigits = (value: number) => String(value).padStart(2, '0');
 
+/** The status line's text, and whether it marks the words synced. */
+export interface SyncStatus {
+  readonly text: string;
+  /** Whether the last sync went through: none runs, and none found no network or was refused. */
+  readonly synced: boolean;
+}
+
 /**
  * The status line under the email of the SLOVO ID screen: that a sync runs,
  * or when the words were last synced (the time today, or the date, with the
  * year only in another year). The offline plate says there is no network,
- * so the line gives the last sync then too. Nothing before a first
- * sync has gone through.
+ * so the line gives the last sync then too. While the Account refuses this
+ * device's changes for good (`refused`) the line gives the last sync and
+ * marks nothing synced. Nothing before a first sync has gone through.
  */
 export function syncStatusLine({
   state,
@@ -21,12 +29,24 @@ export function syncStatusLine({
   /** The short month names, as the line abbreviates them. */
   months: EditionStrings['dates']['shortMonths'];
   clock: Clock;
-}): string | undefined {
-  if (state.running) return strings.syncing;
+}): SyncStatus | undefined {
+  if (state.running) return { text: strings.syncing, synced: false };
   if (state.syncedAt === undefined) return undefined;
-  const { date, daysAgo } = localDayOf(state.syncedAt, clock);
+  return {
+    text: lastSync(state.syncedAt, strings, months, clock),
+    synced: !state.offline && !state.refused,
+  };
+}
+
+function lastSync(
+  syncedAt: Date,
+  strings: EditionStrings['account']['sync'],
+  months: EditionStrings['dates']['shortMonths'],
+  clock: Clock,
+): string {
+  const { date, daysAgo } = localDayOf(syncedAt, clock);
   if (daysAgo === 0) {
-    const { hour, minute } = localTimeOf(state.syncedAt, clock);
+    const { hour, minute } = localTimeOf(syncedAt, clock);
     return fill(strings.syncedToday, { time: `${twoDigits(hour)}:${twoDigits(minute)}` });
   }
   const day = String(date.day);

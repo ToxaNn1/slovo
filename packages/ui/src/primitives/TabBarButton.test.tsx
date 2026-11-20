@@ -1,4 +1,4 @@
-import { EditionProvider, ReduceMotionProvider, TabBarButton } from '@slovo/ui';
+import { EditionProvider, fontScaleCap, ReduceMotionProvider, TabBarButton } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
@@ -73,6 +73,12 @@ describe('TabBarButton', () => {
     expect(tab).toBeSelected();
     expect(screen.getByText('Saved')).toBeTruthy();
     expect(indicator().scaleX).toBe(1);
+  });
+
+  it('keeps its label to the tab bar at the largest text sizes', async () => {
+    await renderTab({ selected: false });
+
+    expect(screen.getByText('Saved')).toHaveProp('maxFontSizeMultiplier', fontScaleCap.number);
   });
 
   it('stretches the indicator in when the tab becomes selected', async () => {

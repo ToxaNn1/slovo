@@ -277,14 +277,30 @@ function amountOf(table: XpTable, action: XpAction, reviewToday: number): number
 const crosswordIdOf = (date: string) => `daily-crossword-${date}`;
 
 /**
+ * The date of the Daily Crossword a record's id names. A crossword opened
+ * before midnight and solved after is still its own date's, while its XP is
+ * the day's it was earned on, so the run of crosswords reads the id and not
+ * the record's date.
+ */
+const crosswordDateOf = (id: string): string | undefined =>
+  /^daily-crossword-(\d{4}-\d{2}-\d{2})$/.exec(id)?.[1];
+
+/**
  * The id of the action's record. The Daily Crossword of a date has one, and
  * so has the Review answer of an Entry on `today`, so a second award is
  * refused, after a restart too, and two devices' awards merge into one
- * record; any other action's id is new, made by `newId`.
+ * record; any other action's id is new, made by `newId`. The Review answer's
+ * is `scoped`, so the answer earns again after a Progress reset the same day.
+ * The Daily Crossword's is not: a reset leaves the crossword solved, and it
+ * stays one solve a day.
  */
-function fixedIdOf(action: XpAction, today: string): string | undefined {
+function fixedIdOf(
+  action: XpAction,
+  today: string,
+  scoped: (id: string) => string,
+): string | undefined {
   if (action.source === 'daily-crossword') return crosswordIdOf(action.date);
-  if (action.source === 'review-answer') return `review-answer-${today}-${action.entryId}`;
+  if (action.source === 'review-answer') return scoped(`review-answer-${today}-${action.entryId}`);
   return undefined;
 }
 
@@ -302,7 +318,7 @@ export async function openXpLog({
   edition: Pick<Edition, 'isFeatureEnabled' | 'xp' | 'levels'>;
   userState: Pick<UserState, 'list' | 'write'>;
   /** The Entries Seen, whose Words today count toward the Daily Goal. */
-  history: Pick<History, 'list' | 'subscribe'>;
+  history: Pick<History, 'list' | 'subscribe' | 'cleared'>;
   /** Whether a Word Seen now may be Seen for the first time: only in the first Cycle. */
   isFirstCycle: () => boolean;
   clock: Clock;
@@ -482,13 +498,13 @@ export async function openXpLog({
   }
 
   /**
-   * The Words Seen today. History is newest first, so the count stops at the
-   * first Entry Seen before today; an Entry ahead of today, after the clock
-   * moved back, is not today's.
+   * The Words Seen today, those a clear took out of History included. History
+   * is newest first, so the count stops at the first Entry Seen before today;
+   * an Entry ahead of today, after the clock moved back, is not today's.
    */
   function seenToday(): number {
     const { start, end } = todayBounds(clock);
-    let seen = 0;
+    let seen = history.cleared(todayKey(clock)).words;
     for (const { seenAt, row } of history.list) {
       const time = seenAt.getTime();
       if (time < start) break;
@@ -599,7 +615,7 @@ export async function openXpLog({
               break;
             }
             case 'daily-crossword':
-              crosswords.add(record.date);
+              crosswords.add(crosswordDateOf(id) ?? record.date);
           }
           const amount = count(record);
           total += amount;
@@ -757,7 +773,7 @@ export async function openXpLog({
   }
 
   function award(action: XpAction): XpAward {
-    const fixedId = fixedIdOf(action, todayKey(clock));
+    const fixedId = fixedIdOf(action, todayKey(clock), scoped);
     if (!on || (fixedId !== undefined && records.has(fixedId))) return NOTHING_EARNED;
     const amount = amountOf(edition.xp, action, derived.reviewToday);
     if (amount === 0) return NOTHING_EARNED;

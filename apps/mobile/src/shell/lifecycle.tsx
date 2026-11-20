@@ -105,6 +105,8 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
   // While the app is in the foreground it checks for a Patch at once and every 15 minutes (ADR 0090).
   let stopFollowing: () => void = () => undefined;
   let unsubscribePatches: () => void = () => undefined;
+  /** Whether the app is in the background as of the last moment, which a check started before it must not follow into. */
+  let inBackground = false;
   reports.listen(languagePack, ({ contentUpdate }, moment) => {
     if (contentUpdate === undefined) return;
     if (moment === 'launch') {
@@ -114,13 +116,15 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
       });
     }
     if (moment === 'background') {
+      inBackground = true;
       stopFollowing();
       return;
     }
     if (moment !== 'launch' && moment !== 'return') return;
+    inBackground = false;
     isOnInEffect('contentUpdates')
       .then(async (on) => {
-        if (!on) return;
+        if (!on || inBackground) return;
         stopFollowing();
         stopFollowing = contentUpdate.followForeground();
         await contentUpdate.checkForUpdate();

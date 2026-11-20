@@ -299,6 +299,10 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
       <Tabs.Screen name="correction-type/[type]" options={offTabs} />
       {/* A Curated Collection's screen, from its card on the Dashboard; no tab leads to it. */}
       <Tabs.Screen name="curated-collection/[collectionId]" options={offTabs} />
+      {/* All Curated Collections, from «SLOVO пропонує»; no tab leads to them. */}
+      <Tabs.Screen name="curated-collections" options={offTabs} />
+      {/* A Curated Collection's Feed, from a Word of its screen; no tab leads to it. */}
+      <Tabs.Screen name="curated-collection-feed/[collectionId]" options={offTabs} />
       {/*
         The Categories (k1, k2) and a Category's screen (k3), from the Dashboard; no tab
         leads to them. A route left out here would be a hidden tab that sends its focus
