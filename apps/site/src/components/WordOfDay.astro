@@ -4,7 +4,7 @@ import { siteWords } from '../site-words';
 import { wordOfDay } from '../word-of-day';
 import { grammarLine, lemmaParts, rarityBars } from '../word-page';
 
-/** The site's one Word of the Day, picked by the date in Kyiv the site is built on (ADR 0149). */
+/** The site's one Word of the Day, picked by the date in Kyiv the site is built on. */
 const { words, pathOf } = await siteWords();
 const word = wordOfDay(words, new Date());
 if (word === undefined) throw new Error('No live Word is rare enough to be the Word of the Day.');

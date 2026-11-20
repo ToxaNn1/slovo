@@ -22,7 +22,7 @@ export interface QuestionnaireOption {
 export type OptionQuestion = QuestionnaireQuestion | 'selfRating';
 
 /**
- * The questionnaire (ADR 0067) past the onboarding: the later questions its
+ * The questionnaire past the onboarding: the later questions its
  * Feed Notices ask, one a local day, each once, and the retake in Settings.
  * Each answer to a later question closes its Feed Notice for the day and is
  * an Analytics event.
@@ -32,9 +32,9 @@ export interface Questionnaire {
   readonly options: Readonly<Record<OptionQuestion, readonly QuestionnaireOption[]>>;
   /**
    * Answers the question with the option `answerId`: «Рівень» sets nothing
-   * (ADR 0183; its «Не знаю» option, which opens the Rarity Test in the
+   * (its «Не знаю» option, which opens the Rarity Test in the
    * onboarding, is no option here), «Навіщо» the Mix kind weights, the self-rating only
-   * whether the Rarity Test is offered (ADR 0072). Resolves to whether
+   * whether the Rarity Test is offered. Resolves to whether
    * `answerId` is an option of it.
    */
   answer(question: OptionQuestion, answerId: string): Promise<boolean>;
@@ -64,7 +64,7 @@ interface Deps {
  * questionnaire: «Навіщо» sets the Mix kind weights by the Edition's mapping.
  * Resolves to whether `answerId` is an option of it. «Рівень» and the
  * self-rating set nothing: the Rarity Range is the reader's and the Rarity
- * Test's alone (ADR 0183), and the self-rating only decides whether to offer
+ * Test's alone, and the self-rating only decides whether to offer
  * the Rarity Test. An option answered is kept as the question's last answer.
  */
 export async function applyAnswer(

@@ -11,6 +11,6 @@ export const SynonymRowCardStringsSchema = z.strictObject({
   concealedHeading: TextSchema,
   /** The line naming the row's sources, with {source}. */
   source: TextSchema,
-  /** The name of a page of members on the tabbed card, with {page} and {pages}, e.g. "Ряд · 1/2" (ADR 0114). */
+  /** The name of a page of members on the tabbed card, with {page} and {pages}, e.g. "Ряд · 1/2". */
   page: TextSchema,
 });

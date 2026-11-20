@@ -1,6 +1,6 @@
 /**
  * The quote check's matching: whether a record's quoted text is on its first
- * source's page (ADR 0084). Pure; the caller fetches the page. The Content CLI's
+ * source's page. Pure; the caller fetches the page. The Content CLI's
  * `verify` and the backend's quote check job both match through it.
  */
 import { STRESS_MARK } from '@slovo/contracts';
@@ -8,7 +8,7 @@ import { parse } from 'node-html-parser';
 
 const GOROH_HOST = 'goroh.pp.ua';
 
-/** goroh's name for text a language model wrote; it is never quoted (ADR 0012). */
+/** goroh's name for text a language model wrote; it is never quoted. */
 export const LANGUAGE_MODEL = 'Велика мовна модель';
 
 /** One article block of a goroh page. */
@@ -159,7 +159,7 @@ interface QuoteSources {
   readonly sources: readonly { readonly url?: string | undefined }[];
 }
 
-/** The text a record quotes from its first source (ADR 0084). */
+/** The text a record quotes from its first source. */
 export function quotedTextOf(record: QuotedRecord): string {
   switch (record.kind) {
     case 'word':

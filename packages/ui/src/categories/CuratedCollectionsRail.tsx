@@ -16,7 +16,7 @@ import {
 import { RailHeader } from '../dashboard/RailHeader';
 
 /**
- * The «SLOVO пропонує» rail of the Dashboard (ADR 0076, 0178), drawn as the
+ * The «SLOVO пропонує» rail of the Dashboard, drawn as the
  * Categories rail: its title with the count of every collection published by
  * today over a horizontal row of Category tiles, one per card, the tones by
  * position. A tile draws the pictogram of the Category its collection names,
@@ -77,7 +77,7 @@ export function CuratedCollectionsRail({
 }
 
 /**
- * The grid of every Curated Collection published by today (ADR 0178), drawn
+ * The grid of every Curated Collection published by today, drawn
  * as the Categories' grid k1: its title with their number, three columns of
  * the rail's tiles in the given order, each with its pictogram, count of
  * Entries and marks; a tap opens its screen.
@@ -141,7 +141,7 @@ function shapesOf(pictogram: CuratedCollectionPictogram | undefined) {
 
 /**
  * The glyph of a Curated Collection's screen hero: the big shape its tile
- * draws, else a circle (ADR 0178).
+ * draws, else a circle.
  */
 export function curatedCollectionGlyph(
   pictogram: CuratedCollectionPictogram | undefined,

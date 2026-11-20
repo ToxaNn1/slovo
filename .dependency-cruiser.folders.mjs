@@ -15,7 +15,7 @@ export default {
     {
       name: 'domain-folders-import-one-way',
       comment:
-        'ADR 0027, 0053: the domain folders of a package import each other in one ' +
+        'The domain folders of a package import each other in one ' +
         'direction, so a cycle between two folders means a module sits in the wrong one.',
       severity: 'error',
       scope: 'folder',

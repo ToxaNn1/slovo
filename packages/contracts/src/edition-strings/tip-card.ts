@@ -13,8 +13,8 @@ export const TipCardStringsSchema = z.strictObject({
   /** What VoiceOver reads for the title, e.g. "Порада: {title}". */
   heading: templateOf('title'),
   /**
-   * The names of the Tip card's tabs (ADR 0091), e.g. "Правило"; "Винятки"
-   * only on a Tip with exceptions, while `tipExceptions` is on (ADR 0120).
+   * The names of the Tip card's tabs, e.g. "Правило"; "Винятки"
+   * only on a Tip with exceptions, while `tipExceptions` is on.
    */
   tabs: z.strictObject({ rule: TextSchema, exceptions: TextSchema }),
 });

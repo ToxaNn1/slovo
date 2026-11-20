@@ -39,7 +39,7 @@ import { useCardFeatures } from './card-features';
  * only the sections the Core put in the card. VoiceOver reads the expression
  * with its kind, then its Definition. Under Self-check it keeps the
  * kicker and the expression; the Entry card draws the button that reveals the
- * rest under them. The rest sits in the tabs «Суть», «Звідки» and «Приклад» (ADR 0091).
+ * rest under them. The rest sits in the tabs «Суть», «Звідки» and «Приклад».
  */
 export function IdiomCardBody({
   card,
@@ -69,7 +69,7 @@ export function IdiomCardBody({
   // The headline's letters fly in as the card reveals.
   const flying = useFlyingText();
   const idiomType = strings.idiomTypes[card.idiomType];
-  // The expression starts at its step of the cards' one title scale (ADR 0157).
+  // The expression starts at its step of the cards' one title scale.
   const expressionSize = titleSize('idiomExpression', lemmaSize);
 
   return (
@@ -97,7 +97,7 @@ export function IdiomCardBody({
               typeRole="idiomExpression"
               testID="idiom-expression"
               stepped
-              // A title of 36 or more keeps its size at every OS text size (ADR 0157).
+              // A title of 36 or more keeps its size at every OS text size.
               allowFontScaling={false}
               lines={3}
               style={[typeStyle('idiomExpression', tokens), { color: colors.ink }]}
@@ -125,7 +125,7 @@ export function IdiomCardBody({
   );
 }
 
-/** What the selected tab of an Idiom card shows (ADR 0091). */
+/** What the selected tab of an Idiom card shows. */
 function IdiomTabContent({ tab, sourceTab }: { tab: IdiomTab; sourceTab: boolean }) {
   const tokens = useTokens();
   const { colors } = tokens;

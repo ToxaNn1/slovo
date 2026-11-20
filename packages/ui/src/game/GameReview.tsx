@@ -7,7 +7,7 @@ import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { fontScaleCap, minTouchTarget, reviewMark, space, typeStyle } from '../tokens';
 
 /**
- * The Game Review under the result, «Огляд раундів» (spec #1880, D11; ADR 0139): every Round of the
+ * The Game Review under the result, «Огляд раундів» (spec #1880, D11): every Round of the
  * Game just over, in order, as the Core's rows, a red ✓ or an ink ✗ and
  * the word. A row neither expands nor opens the Entry; VoiceOver reads its
  * number, its word and whether it was right.

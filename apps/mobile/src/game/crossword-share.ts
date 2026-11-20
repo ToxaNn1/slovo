@@ -13,7 +13,7 @@ const daysOf = (date: string) => {
   return Math.round(Date.UTC(year, month - 1, day) / DAY_MS);
 };
 
-/** The day the crossing Daily Crossword counts from: its №1 (ADR 0087). */
+/** The day the crossing Daily Crossword counts from: its №1. */
 const FIRST_DAY = daysOf('2026-01-01');
 
 /** What one cell of the grid becomes in the shared text: a Word's cell in red, a block in black. */
@@ -39,7 +39,7 @@ export interface CrosswordShare {
   readonly message: string;
 }
 
-/** The solved screen's grid, share line and shared text of today's solve (ADR 0087). */
+/** The solved screen's grid, share line and shared text of today's solve. */
 export function crosswordShare(
   { puzzle, cells }: Pick<CrossingCrosswordPlay, 'puzzle' | 'cells'>,
   { solveSeconds, hinted }: CrosswordSolve,

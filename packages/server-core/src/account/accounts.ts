@@ -129,8 +129,8 @@ export interface Accounts {
    */
   delete(session: Session): Promise<void>;
   /**
-   * One page from 1 of every Account, newest first, for the owner admin alone
-   * (ADR 0162), which names Accounts other than the Session's own; a `search`
+   * One page from 1 of every Account, newest first, for the owner admin alone,
+   * which names Accounts other than the Session's own; a `search`
    * keeps those whose email holds it, in any case. Past the last page it
    * lists none.
    */
@@ -138,19 +138,19 @@ export interface Accounts {
   /**
    * The Account of the id with, for every Edition it syncs, the records Sync
    * keeps of it in the order they were kept, tombstones left out; for the
-   * owner admin alone (ADR 0162), which reads them and never changes them.
+   * owner admin alone, which reads them and never changes them.
    * None when no Account has the id.
    */
   get(accountId: string): Promise<AccountWithRecords | undefined>;
   /**
    * Deletes the email's Account as `delete` does a Session's, for the owner
-   * admin alone (ADR 0127), and answers the Account deleted; none, and
+   * admin alone, and answers the Account deleted; none, and
    * nothing changes, when the email has no Account.
    */
   deleteByEmail(email: string): Promise<AccountRecord | undefined>;
 }
 
-/** An Account as the owner admin opens it, with the records Sync keeps of it per Edition (ADR 0162). */
+/** An Account as the owner admin opens it, with the records Sync keeps of it per Edition. */
 export interface AccountWithRecords extends ReaderAccount {
   readonly editions: readonly {
     readonly editionId: string;

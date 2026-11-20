@@ -11,11 +11,11 @@ import { dashboard, moodTile, typeStyle } from '../tokens';
 import { BlockTitle } from './BlockTitle';
 
 /**
- * The Mood check-in of the Dashboard (ADR 0076), from the board: «Як
+ * The Mood check-in of the Dashboard, from the board: «Як
  * настрій?» with «Mood дня» at the end, over a tile for each Mood, two to a
- * row (an odd last tile keeps half a row) or three in one row (ADR 0192), each with its own red mark. A tap chooses the Mood, or changes it, and
+ * row (an odd last tile keeps half a row) or three in one row, each with its own red mark. A tap chooses the Mood, or changes it, and
  * a toast says its reply; the chosen tile turns red. While the block carries
- * the chosen Mood's effect (ADR 0185), a line under the tiles says it and a
+ * the chosen Mood's effect, a line under the tiles says it and a
  * tap on the chosen tile unpicks the Mood, with no toast; VoiceOver hints it. It needs an
  * `UndoToastProvider` above it.
  */

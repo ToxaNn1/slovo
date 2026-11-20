@@ -8,8 +8,8 @@ export interface CategoryFeedPage {
 }
 
 /**
- * The page at `position` of a Category's Feed opened on the Word `from`
- * (ADR 0110): the Category's Words in Language Pack order, from `from` on
+ * The page at `position` of a Category's Feed opened on the Word `from`:
+ * the Category's Words in Language Pack order, from `from` on
  * and round again after the last, endlessly. A `from` the Category no longer
  * holds opens on its first Word; a Category with no Words has no page.
  */

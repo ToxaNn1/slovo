@@ -1,7 +1,7 @@
 /**
  * The Core's public interface. Every Edition reaches Core behaviour through
  * this module only (ADR 0006). It exports only what the non-test code of the
- * rest of the workspace imports (ADR 0018, 0027; `scripts/core-exports.mjs`
+ * rest of the workspace imports (`scripts/core-exports.mjs`
  * checks it); what only tests need sits behind `@slovo/core/testing`.
  */
 export type { Example, FeatureSwitch } from '@slovo/contracts';

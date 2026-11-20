@@ -39,11 +39,11 @@ const DEFAULT_QUICK_QUESTION_EVERY: QuickQuestionEvery = 10;
 
 /** One list of Categories in the Mix, the Words' or the Corrections', as it stands. */
 export interface CategoriesInMix {
-  /** Every Category of the list in the Language Pack, in or out of the Mix, with its display name, in its order (ADR 0033). */
+  /** Every Category of the list in the Language Pack, in or out of the Mix, with its display name, in its order. */
   readonly allCategories: readonly Category[];
   /** The Categories in the Mix, by id, in the Language Pack's order. */
   readonly categoryIds: readonly string[];
-  /** The Hidden Categories: the Categories out of the Mix, in the Language Pack's order (ADR 0019). */
+  /** The Hidden Categories: the Categories out of the Mix, in the Language Pack's order. */
   readonly hiddenCategories: readonly Category[];
   /** The one Category left in the Mix, which can't be taken out; nothing while more are in. */
   readonly lastCategoryId: string | undefined;
@@ -52,10 +52,10 @@ export interface CategoriesInMix {
 /**
  * The Mix as it stands. The Words' Categories are the Mix's own fields; the
  * Categories of Corrections sit under `correctionCategories`, with the same
- * rules (ADR 0033). `categoriesInMix` reads either list by kind.
+ * rules. `categoriesInMix` reads either list by kind.
  */
 export interface MixState extends CategoriesInMix {
-  /** The Categories of Corrections, in or out one by one under Corrections as a whole (ADR 0033). */
+  /** The Categories of Corrections, in or out one by one under Corrections as a whole. */
   readonly correctionCategories: CategoriesInMix;
   /** Whether each kind of Entry, as a whole, is in the Mix: Corrections, Idioms, Synonym Rows and Tips. */
   readonly kinds: KindsInMix;
@@ -71,7 +71,7 @@ export interface MixState extends CategoriesInMix {
 /** What a hide or an unhide is for: one Entry, one Category, or a kind of Entry (Corrections, Idioms, Synonym Rows, Tips) as a whole. */
 export type HideTarget =
   | { readonly kind: 'entry'; readonly entryId: string }
-  /** A Category of the Words' list, or of the Corrections' when `of` says so (ADR 0033). */
+  /** A Category of the Words' list, or of the Corrections' when `of` says so. */
   | { readonly kind: 'category'; readonly categoryId: string; readonly of?: CategoryKind }
   | { readonly kind: 'whole-kind'; readonly entryKind: MixKind };
 
@@ -98,7 +98,7 @@ export type HideOption =
     }
   /**
    * The last Category of Corrections in the Mix: offered, as Corrections as
-   * a whole can still be hidden beside it, but it can't be chosen (ADR 0019).
+   * a whole can still be hidden beside it, but it can't be chosen.
    */
   | {
       readonly kind: 'last-category';
@@ -113,7 +113,7 @@ export type HideOption =
 /** What is out of the Mix, for the Hidden screen. */
 export interface OutOfMix {
   /**
-   * The Hidden Categories, the Words' and then the Corrections' (ADR 0033),
+   * The Hidden Categories, the Words' and then the Corrections',
    * each in the Language Pack's order. The Corrections' are left out while
    * Corrections as a whole are not shown.
    */
@@ -122,7 +122,7 @@ export interface OutOfMix {
   readonly kinds: readonly MixKind[];
 }
 
-/** A Category's chip on the Mix screen: where it stands, the last one's chip being the one that can't be turned off (ADR 0019). */
+/** A Category's chip on the Mix screen: where it stands, the last one's chip being the one that can't be turned off. */
 export interface MixChip {
   readonly category: Category;
   readonly place: Exclude<CategoryPlace, undefined>;
@@ -136,7 +136,7 @@ export interface MixScreen {
   readonly allOn: boolean;
   /** The switch of each kind of Entry as a whole the Edition turns on, in the Mix's order. */
   readonly kinds: readonly { readonly entryKind: MixKind; readonly on: boolean }[];
-  /** The chips of the Categories of Corrections (ADR 0033), left out while Corrections are not shown. */
+  /** The chips of the Categories of Corrections, left out while Corrections are not shown. */
   readonly correctionCategories: readonly MixChip[] | undefined;
   /** The Mix kind weight of each kind, left out while the Edition turns its mixKindWeights switch off. */
   readonly kindWeights: MixKindWeights | undefined;
@@ -145,9 +145,8 @@ export interface MixScreen {
 /**
  * The Mix: the Categories, plus each other kind of Entry as a whole, the
  * user chose to see in everything new; the Rarity Range is a setting apart
- * from it (ADR 0072). A Category out of the Mix is a Hidden Category, so the
- * Mix screen, the hide action and the Hidden screen all change it here (ADR
- * 0019). Read from the user state once, when it opens, like the Cycle, so
+ * from it. A Category out of the Mix is a Hidden Category, so the
+ * Mix screen, the hide action and the Hidden screen all change it here. Read from the user state once, when it opens, like the Cycle, so
  * open one per app session (the Core composition does). A change is made in
  * memory only once it is written.
  */
@@ -168,8 +167,8 @@ export interface Mix {
    * Puts the Category of the kind's list, the Words' unless given, in the Mix
    * (`inMix`) or takes it out: the one change of a Category's place the Mix
    * screen and the Category screens make. Resolves to whether it stands as
-   * asked now. At least one Category of each list always stays in the Mix
-   * (ADR 0019), so taking out the last one is refused, as is a Category the
+   * asked now. At least one Category of each list always stays in the Mix,
+   * so taking out the last one is refused, as is a Category the
    * list doesn't have in the Language Pack.
    */
   setCategory(categoryId: string, inMix: boolean, of?: CategoryKind): Promise<boolean>;
@@ -188,7 +187,7 @@ export interface Mix {
    * Edition in effect turns its kind on: always the Entry; for a Word or a
    * Correction its Category while in the Mix and in the Language Pack; for
    * any kind but Words the kind as a whole. The last Category of Words is
-   * left out; the last of Corrections is a `last-category` (ADR 0019). A
+   * left out; the last of Corrections is a `last-category`. A
    * kind not shown (`kindShown`) offers the Entry alone.
    */
   hideOptions(entry: EntryToHide): readonly HideOption[];
@@ -209,7 +208,7 @@ export interface Mix {
 /**
  * Each list of Categories, by the kind of Entry it belongs to: its user-state
  * records, one per Category (ADR 0013, 0041), and the Edition's default for it.
- * The two lists may share an id, so each has records of its own (ADR 0033).
+ * The two lists may share an id, so each has records of its own.
  */
 const CATEGORY_LISTS: Readonly<
   Record<
@@ -289,7 +288,7 @@ export function categoriesInMix(state: MixState, of: CategoryKind): CategoriesIn
 
 /**
  * Where a Category of a list stands in the Mix: in, in as the last Category
- * of its list, which can't be taken out (ADR 0019), or out; nothing for a
+ * of its list, which can't be taken out, or out; nothing for a
  * Category the list doesn't have in the Language Pack.
  */
 export type CategoryPlace = 'in' | 'last' | 'out' | undefined;
@@ -316,7 +315,7 @@ function categoryOption(state: MixState, of: CategoryKind, categoryId: string): 
   const place = categoryPlace(state, of, categoryId);
   const category = categoriesInMix(state, of).allCategories.find(({ id }) => id === categoryId);
   if (category === undefined || place === undefined || place === 'out') return [];
-  // The last Category of Words is left out; the last of Corrections is offered, as Corrections as a whole can go (ADR 0019).
+  // The last Category of Words is left out; the last of Corrections is offered, as Corrections as a whole can go.
   if (place === 'last' && of === 'word') return [];
   const target = categoryTarget(categoryId, of);
   return [{ kind: place === 'last' ? 'last-category' : 'category', target, category }];
@@ -383,7 +382,7 @@ function inByDefault(mix: DefaultMix, of: CategoryKind, categoryId: string): boo
 
 /**
  * Whether the Category of the kind's list is in the Mix by the user's choice
- * or, untouched, by the Edition's default (ADR 0019).
+ * or, untouched, by the Edition's default.
  */
 function inMixByChoice(
   edition: MixEdition,
@@ -408,7 +407,7 @@ function categoriesInMixOf(
   let inMix: readonly Category[] = categories.filter(({ id }) =>
     inMixByChoice(edition, choices, of, id),
   );
-  // At least one Category of each list always stays in the Mix (ADR 0019). Taking
+  // At least one Category of each list always stays in the Mix. Taking
   // out the last one is refused, but a later default, a Category gone from the
   // Language Pack or a merge of two devices that each took out a different last
   // one could still leave none in; then the default's Categories are in, or every

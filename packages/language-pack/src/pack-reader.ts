@@ -219,7 +219,7 @@ const idiomParts = (list: string) => ({
 /**
  * The parts of the Synonym Rows of the ids, each row with the id of its
  * Synonym Row. A link to a Word reads back only while the Word is live, so a
- * Word Retired later leaves its dominant or member as plain text (ADR 0051).
+ * Word Retired later leaves its dominant or member as plain text.
  */
 const synonymRowParts = (list: string) => ({
   rows: `

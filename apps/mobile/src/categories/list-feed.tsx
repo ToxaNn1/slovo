@@ -36,7 +36,7 @@ export interface ListFeedRead {
 
 /**
  * The cards of `entryIds`, read with `entryCard`, which writes nothing, so a
- * list's Feed makes nothing Seen and leaves History as it was (ADR 0110).
+ * list's Feed makes nothing Seen and leaves History as it was.
  */
 export async function readCards(
   composition: Composition,
@@ -58,7 +58,7 @@ interface ListFeedProps {
 }
 
 /**
- * A list's Feed (ADR 0110, 0178): the list's Entries alone, one card a page,
+ * A list's Feed: the list's Entries alone, one card a page,
  * from the tapped one on in the list's order and round again after the last,
  * endlessly, each card's kicker naming its place, «Категорія · Емоції · 2 з 4».
  * Its marks are any card's; it makes nothing Seen and keeps the Feed's place.

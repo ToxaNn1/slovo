@@ -43,7 +43,7 @@ export default [
   },
   {
     // Modules with Reanimated or gesture code opt out of the compiler with
-    // 'use no memo' (ADR 0059), so its rules do not apply to them.
+    // 'use no memo', so its rules do not apply to them.
     files: [
       'src/dashboard/HeroReveal.tsx',
       'src/dashboard/CorrectionTypeRow.tsx',

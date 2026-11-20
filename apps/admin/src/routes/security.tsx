@@ -349,7 +349,7 @@ function AgentTokens({ confirm }: { confirm: Confirm }) {
   );
 }
 
-/** Every reader Account, newest first, a page at a time and searched by email; each deleted with a reason (ADR 0162). */
+/** Every reader Account, newest first, a page at a time and searched by email; each deleted with a reason. */
 function ReaderAccounts({ confirm }: { confirm: Confirm }) {
   const [draft, setDraft] = useState('');
   const [search, setSearch] = useState('');

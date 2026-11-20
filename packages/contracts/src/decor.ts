@@ -10,7 +10,7 @@ const SplashThemeSchema = z.strictObject({
 /**
  * The splash the native app shows while it starts, before any JavaScript
  * runs: a plain colour in light and dark, the colour the app's own splash
- * cut opens on (ADR 0014, 0070). It is baked into the native build, so
+ * cut opens on. It is baked into the native build, so
  * changing it needs a new development build.
  */
 export const SplashDecorSchema = z.strictObject({
@@ -29,7 +29,7 @@ const SizeSchema = z.number().positive();
 
 /**
  * The motif of a Season or a Holiday: the accessory the Mascot wears while
- * seasonal Decor is on (ADR 0055).
+ * seasonal Decor is on.
  */
 export const SeasonalMotifSchema = z.strictObject({
   accessory: z.lazy(() => MascotAccessorySchema),
@@ -126,7 +126,7 @@ const MascotShapesSchema = z.array(MascotShapeSchema).min(1);
 
 /**
  * The Mascot's vector on its own grid, in parts the Core puts together for
- * each state (ADR 0070): the figure, its shine, the eyes of every state, the
+ * each state: the figure, its shine, the eyes of every state, the
  * hat on the head and on the ground (the hat-off state), and the rays,
  * confetti and sleep marks some states add. `pivot` is where the sad and
  * hat-off states turn the figure.
@@ -204,13 +204,13 @@ export const CategoryArtSchema = z.strictObject({
 export type CategoryArt = z.infer<typeof CategoryArtSchema>;
 
 /**
- * The Decor an Edition draws in the app (ADR 0014, `docs/design/README.md`):
+ * The Decor an Edition draws in the app (`docs/design/README.md`):
  * `editions/<edition>/decor/decor.json`. Every part is optional; without one
  * the Core draws nothing in its place. Decor holds shapes and colours only,
- * never text or behaviour (ADR 0014).
+ * never text or behaviour.
  */
 export const EditionDecorSchema = z.strictObject({
-  /** The Mascot's vector, which the Core draws in its states (ADR 0070). */
+  /** The Mascot's vector, which the Core draws in its states. */
   mascot: MascotFigureSchema.optional(),
   /**
    * Seasonal Decor: a motif for every Season, whose accessory the Mascot

@@ -3,7 +3,7 @@ import { ROUND_OPTIONS, type GameMode } from './game-mode';
 import { shuffled } from '../shuffled';
 
 /**
- * «Звідки слово», the Core's origin mode (ADR 0052): a Round shows a Word's
+ * «Звідки слово», the Core's origin mode: a Round shows a Word's
  * Lemma with its Stress and its primary Definition under it, and four of the
  * Edition's origin languages, the one the Word comes from right; the three
  * Distractors are other languages of the Edition's list. Only Words with an

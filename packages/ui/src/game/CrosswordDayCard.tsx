@@ -32,8 +32,8 @@ export type CrosswordDayCardState =
     };
 
 /**
- * The crossing Daily Crossword's card on the hub, board 08's three states
- * (ADR 0087): a card with the name and day, then the size line and a red
+ * The crossing Daily Crossword's card on the hub, board 08's three states:
+ * a card with the name and day, then the size line and a red
  * «Почати», or a slanted bar of the Words solved and an ink «Продовжити»;
  * once solved, an ink card with its grid of red cells, «✓ Розв’язано» and the
  * time line. A tap anywhere on it opens the crossword's screen, and VoiceOver

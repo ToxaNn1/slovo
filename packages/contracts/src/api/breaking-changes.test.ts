@@ -142,7 +142,7 @@ describe('a change of the contract', () => {
     expect(await changesFrom(before, after)).toEqual([]);
   });
 
-  it('breaks nothing when an admin input narrows, but still breaks an admin output (ADR 0122)', async () => {
+  it('breaks nothing when an admin input narrows, but still breaks an admin output', async () => {
     const before = thingContract({
       path: '/admin/things',
       input: z.object({ name: z.string(), reason: z.string() }),
@@ -158,7 +158,7 @@ describe('a change of the contract', () => {
     ]);
   });
 
-  it('breaks nothing when an admin strict output grows, but breaks an app one that grows (ADR 0170)', async () => {
+  it('breaks nothing when an admin strict output grows, but breaks an app one that grows', async () => {
     const output = (path: `/${string}`, shape: z.ZodRawShape) =>
       thingContract({ path, output: z.strictObject(shape) });
 
@@ -176,7 +176,7 @@ describe('a change of the contract', () => {
     ).toEqual(['POST /v1/things: 200 body.size is new in a strict object']);
   });
 
-  it('breaks nothing when a retired Feature Switch leaves an admin `states`, but breaks an app one (ADR 0176)', async () => {
+  it('breaks nothing when a retired Feature Switch leaves an admin `states`, but breaks an app one', async () => {
     const output = (path: `/${string}`, shape: z.ZodRawShape) =>
       thingContract({ path, output: z.object({ states: z.object(shape), size: z.number() }) });
     const before = { feed: z.string(), tracedCrossword: z.string() };
@@ -190,7 +190,7 @@ describe('a change of the contract', () => {
     ]);
   });
 
-  it('breaks nothing when an admin procedure goes, but breaks an app one that goes (ADR 0162)', async () => {
+  it('breaks nothing when an admin procedure goes, but breaks an app one that goes', async () => {
     const empty = oc.prefix('/v1').router({});
 
     expect(await changesFrom(thingContract({ path: '/admin/things' }), empty)).toEqual([]);

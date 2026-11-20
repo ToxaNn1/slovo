@@ -15,7 +15,7 @@ export type BuildResult =
   | {
       readonly ok: true;
       readonly metadata: PackMetadata;
-      /** The counts, Retired Words and Retired Corrections left out (ADR 0123). */
+      /** The counts, Retired Words and Retired Corrections left out. */
       readonly report: ContentReport;
     }
   | { readonly ok: false; readonly errors: readonly BuildError[] };
@@ -42,7 +42,7 @@ export function buildFromSnapshot({
   editionDir: string;
   snapshot: ContentSnapshot;
   outFile: string;
-  /** The day the public domain is judged on (ADR 0045). */
+  /** The day the public domain is judged on. */
   today?: Date;
 }): SnapshotBuildResult {
   const source = readEditionWithSnapshot(editionDir, snapshot, { today });
@@ -80,7 +80,7 @@ export async function buildFromBackend({
   editionDir: string;
   apiUrl: string;
   outFile: string;
-  /** The day the public domain is judged on (ADR 0045). */
+  /** The day the public domain is judged on. */
   today?: Date;
   fetch?: ApiFetch;
 }): Promise<SnapshotBuildResult> {

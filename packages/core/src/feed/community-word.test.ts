@@ -80,7 +80,7 @@ function apiOfWord(entryId = 'w_07') {
   return api;
 }
 
-// Spec #886, ADR 0060: the Community Word, a Feed Notice on a local Monday.
+// Spec #886: the Community Word, a Feed Notice on a local Monday.
 describe('The Community Word', () => {
   it('shows on a local Monday right after the Weekly Recap, with its Entry card and its adds', async () => {
     const app = await run({ records: await withLastWeek(), at: monday, api: apiOfWord() });

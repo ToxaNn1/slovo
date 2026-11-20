@@ -29,11 +29,11 @@ export interface MistakeReportDraft {
 export type MistakeReportAnswer = 'thanked' | 'too-many-requests' | 'switched-off' | 'invalid';
 
 /**
- * Mistake Reports (ADR 0056, 0159): the reports a reader sends from an Entry's card,
+ * Mistake Reports: the reports a reader sends from an Entry's card,
  * through a `device-only` queue of at most `MISTAKE_REPORT_QUEUE_SIZE` unsent
  * reports, so a report written offline goes out later. The queue sends at
  * launch, on each return to the foreground and after a report the backend
- * took, oldest first, each by the one retry rule (ADR 0037). A report leaves
+ * took, oldest first, each by the one retry rule. A report leaves
  * the queue when the backend takes it or refuses it with a 4xx; a queued
  * report that meets too many requests waits for the answer's `Retry-After`,
  * and a new report while it holds is answered `too-many-requests` unsent.
@@ -104,7 +104,7 @@ export function openMistakeReports({
   random: Random;
   /**
    * The device's Account, whose Session a report goes out with while the
-   * reader is signed in (ADR 0159); none for an Edition without Accounts.
+   * reader is signed in; none for an Edition without Accounts.
    */
   account?: Pick<Account, 'withSession'> | undefined;
 }): MistakeReports {
@@ -122,7 +122,7 @@ export function openMistakeReports({
 
   /**
    * Sends the report, with the Session of a signed-in reader and none
-   * otherwise (ADR 0159); the backend answers 202 when it keeps it.
+   * otherwise; the backend answers 202 when it keeps it.
    */
   async function sendOnce(
     report: MistakeReport,

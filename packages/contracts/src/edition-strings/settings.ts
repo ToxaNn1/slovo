@@ -21,7 +21,7 @@ export const SettingsStringsSchema = z.strictObject({
   reduceMotion: z.strictObject({ title: TextSchema, explanation: TextSchema }),
   /** The switch that shares the Community Counters, and the explanation under it. */
   anonymousStats: z.strictObject({ title: TextSchema, explanation: TextSchema }),
-  /** The Daily Goal choice, a goal of Words Seen in its plural form («25 слів»), and «Без цілі», which turns the Daily Goal off from today (ADR 0074). */
+  /** The Daily Goal choice, a goal of Words Seen in its plural form («25 слів»), and «Без цілі», which turns the Daily Goal off from today. */
   dailyGoal: z.strictObject({
     title: TextSchema,
     /** A goal as its option and the Settings row name it, e.g. «25 слів». */
@@ -113,7 +113,7 @@ export const SettingsStringsSchema = z.strictObject({
     /** The About row. Takes `{version}` and `{build}`, e.g. «Версія 1.0 (312)» (ADR 0044). */
     about: templateOf('version', 'build'),
   }),
-  /** The three-step text size screen (ADR 0134): its title, the line under it, the sample and each step's name and explaining line. */
+  /** The three-step text size screen: its title, the line under it, the sample and each step's name and explaining line. */
   textSize: z.strictObject({
     title: TextSchema,
     subtitle: TextSchema,
@@ -141,7 +141,7 @@ export const SettingsStringsSchema = z.strictObject({
       failed: TextSchema,
     }),
   }),
-  /** «Скинути прогрес» (ADR 0133): the button at the bottom of Settings, its sheet and the toast after it. */
+  /** «Скинути прогрес»: the button at the bottom of Settings, its sheet and the toast after it. */
   progressReset: z.strictObject({
     button: TextSchema,
     title: TextSchema,
@@ -168,11 +168,11 @@ export const SettingsStringsSchema = z.strictObject({
       rightAnswers: pluralOf('current'),
       level: pluralOf('current'),
     }),
-    /** A card's status on the Badges screen, earned, e.g. «Отримано»; the date shows in the sheet (ADR 0145). */
+    /** A card's status on the Badges screen, earned, e.g. «Отримано»; the date shows in the sheet. */
     cardEarned: TextSchema,
     /** A card's status while not earned, e.g. «Ще ні · 77%». Takes `{percent}`, how far its condition has come. */
     cardNotYet: templateOf('percent'),
-    /** The Badge families overview heading the Badges screen (ADR 0145). */
+    /** The Badge families overview heading the Badges screen. */
     families: z.strictObject({
       /** How many Badges a family holds, e.g. «5 відзнак». */
       count: PluralSchema,
@@ -189,7 +189,7 @@ export const SettingsStringsSchema = z.strictObject({
         checker: TextSchema,
       }),
     }),
-    /** The ink tag on an earned Badge the reader has not opened yet, e.g. «НОВА» (ADR 0085). */
+    /** The ink tag on an earned Badge the reader has not opened yet, e.g. «НОВА». */
     newTag: TextSchema,
     /** The sheet a tap on any Badge opens (p3, p4). */
     sheet: z.strictObject({
@@ -206,7 +206,7 @@ export const SettingsStringsSchema = z.strictObject({
     title: TextSchema,
     /** The header's line under the name. Takes `{level}` and `{name}`, e.g. «Рівень 3 — Знавець». */
     headerLevel: templateOf('level', 'name'),
-    /** The reader's name (ADR 0136): its row, the row's value without a name, the sheet, and the line when it is too long. */
+    /** The reader's name: its row, the row's value without a name, the sheet, and the line when it is too long. */
     readerName: z.strictObject({
       row: TextSchema,
       empty: TextSchema,
@@ -220,10 +220,10 @@ export const SettingsStringsSchema = z.strictObject({
     }),
     /** The word under the Level's number in its ring, e.g. «Рівень». */
     levelLabel: TextSchema,
-    /** The word under the XP in the ring before the first Level, e.g. «XP» (ADR 0188). */
+    /** The word under the XP in the ring before the first Level, e.g. «XP». */
     xpLabel: TextSchema,
     /**
-     * The line under the Active Days calendar while today waits for its Daily Goal (ADR 0188), by the goal's
+     * The line under the Active Days calendar while today waits for its Daily Goal, by the goal's
      * plural form: `{seen}` Words Seen today of `{count}`, e.g. «Сьогодні зарахується, коли виконаєш ціль: 3 з 10 слів».
      */
     todayPending: pluralOf('seen'),
@@ -245,7 +245,7 @@ export const SettingsStringsSchema = z.strictObject({
     shareLevel: TextSchema,
     /** The text the Level is shared with, e.g. «Мій рівень — 3 · Читач». */
     shareMessage: templateOf('level', 'name'),
-    /** The Level card's title, e.g. «7 · Читач». Takes `{level}` and `{name}`, the Level's Edition name (ADR 0085). */
+    /** The Level card's title, e.g. «7 · Читач». Takes `{level}` and `{name}`, the Level's Edition name. */
     level: templateOf('level', 'name'),
     /** The Level card's XP into the Level, e.g. «40 / 120 XP». */
     levelProgress: templateOf('progress', 'toNext'),
@@ -255,7 +255,7 @@ export const SettingsStringsSchema = z.strictObject({
     record: TextSchema,
     /** The Best Streak beside the Streak as VoiceOver reads its tile, e.g. «найдовша 12 днів». */
     bestStreak: PluralSchema,
-    /** The Level ladder (10.8): one card per Level name (ADR 0085). */
+    /** The Level ladder (10.8): one card per Level name. */
     ladder: z.strictObject({
       /** A name's range of Levels, e.g. «Рівні 15–19». */
       range: templateOf('from', 'to'),
@@ -270,7 +270,7 @@ export const SettingsStringsSchema = z.strictObject({
       /** The XP to the next name's first Level, e.g. «ДО ЗНАВЦЯ 340 XP». Takes `{name}` and `{xp}`. */
       toNext: templateOf('name', 'xp'),
     }),
-    /** The new Level screen (p6); the Mascot says the Edition's `newLevel` line (ADR 0085). */
+    /** The new Level screen (p6); the Mascot says the Edition's `newLevel` line. */
     newLevel: z.strictObject({
       /** The giant word the number is stamped into, e.g. «РІВЕНЬ». */
       kicker: TextSchema,
@@ -279,7 +279,7 @@ export const SettingsStringsSchema = z.strictObject({
       /** The button that closes the screen, e.g. «ГОТОВО». */
       done: TextSchema,
     }),
-    /** The Break card while a Break runs (p1, ADR 0085). */
+    /** The Break card while a Break runs (p1). */
     breakCard: z.strictObject({
       /** The kicker, e.g. «ПЕРЕРВА». */
       kicker: TextSchema,
@@ -290,7 +290,7 @@ export const SettingsStringsSchema = z.strictObject({
       /** The first day the next Break may start, e.g. «Наступну перерву можна почати з 12 грудня.» */
       next: templateOf('date'),
     }),
-    /** The Streak freeze card (p2, ADR 0085). */
+    /** The Streak freeze card (p2). */
     freezeCard: z.strictObject({
       title: TextSchema,
       /** The chip of the freezes held, e.g. «2 У ЗАПАСІ». */
@@ -304,7 +304,7 @@ export const SettingsStringsSchema = z.strictObject({
     }),
     /** An earned Badge stamped on red (board 10.7). */
     badgeStamp: z.strictObject({
-      /** The giant cream word behind the mark, e.g. «ВІДЗНАКА» (10.7, ADR 0085). */
+      /** The giant cream word behind the mark, e.g. «ВІДЗНАКА» (10.7). */
       kicker: TextSchema,
       /** The ribbon of the last frame, e.g. «ТЕПЕР ТВОЯ». */
       ribbon: TextSchema,
@@ -314,7 +314,7 @@ export const SettingsStringsSchema = z.strictObject({
       line: TextSchema,
     }),
   }),
-  /** The Break screen: what a Break does, its length, whether one can start today and how one ends early (ADR 0066, 0180). */
+  /** The Break screen: what a Break does, its length, whether one can start today and how one ends early (ADR 0066). */
   streakBreak: z.strictObject({
     title: TextSchema,
     /** What a Break does and how often it can start. */
@@ -328,13 +328,13 @@ export const SettingsStringsSchema = z.strictObject({
     moreDays: TextSchema,
     /** Under the stepper at 7, the longest a Break can be (ADR 0066). */
     most: TextSchema,
-    /** Under the stepper at the Break days left in the 30 days, fewer than 7 (ADR 0180). */
+    /** Under the stepper at the Break days left in the 30 days, fewer than 7. */
     mostLeft: PluralSchema,
     /** While a Break runs, its days from today to its last day, both included. */
     daysLeft: PluralSchema,
     /** While a Break runs. Takes `{date}`, its last day, e.g. «20.10». */
     running: templateOf('date'),
-    /** The button that ends the running Break today (ADR 0180). */
+    /** The button that ends the running Break today. */
     end: TextSchema,
     /** While the next Break waits. Takes `{date}`, the first day it can start, e.g. «13.11». */
     waiting: templateOf('date'),
@@ -344,7 +344,7 @@ export const SettingsStringsSchema = z.strictObject({
     sounds: TextSchema,
     vibration: TextSchema,
   }),
-  /** The «Голос диктора» row and the Narrator Voice screen (ADR 0083). */
+  /** The «Голос диктора» row and the Narrator Voice screen. */
   narratorVoice: z.strictObject({
     /** The row's title. */
     row: TextSchema,

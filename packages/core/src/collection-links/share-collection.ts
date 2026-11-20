@@ -23,11 +23,11 @@ export type CollectionShare =
   | { readonly ok: false; readonly reason: CollectionShareRefusal };
 
 /**
- * Sharing a Collection by a Collection Link (ADR 0058): «Поділитися
+ * Sharing a Collection by a Collection Link: «Поділитися
  * посиланням» stores the Collection as it is now on the server, its name and
  * its Entry ids as the Collection's screen orders them, Hidden and Retired
  * ones too, and answers the message the share sheet sends. It needs no
- * Account. The request goes once through the one retry rule (ADR 0037) and is
+ * Account. The request goes once through the one retry rule and is
  * never queued. Nothing it does rejects.
  */
 export interface CollectionSharing {

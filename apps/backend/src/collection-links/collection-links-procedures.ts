@@ -16,7 +16,7 @@ interface CollectionLinksContext {
  * The Collection Link procedures of the contract, over the server Core's
  * Collection Links. An unknown link, and both requests of an Edition with
  * Collection Links switched off, answer `NOT_FOUND`, and a link over the
- * day's limit of its IP address `TOO_MANY_REQUESTS` with `Retry-After` (ADR 0058).
+ * day's limit of its IP address `TOO_MANY_REQUESTS` with `Retry-After`.
  */
 export function collectionLinksProcedures(links: CollectionLinks) {
   const collectionLinks = implement(apiContract.collectionLinks).$context<CollectionLinksContext>();

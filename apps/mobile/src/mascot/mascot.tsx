@@ -33,7 +33,7 @@ const CROSSWORD_ROUTE = '/game/crossword';
 /** How long a celebration keeps the Mascot on screen. */
 export const CELEBRATION_MS = 4000;
 
-/** The state the Mascot is drawn in at each moment it shows in (ADR 0070). */
+/** The state the Mascot is drawn in at each moment it shows in. */
 const stateAt: Readonly<Record<MascotMoment, MascotState>> = {
   onboarding: 'shouts',
   newLevel: 'celebrates',
@@ -104,7 +104,7 @@ export function MascotAs({
  * new Level screen, until the reader closes it. Nothing while the reader hides
  * the counters («Без лічильників», ADR 0066). A Badge earned shows its ink
  * toast during a Game and its stamp anywhere else (board 10.7); the stamp's
- * «ГОТОВО» opens the Badge, which ends its «НОВА» mark (ADR 0085).
+ * «ГОТОВО» opens the Badge, which ends its «НОВА» mark.
  */
 export function MascotCelebrations() {
   const { xpLog, badges, progress } = useComposition();

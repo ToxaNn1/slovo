@@ -20,7 +20,7 @@ export type CategoryShape = TileShapeKind;
  * A Category tile's tone, from the boards: `red` (ink name, cream big shape,
  * ink small one), `ink` (background name, red big shape, background small
  * one) or `tile`, the sunken surface (ink name, red big shape, ink small one).
- * A quiet Category has a quiet tile (ADR 0081): `quietGrid` in k1, the sunken
+ * A quiet Category has a quiet tile: `quietGrid` in k1, the sunken
  * surface with its name and both shapes in muted ink, and `quietRail` on the
  * Dashboard's rail, the light theme's ink in both themes with its name in the
  * light background, a faint big shape and no small one.
@@ -54,7 +54,7 @@ export interface CategoryTileBox {
  * A Category's tile, as the Dashboard's rail and the k1 grid draw it: its
  * name at the bottom under a two-shape pictogram, in its tone. A tap opens
  * the Category; VoiceOver reads its name. The «SLOVO пропонує» rail draws its
- * Curated Collections with it too (ADR 0178), with a count under the name
+ * Curated Collections with it too, with a count under the name
  * and a mark in the top corner; without shapes it draws no pictogram.
  */
 export function CategoryTile({

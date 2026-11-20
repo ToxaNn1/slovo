@@ -17,8 +17,8 @@ export interface DueQuestion extends MeaningQuiz {
 }
 
 /**
- * The Due Quiz «Перевір себе» on the «Вчу» list (ADR 0131): the Words due
- * for Review today, each asked as Yesterday asks its Word (ADR 0130).
+ * The Due Quiz «Перевір себе» on the «Вчу» list: the Words due
+ * for Review today, each asked as Yesterday asks its Word.
  */
 export interface DueQuiz {
   /**

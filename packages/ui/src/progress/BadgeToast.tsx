@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
+// Reanimated code: the React Compiler skips this module.
 import type { BadgeShape, BadgeTone } from '@slovo/contracts';
 import { useEffect } from 'react';
 import { AccessibilityInfo, StyleSheet, Text, useWindowDimensions, View } from 'react-native';

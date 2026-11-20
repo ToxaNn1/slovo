@@ -127,7 +127,7 @@ export const endOfCycleCard = {
 type Shape = readonly (readonly [number, number])[];
 
 /**
- * The Dashboard of the «SLOVO 02 Feed» board (ADR 0076): the header's
+ * The Dashboard of the «SLOVO 02 Feed» board: the header's
  * padding and the logo's ink plate, the side padding of the blocks and the
  * hero's margin, the room above each block and under its title, and the
  * Word of the Day hero (its height, top corners, where its slanted bottom
@@ -182,7 +182,7 @@ export const dashboard = {
       right: 20,
       /** The open hero's «Ще про слово →». */
       bottom: 76,
-      /** The closed hero's «Розкрий слово», higher (ADR 0105). */
+      /** The closed hero's «Розкрий слово», higher. */
       revealBottom: 132,
       /** The hero's own ink button, 58 as the walkthrough board draws it, not the shared Button's height. */
       height: 58,
@@ -192,7 +192,7 @@ export const dashboard = {
     },
     mascot: { left: 4, top: 334, width: 136 },
     /**
-     * How the hero opens (ADR 0105): the Mascot shouts for `shouts` ms; each
+     * How the hero opens: the Mascot shouts for `shouts` ms; each
      * letter of the Lemma flies in `stagger` ms after the one before, from
      * `entryReveal.from` moved `shift` points left per letter; the card and
      * then the button rise in.
@@ -204,7 +204,7 @@ export const dashboard = {
       button: { delay: 900, duration: 400 },
     },
     /**
-     * The sparks the Mascot throws from its megaphone (ADR 0109), as the
+     * The sparks the Mascot throws from its megaphone, as the
      * board's `slLeaf`: each leaves `from` points right of and below the
      * Mascot's figure and flies `travel` away, turning `turn` degrees; it
      * shows over the first `showsBy` of its flight and fades out to its end.
@@ -276,7 +276,7 @@ export const moodTile = {
 /**
  * A row of «Минулі Слова дня»: its padding, the line under it, the date
  * column's width, the gaps, the chevron, and how the rows rise in one after
- * another (ADR 0105).
+ * another.
  */
 export const previousWordRow = {
   cascade: { delay: 150, stagger: 60, duration: 450 },
@@ -307,7 +307,7 @@ export const previousWordRow = {
  * radius and padding, the gap between tiles, the two shapes of its
  * pictogram (a big one at the top right, a small one under it), the gap
  * over its count and its count's opacity, and the opacity of a quiet
- * tile's big shape on the rail (ADR 0081). A shape is a polygon or a
+ * tile's big shape on the rail. A shape is a polygon or a
  * `circle`; the tiles take the shapes in turn.
  */
 export const categoryTile = {

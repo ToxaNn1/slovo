@@ -42,15 +42,15 @@ export const WordCardStringsSchema = z.strictObject({
   category: templateOf('category'),
   /** The heading over a Word's etymology in «Історія» and in a Game's review. */
   etymology: TextSchema,
-  /** The button under a tab too long for its card's frame, on every kind of card, which opens the rest of the tab (ADR 0091). */
+  /** The button under a tab too long for its card's frame, on every kind of card, which opens the rest of the tab. */
   tabMore: TextSchema,
   /** The button under a tab opened by «Детальніше», which clamps it to the card's frame again (owner 08.11). */
   tabLess: TextSchema,
-  /** The name of the last tab of every tabbed Entry card, which names its sources (ADR 0116). */
+  /** The name of the last tab of every tabbed Entry card, which names its sources. */
   tabSource: TextSchema,
-  /** The title of the source every Entry the Edition wrote itself carries (ADR 0146); the cards name no such source and show no «Джерело» tab for it (ADR 0154). */
+  /** The title of the source every Entry the Edition wrote itself carries (ADR 0146); the cards name no such source and show no «Джерело» tab for it. */
   ownSource: TextSchema,
-  /** The names of the Word card's tabs (ADR 0091). */
+  /** The names of the Word card's tabs. */
   tabs: z.strictObject({
     essence: TextSchema,
     example: TextSchema,
@@ -68,7 +68,7 @@ export const WordCardStringsSchema = z.strictObject({
   oftenSaid: TextSchema,
   /** What VoiceOver says a linked Correction's form does when tapped, e.g. "Відкриває виправлення". */
   oftenSaidHint: TextSchema,
-  /** The line of the Synonym Row the Word is a member of, e.g. "У синонімічному ряду: {dominant}" (ADR 0051). */
+  /** The line of the Synonym Row the Word is a member of, e.g. "У синонімічному ряду: {dominant}". */
   synonymRow: templateOf('dominant'),
   /** What VoiceOver says the Synonym Row line does when tapped, e.g. "Відкриває синонімічний ряд". */
   synonymRowHint: TextSchema,

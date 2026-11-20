@@ -4,7 +4,7 @@ import { EditionIdSchema } from './edition';
 
 /**
  * The checksum of a Language Pack's content: `sha256:` followed by the hex
- * digest of the canonical content, version included (ADR 0011). It is not
+ * digest of the canonical content, version included. It is not
  * the SHA-256 of the pack file.
  */
 const ContentChecksumSchema = z

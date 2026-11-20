@@ -7,7 +7,7 @@ import { templateOf } from './shared';
 const NOTIFICATION_TITLE_TEMPLATE_COUNT = 10;
 
 /**
- * The titles of an Edition's notifications, its evening texts and its polite pause (ADR 0054).
+ * The titles of an Edition's notifications, its evening texts and its polite pause.
  * The plan picks a title template for each notification and never the one
  * used last, so the titles don't repeat twice in a row.
  */

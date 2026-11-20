@@ -1,5 +1,5 @@
 /**
- * The quote check job (ADR 0084, 0090): checks the quoted text of every record
+ * The quote check job (ADR 0090): checks the quoted text of every record
  * changed since its last check against its first source's page, through the
  * sourcing port and the Postgres sourcing cache. A save never waits for it:
  * every write other than an import raises the record version, and a record

@@ -58,7 +58,7 @@ async function renderPager({
   };
 }
 
-/** The longest a page takes to settle, swiped or turned without a swipe (ADR 0055). */
+/** The longest a page takes to settle, swiped or turned without a swipe. */
 const SETTLE_MS = 300;
 
 /** Where the page showing `text` stands: its offset in points and its opacity. */

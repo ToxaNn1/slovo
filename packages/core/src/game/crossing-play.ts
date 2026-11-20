@@ -11,7 +11,7 @@ export type CrossingCell =
 export type CrossingWordState = { readonly kind: 'open' } | { readonly kind: 'solved' };
 
 /**
- * The reader's play of a crossing Daily Crossword (ADR 0087): every white
+ * The reader's play of a crossing Daily Crossword: every white
  * cell by its key, every Word by the puzzle's order, the current Word, the
  * tiles of its Letter Wheel traced so far, whether the Crossword Hint was
  * used and the seconds the crossword was on screen.
@@ -72,7 +72,7 @@ export type CrossingSpot =
 
 /**
  * The puzzle's square grid, row by row, laid once from its blocks and
- * Words. Every white cell is in a Word (ADR 0087), so a cell in none is a
+ * Words. Every white cell is in a Word, so a cell in none is a
  * block.
  */
 export function crossingGridOf(puzzle: CrossingPuzzle): CrossingSpot[][] {
@@ -138,7 +138,7 @@ const isFull = (cells: CrossingPlay['cells'], word: CrossingPuzzle['words'][numb
 
 /**
  * The Words solved after the cells changed: every Word already solved, and
- * every open Word whose every cell the crossings filled (ADR 0087).
+ * every open Word whose every cell the crossings filled.
  */
 const settled = (puzzle: CrossingPuzzle, state: CrossingPlay): CrossingWordState[] =>
   puzzle.words.map((word, i) =>

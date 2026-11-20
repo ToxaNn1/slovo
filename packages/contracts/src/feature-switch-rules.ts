@@ -53,7 +53,7 @@ export const RuleTargetsSchema = z.strictObject({
   schedule: z
     .strictObject({ from: z.iso.datetime().optional(), until: z.iso.datetime().optional() })
     .optional(),
-  /** The Update channel the build listens to (ADR 0170): `beta` targets the owner's testers. */
+  /** The Update channel the build listens to: `beta` targets the owner's testers. */
   channel: UpdateChannelSchema.optional(),
 });
 

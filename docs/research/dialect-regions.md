@@ -1,6 +1,6 @@
 # Dialect Regions: which online source can supply a quotable Region
 
-Question: is there an online source an automated tool can read to draft dialect Words that meet the Rare Word rule in `CONTEXT.md`? The rule: a dialect Word carries «діал.» and its Region, and a normative dictionary (СУМ, Грінченко) or a dialect dictionary that names the Region lists it. ADR 0012 adds that text is quoted word for word, with no text written by a model.
+Question: is there an online source an automated tool can read to draft dialect Words that meet the Rare Word rule in `CONTEXT.md`? The rule: a dialect Word carries «діал.» and its Region, and a normative dictionary (СУМ, Грінченко) or a dialect dictionary that names the Region lists it. The content rules add that text is quoted word for word, with no text written by a model.
 
 Checked on 2026-11-06 from this machine; `robots.txt` files rechecked on 2026-11-07.
 
@@ -10,7 +10,7 @@ Status: on 2026-11-06 the owner chose not to draft dialect Words for now. The re
 
 No single source gives «діал.» + a Ukrainian Definition + a Region in one quotable entry. goroh supplies the first two; two Region leads exist:
 
-1. **goroh «Тлумачення» (СУМ-20 / СУМ-11)** supplies «діал.», the Definition and the Examples, as today (ADR 0012).
+1. **goroh «Тлумачення» (СУМ-20 / СУМ-11)** supplies «діал.», the Definition and the Examples, as today.
 2. **«Гуцульські говірки. Короткий словник» (Львів, 1997, Ін-т українознавства НАН України, ред. Я. Закревська)**, a PDF in the НБУВ «Україніка» library, supplies one Region for every Lemma it lists. The dictionary names its Region in its title and annotation: «Гуцульщина».
 3. **Грінченко (hrinchenko.com)** supplies a Region per entry where its source abbreviation (`author_source`, e.g. «Шух.») maps in `/sources` to a Region («Шух. = Гуцульщина»). The Rare Word rule names Грінченко as a normative dictionary for a dialect Word. The limit: most abbreviations map to a book or to a list of places by page range, not to one Region, so only the abbreviations that name a Region count.
 
@@ -49,7 +49,7 @@ A match on the Lemma alone proves little: a homonym may carry another sense in t
 ## Caveats for a tool
 
 - **Robots and terms.** The `ClaudeBot` and `GPTBot` rules on NBUV and hrinchenko.com bind those crawlers, not a tool SLOVO runs under its own name; the rule that binds the tool is `User-agent: *`, which allows the pages on both sites. NBUV adds the signals `use=reference` and `ai-train=no`: a one-time download of one PDF for a reference index is the lightest use, and the owner decides whether it is acceptable. soloviy's terms forbid automated bulk export. The copyright notices stand regardless of robots.
-- **Word for word.** ADR 0012 governs Definitions and Examples: they are quoted from goroh, and nothing is quoted from the OCR text or from Грінченко. The lookup key is another matter: the tool may normalise the OCR text to find a Lemma (a stress shown as a digit or a capital, soft hyphens, «11» for «||»), because that text is compared, not quoted. Only the Region name and the fact that the Lemma is listed come from the dialect dictionary.
+- **Word for word.** The content rules govern Definitions and Examples: they are quoted from goroh, and nothing is quoted from the OCR text or from Грінченко. The lookup key is another matter: the tool may normalise the OCR text to find a Lemma (a stress shown as a digit or a capital, soft hyphens, «11» for «||»), because that text is compared, not quoted. Only the Region name and the fact that the Lemma is listed come from the dialect dictionary.
 - **Sense, not Lemma.** A Lemma listed in the 1997 dictionary may be a homonym with another sense, or a word said in several dialects. The Region is assigned only after a human has matched goroh's Definition to the gloss on the page scan.
 - **Region granularity.** The 1997 dictionary gives Гуцульщина for the whole work, not a village or область per entry. Грінченко's `/sources` gives a Region for some books and a list of places for others.
 - **Copyright.** The 1997 dictionary and СУМ are both in copyright. Using only membership and a Region name is the smallest possible use. Quoting a Definition is the same exposure the project already has with СУМ.

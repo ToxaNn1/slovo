@@ -32,7 +32,7 @@ const valueColumns = (value: StoredEntryValue) =>
     ? { openValue: value.value, sealedValue: null }
     : { openValue: null, sealedValue: value.sealed };
 
-/** The Service entries in their own table (ADR 0164). */
+/** The Service entries in their own table. */
 export function createServiceEntryStore({ db }: Database): ServiceEntryStore {
   return {
     async serviceName(serviceId) {

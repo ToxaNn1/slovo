@@ -394,7 +394,7 @@ function Reports({ reports, confirm }: { reports: readonly Report[]; confirm: Co
 /**
  * One Mistake Report: what the reader said, who sent it (the email of a
  * signed-in reader, to thank them) and, opened, the whole Entry it names as
- * the content database keeps it now (ADR 0159).
+ * the content database keeps it now.
  */
 function ReportRow({ report, resolve }: { report: Report; resolve: () => void }) {
   const [open, setOpen] = useState(false);

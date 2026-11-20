@@ -18,7 +18,7 @@ import type { PackContent } from './pack-layout';
 /** Seeded, so CI checks the same inputs on every run. */
 const runs = { seed: 20261030, numRuns: 15 };
 
-/** The rules of ADR 0052, written out so that a change to the build's constants breaks them. */
+/** The crossword rules, written out so that a change to the build's constants breaks them. */
 const SIZE = 5;
 const WORDS_A_DAY = { min: 4, max: 6 };
 const LETTERS = { min: 3, max: 5 };

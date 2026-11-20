@@ -39,7 +39,7 @@ export type GameHubGroup = (typeof GAME_HUB_GROUPS)[number];
 export type RoundLabelKind = 'mode' | 'synonymRow' | 'tip' | 'gap' | 'meaning';
 
 /**
- * The form of a Round's answer, which the Game Mode decides (ADR 0052): a
+ * The form of a Round's answer, which the Game Mode decides: a
  * pick of options, a tap on a vowel, a pair in a pairs grid, chips tapped in
  * order, or typed text, each its own Answer Form. Each form but the pairs
  * grid carries the sheet shown after the answer; a grid carries one per pair.
@@ -95,7 +95,7 @@ export interface GameMode {
   readonly id: string;
   /** The kind of Entry its Rounds ask about, which its card names and whose refusal it gives. */
   readonly entryKind: ShownKind;
-  /** The board's group of the mode screen its card stands in (ADR 0139). */
+  /** The board's group of the mode screen its card stands in. */
   readonly group: GameHubGroup;
   /**
    * Other kinds of Entry its Rounds may ask about, such as idioms and

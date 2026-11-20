@@ -13,7 +13,7 @@ function done<Done>(
   throw result.reason === 'vault-off' ? errors.VAULT_OFF() : errors.NOT_FOUND();
 }
 
-/** The Service entry procedures of «Сервіси» (ADR 0164): a Власник only, no read with a sealed value. */
+/** The Service entry procedures of «Сервіси»: a Власник only, no read with a sealed value. */
 export function serviceEntriesProcedures({
   entries,
   signIn,

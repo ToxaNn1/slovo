@@ -87,7 +87,7 @@ interface Progress {
 }
 
 /**
- * Folds the XP log as the Core does (ADR 0133): the latest reset marker is
+ * Folds the XP log as the Core does: the latest reset marker is
  * the one with the latest instant, then the greatest id, and only the records
  * after its instant count, whatever order the server gives them in. The
  * Daily Goal in force is the last `word-goal` by date, then by instant.
@@ -181,7 +181,7 @@ function settingsOf(voiceName: (id: string) => string) {
   > = {
     theme: ['Тема', choiceOf(ThemeSchema, THEMES)],
     textSize: ['Шрифт і розмір', choiceOf(TextSizeSchema, TEXT_SIZES)],
-    // The S…XL scale before the text size followed the system (ADR 0134), still kept (ADR 0013).
+    // The S…XL scale before the text size followed the system, still kept (ADR 0013).
     fontSize: ['Старий розмір шрифту', choiceOf(OldFontSize, OLD_FONT_SIZES)],
     hideStreak: ['Без лічильників', toggle],
     selfCheck: ['Перевір себе', toggle],
@@ -239,7 +239,7 @@ function idAfter(key: string, prefix: string): string | undefined {
 }
 
 /**
- * An Edition's records as the Account page reads them (ADR 0162): Favorites,
+ * An Edition's records as the Account page reads them: Favorites,
  * Collections, hidden Entries and «Знаю» and «Не знаю» marks by the title of
  * their Entry, the progress the XP log keeps (XP after the latest reset
  * marker, the Daily Goal in force, freezes used, Breaks and Badges by name),

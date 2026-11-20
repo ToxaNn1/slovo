@@ -11,7 +11,7 @@ import type { Clock, CommunityWord, CounterStore, EntryCounts, RateLimits } from
 import { countRequest, ipSubject, type TooManyRequests } from '../rate-limit';
 import { isoWeekOf } from './iso-week';
 
-/** The counter events one IP address may send in a day, each event of a batch counting (ADR 0060). */
+/** The counter events one IP address may send in a day, each event of a batch counting. */
 const EVENTS_PER_IP = { requests: 500, windowSeconds: 24 * 60 * 60 } as const;
 
 /** The questionnaire answers one IP address may send in a day (ADR 0068). */
@@ -52,7 +52,7 @@ export interface UnknownAnswer {
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
-/** The Community Counters readers' devices send their changes to (ADR 0060). */
+/** The Community Counters readers' devices send their changes to. */
 export interface CommunityCounters {
   /**
    * Adds the events' deltas to the Edition's counts, and each saved +1 to the

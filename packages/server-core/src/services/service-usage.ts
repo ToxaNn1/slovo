@@ -1,7 +1,7 @@
 import type { Clock, SourceRead } from '../ports';
 import { cachedRead, type FreshRead } from '../sources/cached-source';
 
-/** How long a Service's usage is kept before its provider is read again (ADR 0164). */
+/** How long a Service's usage is kept before its provider is read again. */
 export const USAGE_FRESH_MS = 60 * 60 * 1000;
 
 /** One limit of a Service's plan and how much of it the current period used: `used` of `limit` `unit`. */
@@ -12,7 +12,7 @@ export interface LimitUsage {
   readonly limit: number;
 }
 
-/** What Railway bills a month by: the vCPU, the memory, the egress and the volume (ADR 0173). */
+/** What Railway bills a month by: the vCPU, the memory, the egress and the volume. */
 export type RailwaySpendPart = 'cpu' | 'memory' | 'egress' | 'disk';
 
 /**
@@ -36,7 +36,7 @@ export type ServiceReading =
     };
 
 /**
- * The one usage port (ADR 0164): a provider's API read with the key the
+ * The one usage port: a provider's API read with the key the
  * Deployment's environment holds. Each provider is an adapter of it; it
  * answers `unavailable` when the provider refuses, fails or is not set up.
  */

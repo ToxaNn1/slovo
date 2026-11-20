@@ -25,9 +25,9 @@ export type XpAction =
   | {
       readonly source: 'daily-crossword';
       readonly date: string;
-      /** The Solve time in seconds, left out where it is not measured (ADR 0087). */
+      /** The Solve time in seconds, left out where it is not measured. */
       readonly solveSeconds?: number;
-      /** Whether the Crossword Hint was used; left out, no hint (ADR 0087). */
+      /** Whether the Crossword Hint was used; left out, no hint. */
       readonly hinted?: boolean;
     }
   | { readonly source: 'review-answer'; readonly entryId: string }
@@ -54,13 +54,12 @@ export interface GameXp {
 
 /**
  * What the Game records in the XP log: the XP it awards, and each Round
- * answered wrong, which earns nothing and breaks a run of right answers
- * (ADR 0085).
+ * answered wrong, which earns nothing and breaks a run of right answers.
  */
 export interface GameRecords extends GameXp {
   /** The record a Round answered wrong in `mode` appends, for the write of the answer. */
   answeredWrong(mode: string): StagedPiece;
-  /** The latest reset marker of a Progress reset: each Game Mode's Best result counts the Games after it (ADR 0133). */
+  /** The latest reset marker of a Progress reset: each Game Mode's Best result counts the Games after it. */
   readonly resetMarker: { readonly id: string } | undefined;
   /** Tells the listener the log changed, a Progress reset included. */
   subscribe(listener: () => void): () => void;

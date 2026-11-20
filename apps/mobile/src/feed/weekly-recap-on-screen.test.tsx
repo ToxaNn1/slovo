@@ -343,7 +343,7 @@ describe('«Твій тиждень» on the Feed', () => {
   });
 });
 
-describe('«Пам’ятаєш учорашнє слово?» on the Feed (ADR 0130)', () => {
+describe('«Пам’ятаєш учорашнє слово?» on the Feed', () => {
   const yesterday = editionStrings.feedNotices.yesterday;
   const { chosen, correct } = editionStrings.game.round;
   const right = 'Значення слова лагідний.';

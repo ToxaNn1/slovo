@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Removes the footer a cloud session appends to a pull request body (ADR 0100),
+ * Removes the footer a cloud session appends to a pull request body,
  * so the attribution check of `commitlint.yml` reads the body without it.
  *
  *   node scripts/strip-pr-footer.mjs < body.md > clean.md

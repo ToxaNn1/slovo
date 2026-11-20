@@ -46,7 +46,7 @@ export interface RecordingAudioModule {
 }
 
 /**
- * The device's player of Recordings (ADR 0083): one at a time, unloaded when
+ * The device's player of Recordings: one at a time, unloaded when
  * it ends or stops. Like the Interface sounds, it stays silent with the ring
  * switch off, mixes with the reader's music and never plays in the
  * background. With no audio module (a binary built before the 1.0 batch)

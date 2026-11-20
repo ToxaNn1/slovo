@@ -3,7 +3,7 @@ import type { EntryRowModel } from '@slovo/core';
 
 /**
  * The Edition's label of a row, its kind or an Idiom's Idiom Type, as the Core's Entry row keys it:
- * «слово», «виправлення», «фразеологізм», «топонім», «синоніми» or «порада» (ADR 0017). The one
+ * «слово», «виправлення», «фразеологізм», «топонім», «синоніми» or «порада». The one
  * place a screen turns the key into the word.
  */
 export function entryLabel(

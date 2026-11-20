@@ -47,7 +47,7 @@ export interface Favorites {
 
 /**
  * Opens Favorites over the user state, for the Core composition. An add or a
- * removal writes the Community Counters' changes that count it (ADR 0060).
+ * removal writes the Community Counters' changes that count it.
  */
 export async function openFavorites({
   rows,

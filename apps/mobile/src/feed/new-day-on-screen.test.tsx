@@ -172,7 +172,7 @@ describe('the Feed on a new local day', () => {
 
     expect(screen.getByText('ср, 4 листопада', hidden)).toBeTruthy();
     expect(screen.queryByText('вт, 3 листопада', hidden)).toBeNull();
-    // The card on screen stays (ADR 0022); the new day's Word of the Day comes after the next swipe.
+    // The card on screen stays; the new day's Word of the Day comes after the next swipe.
     await swipeUp();
     expect(screen.getByText('Слово дня · 4.11', hidden)).toBeTruthy();
   });

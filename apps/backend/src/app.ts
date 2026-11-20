@@ -95,7 +95,7 @@ export interface AppDependencies {
   readonly alerts: Alerts;
   /** Reads the aggregates of the Analytics events, for the admin's Аналітика. */
   readonly posthog: PostHogPort;
-  /** The NBU's official rate of the dollar, for «Сервіси»'s money in hryvnias (ADR 0164). */
+  /** The NBU's official rate of the dollar, for «Сервіси»'s money in hryvnias. */
   readonly nbu: NbuPort;
   /** Verifies the Google identity tokens of Google sign-ins. */
   readonly google: GoogleVerifier;
@@ -116,9 +116,9 @@ export interface AppDependencies {
   readonly trustedProxyHops: number;
   /** Where Якість reads Sentry's numbers. */
   readonly sentry: SentryReader;
-  /** Where «Сервіси» reads each Service's usage, by the Service's name (ADR 0164). */
+  /** Where «Сервіси» reads each Service's usage, by the Service's name. */
   readonly usage: Readonly<Record<string, UsagePort>>;
-  /** The Bearer token CI pushes its history with (ADR 0096); unset refuses every push. */
+  /** The Bearer token CI pushes its history with; unset refuses every push. */
   readonly ciToken: string | undefined;
   /** The URL root of the Media Store the snapshot and the Patch name (ADR 0099). */
   readonly mediaBase: string;
@@ -126,7 +126,7 @@ export interface AppDependencies {
   readonly mediaStore: MediaStore;
   /** The folder of the built owner admin app (apps/admin/dist), served at `/admin`; without it none. */
   readonly adminDist?: string | undefined;
-  /** The Vault of the Service entries, under `VAULT_KEY`, or off without it (ADR 0164). */
+  /** The Vault of the Service entries, under `VAULT_KEY`, or off without it. */
   readonly vault: ServiceVault;
 }
 
@@ -359,7 +359,7 @@ export function createApp({
     return c.json({ status: 'ok', migration: state.last });
   });
 
-  // The file that lets the app open its Collection Links (ADR 0058).
+  // The file that lets the app open its Collection Links.
   // While the app has no Team ID there is none, so the path is not found.
   const association = appSiteAssociation(
     appConfig,
@@ -395,8 +395,7 @@ export function createApp({
     });
   }
 
-  // A Collection Link as its URL names it, under its Edition's path (ADR
-  // 0058, 0065): a browser gets its web page; any other client the API's
+  // A Collection Link as its URL names it, under its Edition's path (ADR 0065): a browser gets its web page; any other client the API's
   // answer for the link. Like the API's read, it is not limited. The page
   // speaks the language of the Edition the path names; a link of another
   // Edition is unavailable there.

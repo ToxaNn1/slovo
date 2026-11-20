@@ -358,7 +358,7 @@ describe('The stats sheet’s numbers', () => {
   });
 });
 
-// Spec #461, ADR 0043: the counts the statistics show from the Knowledge Marks.
+// Spec #461: the counts the statistics show from the Knowledge Marks.
 describe('The knowledge counts', () => {
   const DAY = 24 * 60 * 60_000;
 

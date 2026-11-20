@@ -22,7 +22,7 @@ function refusalOf(error: unknown): string {
     : 'Не вдалося. Спробуйте ще раз.';
 }
 
-/** One reader Account on its own page, read only, and deleted with a reason (ADR 0162); a Власник only. */
+/** One reader Account on its own page, read only, and deleted with a reason; a Власник only. */
 function AccountPage() {
   const admin = useSignedInAdmin();
   if (admin?.role !== 'owner') {

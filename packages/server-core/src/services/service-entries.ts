@@ -7,11 +7,11 @@ import {
 import type { AccessWrite, Actor, AdminAccess } from '../admin/admin-access';
 import type { Clock } from '../ports';
 
-/** How long a fresh TOTP opens «Показати» and «Копіювати» for one admin session (ADR 0164). */
+/** How long a fresh TOTP opens «Показати» and «Копіювати» for one admin session. */
 const VAULT_OPEN_MS = 15 * 60 * 1000;
 
 /**
- * The Vault (ADR 0164): seals the secret Service entries under `VAULT_KEY`,
+ * The Vault: seals the secret Service entries under `VAULT_KEY`,
  * or is off while the Deployment has none, and then no entry is written.
  */
 export type ServiceVault =
@@ -78,7 +78,7 @@ export type EntryReadResult =
 /** Why a plain value is read: shown by «Показати», or copied by «Копіювати» without showing. */
 export type EntryRead = 'reveal' | 'copy';
 
-/** The Service entries of «Сервіси» (ADR 0164): no list answers a sealed value. */
+/** The Service entries of «Сервіси»: no list answers a sealed value. */
 export interface ServiceEntries {
   readonly vault: ServiceVault['state'];
   /** The Service's entries, sealed ones without their value; none when there is no such Service. */

@@ -34,8 +34,8 @@ const EditionContext = createContext<EditionPresentation | undefined>(undefined)
 /**
  * Gives every component below the Edition's strings and language, and the
  * Pronunciation button the shell connects to the device's voice, and the
- * hook that gives each Word's Illustration from the media (ADR 0055, 0099). Category
- * names come with the cards, from the Language Pack (ADR 0033).
+ * hook that gives each Word's Illustration from the media (ADR 0099). Category
+ * names come with the cards, from the Language Pack.
  */
 export function EditionProvider({
   edition,

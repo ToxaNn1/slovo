@@ -86,7 +86,7 @@ async function keptDailyGoal() {
   return (await openOver(editionInEffect)).xpLog.state.dailyGoal?.goal;
 }
 
-// Tickets #1369, #1557 and #1874, ADR 0074: «Ціль дня», screen 85 of board 11.
+// Tickets #1369, #1557 and #1874: «Ціль дня», screen 85 of board 11.
 describe('the Daily Goal screen', () => {
   it('offers the Edition’s 10, 25 and 50 Words and «Без цілі», «Без цілі» chosen to start with', async () => {
     await renderDailyGoal();

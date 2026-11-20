@@ -11,9 +11,9 @@ export interface SynonymRowWordModel {
   /** The stressed vowels of the text, in order, as VoiceOver names them. */
   readonly stressedVowels: readonly string[];
   /**
-   * The Word of the Language Pack a tap opens, even a Hidden one (ADR 0015);
+   * The Word of the Language Pack a tap opens, even a Hidden one;
    * nothing for a word without a Word id or one whose Word is Retired or not
-   * in the pack, which shows as plain text (ADR 0051).
+   * in the pack, which shows as plain text.
    */
   readonly wordId: string | undefined;
 }
@@ -27,7 +27,7 @@ export interface SynonymRowMemberModel extends SynonymRowWordModel {
 /**
  * What a Synonym Row card shows, decided by the Core: the UI draws it and
  * never picks sections itself. It carries data and keys only; the UI turns
- * the kind into the Edition's chip «синоніми» (ADR 0051). A section without
+ * the kind into the Edition's chip «синоніми». A section without
  * data is left out: `undefined`.
  */
 export interface SynonymRowCardModel {

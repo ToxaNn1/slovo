@@ -33,7 +33,7 @@ export function readEditionWithSnapshot(
   {
     today,
   }: {
-    /** The day the public domain is judged on (ADR 0045). */
+    /** The day the public domain is judged on. */
     today: Date;
   },
 ): SnapshotSource {

@@ -36,8 +36,8 @@ function previewWordOf(snapshot: WidgetSnapshot | undefined) {
 
 /**
  * Settings › «Віджети»: what each widget looks like, drawn from the Widget
- * Snapshot, over the three steps to add one (ADR 0054). The previews are
- * only a look and keep nothing (ADR 0026); the lock-screen one is there
+ * Snapshot, over the three steps to add one. The previews are
+ * only a look and keep nothing; the lock-screen one is there
  * while the snapshot carries the lock-screen widget. With the widget
  * previews off, the steps alone.
  */

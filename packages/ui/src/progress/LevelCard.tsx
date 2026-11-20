@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
+// Reanimated code: the React Compiler skips this module.
 
 import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -30,8 +30,7 @@ export interface LevelCardLine {
 }
 
 /**
- * The Profile's Level card: a tile card with a red wedge and ink words (ADR
- * 0188), the `number` over its `label` inside a red ring that fills to
+ * The Profile's Level card: a tile card with a red wedge and ink words, the `number` over its `label` inside a red ring that fills to
  * `progress` of `toNext`,
  * and beside it the Level's name, loud, over the card's quieter lines. The
  * ring fills as the card shows; under Reduce Motion it is drawn full at once.

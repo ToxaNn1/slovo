@@ -10,7 +10,7 @@ import { useSetDailyGoal, useXpLogState } from '@/progress/xp-log';
 
 const strings = editionStrings.settings.dailyGoal;
 
-/** The option of «Без цілі», which turns the Daily Goal off from today (ADR 0074). */
+/** The option of «Без цілі», which turns the Daily Goal off from today. */
 const NO_DAILY_GOAL = 'none';
 
 /** What the big number shows under «Без цілі», which has no number. */

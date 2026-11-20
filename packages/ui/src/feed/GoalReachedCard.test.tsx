@@ -120,7 +120,7 @@ async function wait(ms: number) {
   });
 }
 
-// Owner 14.11, ADR 0129, board XFeed f4: the goal-reached card.
+// Owner 14.11, board XFeed f4: the goal-reached card.
 describe('the goal-reached card', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -281,7 +281,7 @@ describe('the goal-reached card', () => {
     expect(pose('goal-reached-shard-0').opacity).toBe(0);
   });
 
-  it('only fades in under Reduce Motion, its parts in place and no shards (ADR 0055)', async () => {
+  it('only fades in under Reduce Motion, its parts in place and no shards', async () => {
     await renderFeed({ goal: 3, words: ['dawn', 'spark'], streak: 4 }, jest.fn(), true);
     const start = pose('goal-reached-enter');
     expect(start.opacity).toBeLessThan(1);

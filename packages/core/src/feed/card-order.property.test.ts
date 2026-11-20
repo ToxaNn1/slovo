@@ -91,7 +91,7 @@ function order(
   return shown;
 }
 
-/** How a Mix kind weight spaces a kind's turn of `every` cards, as ADR 0051 words it. */
+/** How a Mix kind weight spaces a kind's turn of `every` cards. */
 const spaced = (weight: MixKindWeight, every: number) =>
   ({ less: every * 2, normal: every, more: Math.ceil(every / 2) })[weight];
 

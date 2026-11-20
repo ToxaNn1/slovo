@@ -20,7 +20,7 @@ const titleOf = ({ entry, answer }: PlayedRound): RoundOption =>
   });
 
 /**
- * A row of the Game Review, «Огляд раундів» (spec #1880, D11; ADR 0139): a Round
+ * A row of the Game Review, «Огляд раундів» (spec #1880, D11): a Round
  * played, ✓ or ✗ and its word. A row neither expands nor opens the Entry.
  */
 export interface GameReviewRow {

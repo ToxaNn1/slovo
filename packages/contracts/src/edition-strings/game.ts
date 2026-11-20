@@ -13,7 +13,7 @@ const GameModeStringsSchema = z.strictObject({
   glyph: TextSchema,
   title: TextSchema,
   description: TextSchema,
-  /** The mode's one line under its name in a Games hub row, e.g. «Визначення є. Яке це слово?» (ADR 0139). */
+  /** The mode's one line under its name in a Games hub row, e.g. «Визначення є. Яке це слово?». */
   oneLiner: TextSchema,
   /** The label over a Round's prompt, e.g. «ВИЗНАЧЕННЯ». */
   roundLabel: TextSchema,
@@ -38,7 +38,7 @@ export const GameStringsSchema = z.strictObject({
   title: TextSchema,
   /** The XP earned in all, beside the mode screen's title, e.g. «45 XP». Takes `{count}`. */
   xp: templateOf('count'),
-  /** The titles of the Games hub's five groups of mode cards (ADR 0139). */
+  /** The titles of the Games hub's five groups of mode cards. */
   groups: z.strictObject({
     /** The modes that ask about sound, e.g. «Звук». */
     sound: TextSchema,
@@ -58,7 +58,7 @@ export const GameStringsSchema = z.strictObject({
     /** In a mode without a Round limit, e.g. «Найкраще: 23». Takes `{n}`, the Best result. */
     count: templateOf('n'),
   }),
-  /** A Games hub row's Best result (ADR 0139). */
+  /** A Games hub row's Best result. */
   hubRow: z.strictObject({
     /** The Best result, e.g. «Рекорд: 12 з 15». Takes `{n}` and `{total}`, the mode's Round limit. */
     record: templateOf('n', 'total'),
@@ -67,7 +67,7 @@ export const GameStringsSchema = z.strictObject({
     /** A mode not played yet, e.g. «Ще жодної гри». */
     never: TextSchema,
   }),
-  /** The toast on a tap of a mode that cannot be played, behind `gameModeToast` (ADR 0139). Takes `{mode}` and `{other}`, a mode the reader can play. */
+  /** The toast on a tap of a mode that cannot be played, behind `gameModeToast`. Takes `{mode}` and `{other}`, a mode the reader can play. */
   hubToast: templateOf('mode', 'other'),
   /** The toast while «Наголос» itself cannot be played, behind `gameModeToast`, e.g. «„Наголос“ ще розминається. Спробуй поки „Пари“!». Takes `{mode}` and `{other}`, «Пари» while it can be played, else the first mode that can. */
   hubToastFallback: templateOf('mode', 'other'),
@@ -98,11 +98,11 @@ export const GameStringsSchema = z.strictObject({
     solved: TextSchema,
     /** The Letter Wheel's button that checks the tiles tapped with VoiceOver on, e.g. «Перевірити». */
     check: TextSchema,
-    /** The crossing Daily Crossword's grid size on its card, e.g. «5×5». Takes `{size}` (ADR 0087). */
+    /** The crossing Daily Crossword's grid size on its card, e.g. «5×5». Takes `{size}`. */
     size: templateOf('size'),
-    /** The count of its Words on its card, e.g. «6 слів» (ADR 0087). */
+    /** The count of its Words on its card, e.g. «6 слів». */
     words: PluralSchema,
-    /** The Solve time on the solved card, e.g. «за 3:42». Takes `{time}` (ADR 0087). */
+    /** The Solve time on the solved card, e.g. «за 3:42». Takes `{time}`. */
     solvedIn: templateOf('time'),
     /** The mark of a day solved without the Crossword Hint, on the card and the share line, e.g. «без підказок». */
     noHints: TextSchema,
@@ -131,7 +131,7 @@ export const GameStringsSchema = z.strictObject({
     wheelHintShort: TextSchema,
     /** The line once every cell is filled and some letter is wrong, e.g. «Десь закралася помилка. Шукай уважніше!». */
     miss: TextSchema,
-    /** The solved screen (ADR 0087). */
+    /** The solved screen. */
     solvedScreen: z.strictObject({
       title: TextSchema,
       /** The button that shares the grid with no letters, e.g. «Поділитися без спойлера». */
@@ -140,7 +140,7 @@ export const GameStringsSchema = z.strictObject({
       /** The button that goes to the Games hub, e.g. «До ігор». */
       toGames: TextSchema,
     }),
-    /** The share line of a solved day (ADR 0087). */
+    /** The share line of a solved day. */
     share: z.strictObject({
       /** Its head, e.g. «SLOVO · Кросворд №12». Takes `{n}`, the day's number. */
       title: templateOf('n'),
@@ -152,7 +152,7 @@ export const GameStringsSchema = z.strictObject({
   }),
   /**
    * The texts of each Game Mode on offer, by its id: the Core's own and any
-   * an Edition registers (ADR 0024).
+   * an Edition registers.
    */
   modes: z.record(z.string(), GameModeStringsSchema),
   /** A Round. */
@@ -168,7 +168,7 @@ export const GameStringsSchema = z.strictObject({
       /** Its button to the next Round, e.g. «Далі →». */
       next: TextSchema,
     }),
-    /** The answer banner (ADR 0138). */
+    /** The answer banner. */
     banner: z.strictObject({
       /** Its head after a right answer, in turn, e.g. «Влучив!». */
       right: z.array(TextSchema).min(1),
@@ -286,7 +286,7 @@ export const GameStringsSchema = z.strictObject({
     again: TextSchema,
     /** The button that goes to the Games hub, e.g. «До ігор». */
     toGames: TextSchema,
-    /** The title over the Game Review, e.g. «Огляд раундів» (ADR 0139). */
+    /** The title over the Game Review, e.g. «Огляд раундів». */
     review: TextSchema,
   }),
 });

@@ -1,6 +1,6 @@
 import type { RuleName } from './refusal';
 
-/** The largest Illustration taken, in bytes: 150 KB (ADR 0055). */
+/** The largest Illustration taken, in bytes: 150 KB. */
 export const MAX_ILLUSTRATION_BYTES = 150_000;
 
 const PNG_SIGNATURE = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
@@ -12,7 +12,7 @@ export interface IllustrationRefusal {
 }
 
 /**
- * The rules an Illustration file breaks (ADR 0055, 0099): it is not a PNG,
+ * The rules an Illustration file breaks (ADR 0099): it is not a PNG,
  * is over 150 KB or is not square. A file that is not a PNG is refused for
  * that alone; a PNG both too large and not square gets both refusals.
  */

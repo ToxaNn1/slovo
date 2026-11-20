@@ -12,7 +12,7 @@ interface LiveIllustration {
 
 /**
  * A Word's Illustration and its upload. The backend checks the file against
- * the Illustration rules (ADR 0055); a refused rule shows by its name.
+ * the Illustration rules; a refused rule shows by its name.
  */
 export function IllustrationUpload({
   editionId,

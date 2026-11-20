@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # A cloud session appends a footer to the PR body (ADR 0100). This job alone
+  # A cloud session appends a footer to the PR body. This job alone
   # may edit the PR, so it never runs the PR's code: the script comes from the
   # base commit and nothing is installed. A fork's PR gets a read-only token,
   # so its body stays as it is; the check below ignores the footer either way.
@@ -87,7 +87,7 @@ jobs:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           status=0
-          # The body without the cloud session footer, as the footer job leaves it on the PR (ADR 0100).
+          # The body without the cloud session footer, as the footer job leaves it on the PR.
           PR_TEXT="$PR_TITLE $(printf '%s' "$PR_BODY" | node scripts/strip-pr-footer.mjs)"
           # The owner's address is .github/owner-email (the owner's GitHub noreply address).
           OWNER_EMAIL="$(cat .github/owner-email)"

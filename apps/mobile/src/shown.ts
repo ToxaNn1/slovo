@@ -22,7 +22,7 @@ export interface Shown {
   readonly tabs: readonly Tab[];
   /** Whether an Entry card is in Self-check. */
   readonly selfCheck: boolean;
-  /** The switch «Анонімна статистика» on the privacy screen (ADR 0060, 0135). */
+  /** The switch «Анонімна статистика» on the privacy screen (ADR 0135). */
   readonly shareCountersSetting: boolean;
   /**
    * The Stats pill and the stats sheet, with the setting that hides the Streak;
@@ -53,7 +53,7 @@ export interface Shown {
   readonly breakCard: boolean;
   /** The Profile's Streak freeze card, while the freezes are on and the reader has not hidden the counters. */
   readonly streakFreezeCard: boolean;
-  /** How many Badges are earned («1 з 21», a family's «0 з 4»), while the reader has not hidden the counters (ADR 0188). */
+  /** How many Badges are earned («1 з 21», a family's «0 з 4»), while the reader has not hidden the counters. */
   readonly badgeCounts: boolean;
   /**
    * The offers to share a Level reached, a Badge earned or a Streak
@@ -76,7 +76,7 @@ export interface Shown {
 }
 
 /**
- * What the reader is shown, from the Edition in effect (ADR 0040), the
+ * What the reader is shown, from the Edition in effect, the
  * reader's settings and their Mix. A feature shows only while its Feature
  * Switch is in effect, which the Edition answers with its dependencies
  * applied; the reader may hide the counters (or, with «Без лічильників»

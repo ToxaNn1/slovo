@@ -56,7 +56,7 @@ const ServerVariablesSchema = z.object({
   // Store write, Sentry environment `staging`. Unset, the Deployment.
   DEPLOYMENT: emptyAsUnset(z.enum(['production', 'staging']).default('production')),
   DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/, error: 'must be a postgres:// URL' }),
-  // The sign-in emails go over ZeptoMail's HTTPS API (ADR 0115): its email
+  // The sign-in emails go over ZeptoMail's HTTPS API: its email
   // endpoint, https:// only, in the EU data centre by default, and the Send
   // Mail token of its Agent. No token sends them to Mailpit instead.
   ZEPTOMAIL_API_URL: unsetWhenEmpty(
@@ -118,7 +118,7 @@ const ServerVariablesSchema = z.object({
   SENTRY_ORG: unsetWhenEmpty(z.string().min(1)),
   SENTRY_APP_PROJECT: unsetWhenEmpty(z.string().regex(/^\d+$/, 'must be a numeric project id')),
   SENTRY_BACKEND_PROJECT: unsetWhenEmpty(z.string().regex(/^\d+$/, 'must be a numeric project id')),
-  // The Bearer token CI pushes its history with (ADR 0096); unset, every push
+  // The Bearer token CI pushes its history with; unset, every push
   // is refused.
   CI_HISTORY_TOKEN: unsetWhenEmpty(z.string().min(32, 'must be at least 32 characters')),
   // The Telegram bot that tells the owner of alerts and the daily digest, and
@@ -129,7 +129,7 @@ const ServerVariablesSchema = z.object({
   // The backend's health URL the Cron service checks; unset, it is not checked.
   BACKEND_HEALTH_URL: unsetWhenEmpty(z.url()),
   // «Сервіси» reads the backend's and the Crons' state and the month's spend
-  // from Railway's GraphQL API with this token (ADR 0164). Railway sets the
+  // from Railway's GraphQL API with this token. Railway sets the
   // project's and the environment's ids itself. Unset, those blocks answer
   // «не вдалося прочитати».
   RAILWAY_READ_TOKEN: unsetWhenEmpty(z.string().min(1)),
@@ -145,7 +145,7 @@ const ServerVariablesSchema = z.object({
     .default(0),
   // 0 takes any free port.
   PORT: z.coerce.number().int().min(0).max(65535).default(8787),
-  // The folder that holds one folder per Edition (ADR 0035).
+  // The folder that holds one folder per Edition.
   EDITIONS_DIR: z.string().min(1).default(EDITIONS_DIR),
   // The URL root of the Media Store the snapshot and the Patch name (ADR
   // 0099), with no trailing slash: one setting moves it to media.<domain>.
@@ -154,7 +154,7 @@ const ServerVariablesSchema = z.object({
       .url({ error: 'must be a URL' })
       .refine((url) => !url.endsWith('/'), 'must not end with a slash'),
   ),
-  // «Сервіси» reads usage with these (ADR 0164); unset, that Service's block
+  // «Сервіси» reads usage with these; unset, that Service's block
   // says it cannot be read. A Neon API key and the project's id: the reads go
   // to Neon's management API, never to the database. A Cloudflare API token
   // with Account Analytics: Read, on the R2 account and bucket below.
@@ -173,13 +173,12 @@ const ServerVariablesSchema = z.object({
   // where recordings.Dockerfile puts them.
   RECORDINGS_PYTHON: emptyAsUnset(z.string().min(1).default('/opt/recordings/venv/bin/python')),
   RECORDINGS_MODEL_DIR: emptyAsUnset(z.string().min(1).default('/opt/recordings/model')),
-  // The key of the Vault that seals the Service entries of «Сервіси» (ADR
-  // 0164): 32 random bytes in base64, `openssl rand -base64 32`, apart from
+  // The key of the Vault that seals the Service entries of «Сервіси»: 32 random bytes in base64, `openssl rand -base64 32`, apart from
   // AUTH_SECRET. Unset, the Vault is off and no entry is written. Lost, the
   // sealed entries are lost: the owner keeps a copy outside Railway.
   VAULT_KEY: VaultKeySchema,
   // The deployment Railway runs; a new one lets a stopped Recordings job try
-  // again (ADR 0169). Unset outside Railway.
+  // again. Unset outside Railway.
   RAILWAY_DEPLOYMENT_ID: emptyAsUnset(z.string().min(1).default('local')),
 });
 
@@ -381,7 +380,7 @@ export const CronConfigSchema = ServerVariablesSchema.pick({
   TELEGRAM_BOT_TOKEN: true,
   TELEGRAM_CHAT_ID: true,
   BACKEND_HEALTH_URL: true,
-  // The usage ports' keys: the 90 % Alert reads what «Сервіси» shows (ADR 0164).
+  // The usage ports' keys: the 90 % Alert reads what «Сервіси» shows.
   RAILWAY_READ_TOKEN: true,
   RAILWAY_PROJECT_ID: true,
   RAILWAY_ENVIRONMENT_ID: true,

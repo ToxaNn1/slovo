@@ -137,15 +137,15 @@ export function createApiHandler({
   };
   /** The Editions the backend serves, as the admin lists them. */
   served: readonly Edition[];
-  /** The Services of «Сервіси» (ADR 0164). */
+  /** The Services of «Сервіси». */
   services: ServiceStore;
-  /** The Service entries of «Сервіси», sealed in the Vault (ADR 0164). */
+  /** The Service entries of «Сервіси», sealed in the Vault. */
   serviceEntries: ServiceEntries;
-  /** What SLOVO pays for the Services, and the Власник's writes of it (ADR 0164). */
+  /** What SLOVO pays for the Services, and the Власник's writes of it. */
   serviceMoney: ServiceMoneyBook;
-  /** The usage of the Services, read from their providers (ADR 0164). */
+  /** The usage of the Services, read from their providers. */
   serviceUsage: ServiceUsage;
-  /** The NBU rate «Сервіси» counts the money in hryvnias at (ADR 0164). */
+  /** The NBU rate «Сервіси» counts the money in hryvnias at. */
   usdRates: UsdRates;
   sync: Sync;
 }) {

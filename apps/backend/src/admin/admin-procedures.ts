@@ -50,7 +50,7 @@ const COOKIE_PATH = '/v1/admin';
 /** The cookie's life: a session's longest; the backend ends it sooner when idle. */
 const COOKIE_MAX_AGE_SECONDS = 30 * 24 * 60 * 60;
 
-/** The kinds of Sync record the Account page names by their Entry (ADR 0162); each key ends in the Entry's id. */
+/** The kinds of Sync record the Account page names by their Entry; each key ends in the Entry's id. */
 const ENTRY_NAMING_KINDS = ['favorites.', 'hidden.', 'knowledge.', 'collectionEntries.'];
 
 /** The Entry id a Sync record's key names, when it is of a kind the Account page names by its Entry. */
@@ -85,22 +85,22 @@ export interface AdminDependencies {
   readonly contentQueue: ContentQueue;
   readonly ownerChecks: OwnerChecks;
   readonly analytics: AdminAnalytics;
-  /** The readers' Accounts, which a Власник finds and deletes by email (ADR 0127). */
+  /** The readers' Accounts, which a Власник finds and deletes by email. */
   readonly accounts: Accounts;
   readonly quality: Quality;
-  /** The token CI pushes its history with (ADR 0096). */
+  /** The token CI pushes its history with. */
   readonly ciToken: string | undefined;
   readonly alertSettings: AlertSettings;
   readonly alertStore: AlertStore;
-  /** The Services of «Сервіси» (ADR 0164). */
+  /** The Services of «Сервіси». */
   readonly services: ServiceStore;
-  /** The Service entries of «Сервіси», sealed in the Vault (ADR 0164). */
+  /** The Service entries of «Сервіси», sealed in the Vault. */
   readonly serviceEntries: ServiceEntries;
-  /** What SLOVO pays for the Services, and the Власник's writes of it (ADR 0164). */
+  /** What SLOVO pays for the Services, and the Власник's writes of it. */
   readonly serviceMoney: ServiceMoneyBook;
-  /** The usage of the Services, read from their providers (ADR 0164). */
+  /** The usage of the Services, read from their providers. */
   readonly serviceUsage: ServiceUsage;
-  /** The NBU rate «Сервіси» counts the money in hryvnias at (ADR 0164). */
+  /** The NBU rate «Сервіси» counts the money in hryvnias at. */
   readonly usdRates: UsdRates;
 }
 
@@ -360,7 +360,7 @@ export function adminProcedures({
       return { revoked: true as const };
     }),
 
-    // Never logged: reads are not (ADR 0088, 0162).
+    // Never logged: reads are not (ADR 0088).
     listAccounts: os.listAccounts.handler(async ({ input }) => {
       const listed = await accounts.list({ page: input.page ?? 1, search: input.search ?? '' });
       return {
@@ -374,7 +374,7 @@ export function adminProcedures({
       };
     }),
 
-    // Never logged: reads are not (ADR 0088, 0162).
+    // Never logged: reads are not (ADR 0088).
     getAccount: os.getAccount.handler(async ({ input }) => {
       const found = await accounts.get(input.accountId);
       if (found === undefined) return { account: null };
@@ -409,7 +409,7 @@ export function adminProcedures({
       };
     }),
 
-    // The app's own deletion path (ADR 0127): the Account goes as «Видалити SLOVO ID» deletes it.
+    // The app's own deletion path: the Account goes as «Видалити SLOVO ID» deletes it.
     deleteAccount: os.deleteAccount.handler(async ({ context, input, errors }) => {
       const { who, reason } = writeOf(context.caller, input.reason);
       const deleted = await accounts.deleteByEmail(input.email);
@@ -651,14 +651,14 @@ export function adminProcedures({
         return answer;
       }),
       check: content.check.handler(async ({ context, input, errors }) => {
-        // Only a person checks a record; an Агент's eye is not a check (ADR 0143).
+        // Only a person checks a record; an Агент's eye is not a check.
         const writer = personOf(context.caller);
         const checked = await contentWrites.check(writer.email, input);
         if (!checked.ok) throw refusalOf(checked, errors);
         return checked.checked;
       }),
       checkAll: content.checkAll.handler(async ({ context, input, errors }) => {
-        // Only a person checks a record; an Агент's eye is not a check (ADR 0143, 0152).
+        // Only a person checks a record; an Агент's eye is not a check.
         const writer = personOf(context.caller);
         const checked = await contentWrites.checkAll(writer.email, input);
         if (checked.ok) return { checked: checked.checked };

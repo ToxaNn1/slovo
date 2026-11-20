@@ -9,7 +9,7 @@ import { openLanguagePack, type NodeLanguagePack } from './index';
 import { buildUkrainianPack, ukrainian } from './test-support';
 
 // The origins of the real Ukrainian Language Pack: the Words «Звідки слово»
-// asks about (spec #772, seam 1; ADR 0052).
+// asks about (spec #772, seam 1).
 
 let workDir: string;
 let pack: NodeLanguagePack;

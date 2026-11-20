@@ -5,7 +5,7 @@ import { WidgetEntrySchema } from './widget-snapshot';
 
 /**
  * An Entry as the iPhone search finds it: the text the widget shows for it
- * (ADR 0026) and the route a tap opens, `entry/<id>`.
+ * and the route a tap opens, `entry/<id>`.
  */
 const SpotlightEntrySchema = z
   .strictObject({
@@ -34,7 +34,7 @@ const SpotlightCollectionSchema = z
   );
 
 /**
- * The Spotlight Snapshot (ADR 0057): everything the iPhone search may find,
+ * The Spotlight Snapshot: everything the iPhone search may find,
  * decided by the Core, which the app hands to its native module to replace
  * the whole index with. Empty, the index is emptied.
  */

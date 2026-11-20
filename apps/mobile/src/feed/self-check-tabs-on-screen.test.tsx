@@ -85,7 +85,7 @@ const idiom: Idiom = {
   retired: false,
 };
 
-/** A Tip with an Example: one tab, «Правило», so its card draws no tab bar (ADR 0119). */
+/** A Tip with an Example: one tab, «Правило», so its card draws no tab bar. */
 const tip: Tip = {
   kind: 'tip',
   id: 't_hour',
@@ -103,7 +103,7 @@ const tip: Tip = {
   retired: false,
 };
 
-/** A Synonym Row, which draws no tab bar (ADR 0091). */
+/** A Synonym Row, which draws no tab bar. */
 const row: SynonymRow = {
   kind: 'synonymRow',
   id: 'r_walk',

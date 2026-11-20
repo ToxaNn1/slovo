@@ -38,7 +38,7 @@ function passRoutes(): Set<string> {
   );
 }
 
-describe('the app pass (ADR 0177)', () => {
+describe('the app pass', () => {
   it('finds the screen routes', () => {
     const routes = screenRoutes();
     expect(routes.get('/')).toBe('index.tsx');

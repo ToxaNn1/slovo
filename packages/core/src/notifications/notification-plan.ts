@@ -123,7 +123,7 @@ function slotsAhead(times: readonly TimeOfDay[], clock: Clock): Slot[] {
 }
 
 /**
- * The slots of the polite pause (ADR 0054): every time from the next one
+ * The slots of the polite pause: every time from the next one
  * still ahead today to the last of the `PLAN_DAYS`th local day after today,
  * the last of which is the farewell. Every plan is made with the app open,
  * so today is the day of the last open.
@@ -197,7 +197,7 @@ export const noNotificationPlanner: NotificationPlanner = {
 
 /**
  * Makes the plan of the Notification times, for the Notifications module,
- * and hands it to the device's scheduler (ADR 0021). The plan is a list of
+ * and hands it to the device's scheduler. The plan is a list of
  * floating local dates and times, each with one Word, and the user state
  * keeps it as the Reserved Words, one Word per notification.
  *
@@ -207,8 +207,8 @@ export const noNotificationPlanner: NotificationPlanner = {
  * local day carries that day's Word of the Day: today's is the Word of the
  * Day module's while it is unseen, and no other notification carries it; a
  * later day's is the Word the plan Reserves for that morning, which the Word
- * of the Day module takes when the day comes, before a plan is made on it
- * (ADR 0022), so a new day keeps its morning Word even once its notification
+ * of the Day module takes when the day comes, before a plan is made on it,
+ * so a new day keeps its morning Word even once its notification
  * has passed. Planning again keeps every
  * notification still ahead whose Word is still eligible, unseen and not
  * needed elsewhere, so the plan doesn't churn, and gives the others the next
@@ -226,7 +226,7 @@ export const noNotificationPlanner: NotificationPlanner = {
  * With the `politePause` Feature Switch on, the plan reaches no further than
  * the 14th local day after the last open, and the last time of that day is
  * the Edition's farewell, with no title and no Word, so it Reserves none;
- * nothing comes after it until the next open plans again (ADR 0054). Off,
+ * nothing comes after it until the next open plans again. Off,
  * the plan holds 14 days of times from the next one ahead.
  *
  * The plan is the active Edition's alone (ADR 0065): the composition opens
@@ -237,7 +237,7 @@ export const noNotificationPlanner: NotificationPlanner = {
  * its Word, the Lemma with its Stress; the body is the primary Definition.
  * A notification still ahead keeps its template unless the one before it now
  * has the same; any other is drawn with `random`, never the template of the
- * notification just before, the last that came included (ADR 0054).
+ * notification just before, the last that came included.
  *
  * `nextMorning` answers which morning notification a plan made now would
  * hold, also while the device doesn't let the app notify, and writes nothing.

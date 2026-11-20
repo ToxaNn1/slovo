@@ -16,7 +16,7 @@ export interface RoundAward {
 
 /** What a Game just over came to, once its end is written. */
 export interface GameResult {
-  /** The right answers: the Game's result, which its mode's Best result keeps (ADR 0052). */
+  /** The right answers: the Game's result, which its mode's Best result keeps. */
   readonly right: number;
   /** Whether the result is the mode's Best result now: its first, or above the one before. */
   readonly beaten: boolean;
@@ -67,7 +67,7 @@ export function createGameAwards({
 
   /**
    * The record id of a mode's Best result: one per reset marker, so after a
-   * Progress reset the mode has none until a Game after it (ADR 0133).
+   * Progress reset the mode has none until a Game after it.
    */
   function bestIdOf(modeId: string): string {
     const marker = xp.resetMarker;

@@ -4,7 +4,7 @@
 //   filter: only blocks (goroh) or lines (other pages) containing this text, case-insensitive
 //   skip:   skip this many output characters (to page through a long article)
 // goroh.pp.ua: one line per article block, prefixed by its source; blocks from
-// «Велика мовна модель» are hidden and only counted: they must not be quoted (ADR 0012).
+// «Велика мовна модель» are hidden and only counted: they must not be quoted.
 // Other pages (ukrlib.com.ua, cp1251): plain text of the page body.
 import { execFileSync } from 'node:child_process';
 

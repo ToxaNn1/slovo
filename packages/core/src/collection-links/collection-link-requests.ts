@@ -17,7 +17,7 @@ const notFound = ({ code }: { code: string }) =>
 
 /**
  * The requests of Collection Links to the backend, each answered as a value
- * (ADR 0064). They need no Account and send no Session (ADR 0058).
+ * (ADR 0064). They need no Account and send no Session.
  */
 export function collectionLinkRequests(backend: Pick<Backend, 'collectionLinks'>) {
   return {

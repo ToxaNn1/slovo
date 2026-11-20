@@ -307,7 +307,7 @@ async function playGame(app: Composition, wrongIn: readonly number[] = []): Prom
   return rounds;
 }
 
-// Spec #886 story 44, ADR 0060: a Game answer is not the reader's judgement of a word.
+// Spec #886 story 44: a Game answer is not the reader's judgement of a word.
 describe('the Game and the Community Counters', () => {
   it('counts nothing for the Unknown mark a wrong answer sets', async () => {
     const app = await run({ on: ['rarityCeiling', 'knowledge', 'communityCounters'] });
@@ -1551,7 +1551,7 @@ describe('the Words a Game asks about', () => {
   });
 });
 
-// Spec #461, ADR 0043: up to 5 of the 15 Rounds ask about Entries the reader is weak on.
+// Spec #461: up to 5 of the 15 Rounds ask about Entries the reader is weak on.
 describe('the Rounds about Entries marked «Не знаю» or due', () => {
   const unknown = numbered('w_nnoun', 8);
 
@@ -1568,7 +1568,7 @@ describe('the Rounds about Entries marked «Не знаю» or due', () => {
     expect(new Set(ids).size).toBe(GAME_ROUNDS);
   });
 
-  // ADR 0190: the weak Entries take places drawn at random among the first 15 Rounds.
+  // The weak Entries take places drawn at random among the first 15 Rounds.
   it('asks the Words marked «Не знаю» at places drawn anew for each Game, not first', async () => {
     const places: number[][] = [];
     for (const seed of [1, 2, 3, 4, 5, 6]) {
@@ -1656,7 +1656,7 @@ describe('the Rounds about Entries marked «Не знаю» or due', () => {
   });
 });
 
-// Spec #461, ADR 0043: a wrong answer marks the Entry «Не знаю»; a right one changes nothing.
+// Spec #461: a wrong answer marks the Entry «Не знаю»; a right one changes nothing.
 describe('the Knowledge Marks a Game leaves', () => {
   const tomorrow: Clock = { ...clock, now: () => new Date('2026-10-12T09:00:00+03:00') };
 
@@ -2543,7 +2543,7 @@ describe('a failed planning of the offers', () => {
   });
 });
 
-// Spec #772, ADR 0052: weak Rounds in every Game Mode; a mode with no Round limit repeats its Entries reshuffled.
+// Spec #772: weak Rounds in every Game Mode; a mode with no Round limit repeats its Entries reshuffled.
 describe('weak Rounds and reshuffled repeats in every Game Mode', () => {
   const unknown = numbered('w_nnoun', 8);
   const endlessMode: GameMode = { ...lemmaMode, id: 'test-endless', lives: 3, roundLimit: 'none' };
@@ -2909,7 +2909,7 @@ describe('«Вгадай слово» harder as it goes (L10)', () => {
   });
 });
 
-// Spec #1641, ticket #1644, ADR 0085: a played Game leaves in the XP log what
+// Spec #1641, ticket #1644: a played Game leaves in the XP log what
 // a flawless Game and a run of right answers read.
 describe('the Game and the Badges', () => {
   const flawless: Badge = {

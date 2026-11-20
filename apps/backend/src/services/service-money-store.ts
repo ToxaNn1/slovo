@@ -5,7 +5,7 @@ import type { Database } from '../database/database';
 import { services } from '../database/schema';
 import { createServiceStore } from './service-store';
 
-/** A Service's money and a new Service, written to the Services table (ADR 0164). */
+/** A Service's money and a new Service, written to the Services table. */
 export function createServiceMoneyStore(database: Database): ServiceMoneyStore {
   const { db } = database;
   const read = createServiceStore(database);

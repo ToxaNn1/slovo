@@ -51,7 +51,7 @@ type RarityTestPhase =
  * слово?», with «Не знаю» and «Знаю» side by side; the last answer applies
  * them all. The result shows the Rarity Range set as a big number, the line
  * «Твоя рідкість — до {n}…», five bars lit up to it and how many Words the
- * reader knew; no range line (ADR 0072). With `onAgain` (Settings) it closes
+ * reader knew; no range line. With `onAgain` (Settings) it closes
  * on «ГОТОВО» and offers the test again; without it (onboarding) one «Далі»
  * goes on. The caller draws each screen in its own frame.
  */
@@ -248,7 +248,7 @@ function Segments({
 /**
  * The result (screen 93, XSettings t7): a card with the top of the Rarity
  * Range as a big number cut by its top right corner, beside the heading that
- * says the range the test set and whether that changed it (ADR 0182), five
+ * says the range the test set and whether that changed it, five
  * bars lit up to it, and how many Words the reader knew. The heading is a few
  * short words, so each fits its line beside the number.
  */

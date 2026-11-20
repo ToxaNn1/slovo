@@ -98,7 +98,7 @@ async function open({
             ? correctionTypeGrid
             : feature === 'previousWords'
               ? previousWords && shipped.isFeatureEnabled(feature)
-              : // The UA Edition ships the rail off till a content spec (ADR 0076); the test turns it on.
+              : // The UA Edition ships the rail off till a content spec; the test turns it on.
                 feature === 'curatedCollections'
                 ? curatedCollections
                 : // No later question takes the Word of the Day's place in the Feed.

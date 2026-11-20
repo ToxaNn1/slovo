@@ -16,7 +16,7 @@ enum ModeChoice: String, AppEnum {
   ]
 }
 
-/// The widget's background, «Тло», chosen beside its Widget Mode (ADR 0026).
+/// The widget's background, «Тло», chosen beside its Widget Mode.
 /// Each widget keeps its own; a new one starts in Авто, which follows the
 /// phone's light or dark appearance.
 enum BackgroundChoice: String, AppEnum {

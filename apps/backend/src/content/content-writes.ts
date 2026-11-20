@@ -295,7 +295,7 @@ export function createContentWrites({
   }
 
   /**
-   * The Edition's records at each content version last seen (ADR 0148): every
+   * The Edition's records at each content version last seen: every
    * change of a record raises the content version, so the records of one
    * version are read once and kept, not read again by every write and report.
    */
@@ -710,7 +710,7 @@ export function createContentWrites({
     }, readOnly);
   }
 
-  /** A live record not checked at its record version: of no check, or of a write since (ADR 0143). */
+  /** A live record not checked at its record version: of no check, or of a write since. */
   const uncheckedOf = (kind: RecordKind, editionId: string) => {
     const table = TABLES[kind];
     return and(
@@ -756,7 +756,7 @@ export function createContentWrites({
 
   /**
    * An Admin user marks a record checked at its record version: the content
-   * stays as it is, the Action log keeps a row (ADR 0143).
+   * stays as it is, the Action log keeps a row.
    */
   async function check(
     email: string,
@@ -803,7 +803,7 @@ export function createContentWrites({
    * An Admin user marks every live record of a kind not checked yet checked at
    * its record version, if their count is still the one the confirmation named:
    * one statement per table, in Postgres, each record with the Action log row of
-   * a single check; no record's fields leave the database (ADR 0152).
+   * a single check; no record's fields leave the database.
    */
   async function checkAll(
     email: string,

@@ -56,7 +56,7 @@ export function CategoryRoute({ of }: { of: CategoryKind }) {
  * cards under it in the Language Pack's order. `place` is the Category's
  * place in its list, which picks its shape. An empty Category shows the hero
  * alone, and the counts show once the Entries are read. A quiet Category of
- * Words draws its quiet screen instead (board 05.2 k3, ADR 0081): «Категорія»,
+ * Words draws its quiet screen instead (board 05.2 k3): «Категорія»,
  * its name and description, no right button and no progress, its Entries as
  * plain rows. k2 draws no quiet tile, so a Category of Corrections is never
  * quiet.

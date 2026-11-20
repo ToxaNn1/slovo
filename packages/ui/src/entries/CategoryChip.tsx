@@ -11,7 +11,7 @@ import { useOnAccent } from './on-accent';
  * The chip naming an Entry's Category on its card, filled where the chips of
  * the Correction Type and register are outlined. VoiceOver reads it as the
  * Category, in the Edition's language. On the red ground it is cream, see-through.
- * Clamped content shows it whole or not at all, never a sliver of its box (ADR 0091).
+ * Clamped content shows it whole or not at all, never a sliver of its box.
  */
 export function CategoryChip({ testID, name }: { testID: string; name: string }) {
   const tokens = useTokens();

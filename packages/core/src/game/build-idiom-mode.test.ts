@@ -310,7 +310,7 @@ describe('a Round of «Склади вислів»', () => {
     expect(app.knowledge.state.shown.size).toBe(0);
   });
 
-  // ADR 0190: the weak Entries take places drawn at random among the first 15 Rounds.
+  // The weak Entries take places drawn at random among the first 15 Rounds.
   it('asks about the expressions the reader marked «Не знаю» at places drawn among the first 15 Rounds', async () => {
     const weak = ['пекти раків', 'Око за око', 'не все те золото, що блищить'];
     const places: number[] = [];

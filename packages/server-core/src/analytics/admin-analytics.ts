@@ -54,7 +54,7 @@ export interface ReaderCounts {
   readonly registered: number;
   readonly unregisteredAtLeast: number | null;
   readonly statisticsOff: number;
-  /** The Accounts with Sync records in the Editions, which follows the Edition filter (ADR 0162). */
+  /** The Accounts with Sync records in the Editions, which follows the Edition filter. */
   readonly syncing: number;
 }
 

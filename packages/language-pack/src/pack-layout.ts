@@ -29,7 +29,7 @@ CREATE TABLE categories (
   position INTEGER NOT NULL
 ) WITHOUT ROWID;
 
--- The Categories of Corrections, a list apart from the Words' (ADR 0033).
+-- The Categories of Corrections, a list apart from the Words'.
 CREATE TABLE correction_categories (
   id TEXT PRIMARY KEY,
   display_name TEXT NOT NULL,
@@ -223,7 +223,7 @@ CREATE TABLE tip_wrong_answers (
   PRIMARY KEY (tip_id, position)
 ) WITHOUT ROWID;
 
--- The words of a Tip's exceptions, in order; a Tip with exceptions has at least one (ADR 0120).
+-- The words of a Tip's exceptions, in order; a Tip with exceptions has at least one.
 CREATE TABLE tip_exception_words (
   tip_id TEXT NOT NULL REFERENCES tips (id),
   position INTEGER NOT NULL,
@@ -231,7 +231,7 @@ CREATE TABLE tip_exception_words (
   PRIMARY KEY (tip_id, position)
 ) WITHOUT ROWID;
 
--- The Daily Crossword, a row per word of a day (ADR 0052). A day keeps the
+-- The Daily Crossword, a row per word of a day. A day keeps the
 -- answer and clue it was made with, so a later edit of its Entry never changes it.
 CREATE TABLE crossword_words (
   date TEXT NOT NULL,
@@ -245,8 +245,7 @@ CREATE TABLE crossword_words (
   PRIMARY KEY (date, position)
 ) WITHOUT ROWID;
 
--- The Curated Collections of the Dashboard's «SLOVO пропонує» rail (ADR 0076,
--- 0178); pictogram is the id of the Category whose pictogram the tile draws.
+-- The Curated Collections of the Dashboard's «SLOVO пропонує» rail; pictogram is the id of the Category whose pictogram the tile draws.
 CREATE TABLE curated_collections (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
@@ -313,26 +312,25 @@ CREATE TABLE media_illustrations (
  * keeps format 4's layout, adding only the Synonym Row tables
  * (`synonym_rows`, `synonym_row_members` and `synonym_row_stress`), the Tip
  * tables (`tips` and `tip_wrong_answers`) and the kinds `'synonymRow'` and
- * `'tip'`, and admits the Synonym Rows and Tips of 0.8.11 (ADR 0051); format 6
+ * `'tip'`, and admits the Synonym Rows and Tips of 0.8.11; format 6
  * keeps format 5's layout, adding only the Word's origin column and the table
  * `crossword_words`, and admits the Word's origin and the Daily Crossword of
- * 0.8.12 (ADR 0052); format 7 keeps format 6's layout, adding only the table
- * `word_moods`, and admits the Word's moods of 0.8.13 (ADR 0054); format 8
+ * 0.8.12; format 7 keeps format 6's layout, adding only the table
+ * `word_moods`, and admits the Word's moods of 0.8.13; format 8
  * keeps format 7's layout, adding only the Word's illustration column, and
- * admits the Word's Illustration of 0.8.14 (ADR 0055); format 9 keeps format
+ * admits the Word's Illustration of 0.8.14; format 9 keeps format
  * 8's layout, adding only the source's short name column, and admits the
- * short names of the «Джерело:» line (ADR 0032); format 10 drops the table
+ * short names of the «Джерело:» line; format 10 drops the table
  * `word_moods` and the Word's moods, which a Mood no longer tags, and adds the
  * Curated Collection tables (`curated_collections` and
- * `curated_collection_entries`) of the Dashboard's rail (spec #1564, ADR 0076);
+ * `curated_collection_entries`) of the Dashboard's rail (spec #1564);
  * format 11 adds the columns `description` and `tone` to both Category tables
  * (spec #1604), and later the Word's `needs_new_recording` column, which no
  * app reads, so the format stays (spec #1708); format 12 adds the media
  * tables `media_recordings` and `media_illustrations` and the metadata key
  * `media_base` (ADR 0099); format 13 adds the Tip's `exceptions_explanation`
- * column and the table `tip_exception_words`, the «Винятки» tab of a Tip
- * (ADR 0120); format 14 adds the Curated Collection's `pictogram` column
- * (ADR 0178).
+ * column and the table `tip_exception_words`, the «Винятки» tab of a Tip;
+ * format 14 adds the Curated Collection's `pictogram` column.
  */
 export const PACK_FORMAT = 14;
 

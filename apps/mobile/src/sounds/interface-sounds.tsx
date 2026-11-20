@@ -24,7 +24,7 @@ const audio = nativeModules.load(
 /** The device's audio for the Interface sounds: the active Edition's sounds. */
 export const soundEngine: SoundEngine = createSoundEngine(audio, activeEditionFiles.sounds);
 
-/** The device's player of Recordings, for Pronunciation (ADR 0083). */
+/** The device's player of Recordings, for Pronunciation. */
 export const recordingPlayer = createRecordingPlayer(audio);
 
 /**

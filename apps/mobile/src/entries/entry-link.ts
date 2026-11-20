@@ -11,7 +11,7 @@ import { APP_INTENT_PARAM, APP_INTENT_ROUTES, APP_INTENTS, type AppIntent } from
 const entryPath =
   /^\/(?:entry|game|saved\/(?:favorites|history|learning)|saved\/collections\/[^/]+)\/[^/]+$/;
 
-/** A path under `/c`, where a Collection Link opens as `/c/<id>` (ADR 0058). */
+/** A path under `/c`, where a Collection Link opens as `/c/<id>`. */
 const collectionLinksPath = /^\/c(?:\/|$)/;
 
 /** A link's scheme, such as `slovo://`, after which its host is the first part of the path. */
@@ -41,7 +41,7 @@ interface Route {
  * letter case, or after Expo Go's `exp://<host>:<port>/--`, or, for the dev client's link
  * (`<scheme>://expo-development-client/?url=<link>`), that of the link in its
  * `url`. Nothing for a web address of any other host, which the app never
- * opens (ADR 0058, 0065).
+ * opens (ADR 0065).
  */
 function routeOf(link: string, domain: string): Route | undefined {
   const host = webOrigin.exec(link)?.[1];
@@ -72,7 +72,7 @@ function normalPath(path: string): string {
  * address iOS hands the app; one of any other host opens nothing) or the
  * scheme + `c/<id>?edition=<edition>`, opens `/c/<id>` with
  * none of its search params; any other link under `c/`, with an id the
- * backend never makes, opens nothing (ADR 0058). A link to an Entry, on any of
+ * backend never makes, opens nothing. A link to an Entry, on any of
  * its routes and whatever its slashes, opens with its path and none of its
  * search params, so it can't name the label of «Назад» or pass for a
  * notification's link, which never comes from outside (`NotificationTaps`
@@ -104,7 +104,7 @@ function appIntentOf(route: Route, domain: string): AppIntent | undefined {
   );
 }
 
-/** What the outside links read and ask of the app for the App Intents (ADR 0057). */
+/** What the outside links read and ask of the app for the App Intents. */
 export interface AppIntentLandings {
   /** Whether the Feature Switch `appIntents` is on in effect. */
   on(): Promise<boolean>;
@@ -131,7 +131,7 @@ export interface WidgetEntries {
  * Intent's link opens its route without its mark: «Слово дня» the Feed,
  * landing on today's Word of the Day card, and «Відкрити гру» the Game; with
  * `appIntents` off in effect, or unknown, both open the app's start, the Feed
- * as it was (ADR 0057). A link that names another Edition than the
+ * as it was. A link that names another Edition than the
  * active one (`edition=<id>`, or the web address's `/<edition>/` path, ADR
  * 0065), left from before a switch or shared from another Edition, opens the
  * app's start, the active Edition's Feed.

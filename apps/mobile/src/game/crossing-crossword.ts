@@ -39,7 +39,7 @@ const letterAt = (state: CrossingPlay, place: PuzzlePlace) => {
 
 /**
  * Today's solve: the one the XP log records, which Sync brings from every
- * device (ADR 0087), or the one this device's play made while the log keeps
+ * device, or the one this device's play made while the log keeps
  * none, with no Solve time; `undefined` until it is solved.
  */
 export function crossingSolveOf(
@@ -153,7 +153,7 @@ const DIRECTION_MARK = { across: '→', down: '↓' } as const;
  * the progress this device made, and afresh for another one opened. Each move
  * goes to the Core in turn; a release that solves no Word becomes the `miss`.
  * The Solve time ticks from the device clock only while the screen is in front
- * and the app in the foreground (ADR 0087); as the screen leaves or the app
+ * and the app in the foreground; as the screen leaves or the app
  * goes to the background the progress is kept and the time pauses, until the
  * reader comes back. A move that fails is logged and changes nothing.
  */

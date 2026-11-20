@@ -6,8 +6,7 @@ import { shuffled, type PuzzlePlace } from './crossword-puzzle';
 /**
  * A block pattern: the rows of a 5 × 5 grid, `#` a block and `.` a white
  * cell. Every pattern is symmetric under a half turn, gives 3–8 Words of 3–5
- * letters, has no run of exactly two cells and no white cell outside a Word
- * (ADR 0087).
+ * letters, has no run of exactly two cells and no white cell outside a Word.
  */
 export type BlockPattern = readonly string[];
 
@@ -255,7 +254,7 @@ function wheelOf(
 }
 
 /**
- * The crossing Daily Crossword of a date (ADR 0087). Seeds the port with the
+ * The crossing Daily Crossword of a date. Seeds the port with the
  * date and the ids of the Words within the Rarity Range, tries the block
  * patterns in seeded order and fills the first that fills within the search
  * budget; numbers the cells in reading order, pre-fills 2–3 crossing cells

@@ -156,7 +156,7 @@ export interface AuthoredContent {
   readonly idioms: readonly Authored<Idiom>[];
   readonly synonymRows: readonly Authored<SynonymRow>[];
   readonly tips: readonly Authored<Tip>[];
-  /** The Curated Collections, each with its file (ADR 0076). */
+  /** The Curated Collections, each with its file. */
   readonly curatedCollections: readonly Authored<CuratedCollection>[];
 }
 
@@ -250,7 +250,7 @@ export type EditionBuild = 'development' | 'release';
 
 /**
  * Opens the Edition with the given id in an editions folder, with the records
- * of a snapshot of the backend (ADR 0090, 0153): the config, assets and every
+ * of a snapshot of the backend (ADR 0090): the config, assets and every
  * other file come from the folder. The id must name one of its Editions, and
  * the Edition's config must be valid and carry the folder's name as its id,
  * since the app, Metro and the Language Pack look the Edition up by it. Throws

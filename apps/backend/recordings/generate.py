@@ -1,4 +1,4 @@
-"""Generates Recordings of Words in their Narrator Voices (ADR 0083, 0099).
+"""Generates Recordings of Words in their Narrator Voices (ADR 0099).
 
     python recordings/generate.py --model <dir> --requests <file> --out-dir <dir>
     python recordings/generate.py --model <dir> --requests <file> --check
@@ -20,7 +20,7 @@ The model files come from `fetch-model.sh`, checked by SHA256; the engine is
 given that folder, so it downloads nothing else.
 
 torch runs on `OMP_NUM_THREADS` threads (2 unless set; the Recordings service
-sets it, ADR 0172): by default it takes one per core of the whole host, more
+sets it): by default it takes one per core of the whole host, more
 than the container may run, and crawls. Each request prints the seconds it
 took, line by line, so a run killed at its time limit still shows them.
 """
@@ -39,7 +39,7 @@ import wave
 from pathlib import Path
 
 # The ukrainian-tts voice that reads each Narrator Voice of the Edition config.
-# Dmytro is never used (ADR 0083).
+# Dmytro is never used.
 ENGINE_VOICES = {
     "oksana": "Tetiana",
     "taras": "Mykyta",

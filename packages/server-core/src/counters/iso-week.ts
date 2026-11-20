@@ -1,7 +1,7 @@
 /**
  * The ISO week (UTC) of a time, by its Monday as `YYYY-MM-DD`: the week of
  * Sunday 23:59 UTC is the one that started six days before, whatever the
- * reader's time zone (ADR 0060).
+ * reader's time zone.
  */
 export function isoWeekOf(time: Date): string {
   const monday = new Date(time.getTime());

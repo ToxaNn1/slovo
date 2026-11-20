@@ -22,7 +22,7 @@ export interface EntryCardPage {
 
 /**
  * A tabbed card is a fixed frame the page's height: nothing around it scrolls,
- * only an opened tab inside it, so its frame and tab bar never move (ADR 0091).
+ * only an opened tab inside it, so its frame and tab bar never move.
  * Any other card, the red one of the Word of the Day Self-check keeps closed,
  * scrolls, under the room above it.
  */

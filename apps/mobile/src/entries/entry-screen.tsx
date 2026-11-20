@@ -34,14 +34,14 @@ export function EntryScreen({
 }: {
   entryId: string;
   back: string;
-  /** Opened from a tab of Saved: the card takes no side swipes, its mark set from the «⋯» sheet (ADR 0144). */
+  /** Opened from a tab of Saved: the card takes no side swipes, its mark set from the «⋯» sheet. */
   inSaved?: boolean;
   /**
    * Where outside the app it opened from, if it did: the Entry is Seen, in
    * History and today is an Active Day. A Search result opens through its
    * own way in, which makes nothing Seen (`search`). On any way in, an id the Language Pack doesn't
    * have opens the Feed, such as a plain link's or a Spotlight result's to an
-   * Entry a pack update took out (ADR 0057).
+   * Entry a pack update took out.
    */
   openedFrom?: EntryLinkSource | 'search' | undefined;
 }) {
@@ -63,7 +63,7 @@ export function EntryScreen({
     if (card === null) router.replace('/');
   }, [card, router]);
   // The Word History drawn is the history opened for Analytics (ADR 0068), once per Entry:
-  // «Історія» draws it again on every return to the tab and at each smaller size (ADR 0091).
+  // «Історія» draws it again on every return to the tab and at each smaller size.
   const composition = useShell().composition;
   const historyCountedFor = useRef<string | undefined>(undefined);
   const onWordHistoryShown = useCallback(() => {
@@ -120,8 +120,8 @@ export function EntryScreen({
 }
 
 /**
- * Entry details with the Entry's action row, or its corner and side swipes
- * (ADR 0077); with `swipes` false, the corner alone.
+ * Entry details with the Entry's action row, or its corner and side swipes;
+ * with `swipes` false, the corner alone.
  */
 function SlottedEntryDetails({
   swipes,

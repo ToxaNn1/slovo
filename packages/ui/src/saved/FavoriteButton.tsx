@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
+// Reanimated or gesture code: the React Compiler skips this module.
 
 import Animated, {
   ReduceMotion,
@@ -21,7 +21,7 @@ const HEART_ICON = {
 };
 
 /**
- * The pop, 300 ms in all (ADR 0055, the audit's H1): a critically damped
+ * The pop, 300 ms in all (the audit's H1): a critically damped
  * spring up to 1.2, then a softer one back to 1 that settles with a small
  * bounce. Reanimated takes a spring's `duration` as perceptual and runs 1.5
  * times it, so 80 + 120 here is 120 + 180 ms; a mass of 1 lets a spring this

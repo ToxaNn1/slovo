@@ -53,7 +53,7 @@ export const roundLayout = {
   tightGap: 6,
   sheetGap: 14,
   textMaxFontScale: 1.5,
-  /** The most lines a Round's prompt takes, stepping down the cards' title scale to fit (ADR 0157). */
+  /** The most lines a Round's prompt takes, stepping down the cards' title scale to fit. */
   promptLines: 4,
   /** The full-width tile of the Word in «Звідки слово» on the ground (board g4). */
   originTileMinHeight: 110,
@@ -135,8 +135,8 @@ export const dailyCrosswordCard = {
 } as const;
 
 /**
- * The crossing Daily Crossword's card on the hub, board 08's three states
- * (ADR 0087): its padding and the gaps between its parts, its button's
+ * The crossing Daily Crossword's card on the hub, board 08's three states:
+ * its padding and the gaps between its parts, its button's
  * height and side padding, the progress bar's height and slant, and the
  * solved card's small grid: a cell's side, corner and gap, how faint a block
  * shows on the ink, and how faint the time line is.
@@ -181,7 +181,7 @@ export const crosswordLayout = {
 } as const;
 
 /**
- * The crossing Daily Crossword (ADR 0087, board 08): a grid cell's side and
+ * The crossing Daily Crossword (board 08): a grid cell's side and
  * the gap between cells; how far a solved cell pops; the room above the clue
  * bar and above the path slot, and the slot's height, where the path chips or
  * the line on how to trace show; the Letter Wheel's side, the depth of its

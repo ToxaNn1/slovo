@@ -8,7 +8,7 @@ import type { BuildError } from './build-error';
 import { FONTS_DIR } from './edition-folder';
 
 /**
- * Why the Edition's fonts can't set its text (ADR 0035, 0070): the Word of
+ * Why the Edition's fonts can't set its text: the Word of
  * the Day font named in the Edition config, and every file of the word and
  * UI families its tokens name. A font must be among the Edition's fonts, be
  * a font, and have a glyph for every letter of the alphabet, in either case,

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Which test parts of `ci.yml` a pull request can affect (ADR 0098, amending
+ * Which test parts of `ci.yml` a pull request can affect (amending
  * 0086). Writes one `true`/`false` flag per part, and the `--filter` arguments
  * of the part "other packages", to GITHUB_OUTPUT when it is set, and prints
  * them.
@@ -32,7 +32,7 @@ const NOT_OTHER = ['@slovo/backend', '@slovo/core', '@slovo/ui', '@slovo/mobile'
 
 const DOCS = /^docs\/|\.md$/;
 const IN_PACKAGES = /^(apps|packages|tools)\//;
-// The app links to the legal pages by address and never reads them (ADR 0086).
+// The app links to the legal pages by address and never reads them.
 const SITE_ONLY = /^(editions\/[^/]+\/legal\/|\.github\/workflows\/pages\.yml$)/;
 const MOBILE_ONLY = /^\.github\/workflows\/(maestro|ota-update)\.yml$/;
 

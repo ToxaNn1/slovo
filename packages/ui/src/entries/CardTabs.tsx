@@ -19,7 +19,7 @@ import { capitalised } from './capitalised';
 /**
  * How content sits in the card's fixed frame: whole at a size from the
  * user's down to the floor of its scale, or at the floor clamped to the frame
- * under «Детальніше» (ADR 0091, 0134).
+ * under «Детальніше».
  */
 interface Fit {
   readonly size: TextSizeStep;
@@ -27,15 +27,14 @@ interface Fit {
 }
 
 /**
- * An Entry card's tabs under its head (ADR 0091): the selected tab's content
+ * An Entry card's tabs under its head: the selected tab's content
  * in a `FitPanel`, and at the card's foot a `tablist` of `tab`s by their
  * names, a red slanted mark over the selected one (board p1), the first
  * selected on opening. A card with one tab draws no tab bar. Nothing moves between
  * tabs, so Reduce Motion has nothing to stop. Under Self-check the tabs are
  * there but disabled, and the panel shows nothing, until the reveal. Given
  * `sources` (while `sourceTab` is on) that are not empty, the last tab is
- * «Джерело», naming each source on its own line, `<testID>-source-<n>`
- * (ADR 0116).
+ * «Джерело», naming each source on its own line, `<testID>-source-<n>`.
  */
 export function CardTabs<Tab extends { readonly key: string }>({
   testID,
@@ -50,7 +49,7 @@ export function CardTabs<Tab extends { readonly key: string }>({
   tabs: readonly [Tab, ...Tab[]];
   /** The tab's name from the Edition's strings. */
   nameOf: (tab: Tab) => string;
-  /** The names of the Entry's sources for the last tab «Джерело», given only while `sourceTab` is on (ADR 0116). */
+  /** The names of the Entry's sources for the last tab «Джерело», given only while `sourceTab` is on. */
   sources?: readonly string[] | undefined;
   /** Self-check conceals the card: the tabs take no tap and the panel stays empty. */
   disabled?: boolean;
@@ -60,7 +59,7 @@ export function CardTabs<Tab extends { readonly key: string }>({
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice, strings } = useEdition();
-  // The Edition's own editing is no source to name (ADR 0154).
+  // The Edition's own editing is no source to name.
   const sources = allSources.filter((source) => source !== strings.wordCard.ownSource);
   const [first, ...rest] = ownTabs;
   const tabs: readonly [CardTab<Tab>, ...CardTab<Tab>[]] = [
@@ -142,23 +141,23 @@ export function CardTabs<Tab extends { readonly key: string }>({
   );
 }
 
-/** One of the card's tabs: the kind's `own`, or with none the «Джерело» tab (ADR 0116). */
+/** One of the card's tabs: the kind's `own`, or with none the «Джерело» tab. */
 type CardTab<Tab> = { readonly key: string; readonly own: Tab } | typeof SOURCE_TAB;
 
 /** The «Джерело» tab, which a kind's own tab keys never take. */
 const SOURCE_TAB = { key: 'source', own: undefined } as const;
 
 /**
- * Content that fills the rest of an Entry card's fixed frame (ADR 0091):
+ * Content that fills the rest of an Entry card's fixed frame:
  * content too tall for it takes the text size a step smaller at a time down
- * the scale in effect to its floor (S of S…XL, «Як у системі» on the ladder of
- * ADR 0134), and content too tall even there stays at the floor, clamped to the
+ * the scale in effect to its floor (S of S…XL, «Як у системі» on the ladder),
+ * and content too tall even there stays at the floor, clamped to the
  * frame at whole lines, never through one, with «Детальніше» a little under
  * the last line shown (`entryCardFrame.moreGap`), inside the room: every `WholeLinesText` and `useWholeBlock` in it reports
  * its lines, and the clip ends under the lowest that fits above the link
  * (`wholeLinesCut`). A tap on it opens the whole content in a
  * scroll inside the room, so the card keeps its frame and only the card
- * scrolls, never the page (ADR 0113); «Сховати» takes «Детальніше»'s place
+ * scrolls, never the page; «Сховати» takes «Детальніше»'s place
  * in the room under the scroll, which fills the rest of the room, and clamps
  * the content to the frame again at once. The card measures the
  * drawn height against the room once both are laid out, on the render after
@@ -260,8 +259,8 @@ function FitPanel({
         setRoom(nativeEvent.layout.height);
       }}
     >
-      {/* Only the card scrolls: the opened tab scrolls in the room, which keeps the frame's height
-          (ADR 0113); in the Feed a swipe scrolls it and turns the page at its ends. «Сховати» takes
+      {/* Only the card scrolls: the opened tab scrolls in the room, which keeps the frame's height;
+          in the Feed a swipe scrolls it and turns the page at its ends. «Сховати» takes
           «Детальніше»'s place under it, so the scroll fills the room down to the link (owner 13.11). */}
       {open ? (
         <>

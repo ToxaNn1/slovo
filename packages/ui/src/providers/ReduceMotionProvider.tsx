@@ -6,7 +6,7 @@ export const ReduceMotionSettingContext = createContext(false);
 /**
  * Gives every animation below the reader's «Менше руху» choice. It joins the
  * system's Reduce Motion: either one turns every animation into its calmer
- * variant (ADR 0055).
+ * variant.
  */
 export function ReduceMotionProvider({
   reduceMotion,

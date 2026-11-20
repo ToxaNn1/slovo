@@ -100,7 +100,7 @@ function earned(records: Map<string, string>, amount: number, ...dates: string[]
   return records;
 }
 
-/** Sets a Daily Goal in Words before the week and meets it on each of the dates (ADR 0074). */
+/** Sets a Daily Goal in Words before the week and meets it on each of the dates. */
 function goalMet(records: Map<string, string>, ...dates: string[]) {
   records.set(
     'xp.word-goal',
@@ -129,7 +129,7 @@ async function firstCards(app: Composition): Promise<readonly FeedCard[]> {
 const recapCards = (cards: readonly FeedCard[]) =>
   cards.filter((card) => card.kind === 'notice' && card.notice === 'weeklyRecap');
 
-// Spec #832, ADR 0054: the Weekly Recap.
+// Spec #832: the Weekly Recap.
 describe('the Weekly Recap', () => {
   it('gives the week before Monday: Entries last Seen, Favorites added and Known marks set in it, and the Streak', async () => {
     const app = await run({ records: fakeWeek(), at: monday });

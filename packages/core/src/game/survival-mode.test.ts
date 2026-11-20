@@ -229,7 +229,7 @@ describe('a Game of «Виживання»', () => {
     expect(ids.slice(eligible)).not.toEqual(ids.slice(0, GAME_ROUNDS));
   });
 
-  // ADR 0190: the weak Entries take places drawn at random among the first 15 Rounds.
+  // The weak Entries take places drawn at random among the first 15 Rounds.
   it('asks about the Words and Corrections the reader marked «Не знаю» at places drawn among the first 15 Rounds', async () => {
     const weak = ['c_fix03', 'w_word07', 'w_word19'];
     const places: number[] = [];

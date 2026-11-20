@@ -7,7 +7,7 @@ const staysInPlace = (character: string, comparison: TextComparison): boolean =>
   character === '-' || comparison.isApostrophe(character);
 
 /**
- * «За літерами», the Core's letters mode (ADR 0052): a Round shows a Word's
+ * «За літерами», the Core's letters mode: a Round shows a Word's
  * primary Definition. A blank stands for each
  * letter and the reader types the Word, compared by its Comparison Key as a
  * typed answer; «Відкрити літеру» opens one letter at a time until one is

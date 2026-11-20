@@ -43,7 +43,7 @@ function Day({ day }: { day: CalendarDay }) {
 }
 
 /**
- * The Profile's Streak freeze card (p2, ADR 0085): an ink card titled
+ * The Profile's Streak freeze card (p2): an ink card titled
  * «Заморозка серії» with a cream chip of the freezes `held`, what a freeze
  * does and the 7 `days` ending today; under it two tiles, each a big number
  * over its caption declined by it: the Streak in red, and the days the

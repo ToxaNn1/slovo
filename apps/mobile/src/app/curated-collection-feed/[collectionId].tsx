@@ -5,8 +5,7 @@ import { useQueryParam, useSegmentParam } from '@/route-params';
 import { useEditionInEffect } from '@/edition/remote-switches';
 
 /**
- * A Curated Collection's Feed, from a tap on an Entry of its screen (ADR
- * 0178), opened on the Entry `from`. With `curatedCollectionFeed` off it
+ * A Curated Collection's Feed, from a tap on an Entry of its screen, opened on the Entry `from`. With `curatedCollectionFeed` off it
  * returns to the Dashboard.
  */
 export default function CuratedCollectionFeedRoute() {

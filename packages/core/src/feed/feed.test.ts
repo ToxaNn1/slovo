@@ -272,7 +272,7 @@ describe('the Feed', () => {
         words,
         clock: time.clock,
       });
-      // Past the Word of the Day, which comes no second time today (ADR 0184).
+      // Past the Word of the Day, which comes no second time today.
       await look(feed, time, 0, SEEN_DWELL_MS);
       const first = feed.cards[1]?.entryId;
       await feed.show(1);
@@ -517,7 +517,7 @@ describe('the Feed', () => {
 
       const again = [await feed.next(), await feed.next()];
 
-      // Never the Word of the Day, which opened the day (ADR 0184).
+      // Never the Word of the Day, which opened the day.
       expect(again.map((card) => card?.entryId)).toEqual(order.slice(1, 3));
     });
   });
@@ -602,7 +602,7 @@ describe('the Feed', () => {
 
       expect(lastCycle).toEqual(await walk(await run({ random: randomOf(0.25) })));
       // The order a first Cycle shuffled with the second seed has, without
-      // today's Word of the Day (ADR 0184).
+      // today's Word of the Day.
       const order = await walk(await run({ random: randomOf(0.75) }));
       expect(newCycle).toEqual(order.filter((id) => id !== today));
       expect(newCycle).not.toEqual(lastCycle);
@@ -636,7 +636,7 @@ describe('the Feed', () => {
       expect(card?.kind).toBe('word');
       const newCycle = await walk(feed, entryIdsOf(card === undefined ? [] : [card]));
       // Nothing Seen, in the order of the seed drawn on the next try, without
-      // today's Word of the Day (ADR 0184).
+      // today's Word of the Day.
       const order = await walk(await run({ words: small, random: randomOf(0.5) }));
       expect(newCycle).toEqual(order.filter((id) => id !== wordOfTheDay));
       // The next app run reads the same new Cycle; its Word of the Day is
@@ -1137,7 +1137,7 @@ describe('Corrections in the Feed', () => {
     // After the Word of the Day: the other Word, the Correction, the end, then a new Cycle.
     expect(offered.slice(0, 2)).toEqual([expect.stringMatching(/^w_/), 'c_one']);
     expect(offered[2]).toBe('end');
-    // The new Cycle leaves out today's Word of the Day (ADR 0184), so it ends sooner.
+    // The new Cycle leaves out today's Word of the Day, so it ends sooner.
     expect(new Set(offered.slice(3))).toEqual(new Set([offered[0], 'c_one', 'end']));
   });
 
@@ -1599,7 +1599,7 @@ describe('Idioms in the Feed', () => {
     // After the Word of the Day: the other Word, the Correction, the Idiom, the end, then a new Cycle.
     expect(offered.slice(0, 3)).toEqual([expect.stringMatching(/^w_/), 'c_one', 'i_one']);
     expect(offered[3]).toBe('end');
-    // The new Cycle leaves out today's Word of the Day (ADR 0184), so it ends sooner.
+    // The new Cycle leaves out today's Word of the Day, so it ends sooner.
     expect(new Set(offered.slice(4))).toEqual(new Set([offered[0], 'c_one', 'i_one', 'end']));
   });
 

@@ -373,14 +373,14 @@ describe('the tabs of a Word card in the Feed', () => {
 
     await act(() => jest.advanceTimersByTimeAsync(500));
 
-    // Only the card scrolls: the opened tab scrolls in the room, which keeps the frame's height, so the page never scrolls (ADR 0113).
+    // Only the card scrolls: the opened tab scrolls in the room, which keeps the frame's height, so the page never scrolls.
     const panel = wordCard().getByTestId('word-tab-panel', hidden);
     const scroll = within(panel).getByTestId('word-tab-scroll', hidden);
     expect(wordCard().queryByTestId('word-tab-more', hidden)).toBeNull();
     expect(within(scroll).getByText(long, hidden)).toBeTruthy();
     expect(scroll.props['showsVerticalScrollIndicator']).not.toBe(false);
     expect(StyleSheet.flatten(panel.props['style'])).not.toHaveProperty('minHeight');
-    // Nothing around the card scrolls, so its frame and tab bar never move (ADR 0113).
+    // Nothing around the card scrolls, so its frame and tab bar never move.
     expect(scrollsAround(panel)).toEqual([]);
 
     await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-example')));

@@ -16,7 +16,7 @@ export interface CardFeatures {
    * the screen. The Entry screen's details have no Self-check.
    */
   readonly selfCheck: boolean;
-  /** The falling Stress of a Word card (ADR 0055), while the Edition's `stressAnimation` is on in effect. */
+  /** The falling Stress of a Word card, while the Edition's `stressAnimation` is on in effect. */
   readonly stressFalls: boolean;
   /**
    * The Edition's calligraphic font family, which the Lemma on the card of
@@ -26,11 +26,10 @@ export interface CardFeatures {
   readonly wordOfTheDayFont: string | undefined;
   /**
    * The tabbed card's last tab «Джерело» names the Entry's sources, which
-   * leave its other tabs, while the Edition's `sourceTab` is on in effect
-   * (ADR 0116).
+   * leave its other tabs, while the Edition's `sourceTab` is on in effect.
    */
   readonly sourceTab: boolean;
-  /** A tabbed Tip card with exceptions gets the tab «Винятки», while the Edition's `tipExceptions` is on in effect (ADR 0120). */
+  /** A tabbed Tip card with exceptions gets the tab «Винятки», while the Edition's `tipExceptions` is on in effect. */
   readonly tipExceptions: boolean;
 }
 

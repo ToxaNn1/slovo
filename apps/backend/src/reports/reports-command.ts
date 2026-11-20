@@ -1,6 +1,6 @@
 // `pnpm reports list [--edition <id>] [--since <YYYY-MM-DD>]`: prints the
 // Mistake Reports still to check on the database DATABASE_URL names, newest
-// first (ADR 0056). `--since` takes the day from its start in UTC.
+// first. `--since` takes the day from its start in UTC.
 // `pnpm reports resolve <id>`: deletes the report of the id once it is checked.
 import { parseArgs } from 'node:util';
 

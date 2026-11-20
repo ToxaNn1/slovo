@@ -52,7 +52,7 @@ const content = createMemoryContentPort({ words });
 
 /**
  * Two stress traps, their main standard equivalent first, each with where the
- * vowels of that form without Stress stand (ADR 0045).
+ * vowels of that form without Stress stand.
  */
 const traps: readonly {
   id: string;
@@ -297,7 +297,7 @@ describe('a Round of «Наголос»', () => {
     });
   });
 
-  // ADR 0190: the weak Entries take places drawn at random among the first 15 Rounds.
+  // The weak Entries take places drawn at random among the first 15 Rounds.
   it('asks about the Words the reader marked «Не знаю» at places drawn among the first 15 Rounds', async () => {
     const weak = ['кобза', 'ослін', 'пугач'];
     const places: number[] = [];

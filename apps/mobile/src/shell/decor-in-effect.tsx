@@ -28,7 +28,7 @@ function useToday(clock: Clock) {
 }
 
 /**
- * Gives everything below the Decor of today (ADR 0055): the Mascot wears the
+ * Gives everything below the Decor of today: the Mascot wears the
  * accessory of the Season or Holiday while «Сезонний декор» and its Feature
  * Switch are on, and the Edition's plain Decor otherwise.
  * It changes at local midnight. Draw it under the gate of the Language Pack.

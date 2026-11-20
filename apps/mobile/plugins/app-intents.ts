@@ -8,7 +8,7 @@ import { editionRoute } from '../src/edition/edition-link';
 import { APP_INTENT_ROUTES } from '../src/entries/app-intents';
 
 /**
- * What the App Intents take from the Edition at prebuild (ADR 0057), so the
+ * What the App Intents take from the Edition at prebuild, so the
  * Swift code holds no Edition text: only the intents that open a route.
  */
 export interface AppIntentsEdition {
@@ -47,7 +47,7 @@ const INTENT_KEYS: readonly IntentKey[] = Object.values({
 /** The key of an intent's title in the app's `Localizable.strings`, as the Swift code names it. */
 const titleKey = (intent: IntentKey) => `appIntents.${intent}`;
 
-/** The intents' Swift sources kept in git, in the local module (ADR 0057). */
+/** The intents' Swift sources kept in git, in the local module. */
 export const APP_INTENTS_SOURCE = fileURLToPath(
   new URL('../modules/spotlight/app-intents/SlovoAppIntents.swift', import.meta.url),
 );

@@ -25,7 +25,7 @@ export interface Statement {
  * inserts, which a Patch runs after `childDeletes` removed the old ones. A
  * Curated Collection is the exception: its own row is a plain insert too, run
  * after `curatedCollectionDeletes` removed the old one, so a Retired one is
- * left out of the pack (ADR 0178).
+ * left out of the pack.
  */
 const SQL = {
   entry:
@@ -345,7 +345,7 @@ export function curatedCollectionDeletes(id: string): Statement[] {
   ];
 }
 
-/** The rows of a Curated Collection; a Retired one has none (ADR 0178). */
+/** The rows of a Curated Collection; a Retired one has none. */
 export function curatedCollectionRows({
   id,
   name,

@@ -36,15 +36,15 @@ import { useCardFeatures } from './card-features';
  * standard equivalent at a share of the Lemma's size under its label, with the
  * Category chip at the label's right and the other equivalents under it, the
  * explanation, the example pair as plain lines, the wrong one struck and the
- * standard form the content marks in the right one bold (ADR 0117), the Correction's
+ * standard form the content marks in the right one bold, the Correction's
  * literary uses under their heading, each like a Word's Example with its
  * author, work and year, and, when the Correction has sources, a line naming them.
  * Nothing on the card reads as an error. A stress trap's texts carry their
- * Stress marks (ADR 0045): VoiceOver reads each form with where its Stress
+ * Stress marks: VoiceOver reads each form with where its Stress
  * falls, as for a Lemma, and every other text without the mark. Under Self-check it keeps only the non-standard form and
  * asks how to say it right; the Entry card draws the button that reveals the
  * rest under it. The blocks under the non-standard form sit in the tabs
- * «Як краще», «Чому» and «Приклади» (ADR 0091).
+ * «Як краще», «Чому» and «Приклади».
  */
 export function CorrectionCardBody({
   card,
@@ -105,10 +105,10 @@ export function CorrectionCardBody({
 }
 
 /**
- * What a Correction card's selected tab shows (ADR 0091): «Як краще» the
+ * What a Correction card's selected tab shows: «Як краще» the
  * standard equivalents with the Category chip, «Чому» the explanation and its
  * sources, «Приклади» the example pair and the literary uses. While
- * `sourceTab` is on, the sources are in their own tab (ADR 0116).
+ * `sourceTab` is on, the sources are in their own tab.
  */
 function CorrectionTabContent({
   tab,
@@ -433,7 +433,7 @@ function StruckForm({
  * A Correction's main standard equivalent in «Як краще» (board XEntry2 e6):
  * the red label «Українською краще», with the Category chip at its right as
  * on the Word card's grammar line, over the form at its step of the cards'
- * title scale (ADR 0157), as one element VoiceOver reads with its label and
+ * title scale, as one element VoiceOver reads with its label and
  * Category.
  */
 function CorrectionStandard({

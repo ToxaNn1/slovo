@@ -5,7 +5,7 @@ import type { apiContract } from '@slovo/contracts/api';
 import { ADMIN_SESSION_COOKIE, ADMIN_WRITE_HEADER } from '@slovo/contracts/admin-api';
 import type { AdminAccess, AdminSignIn, SignedInAdmin } from '@slovo/server-core';
 
-/** Who may be declared a caller of an admin procedure (ADR 0088, 0096, 0198). */
+/** Who may be declared a caller of an admin procedure (ADRs 0088 and 0198). */
 export type AdminCallerKind = 'owner' | 'admin' | 'agent' | 'ci' | 'sign-in';
 
 /**
@@ -21,7 +21,7 @@ export type Admission =
       readonly access: 'read' | 'write';
     }
   | {
-      /** CI by its history token (ADR 0096); anyone stepping through a sign-in, with the header. */
+      /** CI by its history token; anyone stepping through a sign-in, with the header. */
       readonly callers: readonly ['ci'] | readonly ['sign-in'];
       readonly access: 'write';
     };
@@ -52,7 +52,7 @@ export const ADMISSION = {
   signOut: write(PEOPLE),
   signOutEverywhere: write(PEOPLE),
 
-  // Безпека (ADR 0088, 0127): a Власник only.
+  // Безпека (ADR 0088): a Власник only.
   actions: read(OWNER),
   people: read(OWNER),
   invite: write(OWNER),
@@ -80,7 +80,7 @@ export const ADMISSION = {
   editions: read(PEOPLE),
   editionCard: read(PEOPLE),
 
-  // «Сервіси» (ADR 0164): a Власник only; a plain value is read as a write.
+  // «Сервіси»: a Власник only; a plain value is read as a write.
   services: {
     list: read(OWNER),
     entries: read(OWNER),
@@ -108,7 +108,7 @@ export const ADMISSION = {
     record: read(WRITERS),
     records: read(WRITERS),
     unchecked: read(WRITERS),
-    // Only a person checks a record or asks for the other voices (ADR 0143, 0152, 0195).
+    // Only a person checks a record or asks for the other voices (ADR 0195).
     check: write(PEOPLE),
     checkAll: write(PEOPLE),
     addOtherVoices: write(PEOPLE),

@@ -76,12 +76,12 @@ function over<S, T>(
  * The Shell of the device for one Edition: every opening over that
  * Edition's user state, in the order they wait for each other. Nothing opens
  * until something reads it. The remote Feature Switches open over the
- * answer the device kept (ADR 0040); every other opening opens over the one
+ * answer the device kept; every other opening opens over the one
  * set of device ports, which waits for the user state alone. Their Edition
  * in effect takes the remote switches once they are open, and the shipped
  * states (`editionAtLaunch`) until then or when they fail, so a slow or
  * failed answer holds nothing back. The Account and Sync open apart from the
- * composition (ADR 0037); Sync, Mistake Reports and the Community Counters
+ * composition; Sync, Mistake Reports and the Community Counters
  * apart from it too, and nothing waits for them. The Shell has an Account and
  * a Sync when the build shipped them on, the one reader here that takes the
  * shipped answer on purpose; each opens only while it is on in effect by the
@@ -248,7 +248,7 @@ export function createShell(
             openSync({ ...opened, account: await account.opened() }),
           ),
     // Each report carries the app version the build declares and the content version of the Language Pack,
-    // and goes out with the Session while the reader is signed in (ADR 0159); an Account off in effect or
+    // and goes out with the Session while the reader is signed in; an Account off in effect or
     // that failed to open leaves the reports anonymous.
     mistakeReports: over(ports, 'Could not open Mistake Reports', async (opened) =>
       openMistakeReports({

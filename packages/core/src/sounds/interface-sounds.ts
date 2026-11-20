@@ -14,7 +14,7 @@ export interface InterfaceSounds {
 /**
  * The one way the app plays an Interface sound: it asks every time whether
  * the `sounds` Feature Switch is in effect and «Звуки» is on, so a change of
- * either applies to the very next sound (ADR 0070).
+ * either applies to the very next sound.
  */
 export function createInterfaceSounds({
   engine,

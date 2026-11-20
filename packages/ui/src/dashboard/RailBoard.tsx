@@ -30,7 +30,7 @@ export function knownShare(cards: readonly RailBoardCard[]): {
 }
 
 /**
- * A board-style screen (board 05.1, ADR 0082), as a Category, a Collection
+ * A board-style screen (board 05.1), as a Category, a Collection
  * and a Curated Collection draw it: the `hero` across the top, then the
  * cards, one per Entry, rising in one after another. A tap on a card opens
  * its Entry. What the hero holds, such as a field to rename the Collection,

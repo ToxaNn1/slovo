@@ -1,6 +1,6 @@
 # Fonts of the UA Edition
 
-The Edition's own fonts (ADR 0006, 0070). The app embeds every font file in this folder at build time (see `apps/mobile/app.config.ts`); the Core brings no font of its own, so text never waits for the network. Changing a font needs a new development build.
+The Edition's own fonts (ADR 0006). The app embeds every font file in this folder at build time (see `apps/mobile/app.config.ts`); the Core brings no font of its own, so text never waits for the network. Changing a font needs a new development build.
 
 | Family    | Weights            | Used for                                                                                  |
 | --------- | ------------------ | ----------------------------------------------------------------------------------------- |

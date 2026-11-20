@@ -20,7 +20,7 @@ async function readWords(
 }
 
 /**
- * A Category's Feed (ADR 0110): the Category's live Words alone, from the
+ * A Category's Feed: the Category's live Words alone, from the
  * Word tapped on its screen on in the Language Pack's order and round again
  * after the last, endlessly, each card's kicker naming its place,
  * «Категорія · Емоції · 2 з 4». It makes nothing Seen; its back tile, named

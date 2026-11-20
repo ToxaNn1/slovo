@@ -35,7 +35,7 @@ export function LinkChips({
   );
 }
 
-/** One chip, shown whole or not at all where its tab is clamped (ADR 0091). */
+/** One chip, shown whole or not at all where its tab is clamped. */
 function LinkChip({ testID, word }: { testID: string; word: string }) {
   const tokens = useTokens();
   const { colors } = tokens;

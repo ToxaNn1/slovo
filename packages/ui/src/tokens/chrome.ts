@@ -128,7 +128,7 @@ export const choiceMark = { size: 26, radius: 8, border: 2.5, tick: 16 } as cons
  * the side and the four colours of Google's "G" logo, and its label's type:
  * medium weight in the system's sans-serif. Google's, not an Edition's, so no
  * Edition token changes them, and the label is the one text that takes no
- * type role (ADR 0070).
+ * type role.
  */
 export const googleSignInButton = {
   light: { fill: '#FFFFFF', stroke: '#747775', label: '#1F1F1F' },

@@ -6,7 +6,7 @@ import { createFakeBackend, createMemoryContentPort } from '../testing';
 import { fakeClock, randomOf, testEdition, testSchedule, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
-/** Long enough for every wait between the tries of one request (ADR 0037). */
+/** Long enough for every wait between the tries of one request. */
 const ALL_TRIES = 10_000;
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
@@ -147,7 +147,7 @@ describe('sharing a Collection that the backend does not link', () => {
     app.api.online = false;
 
     expect(await app.share(autumn)).toEqual({ ok: false, reason: 'offline' });
-    // The first try and three more (ADR 0037).
+    // The first try and three more.
     expect(app.api.calls).toHaveLength(4);
     expect(app.api.collectionLinks.made).toEqual([]);
   });

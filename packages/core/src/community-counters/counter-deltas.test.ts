@@ -81,7 +81,7 @@ async function countedAndSent(entryId: string, mark: 'known' | 'unknown') {
   return sent(records);
 }
 
-// Spec #886 stories 41, 44, 45; ADR 0060: the deltas a reader's Knowledge Marks give.
+// Spec #886 stories 41, 44, 45: the deltas a reader's Knowledge Marks give.
 describe('Community Counter deltas from Knowledge Marks', () => {
   it('counts a new Known mark and a new Unknown mark one each', async () => {
     const app = await run();
@@ -179,7 +179,7 @@ async function savedAndSent(entryId: string) {
   return sent(records);
 }
 
-// Spec #886 stories 41, 45; ADR 0060: the deltas a reader's Favorites give.
+// Spec #886 stories 41, 45: the deltas a reader's Favorites give.
 describe('Community Counter deltas from Favorites', () => {
   it('counts an Entry added to Favorites as saved one', async () => {
     const app = await run();

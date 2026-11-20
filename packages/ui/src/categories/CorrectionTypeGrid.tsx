@@ -7,7 +7,7 @@ import { categoryGrid as place } from '../tokens';
 import { GridTitle } from './CategoryGrid';
 
 /**
- * The grid of the Correction Types (ADR 0140): the title with the number of
+ * The grid of the Correction Types: the title with the number of
  * them over two columns of the Dashboard rail's tiles, in the rail's order,
  * so the grid its header opens shows what the rail shows. A tile opens its
  * type's screen. It spans the screen's width, as a list's header does.

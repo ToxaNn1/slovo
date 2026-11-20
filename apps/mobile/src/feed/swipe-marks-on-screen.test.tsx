@@ -195,7 +195,7 @@ async function swipeUp() {
   });
 }
 
-describe('the side swipes on the Feed (ADR 0077)', () => {
+describe('the side swipes on the Feed', () => {
   it('wrap the Entry cards', async () => {
     await open();
     await openApp();
@@ -228,7 +228,7 @@ describe('the side swipes on the Feed (ADR 0077)', () => {
 });
 
 describe('the «⋯» sheet of an Entry card on the Feed', () => {
-  it('closes with «Скасувати», as on the board (ADR 0092)', async () => {
+  it('closes with «Скасувати», as on the board', async () => {
     await open();
     await openApp();
     const page = within(screen.getByTestId('feed-card-0'));

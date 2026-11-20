@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
+// Reanimated code: the React Compiler skips this module.
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -69,7 +69,7 @@ function covered(clock: number, side: 'left' | 'right' = 'right') {
  * The entrance's clock, in ms from its start, and how much of the card shows:
  * the clock runs once the page is on screen and the system has answered on
  * Reduce Motion. Under Reduce Motion it stands at the end, so nothing moves,
- * and the card only fades in (ADR 0055).
+ * and the card only fades in.
  */
 function useEntranceClock(): {
   clock: SharedValue<number>;
@@ -112,7 +112,7 @@ function useRise(clock: SharedValue<number>, wait: number) {
 }
 
 /**
- * «Ціль дня виконано!» (ADR 0129): the red card of the day's Daily Goal met,
+ * «Ціль дня виконано!»: the red card of the day's Daily Goal met,
  * its plate with the goal, the first Words Seen today, the celebrating
  * Mascot and the Streak, or no Streak while the reader doesn't see it or it is 0. The
  * button turns to the next card as a swipe would, and so closes the card.

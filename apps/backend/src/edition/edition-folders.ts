@@ -3,8 +3,7 @@ import type { Edition } from '@slovo/server-core';
 
 /**
  * Every Edition in an editions folder, each with its config (its content
- * targets included, ADR 0123) and strings checked against the contracts
- * (ADR 0035).
+ * targets included) and strings checked against the contracts.
  * Throws an EditionFolderError naming the broken file when an Edition can't
  * be read, so the server doesn't start with it.
  */

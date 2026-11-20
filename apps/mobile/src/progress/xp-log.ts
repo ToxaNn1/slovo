@@ -23,7 +23,7 @@ export function useSetDailyGoal(): (goal: DailyGoal | null) => void {
 }
 
 /**
- * Starts the progress over (ADR 0133) and then says that the words are kept;
+ * Starts the progress over and then says that the words are kept;
  * a failure is logged.
  */
 export function useResetProgress(): () => void {

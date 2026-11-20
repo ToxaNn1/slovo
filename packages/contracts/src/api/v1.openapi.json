@@ -7040,7 +7040,7 @@
       "get": {
         "operationId": "admin.listAccounts",
         "summary": "Every reader's Account, newest first, a page of 50 at a time with the count of every match",
-        "description": "A Безпека procedure: a Власник only (ADR 0162), and never logged. A `search` keeps the Accounts whose email holds it, in any case.",
+        "description": "A Безпека procedure: a Власник only, and never logged. A `search` keeps the Accounts whose email holds it, in any case.",
         "tags": [
           "admin"
         ],
@@ -7370,7 +7370,7 @@
       "get": {
         "operationId": "admin.getAccount",
         "summary": "One reader's Account with its Sync records in every Edition, read only",
-        "description": "A Безпека procedure: a Власник only (ADR 0162), and never logged. Answers the email, the date, the Google and Apple sign-in methods and, per Edition, the records Sync keeps, without tombstones; `null` for an id with no Account.",
+        "description": "A Безпека procedure: a Власник only, and never logged. Answers the email, the date, the Google and Apple sign-in methods and, per Edition, the records Sync keeps, without tombstones; `null` for an id with no Account.",
         "tags": [
           "admin"
         ],
@@ -7854,7 +7854,7 @@
       "post": {
         "operationId": "admin.deleteAccount",
         "summary": "Deletes a reader's Account for good, as the app's own deletion does",
-        "description": "A Власник only (ADR 0127). Its Sessions, sign-in methods and Sync records go with it. Refused with `unknown` for an email with no Account.",
+        "description": "A Власник only. Its Sessions, sign-in methods and Sync records go with it. Refused with `unknown` for an email with no Account.",
         "tags": [
           "admin"
         ],
@@ -17915,7 +17915,7 @@
       "put": {
         "operationId": "admin.content.uploadIllustration",
         "summary": "Upload a Word's Illustration: checked, kept in the Media Store and published",
-        "description": "A PNG, square, at most 150 KB (ADR 0055). It becomes the live Illustration, retires the one it replaces and raises the content version (ADR 0099).",
+        "description": "A PNG, square, at most 150 KB. It becomes the live Illustration, retires the one it replaces and raises the content version (ADR 0099).",
         "tags": [
           "admin"
         ],
@@ -20690,7 +20690,7 @@
       "get": {
         "operationId": "admin.content.unchecked",
         "summary": "The next live record of a kind not checked yet, for «Перегляд», with the count of them all",
-        "description": "Records whose last change came in the newest batch come first. A record is checked at the record version an Admin user marked; any later write leaves it unchecked again (ADR 0143).",
+        "description": "Records whose last change came in the newest batch come first. A record is checked at the record version an Admin user marked; any later write leaves it unchecked again.",
         "tags": [
           "admin"
         ],
@@ -21087,7 +21087,7 @@
       "post": {
         "operationId": "admin.content.check",
         "summary": "Mark a record checked at its record version: no content changes, an Action log row",
-        "description": "An Admin user only, with no reason; an Агент token is refused (ADR 0143).",
+        "description": "An Admin user only, with no reason; an Агент token is refused.",
         "tags": [
           "admin"
         ],
@@ -21521,7 +21521,7 @@
       "post": {
         "operationId": "admin.content.checkAll",
         "summary": "Mark every live record of a kind not checked yet checked at its record version, at one confirmation",
-        "description": "An Admin user only, with a reason; an Агент token is refused. Each record leaves the Action log row of a single check, with the reason; `total` is the count the confirmation named, and a different count now is refused (ADR 0152).",
+        "description": "An Admin user only, with a reason; an Агент token is refused. Each record leaves the Action log row of a single check, with the reason; `total` is the count the confirmation named, and a different count now is refused.",
         "tags": [
           "admin"
         ],
@@ -24584,7 +24584,7 @@
     "/v1/admin/content-queue/reports/{id}/resolve": {
       "post": {
         "operationId": "admin.contentQueue.resolveReport",
-        "summary": "«Вирішено»: deletes the Mistake Report (ADR 0056)",
+        "summary": "«Вирішено»: deletes the Mistake Report",
         "tags": [
           "admin"
         ],
@@ -33324,7 +33324,7 @@
       "post": {
         "operationId": "admin.pushCiRun",
         "summary": "CI pushes a run on main to the history",
-        "description": "Called by CI after each run on main, with the CI history token as Bearer (ADR 0096). A run already kept stays as it is.",
+        "description": "Called by CI after each run on main, with the CI history token as Bearer. A run already kept stays as it is.",
         "tags": [
           "admin"
         ],
@@ -34653,7 +34653,7 @@
       "post": {
         "operationId": "collectionLinks.create",
         "summary": "Share a Collection behind a link",
-        "description": "Stores the Collection as it is now and answers the link's id and its URL, `https://<domain>/<edition>/c/<id>`. The backend checks the shape, not whether the Entries are in a pack: a name of 1 to 60 characters once trimmed, 1 to 200 Entries, each once. A link never changes and never expires; it is kept with its Edition, name, Entry ids and the time it was made only: no Account, no device id, no IP address (ADR 0058).",
+        "description": "Stores the Collection as it is now and answers the link's id and its URL, `https://<domain>/<edition>/c/<id>`. The backend checks the shape, not whether the Entries are in a pack: a name of 1 to 60 characters once trimmed, 1 to 200 Entries, each once. A link never changes and never expires; it is kept with its Edition, name, Entry ids and the time it was made only: no Account, no device id, no IP address.",
         "tags": [
           "collection-links"
         ],
@@ -34925,7 +34925,7 @@
       "get": {
         "operationId": "collectionLinks.read",
         "summary": "A shared Collection",
-        "description": "The Collection as it was stored when it was shared: its Edition, its name and its Entry ids in its order. An unknown id answers 404 and a malformed id answers 400. Reading a link is not limited (ADR 0058).",
+        "description": "The Collection as it was stored when it was shared: its Edition, its name and its Entry ids in its order. An unknown id answers 404 and a malformed id answers 400. Reading a link is not limited.",
         "tags": [
           "collection-links"
         ],
@@ -37940,7 +37940,7 @@
       "post": {
         "operationId": "counters.send",
         "summary": "Count the changes of marks and Favorites a device made",
-        "description": "Each event names an Entry once and changes its known, unknown and saved counts by −1, 0 or +1; a saved +1 also adds to the Entry’s Favorites adds of the current ISO week (UTC). A request names 1 to 100 Entries and is counted whole or not at all. The backend keeps the totals only: no Account, no device id, no IP address (ADR 0060).",
+        "description": "Each event names an Entry once and changes its known, unknown and saved counts by −1, 0 or +1; a saved +1 also adds to the Entry’s Favorites adds of the current ISO week (UTC). A request names 1 to 100 Entries and is counted whole or not at all. The backend keeps the totals only: no Account, no device id, no IP address.",
         "tags": [
           "counters"
         ],
@@ -38455,7 +38455,7 @@
       "get": {
         "operationId": "counters.communityWord",
         "summary": "The Community Word of the last ISO week",
-        "description": "The Entry most added to Favorites in the last full ISO week (UTC), with its adds, the lower Entry id winning a tie; none when nobody added anything (ADR 0060).",
+        "description": "The Entry most added to Favorites in the last full ISO week (UTC), with its adds, the lower Entry id winning a tie; none when nobody added anything.",
         "tags": [
           "counters"
         ],
@@ -39393,7 +39393,7 @@
       "post": {
         "operationId": "reports.send",
         "summary": "Report a mistake in an Entry",
-        "description": "The backend checks the report's shape, not whether its Entry is in a pack, and keeps it with its time of arrival and, from a signed-in device, the Account of its Session: no device id, no IP address (ADR 0056, 0159). Without a Session, or with one that is not on, the report is anonymous and still taken. A comment has at most 500 characters once trimmed and is empty when there is none; type other needs one.",
+        "description": "The backend checks the report's shape, not whether its Entry is in a pack, and keeps it with its time of arrival and, from a signed-in device, the Account of its Session: no device id, no IP address. Without a Session, or with one that is not on, the report is anonymous and still taken. A comment has at most 500 characters once trimmed and is empty when there is none; type other needs one.",
         "tags": [
           "reports"
         ],

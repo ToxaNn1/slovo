@@ -3,7 +3,7 @@ import type { MistakeReportStore } from '@slovo/server-core';
 import type { Database } from '../database/database';
 import { mistakeReports } from '../database/schema';
 
-/** The Mistake Reports still to check, kept in the `mistake_reports` table (ADR 0056, 0159). */
+/** The Mistake Reports still to check, kept in the `mistake_reports` table. */
 export function createMistakeReportStore({ db }: Database): MistakeReportStore {
   return {
     async keep(report) {

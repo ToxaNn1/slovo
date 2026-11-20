@@ -21,7 +21,7 @@ export const appStringsShape = {
   back: TextSchema,
   /**
    * The offline plate under the status bar when an action that needs the
-   * network finds none (ADR 0158), e.g. "Немає з’єднання. Спробуй пізніше.".
+   * network finds none, e.g. "Немає з’єднання. Спробуй пізніше.".
    */
   offlinePlate: TextSchema,
 };

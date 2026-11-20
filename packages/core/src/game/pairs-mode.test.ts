@@ -276,7 +276,7 @@ describe('the grids of «Пари»', () => {
     ]);
   });
 
-  // ADR 0190: the weak Entries take places drawn at random among the first 15 Rounds.
+  // The weak Entries take places drawn at random among the first 15 Rounds.
   it('puts the Words the reader marked «Не знаю» in grids drawn anew for each Game, not always the first', async () => {
     const weak = ['w_n03', 'w_n07', 'w_n09'];
     const places: number[] = [];

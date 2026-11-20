@@ -25,7 +25,7 @@ export function firstLetter(lemma: string): string {
  * under the halftone raster with a giant cream «?» behind it, while
  * Self-check keeps the meaning: it shouts «Лови слово!» over the Lemma, part
  * of speech and Category, with the shouting Mascot and the «Розкрити»
- * button. Revealed, the Word of the Day is the tabbed card (ADR 0091).
+ * button. Revealed, the Word of the Day is the tabbed card.
  */
 export function WordHero({
   card,

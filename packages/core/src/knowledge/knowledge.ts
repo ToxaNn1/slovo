@@ -42,7 +42,7 @@ export interface LearningEntry {
 export type KnownCounts = Readonly<Record<EntryKind, number>>;
 
 /**
- * The confirmed Entries (ADR 0043): Known on a Review of 7 days or later, or
+ * The confirmed Entries: Known on a Review of 7 days or later, or
  * answered right in a Game or a Quick Question. Every confirmed Entry the
  * Language Pack has counts in the total; a Word counts by its rarity too.
  */
@@ -91,7 +91,7 @@ export interface KnowledgeState {
 }
 
 /**
- * The Knowledge Marks of every Entry (ADR 0043), read from the user state
+ * The Knowledge Marks of every Entry, read from the user state
  * once, when they open, so open them once per app session (the Core
  * composition does). A change is made in memory only once it is written.
  * With the `knowledge` Feature Switch off nothing is marked, and the marks
@@ -123,7 +123,7 @@ export interface Knowledge {
   /**
    * The reader taps a mark on the Entry's card: the mark the card shows
    * removes it, deleting the record; any other tap answers the Entry today,
-   * as `answer` does. The change counts for the Community Counters (ADR 0060).
+   * as `answer` does. The change counts for the Community Counters.
    * A tap on an Entry due for Review is a Review answer: it earns its XP, up
    * to the Edition's daily cap (ADR 0066).
    */
@@ -132,7 +132,7 @@ export interface Knowledge {
    * The reader sets a mark, by a swipe or the card's menu: the mark the card
    * shows already changes nothing; any other answers the Entry today, as a
    * tap does, and can be undone until the next change of a mark. The change
-   * counts for the Community Counters (ADR 0060). A set on an Entry due for
+   * counts for the Community Counters. A set on an Entry due for
    * Review is a Review answer: it earns its XP once per Entry on a local day,
    * up to the Edition's daily cap (ADR 0066).
    */
@@ -162,7 +162,7 @@ export interface Knowledge {
    */
   confirm(entryId: string): Promise<void>;
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
-  /** The confirmed Entries counted in `state`, confirmed after the instant: what a Badge counts after a Progress reset (ADR 0133). */
+  /** The confirmed Entries counted in `state`, confirmed after the instant: what a Badge counts after a Progress reset. */
   confirmedAfter(at: string): number;
   subscribe(listener: () => void): () => void;
 }

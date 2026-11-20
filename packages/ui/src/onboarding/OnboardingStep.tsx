@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
+// Reanimated or gesture code: the React Compiler skips this module.
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
@@ -35,7 +35,7 @@ import {
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 
-/** How long a step takes to slide in (ADR 0055). */
+/** How long a step takes to slide in. */
 const SLIDE_MS = 300;
 const { shout: shoutAt } = onboardingLayout;
 const SHOUT_TURN = `${String(shoutAt.turn)}deg`;
@@ -86,7 +86,7 @@ function onboardingHero({
  * VoiceOver starts a step at its dots, which say its number. A `framed`
  * step's content never scrolls: it takes the whole room under the red top,
  * kept at its shortest, for a card in its fixed frame that scrolls inside
- * itself (ADR 0091, 0113).
+ * itself.
  */
 export function OnboardingStep({
   step,

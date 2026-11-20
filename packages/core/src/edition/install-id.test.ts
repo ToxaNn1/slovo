@@ -7,7 +7,7 @@ import { createFakeBackend, createMemoryContentPort } from '../testing';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { syncs } from '../user-state-schema';
 
-/** Long enough for every wait between the tries of one request (ADR 0037). */
+/** Long enough for every wait between the tries of one request. */
 const ALL_TRIES = 10_000;
 
 /** A random port with its own stream of numbers, so two devices differ. */

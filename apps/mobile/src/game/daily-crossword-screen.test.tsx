@@ -297,7 +297,7 @@ describe('the Daily Crossword’s card, as the Core opens the crossword', () => 
   });
 });
 
-describe('the crossing Daily Crossword (ADR 0087)', () => {
+describe('the crossing Daily Crossword', () => {
   beforeEach(() => {
     jest.spyOn(AccessibilityInfo, 'isScreenReaderEnabled').mockResolvedValue(true);
   });

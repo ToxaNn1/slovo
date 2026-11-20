@@ -4,7 +4,7 @@
  * marks. A notification's or the widget's link opens its Entry as Seen and
  * puts it in History (`Composition.openedFromNotification`, `Widget.opened`);
  * a plain link marks nothing. The widget's Swift writes the same link with
- * the app's scheme, its key and the Edition (ADR 0026).
+ * the app's scheme, its key and the Edition.
  */
 
 /** Where outside the app an Entry link opened from: a notification or the home-screen widget. */

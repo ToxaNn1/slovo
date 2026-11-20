@@ -19,7 +19,7 @@ import { useOpenScreen } from '@/use-open-screen';
 /**
  * The grid the header of the Dashboard's «Виправлення» rail opens. With
  * `correctionTypeGrid` the rail's Correction Types alone, each opening its
- * type's screen (ADR 0140, owner 15.11); off, k2, two columns of the
+ * type's screen (owner 15.11); off, k2, two columns of the
  * Categories of Corrections, a tile opening its Category, which with no
  * Category to show returns to the Dashboard.
  */

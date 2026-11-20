@@ -46,7 +46,7 @@ import { VowelRound } from './VowelRound';
  * own question, each under its kind's label rather than the mode's.
  * The ✕ asks first, with the SLOVO confirmation dialog, as «Очистити Історію?»
  * does; «Грати далі» leaves the Round as it was.
- * The question stands on the background with no card (ADR 0139), its label
+ * The question stands on the background with no card, its label
  * without the Round's number and none in the modes the board
  * heads in ink, the options at the bottom; the Mascot, when given, stands
  * beside the question, waiting, glad, wincing or sad at the last Life lost.
@@ -233,7 +233,7 @@ function questionFaceOf(modeId: string): QuestionFace {
 }
 
 /**
- * The Mascot's state beside the question (ADR 0070): waiting while the
+ * The Mascot's state beside the question: waiting while the
  * reader thinks, glad at a right answer, wincing at a wrong one, sad at the
  * wrong one that took the last Life.
  */

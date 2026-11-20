@@ -1192,7 +1192,7 @@ function onPager(children: React.ReactNode) {
   return <GestureHandlerRootView>{inEdition(children)}</GestureHandlerRootView>;
 }
 
-describe('the Source tab of a tabbed Entry card (ADR 0116)', () => {
+describe('the Source tab of a tabbed Entry card', () => {
   const sourceStrings = testStrings({
     ...strings,
     wordCard: { ...strings.wordCard, tabSource: 'Source' },

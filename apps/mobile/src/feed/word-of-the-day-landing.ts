@@ -5,7 +5,7 @@ export interface LandingAsked {
 
 /**
  * Where the «Слово дня» App Intent asks the Feed to land on today's Word of
- * the Day card (ADR 0057). The ask waits until the Feed has that card, such as
+ * the Day card. The ask waits until the Feed has that card, such as
  * on a cold start or a return on a new local day, and the Feed lands once.
  */
 export interface WordOfTheDayLanding {

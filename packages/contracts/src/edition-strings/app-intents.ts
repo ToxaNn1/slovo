@@ -11,7 +11,7 @@ const AppIntentStringsSchema = z.strictObject({
 });
 
 /**
- * The texts of the App Intents (ADR 0057). The prebuild writes them into the
+ * The texts of the App Intents. The prebuild writes them into the
  * app like the widget's, so the Swift code holds no text of its own.
  */
 export const AppIntentsStringsSchema = z.strictObject({

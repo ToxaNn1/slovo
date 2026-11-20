@@ -12,7 +12,7 @@ import type { UserState } from '../user-state/user-state';
 import { dashboardRecords } from './records';
 
 /**
- * One tile of the Correction Types rail (ADR 0076): a Correction Type with
+ * One tile of the Correction Types rail: a Correction Type with
  * live Corrections, how many there are and how many are «розібрано».
  */
 export interface CorrectionTypeTile {
@@ -30,7 +30,7 @@ export interface CorrectionTypeRow {
 }
 
 /**
- * The Correction Types (ADR 0076): the rail's tiles and each type's
+ * The Correction Types: the rail's tiles and each type's
  * Corrections. A Correction is «розібрано» once its standard form was shown:
  * Seen on the Feed, or revealed with «Як правильно?» on the type's screen.
  * With `correctionTypes` off there are no tiles and no Corrections.

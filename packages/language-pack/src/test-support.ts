@@ -72,7 +72,7 @@ export function fixtureDir(name: string): string {
 /**
  * The valid fixture Edition's seed snapshot: its records, as the backend
  * serves them, read fresh as the import reads it. The folder gives the
- * config and assets alone (ADR 0153).
+ * config and assets alone.
  */
 export function validSnapshot(): ContentSnapshot {
   return readSnapshotFile(join(fixtureDir('valid'), 'seed-snapshot.json'));

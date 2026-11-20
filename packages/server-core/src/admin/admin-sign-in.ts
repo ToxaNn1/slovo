@@ -84,7 +84,7 @@ export interface AdminSignIn {
   signOut(token: string): Promise<void>;
   /**
    * Checks a fresh TOTP of a signed-in Admin user again, as the Vault unlock
-   * asks (ADR 0164), and spends it; wrong ones count against their own limit.
+   * asks, and spends it; wrong ones count against their own limit.
    */
   confirmTotp(email: string, totp: string): Promise<{ readonly ok: true } | SignInRefused>;
   /** Ends every session of the token's Admin user, and of no one else. */

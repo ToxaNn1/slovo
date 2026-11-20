@@ -29,8 +29,8 @@ function Column({
 }
 
 /**
- * The window of a Service (ADR 0173): a wide native modal `<dialog>` in the
- * middle (ADR 0160), so Esc and the back gesture close it and the page behind
+ * The window of a Service: a wide native modal `<dialog>` in the
+ * middle, so Esc and the back gesture close it and the page behind
  * is inert. Its money, its usage and its entries stand side by side, all on
  * one laptop screen, and stack on a narrow one.
  */

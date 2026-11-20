@@ -22,7 +22,7 @@ import { useMixState } from '../mix/mix';
 const strings = editionStrings.feedNotices.laterQuestions;
 
 /**
- * The Feed Notice of a later question of the questionnaire (ADR 0067): the
+ * The Feed Notice of a later question of the questionnaire: the
  * Daily Goal, the interests, the self-rating, the Rarity Test offer or the
  * Mix review, each with «Пізніше». An answer applies through the Core's
  * questionnaire, which closes the card for the day, and turns to the next
@@ -103,7 +103,7 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
   );
 }
 
-/** The Daily Goals in Words, the Edition's highlighted one picked until the reader picks another (ADR 0067), and «Готово», which sets it. */
+/** The Daily Goals in Words, the Edition's highlighted one picked until the reader picks another, and «Готово», which sets it. */
 function DailyGoalQuestion({
   later,
   onDone,

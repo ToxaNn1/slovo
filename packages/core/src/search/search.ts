@@ -16,13 +16,13 @@ import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import type { TextComparison } from '../text/text-comparison';
 
-/** The shortest query Search answers, in letters of its Comparison Key (ADR 0054). */
+/** The shortest query Search answers, in letters of its Comparison Key. */
 const SHORTEST_QUERY = 2;
 
-/** The shortest query «За значенням» answers, in letters of its Comparison Key (ADR 0054). */
+/** The shortest query «За значенням» answers, in letters of its Comparison Key. */
 const SHORTEST_MEANING_QUERY = 3;
 
-/** The most Entries a group of results holds (ADR 0054). */
+/** The most Entries a group of results holds. */
 const GROUP_LIMIT = 50;
 
 /**
@@ -51,7 +51,7 @@ export interface SearchResults {
 }
 
 /**
- * Search («Пошук», ADR 0054): finds Entries by their visible text, over every
+ * Search («Пошук»): finds Entries by their visible text, over every
  * live Entry that is not Hidden, the Mix and the Rarity Range aside, so a
  * reader finds anything the app knows.
  */
@@ -74,7 +74,7 @@ export interface Search {
   /**
    * Whether «За значенням» answers the query too: 3 letters of its Comparison
    * Key at least, while the Edition turns Search on. Below it, a query that
-   * found nothing reads «Продовжуй вводити» (ADR 0054).
+   * found nothing reads «Продовжуй вводити».
    */
   answersByMeaning(query: string): boolean;
 }

@@ -32,7 +32,7 @@ const SentryStatsSchema = z.object({
 });
 
 /**
- * Sentry's usage (ADR 0164): the errors the organization accepted this month,
+ * Sentry's usage: the errors the organization accepted this month,
  * from its stats API, with Якість's token (`org:read`). One request a read.
  */
 export function createSentryUsage({
@@ -84,7 +84,7 @@ export function createSentryUsage({
 const PostHogCountSchema = z.object({ results: z.tuple([z.tuple([z.coerce.number().min(0)])]) });
 
 /**
- * PostHog's usage (ADR 0164): the events of the project this month, counted
+ * PostHog's usage: the events of the project this month, counted
  * by one HogQL query with the Аналітика's key (`query`). One request a read.
  */
 export function createPostHogUsage({
@@ -142,7 +142,7 @@ const NeonProjectSchema = z.object({
 });
 
 /**
- * Neon's usage (ADR 0164): the project's compute, storage and egress of this
+ * Neon's usage: the project's compute, storage and egress of this
  * period, from Neon's management API with `NEON_API_KEY`. One request a read;
  * it never connects to the database, so it neither wakes the compute nor
  * counts against the egress it reports.
@@ -219,11 +219,11 @@ const GitHubUsageSchema = z.object({
 const GitHubRepositorySchema = z.object({ private: z.boolean() });
 
 /**
- * GitHub Actions' usage (ADR 0164): the Actions minutes of the repository's
+ * GitHub Actions' usage: the Actions minutes of the repository's
  * owner this calendar month (UTC), from the billing usage report, with
  * Розробка's `GITHUB_TOKEN` (which also needs the Plan read permission).
  * A public repository's minutes are free and meter no limit, so the
- * repository's own minutes count only while it is private (ADR 0174); any
+ * repository's own minutes count only while it is private; any
  * other repository's count, as its visibility is not read. Two requests a read.
  */
 export function createGitHubActionsUsage({
@@ -358,7 +358,7 @@ const CloudflareUsageSchema = z.object({
 });
 
 /**
- * Cloudflare's usage (ADR 0164): the Media Store's R2 storage and Class A and
+ * Cloudflare's usage: the Media Store's R2 storage and Class A and
  * B operations this calendar month (UTC), and the account's Worker requests
  * today, in one GraphQL Analytics query with `CLOUDFLARE_API_TOKEN` (Account
  * Analytics: Read) on the R2 account and bucket. One request a read.

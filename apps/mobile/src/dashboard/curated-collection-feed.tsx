@@ -23,7 +23,7 @@ async function readCollection(
 }
 
 /**
- * A Curated Collection's Feed (ADR 0178): the collection's live Entries alone,
+ * A Curated Collection's Feed: the collection's live Entries alone,
  * each kind on its own card, from the Entry tapped on its screen on in its
  * order and round again after the last, endlessly, each card's kicker naming
  * its place, «Добірка · Мішанина · 2 з 3». It makes nothing Seen and leaves

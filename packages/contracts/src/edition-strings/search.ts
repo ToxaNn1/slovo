@@ -29,7 +29,7 @@ export const SearchStringsSchema = z.strictObject({
   nothingFoundHint: TextSchema,
   /** The placeholder of the field on the Search screen (board 09). */
   inputPlaceholder: TextSchema,
-  /** The button beside the field that closes the Search screen (board 09, ADR 0054). */
+  /** The button beside the field that closes the Search screen (board 09). */
   cancel: TextSchema,
   /** The small capitals over the results while the query finds some (board 09). */
   found: TextSchema,

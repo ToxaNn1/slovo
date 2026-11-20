@@ -95,7 +95,7 @@ describe('the Tip card', () => {
   });
 });
 
-describe('the Tip card with the Source tab (ADR 0116)', () => {
+describe('the Tip card with the Source tab', () => {
   it('moves the sources out of the rule tab into a last tab, so the bar reads Rule · Source', async () => {
     await render(
       inEdition(

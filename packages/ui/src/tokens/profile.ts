@@ -64,7 +64,7 @@ export const profileScreen = {
   record: { padX: 16, padY: 8, radius: 14, edge: 4, gap: 2 },
 } as const;
 
-/** The Profile's Level card, from the design: a tile card with a red wedge and the XP ring (ADR 0188). */
+/** The Profile's Level card, from the design: a tile card with a red wedge and the XP ring. */
 /** The Profile's header (board 11, t8): the avatar, the reader's name and the Level. */
 export const profileHeader = {
   padding: 16,
@@ -167,7 +167,7 @@ export const badgeShareMark = { side: 28 } as const;
 /**
  * The Badge grid: marks in rows of their Badge family under its name, five
  * to a row of the Profile (`side`), a card for each Badge on the Badges
- * screen (`card`, ADR 0145).
+ * screen (`card`).
  */
 export const badgeGrid = {
   side: 48,
@@ -244,7 +244,7 @@ export const badgeTile = [
   [0, 0.14],
 ] as const satisfies Wedge;
 
-/** The checker tile shape of a Badge family, two corners cut by 10% of the side: top left and bottom right (ADR 0087, 0145). */
+/** The checker tile shape of a Badge family, two corners cut by 10% of the side: top left and bottom right. */
 export const badgeChecker = [
   [0.1, 0],
   [1, 0],
@@ -254,7 +254,7 @@ export const badgeChecker = [
   [0, 0.1],
 ] as const satisfies Wedge;
 
-/** The wedge shape of the Рівні Badge family (ADR 0145): its left edge short, its right edge full height. */
+/** The wedge shape of the Рівні Badge family: its left edge short, its right edge full height. */
 export const badgeWedge = [
   [0, 0.18],
   [1, 0],
@@ -263,7 +263,7 @@ export const badgeWedge = [
 ] as const satisfies Wedge;
 
 /**
- * The face of a `checker` Badge in place of its symbol (ADR 0087): a square of
+ * The face of a `checker` Badge in place of its symbol: a square of
  * `cells` by `cells`, `side` of the mark's side, centred on the cream inset.
  */
 export const badgeCheckerFace = { cells: 3, side: 0.48 } as const;
@@ -435,7 +435,7 @@ export const levelLadder = {
   gap: 10,
   /** The six cards in one row, each `width` wide; the row scrolls when the screen is narrower. */
   card: { width: 112, padding: 12, radius: 16, border: 1, gap: 8 },
-  /** The Level wedge holding a range's first Level (ADR 0145), its fill inset by `inset` of the side. */
+  /** The Level wedge holding a range's first Level, its fill inset by `inset` of the side. */
   wedge: {
     width: 56,
     height: 44,

@@ -1,4 +1,4 @@
-// Spec decision H, ADR 0018: the Core's main entry exports only the names that
+// Spec decision H: the Core's main entry exports only the names that
 // code outside the Core imports, so the shell cannot go around the
 // composition. Run by `pnpm deps` and in CI next to the dependency-cruiser
 // rules; the cruiser sees modules, not names, so this check reads the names.
@@ -95,7 +95,7 @@ if (unused.length > 0) {
   console.error(
     `${relative(ROOT, join(ROOT, ENTRY))} exports ${unused.length} name(s) that no non-test ` +
       'module outside the Core imports. Take the export off, or move a test helper to ' +
-      `@slovo/core/testing (spec decision H, ADR 0018):\n  ${unused.join('\n  ')}`,
+      `@slovo/core/testing (spec decision H):\n  ${unused.join('\n  ')}`,
   );
   process.exit(1);
 }

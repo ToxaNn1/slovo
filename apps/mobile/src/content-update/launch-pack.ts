@@ -11,7 +11,7 @@ export interface OpenedPack<R> {
 /** The Language Pack of the app run, and the Content update module, when content updates are on. */
 export interface LaunchPack<R> {
   readonly reader: R;
-  /** The content version the pack holds now, which a Mistake Report carries (ADR 0056); a Patch raises it. */
+  /** The content version the pack holds now, which a Mistake Report carries; a Patch raises it. */
   readonly contentVersion: () => number;
   readonly contentUpdate: ContentUpdate | undefined;
   /** The content store of the pack, which the Core media reads the Recordings and Illustrations from (ADR 0099). */

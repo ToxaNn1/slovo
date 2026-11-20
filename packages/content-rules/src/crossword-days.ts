@@ -8,7 +8,7 @@ export const CROSSWORD_DAYS_FILE = 'snapshot:crosswordDays';
 /**
  * How many days apart a word may come back in the Daily Crossword, at the
  * least: a margin under the 24 days with which the UA Edition's
- * 3–5-letter words just fill the 400 days ahead (ADR 0052).
+ * 3–5-letter words just fill the 400 days ahead.
  */
 export const CROSSWORD_REPEAT_DAYS = 20;
 
@@ -18,7 +18,7 @@ export function dateAfter(date: string, days: number): string {
 }
 
 /**
- * What the rules of ADR 0052 refuse in an Edition's crossword days: a gap
+ * What the crossword rules refuse in an Edition's crossword days: a gap
  * between days and a word that comes back within 20 days. That a published
  * day never changes is the content write API's rule (`checkCrosswordDay`).
  */
@@ -105,7 +105,7 @@ function ruleErrors(days: readonly CrosswordDay[]): Refusal[] {
 
 /**
  * What the rules refuse in one Crossword day saved among the days: a day on
- * or before `today` is published and never changes (ADR 0052), a day stands
+ * or before `today` is published and never changes, a day stands
  * next to its neighbours without a gap, a word comes back only 20 days or
  * more from another day of it, and every word is a Word or Correction of the
  * Edition. Each refusal is located at `file`, by the field within the day.

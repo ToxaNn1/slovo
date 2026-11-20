@@ -48,7 +48,7 @@ type ScreenLayoutProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['scr
 /** A tab button's own props, as `TabBarButton` takes them. */
 type ButtonProps = ComponentProps<typeof TabBarButton>;
 
-/** The «Стрічка» button, shown as selected over the Feed it opens too (ADR 0093). */
+/** The «Стрічка» button, shown as selected over the Feed it opens too. */
 function FeedTabButton(props: ButtonProps) {
   // Read here, not in the navigator, so a route change re-renders this button alone.
   const onFeed = usePathname() === '/feed';
@@ -104,7 +104,7 @@ function tabOptions(
  */
 function tabsOptions(tabOrder: readonly Tab[], settingsName: string, feedTab: boolean) {
   return {
-    // With `feedTab` on, «Стрічка» shows as selected over the Feed it opens (ADR 0093).
+    // With `feedTab` on, «Стрічка» shows as selected over the Feed it opens.
     home: tabOptions('home', tabOrder, tabs.home, feedTab ? FeedTabButton : TabBarButton),
     game: tabOptions('game', tabOrder, tabs.game),
     // «Мікс» in the centre opens «Мій Мікс» as its root (ADR 0201).
@@ -209,7 +209,7 @@ function FocusedEnter({ route, children }: Pick<ScreenLayoutProps, 'route' | 'ch
 /**
  * The tabs the Edition shows in effect, in their final order: the Game's goes
  * and comes back with its Feature Switch, also one turned off remotely while
- * the app runs (ADR 0040). As the boards, the tab bar shows only on a tab's
+ * the app runs. As the boards, the tab bar shows only on a tab's
  * first screen and hides over everything a tab or a link pushes: an Entry,
  * Search, the Daily Crossword, a Game's Round and its result.
  */
@@ -252,7 +252,7 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
         options={{ ...options.home, ...bar.shown, ...underBar }}
         listeners={{
           tabPress: (event) => {
-            // The Dashboard stays the home at launch; its tab opens the Feed (ADR 0093).
+            // The Dashboard stays the home at launch; its tab opens the Feed.
             if (!inEffect.isFeatureEnabled('feedTab')) return;
             event.preventDefault();
             router.navigate('/feed');
@@ -306,7 +306,7 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
       */}
       <Tabs.Screen name="categories" options={offTabs} />
       <Tabs.Screen name="category/[categoryId]" options={offTabs} />
-      {/* A Category's Feed, from a Word of its screen (ADR 0110); no tab leads to it. */}
+      {/* A Category's Feed, from a Word of its screen; no tab leads to it. */}
       <Tabs.Screen name="category-feed/[categoryId]" options={offTabs} />
       <Tabs.Screen name="correction-categories" options={offTabs} />
       <Tabs.Screen name="correction-category/[categoryId]" options={offTabs} />

@@ -29,7 +29,7 @@ export interface FeatureSwitchRecord<Switch extends string = string> {
   readonly group: FeatureSwitchGroup;
   /**
    * The switches this feature stands on: it is in effect only while each of
-   * them is in effect too (ADR 0040). None: it depends on nothing.
+   * them is in effect too. None: it depends on nothing.
    */
   readonly dependsOn?: readonly Switch[];
 }
@@ -55,19 +55,19 @@ export const FEATURE_SWITCHES = catalogue({
     line: 'Картки з типовими помилками і тим, як казати правильно.',
     group: 'content',
   },
-  /** Idioms: the third kind of Entry, idioms and place names (ADR 0046). */
+  /** Idioms: the third kind of Entry, idioms and place names. */
   idioms: {
     name: 'Фразеологізми',
     line: 'Картки з приказками, фразеологізмами й назвами місць.',
     group: 'content',
   },
-  /** Synonym Rows: the fourth kind of Entry, a dominant word and a row of its synonyms (ADR 0051). */
+  /** Synonym Rows: the fourth kind of Entry, a dominant word and a row of its synonyms. */
   synonymRows: {
     name: 'Ряди синонімів',
     line: 'Картки з головним словом і рядом його синонімів.',
     group: 'content',
   },
-  /** Tips: the fifth kind of Entry, rules of good speech (ADR 0051). */
+  /** Tips: the fifth kind of Entry, rules of good speech. */
   tips: {
     name: 'Поради',
     line: 'Картки з правилами гарної мови.',
@@ -104,7 +104,7 @@ export const FEATURE_SWITCHES = catalogue({
     line: 'Застосунок щодня шукає нову версію словника.',
     group: 'content',
   },
-  /** Notifications: the daily reminders the Core plans (ADR 0021). */
+  /** Notifications: the daily reminders the Core plans. */
   notifications: {
     name: 'Нагадування',
     line: 'Щоденні сповіщення, які нагадують зайти в застосунок.',
@@ -140,7 +140,7 @@ export const FEATURE_SWITCHES = catalogue({
     line: 'Кнопки, що озвучують слово.',
     group: 'content',
   },
-  /** «Голос диктора»: the reader's choice of the Narrator Voice that reads; off while `pronunciation` is, and off the default voice reads (ADR 0083). */
+  /** «Голос диктора»: the reader's choice of the Narrator Voice that reads; off while `pronunciation` is, and off the default voice reads. */
   narratorVoice: {
     name: 'Голос диктора',
     line: 'Читач сам обирає голос, яким озвучуються слова.',
@@ -172,7 +172,7 @@ export const FEATURE_SWITCHES = catalogue({
     line: 'Позначки «Знаю» і «Не знаю» на записах та повторення за ними.',
     group: 'feed',
   },
-  /** The confirmed-Entry counts the Profile and the Badges show; with it off they are hidden and nothing is confirmed, while Review goes on under `knowledge` (ADR 0043). */
+  /** The confirmed-Entry counts the Profile and the Badges show; with it off they are hidden and nothing is confirmed, while Review goes on under `knowledge`. */
   confirmedEntries: {
     name: 'Підтверджені записи',
     line: 'Лічильники підтверджених записів у профілі та на відзнаках.',
@@ -196,184 +196,184 @@ export const FEATURE_SWITCHES = catalogue({
     line: 'Після гри список усіх запитань із відповідями.',
     group: 'games',
   },
-  /** The Game Mode «Вгадай слово» (`guess-word`); off while `game` is (ADR 0052). */
+  /** The Game Mode «Вгадай слово» (`guess-word`); off while `game` is. */
   gameGuessWord: {
     name: 'Гра «Вгадай слово»',
     line: 'Режим, де за значенням треба вгадати слово.',
     group: 'games',
     dependsOn: ['game'],
   },
-  /** The Game Mode «Обери правильне» (`correction`); off while `game` is (ADR 0052). */
+  /** The Game Mode «Обери правильне» (`correction`); off while `game` is. */
   gameCorrection: {
     name: 'Гра «Обери правильне»',
     line: 'Режим, де з двох варіантів треба обрати правильний.',
     group: 'games',
     dependsOn: ['game', 'corrections'],
   },
-  /** The Game Mode «Наголос» (`stress`); off while `game` is (ADR 0052). */
+  /** The Game Mode «Наголос» (`stress`); off while `game` is. */
   gameStress: {
     name: 'Гра «Наголос»',
     line: 'Режим, де треба поставити наголос у слові.',
     group: 'games',
     dependsOn: ['game'],
   },
-  /** The Game Mode «Пари» (`pairs`); off while `game` is (ADR 0052). */
+  /** The Game Mode «Пари» (`pairs`); off while `game` is. */
   gamePairs: {
     name: 'Гра «Пари»',
     line: 'Режим, де слова треба поєднати з їхніми значеннями.',
     group: 'games',
     dependsOn: ['game'],
   },
-  /** The Game Mode «Виживання» (`survival`); off while `game` is (ADR 0052). */
+  /** The Game Mode «Виживання» (`survival`); off while `game` is. */
   gameSurvival: {
     name: 'Гра «Виживання»',
     line: 'Режим, де гра триває до першої помилки.',
     group: 'games',
     dependsOn: ['game', 'corrections'],
   },
-  /** The Game Mode «На час» (`timed`); off while `game` is (ADR 0052). */
+  /** The Game Mode «На час» (`timed`); off while `game` is. */
   gameTimed: {
     name: 'Гра «На час»',
     line: 'Режим, де треба встигнути відповісти якнайбільше за обмежений час.',
     group: 'games',
     dependsOn: ['game'],
   },
-  /** The Game Mode «Фразеологізми» (`idiom-meaning`); off while `game` is (ADR 0052). */
+  /** The Game Mode «Фразеологізми» (`idiom-meaning`); off while `game` is. */
   gameIdiomMeaning: {
     name: 'Гра «Фразеологізми»',
     line: 'Режим, де треба обрати значення фразеологізму.',
     group: 'games',
     dependsOn: ['game', 'idioms'],
   },
-  /** The Game Mode «Англіцизми» (`anglicism`); off while `game` is (ADR 0052). */
+  /** The Game Mode «Англіцизми» (`anglicism`); off while `game` is. */
   gameAnglicism: {
     name: 'Гра «Англіцизми»',
     line: 'Режим, де до англіцизму треба обрати українську заміну.',
     group: 'games',
     dependsOn: ['game', 'corrections'],
   },
-  /** The Game Mode «Склади вислів» (`build-idiom`); off while `game` is (ADR 0052). */
+  /** The Game Mode «Склади вислів» (`build-idiom`); off while `game` is. */
   gameBuildIdiom: {
     name: 'Гра «Склади вислів»',
     line: 'Режим, де з частин треба скласти цілий вислів.',
     group: 'games',
     dependsOn: ['game', 'idioms'],
   },
-  /** The Game Mode «Впиши слово» (`type-word`); off while `game` is (ADR 0052). */
+  /** The Game Mode «Впиши слово» (`type-word`); off while `game` is. */
   gameTypeWord: {
     name: 'Гра «Впиши слово»',
     line: 'Режим, де слово треба вписати самому.',
     group: 'games',
     dependsOn: ['game', 'corrections'],
   },
-  /** The Game Mode «Анаграми» (`anagram`); off while `game` is (ADR 0052). */
+  /** The Game Mode «Анаграми» (`anagram`); off while `game` is. */
   gameAnagram: {
     name: 'Гра «Анаграми»',
     line: 'Режим, де зі змішаних літер треба скласти слово.',
     group: 'games',
     dependsOn: ['game'],
   },
-  /** The Game Mode «За літерами» (`by-letters`); off while `game` is (ADR 0052). */
+  /** The Game Mode «За літерами» (`by-letters`); off while `game` is. */
   gameByLetters: {
     name: 'Гра «За літерами»',
     line: 'Режим, де слово складають із наданих літер.',
     group: 'games',
     dependsOn: ['game'],
   },
-  /** The Game Mode «Звідки слово» (`origin`); off while `game` is (ADR 0052). */
+  /** The Game Mode «Звідки слово» (`origin`); off while `game` is. */
   gameOrigin: {
     name: 'Гра «Звідки слово»',
     line: 'Режим, де треба вгадати походження слова.',
     group: 'games',
     dependsOn: ['game'],
   },
-  /** The Daily Crossword; off while `game` is (ADR 0052). */
+  /** The Daily Crossword; off while `game` is. */
   dailyCrossword: {
     name: 'Щоденний кросворд',
     line: 'Новий кросворд щодня серед ігор.',
     group: 'crossword',
     dependsOn: ['game'],
   },
-  /** Search: its header button and screen over every non-Retired, non-Hidden Entry (ADR 0054). */
+  /** Search: its header button and screen over every non-Retired, non-Hidden Entry. */
   search: {
     name: 'Пошук',
     line: 'Кнопка й екран пошуку по всіх записах.',
     group: 'content',
   },
-  /** The Rarity Test: the short test that sets the top of the Rarity Range (ADR 0054, 0156). */
+  /** The Rarity Test: the short test that sets the top of the Rarity Range (ADR 0156). */
   rarityTest: {
     name: 'Тест рідкісності',
     line: 'Короткий тест, що підбирає читачеві межу рідкісності слів.',
     group: 'content',
     dependsOn: ['rarityCeiling'],
   },
-  /** The Weekly Recap «Твій тиждень»: the Monday Feed Notice about the week before (ADR 0054). */
+  /** The Weekly Recap «Твій тиждень»: the Monday Feed Notice about the week before. */
   weeklyRecap: {
     name: 'Підсумок тижня',
     line: 'У понеділок у стрічці з’являється підсумок «Твій тиждень».',
     group: 'progress',
   },
-  /** Yesterday: the Feed Notice «Пам’ятаєш учорашнє слово?» (ADR 0054). */
+  /** Yesterday: the Feed Notice «Пам’ятаєш учорашнє слово?». */
   yesterday: {
     name: 'Учорашнє слово',
     line: 'У стрічці питання «Пам’ятаєш учорашнє слово?».',
     group: 'feed',
   },
-  /** The Word of the Day archive «Слова дня» in Saved (ADR 0054). */
+  /** The Word of the Day archive «Слова дня» in Saved. */
   wordOfTheDayArchive: {
     name: 'Архів слів дня',
     line: 'У збережених є добірка «Слова дня» за минулі дні.',
     group: 'content',
   },
-  /** The Active Days calendar on the statistics screen (ADR 0054). */
+  /** The Active Days calendar on the statistics screen. */
   activeDaysCalendar: {
     name: 'Календар активних днів',
     line: 'На екрані статистики видно, у які дні читач користувався застосунком.',
     group: 'progress',
   },
-  /** The polite pause: the notification plan stops 14 days after the last open, with the Edition's farewell (ADR 0054). */
+  /** The polite pause: the notification plan stops 14 days after the last open, with the Edition's farewell. */
   politePause: {
     name: 'Ввічлива пауза',
     line: 'Сповіщення вщухають, якщо читач не заходив два тижні.',
     group: 'notifications',
   },
-  /** The first week: one intro Feed Notice on each of a new reader's first 7 Active Days (ADR 0054). */
+  /** The first week: one intro Feed Notice on each of a new reader's first 7 Active Days. */
   firstWeek: {
     name: 'Перший тиждень',
     line: 'У перші сім днів читача стрічка показує по одному вступному повідомленню.',
     group: 'onboarding',
   },
-  /** «Сезонний декор»: the Decor motif of the local date's Holiday or Season, and its setting (ADR 0055). */
+  /** «Сезонний декор»: the Decor motif of the local date's Holiday or Season, and its setting. */
   seasonalDecor: {
     name: 'Сезонний декор',
     line: 'Оформлення змінюється до свят і пір року.',
     group: 'look',
   },
-  /** The falling Stress: the Stress mark of a Word card's Lemma falls onto its vowel (ADR 0055). */
+  /** The falling Stress: the Stress mark of a Word card's Lemma falls onto its vowel. */
   stressAnimation: {
     name: 'Падіння наголосу',
     line: 'На картці слова наголос падає на свою голосну.',
     group: 'content',
   },
-  /** Illustrations: the Illustration a Word may carry above its Definition (ADR 0055). */
+  /** Illustrations: the Illustration a Word may carry above its Definition. */
   illustrations: {
     name: 'Ілюстрації',
     line: 'У слів, які мають малюнок, він показаний над значенням.',
     group: 'content',
   },
-  /** Mistake Reports: the Entry card's menu item, its sheet and the queue that sends them (ADR 0056). */
+  /** Mistake Reports: the Entry card's menu item, its sheet and the queue that sends them. */
   mistakeReports: {
     name: 'Повідомлення про помилки',
     line: 'У меню запису є пункт, щоб повідомити про помилку в ньому.',
     group: 'content',
   },
-  /** Community Counters: the line under the mark buttons and the changes the device sends (ADR 0060). */
+  /** Community Counters: the line under the mark buttons and the changes the device sends. */
   communityCounters: {
     name: 'Лічильники спільноти',
     line: 'Під кнопками позначок видно, скільки читачів знають слово.',
     group: 'progress',
   },
-  /** The Community Word «Слово тижня спільноти»: its Monday Feed Notice (ADR 0060). */
+  /** The Community Word «Слово тижня спільноти»: its Monday Feed Notice. */
   communityWord: {
     name: 'Слово тижня спільноти',
     line: 'У понеділок у стрічці з’являється слово тижня від спільноти.',
@@ -434,19 +434,19 @@ export const FEATURE_SWITCHES = catalogue({
     line: 'Слово дня в стрічці написане каліграфічним шрифтом видання.',
     group: 'content',
   },
-  /** Spotlight: the Spotlight Snapshot the app writes into the system search; off, the snapshot is empty (ADR 0057). */
+  /** Spotlight: the Spotlight Snapshot the app writes into the system search; off, the snapshot is empty. */
   spotlight: {
     name: 'Пошук iOS (Spotlight)',
     line: 'Слова можна знайти через системний пошук телефона.',
     group: 'feed',
   },
-  /** App Intents: «Слово дня» and «Відкрити гру» open the Word of the Day card and the Game; off, they open the app's start (ADR 0057). */
+  /** App Intents: «Слово дня» and «Відкрити гру» open the Word of the Day card and the Game; off, they open the app's start. */
   appIntents: {
     name: 'Команди Siri',
     line: 'Команди «Слово дня» та «Відкрити гру» працюють із системи.',
     group: 'widgets',
   },
-  /** Collection Links: «Поділитися посиланням» on a Collection and the `c/<id>` links that open its copy (ADR 0058). */
+  /** Collection Links: «Поділитися посиланням» on a Collection and the `c/<id>` links that open its copy. */
   collectionLinks: {
     name: 'Посилання на добірки',
     line: 'Добіркою можна поділитися посиланням, яке відкриє її копію.',
@@ -497,14 +497,14 @@ export const FEATURE_SWITCHES = catalogue({
     group: 'feed',
     dependsOn: ['game'],
   },
-  /** The Word Meaning question: the Quick Question may ask what an Eligible Word means, with four Definitions to pick from; off while `quickQuestion` is (ADR 0128). */
+  /** The Word Meaning question: the Quick Question may ask what an Eligible Word means, with four Definitions to pick from; off while `quickQuestion` is. */
   quickQuestionWordMeaning: {
     name: 'Швидке запитання про значення',
     line: 'У швидкому запитанні можна обирати значення слова з чотирьох.',
     group: 'feed',
     dependsOn: ['quickQuestion'],
   },
-  /** The onboarding step «ГРАЙ!» after the first Word, which shows the Games; off while `game` is (ADR 0067). */
+  /** The onboarding step «ГРАЙ!» after the first Word, which shows the Games; off while `game` is. */
   playStep: {
     name: 'Крок «Грай!»',
     line: 'У вступі після першого слова читачеві показують ігри.',
@@ -538,14 +538,14 @@ export const FEATURE_SWITCHES = catalogue({
     line: 'У стрічці раз на день питання «Може, на сьогодні досить?».',
     group: 'progress',
   },
-  /** The Feed Notice «Ціль дня виконано!» once the reader meets the day's Daily Goal (ADR 0129). */
+  /** The Feed Notice «Ціль дня виконано!» once the reader meets the day's Daily Goal. */
   goalReachedCard: {
     name: 'Картка «Ціль дня виконано»',
     line: 'Коли ціль дня виконано, у стрічці з’являється вітальна картка.',
     group: 'progress',
     dependsOn: ['xpLog', 'dailyGoal'],
   },
-  /** The onboarding questions «Як добре ти знаєш мову?» and «Навіщо», their Feed settings and their anonymous counters (ADR 0067, 0068). */
+  /** The onboarding questions «Як добре ти знаєш мову?» and «Навіщо», their Feed settings and their anonymous counters (ADR 0068). */
   questionnaire: {
     name: 'Вступні запитання',
     line: 'У вступі застосунок питає, наскільки добре читач знає мову і навіщо вчить.',
@@ -558,42 +558,42 @@ export const FEATURE_SWITCHES = catalogue({
     group: 'progress',
     dependsOn: ['xpLog'],
   },
-  /** The Level ladder of the Profile: one card per Level name with its range of Levels, and the bar to the next name (spec #1641, ADR 0085); off while `xpLog` is. */
+  /** The Level ladder of the Profile: one card per Level name with its range of Levels, and the bar to the next name (spec #1641); off while `xpLog` is. */
   levelLadder: {
     name: 'Драбина рівнів',
     line: 'У профілі видно всі назви рівнів і смугу до наступної назви.',
     group: 'progress',
     dependsOn: ['xpLog'],
   },
-  /** The Badge sheet: a tap on any Badge opens its name, date or progress, and an unearned one answers with a toast (ADR 0085); off while `xpLog` or `badges` is. */
+  /** The Badge sheet: a tap on any Badge opens its name, date or progress, and an unearned one answers with a toast; off while `xpLog` or `badges` is. */
   badgeSheet: {
     name: 'Картка відзнаки',
     line: 'Дотик до відзнаки відкриває її назву, дату або прогрес.',
     group: 'progress',
     dependsOn: ['xpLog', 'badges'],
   },
-  /** The Badge families overview heading the Badges screen: each family's mark, name, count, description and shape (ADR 0145); off while `xpLog` or `badges` is. */
+  /** The Badge families overview heading the Badges screen: each family's mark, name, count, description and shape; off while `xpLog` or `badges` is. */
   badgeFamiliesOverview: {
     name: 'Огляд родин відзнак',
     line: 'Екран «Відзнаки» починається з шести родин: знак, назва, опис і форма.',
     group: 'progress',
     dependsOn: ['xpLog', 'badges'],
   },
-  /** The Streak freeze card of the Profile: the freezes held, the last 7 days and the days saved (ADR 0085); off while `xpLog` is. */
+  /** The Streak freeze card of the Profile: the freezes held, the last 7 days and the days saved; off while `xpLog` is. */
   streakFreezeCard: {
     name: 'Картка заморозок',
     line: 'У профілі видно заморожені дні, останній тиждень і врятовані дні.',
     group: 'progress',
     dependsOn: ['xpLog'],
   },
-  /** The Break card of the Profile while a Break runs: its dates, a 14-day strip and the next Break's date (ADR 0085); off while `xpLog` is. */
+  /** The Break card of the Profile while a Break runs: its dates, a 14-day strip and the next Break's date; off while `xpLog` is. */
   breakCard: {
     name: 'Картка перерви',
     line: 'У профілі під час перерви видно її дати й день наступної.',
     group: 'progress',
     dependsOn: ['xpLog'],
   },
-  /** The Active Days calendar's day lines: a tap on a day tells what happened on it (ADR 0085); off while `xpLog` is. */
+  /** The Active Days calendar's day lines: a tap on a day tells what happened on it; off while `xpLog` is. */
   calendarDayLines: {
     name: 'Підписи днів календаря',
     line: 'Дотик до дня календаря розповідає, що в цей день було.',
@@ -607,49 +607,49 @@ export const FEATURE_SWITCHES = catalogue({
     group: 'progress',
     dependsOn: ['shareCards', 'xpLog'],
   },
-  /** «Підказка»: the Crossword Hint, which fills one letter of the current Word, costs nothing and marks the day as hinted (ADR 0087); off while `dailyCrossword` is. */
+  /** «Підказка»: the Crossword Hint, which fills one letter of the current Word, costs nothing and marks the day as hinted; off while `dailyCrossword` is. */
   crosswordHint: {
     name: 'Підказка в кросворді',
     line: 'Кнопка «Підказка» відкриває одну літеру слова.',
     group: 'crossword',
     dependsOn: ['dailyCrossword'],
   },
-  /** The Solve time: the on-screen seconds of the Daily Crossword, kept with its XP log record and shown on the solved card (ADR 0087); off while `dailyCrossword` is. */
+  /** The Solve time: the on-screen seconds of the Daily Crossword, kept with its XP log record and shown on the solved card; off while `dailyCrossword` is. */
   crosswordSolveTime: {
     name: 'Час розгадування',
     line: 'У кросворді рахується час, і його видно на готовій картці.',
     group: 'crossword',
     dependsOn: ['dailyCrossword'],
   },
-  /** The solved screen of the Daily Crossword, «Розгадано!» with its share buttons (ADR 0087); off while `dailyCrossword` is. */
+  /** The solved screen of the Daily Crossword, «Розгадано!» with its share buttons; off while `dailyCrossword` is. */
   crosswordSolvedScreen: {
     name: 'Екран «Розгадано!»',
     line: 'Після розгаданого кросворда з’являється екран із кнопками поширення.',
     group: 'crossword',
     dependsOn: ['dailyCrossword'],
   },
-  /** The full-screen Badge stamp after a solved Daily Crossword that earns a Badge (ADR 0087); off while `dailyCrossword` or `badges` is. */
+  /** The full-screen Badge stamp after a solved Daily Crossword that earns a Badge; off while `dailyCrossword` or `badges` is. */
   crosswordBadgeStamp: {
     name: 'Печатка відзнаки за кросворд',
     line: 'Відзнаку за кросворд показано на весь екран.',
     group: 'crossword',
     dependsOn: ['dailyCrossword', 'badges'],
   },
-  /** The Mascot beside the question of a Round, in its waiting, glad, wincing and sad states (ADR 0139); off while `game` is. */
+  /** The Mascot beside the question of a Round, in its waiting, glad, wincing and sad states; off while `game` is. */
   gameRoundMascot: {
     name: 'Талісман у грі',
     line: 'Біля запитання гри стоїть талісман, який реагує на відповідь.',
     group: 'games',
     dependsOn: ['game'],
   },
-  /** The third end action «До стрічки» beside «Ще раз» and «До ігор» (ADR 0139); off while `game` is. */
+  /** The third end action «До стрічки» beside «Ще раз» and «До ігор»; off while `game` is. */
   gameEndToFeed: {
     name: 'Кнопка «До стрічки»',
     line: 'Наприкінці гри є третя кнопка, що веде до стрічки.',
     group: 'games',
     dependsOn: ['game'],
   },
-  /** The toast on a tap of a Game Mode that cannot be played, which keeps its normal look (ADR 0139); off while `game` is. */
+  /** The toast on a tap of a Game Mode that cannot be played, which keeps its normal look; off while `game` is. */
   gameModeToast: {
     name: 'Підказка про недоступну гру',
     line: 'Дотик до гри, у яку ще не можна грати, показує коротке пояснення.',
@@ -676,7 +676,7 @@ export const FEATURE_SWITCHES = catalogue({
     group: 'notifications',
     dependsOn: ['notifications'],
   },
-  /** The later questions through Feed Notices (the interests, the self-rating, the Mix review, the Rarity Test offer and, for an existing reader, the Daily Goal) and the questionnaire retake in Settings (ADR 0067). */
+  /** The later questions through Feed Notices (the interests, the self-rating, the Mix review, the Rarity Test offer and, for an existing reader, the Daily Goal) and the questionnaire retake in Settings. */
   laterQuestions: {
     name: 'Запитання згодом',
     line: 'Стрічка згодом питає про інтереси, самооцінку та ціль, їх можна пройти ще раз.',
@@ -702,13 +702,13 @@ export const FEATURE_SWITCHES = catalogue({
     line: 'Мовчазна постать видання з короткими репліками.',
     group: 'look',
   },
-  /** The Interface sounds (a shout, a right answer, a wrong answer, a tap) and the «Звуки» setting (ADR 0070). */
+  /** The Interface sounds (a shout, a right answer, a wrong answer, a tap) and the «Звуки» setting. */
   sounds: {
     name: 'Звуки',
     line: 'Звуки інтерфейсу й налаштування «Звуки».',
     group: 'look',
   },
-  /** «Менше руху»: the Settings switch that turns every animation into its calmer variant, as the system's Reduce Motion does (ADR 0055). */
+  /** «Менше руху»: the Settings switch that turns every animation into its calmer variant, as the system's Reduce Motion does. */
   reduceMotion: {
     name: 'Менше руху',
     line: 'Налаштування, що робить усі анімації спокійнішими.',
@@ -720,40 +720,40 @@ export const FEATURE_SWITCHES = catalogue({
     line: 'Перша картка з’являється з повною анімацією, наступні швидше.',
     group: 'feed',
   },
-  /** The Mood check-in: the Dashboard block that asks «Як настрій?» once a day (ADR 0076). */
+  /** The Mood check-in: the Dashboard block that asks «Як настрій?» once a day. */
   mood: {
     name: 'Настрій',
     line: 'На головній раз на день питають «Як настрій?».',
     group: 'feed',
   },
-  /** The Mood's effect: the line under the Mood check-in that says what the picked Mood changed in the Feed, and the second tap that unpicks it (ADR 0185). Off while `mood` is. */
+  /** The Mood's effect: the line under the Mood check-in that says what the picked Mood changed in the Feed, and the second tap that unpicks it. Off while `mood` is. */
   moodEffect: {
     name: 'Що змінив настрій',
     line: 'Під настроями рядок каже, що змінилось у стрічці; другий дотик знімає настрій.',
     group: 'feed',
     dependsOn: ['mood'],
   },
-  /** «Попередні слова»: the Dashboard block with the three newest Word of the Day archive days before today (ADR 0076). Off while `wordOfTheDayArchive` is. */
+  /** «Попередні слова»: the Dashboard block with the three newest Word of the Day archive days before today. Off while `wordOfTheDayArchive` is. */
   previousWords: {
     name: 'Попередні слова',
     line: 'На головній показані три останні слова дня.',
     group: 'feed',
     dependsOn: ['wordOfTheDayArchive'],
   },
-  /** The Correction Types rail: the Dashboard's tile per Correction Type with its screen (ADR 0076). Off while `corrections` is. */
+  /** The Correction Types rail: the Dashboard's tile per Correction Type with its screen. Off while `corrections` is. */
   correctionTypes: {
     name: 'Типи виправлень',
     line: 'На головній є плитки типів виправлень, кожна зі своїм екраном.',
     group: 'content',
     dependsOn: ['corrections'],
   },
-  /** Curated Collections: the Dashboard's «SLOVO пропонує» rail of editorial Entry sets from the Language Pack, above «Категорії» (ADR 0076, 0178). */
+  /** Curated Collections: the Dashboard's «SLOVO пропонує» rail of editorial Entry sets from the Language Pack, above «Категорії». */
   curatedCollections: {
     name: 'Добірки редакції',
     line: 'На головній є стрічка «Добірки» з підбором записів від редакції.',
     group: 'content',
   },
-  /** The gestures hint's demo: while «ГОРТАЙ ПАЛЬЦЕМ» is open, the Feed's card plays the swipes right, left and up in a loop, its edge labels sliding in, with a finger over it and each row of the sheet lit in turn (ADR 0112); off, the sheet stands still. Off while `knowledge` is. */
+  /** The gestures hint's demo: while «ГОРТАЙ ПАЛЬЦЕМ» is open, the Feed's card plays the swipes right, left and up in a loop, its edge labels sliding in, with a finger over it and each row of the sheet lit in turn; off, the sheet stands still. Off while `knowledge` is. */
   gesturesHintDemo: {
     name: 'Показ жестів',
     line: 'У підказці про жести картка сама показує свайпи.',
@@ -767,13 +767,13 @@ export const FEATURE_SWITCHES = catalogue({
     group: 'feed',
     dependsOn: ['knowledge'],
   },
-  /** The source tab: every tabbed Entry card's last tab «Джерело» names its sources, each on its own line, and the source line leaves the other tabs (ADR 0116). Off, the source line stays in its tab. */
+  /** The source tab: every tabbed Entry card's last tab «Джерело» names its sources, each on its own line, and the source line leaves the other tabs. Off, the source line stays in its tab. */
   sourceTab: {
     name: 'Вкладка «Джерело»',
     line: 'Останньою вкладкою картки стоїть «Джерело» зі списком джерел.',
     group: 'content',
   },
-  /** The Tip card's tab «Винятки»: a Tip with exceptions shows them after «Правило», their text and their words in chips (ADR 0120). Off, the card has «Правило» alone. */
+  /** The Tip card's tab «Винятки»: a Tip with exceptions shows them after «Правило», their text and their words in chips. Off, the card has «Правило» alone. */
   tipExceptions: {
     name: 'Вкладка «Винятки»',
     line: 'Картка поради має вкладку з винятками з правила.',
@@ -786,72 +786,72 @@ export const FEATURE_SWITCHES = catalogue({
     group: 'content',
     dependsOn: ['search'],
   },
-  /** The Feed header's wordmark as a button that opens the Dashboard (ADR 0079). */
+  /** The Feed header's wordmark as a button that opens the Dashboard. */
   dashboardWordmark: {
     name: 'Назва веде на головну',
     line: 'Назва застосунку в шапці стрічки відкриває головну.',
     group: 'feed',
   },
-  /** The daily splash: a tap on the Dashboard's logo plays the short splash cut, then the Dashboard again (ADR 0105). */
+  /** The daily splash: a tap on the Dashboard's logo plays the short splash cut, then the Dashboard again. */
   dailySplash: {
     name: 'Щоденна заставка',
     line: 'Дотик до логотипа на головній показує коротку заставку.',
     group: 'feed',
   },
-  /** The hero's sparks: the Mascot in the Dashboard's hero throws sparks from its megaphone, always, not as Decor (ADR 0109). */
+  /** The hero's sparks: the Mascot in the Dashboard's hero throws sparks from its megaphone, always, not as Decor. */
   heroSparks: {
     name: 'Іскри талісмана',
     line: 'Талісман на головній викидає іскри з мегафона.',
     group: 'feed',
   },
-  /** The «Стрічка» tab opens the Feed, not the Dashboard, which stays the home at launch (ADR 0093). */
+  /** The «Стрічка» tab opens the Feed, not the Dashboard, which stays the home at launch. */
   feedTab: {
     name: 'Вкладка «Стрічка»',
     line: 'Вкладка «Стрічка» відкриває стрічку, а не головну.',
     group: 'feed',
   },
-  /** Category screens: the Dashboard's «Категорії» rail of Categories of Words, their grid and each one's screen (ADR 0081). */
+  /** Category screens: the Dashboard's «Категорії» rail of Categories of Words, their grid and each one's screen. */
   categoryScreens: {
     name: 'Екрани категорій',
     line: 'На головній є стрічка «Категорії» слів, кожна зі своїм екраном.',
     group: 'feed',
   },
-  /** The grid of the Categories of Corrections behind the «Виправлення» rail header and each one's screen (ADR 0081); off, the header is a plain title. Off while `corrections` is. */
+  /** The grid of the Categories of Corrections behind the «Виправлення» rail header and each one's screen; off, the header is a plain title. Off while `corrections` is. */
   correctionCategoryScreens: {
     name: 'Категорії виправлень',
     line: 'Заголовок «Виправлення» відкриває сітку категорій виправлень.',
     group: 'feed',
     dependsOn: ['corrections'],
   },
-  /** The «Виправлення» rail's header counts its Correction Types and opens their grid, k2 «Категорії» under it (ADR 0140, owner 15.11). */
+  /** The «Виправлення» rail's header counts its Correction Types and opens their grid, k2 «Категорії» under it (owner 15.11). */
   correctionTypeGrid: {
     name: 'Сітка типів виправлень',
     line: 'Заголовок «Виправлення» рахує типи і відкриває їхню сітку.',
     group: 'feed',
     dependsOn: ['correctionCategoryScreens'],
   },
-  /** The Category's Feed: a tap on a Word of a Category's screen opens a Feed of that Category's Words alone, from the tapped one in Language Pack order and round again after the last (ADR 0110); off, the tap opens the Word's card as Search does. Off while `categoryScreens` is. */
+  /** The Category's Feed: a tap on a Word of a Category's screen opens a Feed of that Category's Words alone, from the tapped one in Language Pack order and round again after the last; off, the tap opens the Word's card as Search does. Off while `categoryScreens` is. */
   categoryFeed: {
     name: 'Стрічка категорії',
     line: 'Дотик до слова категорії відкриває стрічку лише з її слів.',
     group: 'feed',
     dependsOn: ['categoryScreens'],
   },
-  /** A Curated Collection's Feed: a tap on an Entry of a Curated Collection's screen opens a Feed of that collection's Entries of every kind alone, from the tapped one in its order and round again after the last (ADR 0178); off, the tap opens the Entry's card as Search does. Off while `curatedCollections` is. */
+  /** A Curated Collection's Feed: a tap on an Entry of a Curated Collection's screen opens a Feed of that collection's Entries of every kind alone, from the tapped one in its order and round again after the last; off, the tap opens the Entry's card as Search does. Off while `curatedCollections` is. */
   curatedCollectionFeed: {
     name: 'Стрічка добірки',
     line: 'Дотик до запису добірки відкриває стрічку лише з її записів.',
     group: 'feed',
     dependsOn: ['curatedCollections'],
   },
-  /** «Скопіювати посилання» on the share sheet of a Collection, which copies its Collection Link with `expo-clipboard` (ADR 0132); off until the EAS build with that module is out, and off the sheet keeps the system Share alone. Off while `collectionLinks` is. */
+  /** «Скопіювати посилання» on the share sheet of a Collection, which copies its Collection Link with `expo-clipboard`; off until the EAS build with that module is out, and off the sheet keeps the system Share alone. Off while `collectionLinks` is. */
   collectionLinkCopy: {
     name: 'Копіювання посилання',
     line: 'У вікні поширення добірки є кнопка «Скопіювати посилання».',
     group: 'content',
     dependsOn: ['collectionLinks'],
   },
-  /** The Due Quiz «Перевір себе» on «Вчу»: three meanings for each Word due for Review today, right sets Known and wrong Unknown (ADR 0131); off, «Вчу» has no card. Off while `knowledge` is. */
+  /** The Due Quiz «Перевір себе» on «Вчу»: three meanings for each Word due for Review today, right sets Known and wrong Unknown; off, «Вчу» has no card. Off while `knowledge` is. */
   dueQuiz: {
     name: 'Перевір себе',
     line: 'У розділі «Вчу» картка з перевіркою слів, які час повторити.',
@@ -884,7 +884,7 @@ export const FEATURE_SWITCHES = catalogue({
     line: 'Над довгим списком є кругла стрілка, що повертає на початок.',
     group: 'feed',
   },
-  /** «Скинути прогрес»: the reset marker in the XP log, after which every progress value counts from zero (ADR 0133); off, no button. Off while `xpLog` is. */
+  /** «Скинути прогрес»: the reset marker in the XP log, after which every progress value counts from zero; off, no button. Off while `xpLog` is. */
   progressReset: {
     name: 'Скидання прогресу',
     line: 'Кнопка «Скинути прогрес» починає лічити весь прогрес з нуля.',
@@ -897,7 +897,7 @@ export const FEATURE_SWITCHES = catalogue({
     line: 'Рядок «Експортувати мої дані» дає файл із даними читача.',
     group: 'account',
   },
-  /** The reader's name on the Profile: its header and its «Ім’я» row (ADR 0136); off, the header shows the Level alone. Off while `profile` is. */
+  /** The reader's name on the Profile: its header and its «Ім’я» row; off, the header shows the Level alone. Off while `profile` is. */
   readerName: {
     name: 'Ім’я читача',
     line: 'У профілі є ім’я читача в шапці та рядок «Ім’я».',

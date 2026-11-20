@@ -22,7 +22,7 @@ const categories: Category[] = [
     tone: 'loud',
   },
 ];
-/** The Language Pack's Categories of Corrections, a list of their own (ADR 0033). */
+/** The Language Pack's Categories of Corrections, a list of their own. */
 const everyday: Category = {
   id: 'everyday',
   displayName: 'Щодня',

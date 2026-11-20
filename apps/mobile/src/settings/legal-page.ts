@@ -14,7 +14,7 @@ function legalPageAddress(page: LegalPage): string {
 
 /**
  * Opens one of the active Edition's legal pages inside the app, in the system's
- * in-app browser on a sheet that «Готово» closes, never in Safari (ADR 0187).
+ * in-app browser on a sheet that «Готово» closes, never in Safari.
  */
 export function openLegalPage(page: LegalPage) {
   openBrowserAsync(legalPageAddress(page), {

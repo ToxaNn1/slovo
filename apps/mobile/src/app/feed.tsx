@@ -54,7 +54,7 @@ const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
 
 /**
- * The Feed, opened from the Dashboard (ADR 0076). A vertical stream of Entry cards and Feed Notices, one per
+ * The Feed, opened from the Dashboard. A vertical stream of Entry cards and Feed Notices, one per
  * screen. Its undo toasts outlive the card they came from, also when no card
  * is left.
  */
@@ -74,7 +74,7 @@ function FeedScreen() {
   const inEffect = useEditionInEffect();
   const header = useFeedHeaderRows();
   const gesturesHint = useGesturesHint(inEffect.isFeatureEnabled('knowledge'));
-  // While the hint is open the Feed's own card plays the gestures (board XSwipeV, ADR 0112).
+  // While the hint is open the Feed's own card plays the gestures (board XSwipeV).
   const gesturesDemo = useGesturesDemo(
     gesturesHint.visible && inEffect.isFeatureEnabled('gesturesHintDemo'),
   );
@@ -150,7 +150,7 @@ function FeedScreen() {
         wordmark={edition.displayName}
         today={todayText(feed.today, editionStrings)}
         streak={<StatsPillAndSheet />}
-        // The Feed opened from the Dashboard leads back to it by its wordmark (ADR 0079).
+        // The Feed opened from the Dashboard leads back to it by its wordmark.
         onLogo={
           inEffect.isFeatureEnabled('dashboardWordmark')
             ? {
@@ -228,7 +228,7 @@ const FeedPage = memo(function FeedPage({
         />
       </FeedPageFrame>
     );
-  // The week on top under the header, Yesterday under it (board f5, ADR 0130). Nothing
+  // The week on top under the header, Yesterday under it (board f5). Nothing
   // around the cards scrolls: Yesterday fills the rest and scrolls inside its card.
   if (card.kind === 'notice' && card.notice === 'weeklyRecap')
     return (
@@ -330,12 +330,12 @@ const FeedPage = memo(function FeedPage({
   );
 });
 
-/** An Entry's card in the Feed, with its action row or its corner and side swipes (ADR 0077). */
+/** An Entry's card in the Feed, with its action row or its corner and side swipes. */
 function SwipedEntryCard(props: Omit<ComponentProps<typeof EntryCard>, 'slots'>) {
   return <EntryCard {...props} slots={useEntrySlots(props.card)} />;
 }
 
-/** Whether the Feed Notice is a later question of the questionnaire (ADR 0067). */
+/** Whether the Feed Notice is a later question of the questionnaire. */
 function isLaterQuestion(notice: FeedNoticeCard['notice']): boolean {
   return LATER_QUESTIONS.some((question) => question === notice);
 }

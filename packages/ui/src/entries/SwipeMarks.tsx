@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
+// Reanimated or gesture code: the React Compiler skips this module.
 
 import type { KnowledgeMark } from '@slovo/core';
 import { useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
@@ -37,7 +37,7 @@ import { useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { swipeEdgeLayout, swipeMarkLayout, swipeStampLayout, typeStyle, wedges } from '../tokens';
 
-/** The side swipes of an Entry card (ADR 0077). */
+/** The side swipes of an Entry card. */
 export interface EntrySwipe {
   /** The Knowledge Mark the card shows; none on an Entry with no mark. */
   readonly mark: KnowledgeMark | undefined;
@@ -61,7 +61,7 @@ const MARK_VELOCITY = 800;
  * settles in 1.5 times that, 0.45 s, about the design's 0.42 s curve.
  */
 const BACK = { duration: 300, dampingRatio: 0.85, reduceMotion: ReduceMotion.Never };
-/** A marked card flies off in 0.3 s at most, gathering speed as it leaves (board 04, ADR 0078). */
+/** A marked card flies off in 0.3 s at most, gathering speed as it leaves (board 04). */
 const FLY_DURATION = 300;
 /** The shortest fly, for the fastest fling. */
 const FLY_SHORTEST = 100;
@@ -69,7 +69,7 @@ const FLY_SHORTEST = 100;
 const FLY_HANDLE = 0.4;
 const FADE = { duration: 200, easing: Easing.linear, reduceMotion: ReduceMotion.Never };
 /**
- * The stamp lands in 0.45 s (#1578), one of the Рупор peaks ADR 0055 allows,
+ * The stamp lands in 0.45 s (#1578), one of the Рупор peaks the motion rules allow,
  * on one curve that runs a little past its end and comes back (ease-out
  * back), so the stamp presses in and settles with no corner in its motion.
  */
@@ -111,7 +111,7 @@ function flyFrom(remaining: number, speed: number) {
  * a next page the card then flies off its side in 0.3 s and the pager turns
  * to the next Entry, elsewhere it springs back, as it does on anything less,
  * a drag brought back short of the threshold or flicked back towards the
- * middle included (ADR 0078). The undo toast shows for 4 s; its undo turns
+ * middle included. The undo toast shows for 4 s; its undo turns
  * back to the card and brings it in from its side, and puts the mark back once
  * the card is home. A marked card carries its
  * stamp on its bottom edge. A swipe to the mark the card already shows
@@ -131,7 +131,7 @@ export function SwipeMarks({
   concealed: boolean;
   /** The card is a Correction's, whose Known stamp says the reader already says it right. */
   correction: boolean;
-  /** The card is a fixed frame that takes the page's height (ADR 0091), so the swipe grows to it. */
+  /** The card is a fixed frame that takes the page's height, so the swipe grows to it. */
   fill?: boolean;
   children: ReactNode;
 }) {

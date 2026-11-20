@@ -17,7 +17,7 @@ export const Route = createFileRoute('/services')({
   component: Services,
 });
 
-/** «Сервіси» (ADR 0164): a Власник only; an Адмін reads why it stays closed. */
+/** «Сервіси»: a Власник only; an Адмін reads why it stays closed. */
 function Services() {
   const admin = useSignedInAdmin();
   return (

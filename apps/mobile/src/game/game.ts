@@ -73,7 +73,7 @@ export function useTimeLeft(time: GameTime | undefined): number | undefined {
 
 /**
  * Pauses the clock of a timed Game while the app is in the background and
- * runs it again on return, so that time never counts (ADR 0052). A pause or
+ * runs it again on return, so that time never counts. A pause or
  * a resume that fails is logged.
  */
 export function usePauseInBackground(): void {

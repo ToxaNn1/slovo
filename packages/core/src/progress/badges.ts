@@ -18,7 +18,7 @@ export interface BadgeProgress {
 
 /**
  * One Badge as the badges screen shows it, with its Badge family: earned on its
- * local date, new («НОВА») until the reader opens it (ADR 0085), or not yet,
+ * local date, new («НОВА») until the reader opens it, or not yet,
  * with its progress.
  */
 export type BadgeState = Pick<Badge, 'id' | 'name' | 'symbol' | 'family' | 'condition'> &
@@ -40,7 +40,7 @@ export interface Badges {
   readonly state: readonly BadgeState[];
   /**
    * Marks an earned Badge opened, its sheet or its stamp seen, with a record
-   * in the XP log that ends its «НОВА» mark on every device (ADR 0085).
+   * in the XP log that ends its «НОВА» mark on every device.
    * Nothing for a Badge not earned or already opened.
    */
   open(badge: string): Promise<void>;
@@ -108,7 +108,7 @@ export async function openBadges({
   analytics: Pick<Analytics, 'track'>;
 }): Promise<Badges> {
   const on = edition.isFeatureEnabled('badges');
-  // A Daily Crossword Badge goes with the Daily Crossword, earned or not (ADR 0176).
+  // A Daily Crossword Badge goes with the Daily Crossword, earned or not.
   const crosswordOn = edition.isFeatureEnabled('dailyCrossword');
   const subscribers = createSubscribers();
   const earnedSubscribers = createSubscribers<BadgeState>();
@@ -122,7 +122,7 @@ export async function openBadges({
         return { best: activeDays.streak.bestStreak, target: condition.days };
       }
       case 'confirmedEntries': {
-        // After a Progress reset only the Entries confirmed since count (ADR 0133).
+        // After a Progress reset only the Entries confirmed since count.
         const marker = xpLog.resetMarker;
         const total =
           marker === undefined
@@ -170,7 +170,7 @@ export async function openBadges({
       const reach = reachOf(condition, milestones);
       if (reach === undefined) continue;
       if (reach.best >= reach.target) due.push(id);
-      // The progress is the best reach, the one that earns the Badge (ADR 0188).
+      // The progress is the best reach, the one that earns the Badge.
       const progress = { current: Math.min(reach.best, reach.target), target: reach.target };
       state.push({ id, name, symbol, family, condition, earned: false, progress });
     }

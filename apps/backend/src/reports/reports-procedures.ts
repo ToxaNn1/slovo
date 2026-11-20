@@ -19,9 +19,9 @@ interface ReportsContext {
  * The Mistake Report procedures of the contract, over the server Core's
  * Mistake Reports. An Edition with Mistake Reports switched off answers
  * `NOT_FOUND`, which the app takes off its queue, and a report over the day's
- * limit of its IP address `TOO_MANY_REQUESTS` with `Retry-After` (ADR 0056).
+ * limit of its IP address `TOO_MANY_REQUESTS` with `Retry-After`.
  * A report sent with a Session that is on keeps its Account; one without, or
- * with a Session that is not on, is anonymous and still taken (ADR 0159).
+ * with a Session that is not on, is anonymous and still taken.
  */
 export function reportsProcedures(mistakeReports: MistakeReports, accounts: Accounts) {
   const reports = implement(apiContract.reports).$context<ReportsContext>();

@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
+// Reanimated code: the React Compiler skips this module.
 
 import { useEffect } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
@@ -194,7 +194,7 @@ function WidgetDrawing({
   );
 }
 
-/** How long a step of the widget guide takes to come in: 300 ms (ADR 0055). */
+/** How long a step of the widget guide takes to come in: 300 ms. */
 const STEP_IN = {
   duration: 300,
   easing: Easing.out(Easing.quad),

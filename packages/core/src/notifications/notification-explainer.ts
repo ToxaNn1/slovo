@@ -15,7 +15,7 @@ const REASK_AFTER_DAYS = 7;
 const { notificationAsk, onboardingFinished } = userStateRecords;
 
 /**
- * The pre-permission explainer as a Feed Notice (ADR 0067): once the
+ * The pre-permission explainer as a Feed Notice: once the
  * onboarding is finished and while the reader has not been asked for
  * permission to notify, the explainer comes on the first local day the Daily
  * Goal is met, and no later than the onboarding day + 2 (day 3), unless the

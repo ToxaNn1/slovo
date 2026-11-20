@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
+// Reanimated code: the React Compiler skips this module.
 
 import type { CurrentGame } from '@slovo/core';
 import { type ReactNode, useEffect, useState } from 'react';
@@ -20,19 +20,19 @@ import { useReduceMotion } from '../providers/useReduceMotion';
 import { motion, roundLayout, space, typeStyle, wedges } from '../tokens';
 import { NextButton, VerdictTitle } from './AnswerCard';
 
-/** What the answer banner shows: the Core's answered state (ADR 0138). */
+/** What the answer banner shows: the Core's answered state. */
 export type AnsweredRound = Extract<CurrentGame, { status: 'answered' }>['answered'];
 
 /** How long the banner waits at most for VoiceOver to finish reading it, in milliseconds. */
 const ANNOUNCEMENT_LIMIT = 5000;
 
 /**
- * The slanted banner after an answer (ADR 0138, D1 of spec #1880): it slides
+ * The slanted banner after an answer (D1 of spec #1880): it slides
  * in from the bottom, the whole width, on the accent for a right answer with
  * the praise and the XP the answer earned, on the ink for a wrong one with
  * «МИМО», or «ЖИТТЯ ВСЕ» when it took the last Life, and the right answer.
  * The Game moves on by itself after its delay, or, when the Core gives none
- * (a wrong answer with no time limit, ADR 0179), on the banner's «Далі →»,
+ * (a wrong answer with no time limit), on the banner's «Далі →»,
  * which `onNext` names. With «Менше руху» it shows without
  * sliding. With VoiceOver on it is announced, and `onWaitFor` gets the
  * announcement, so the Game holds the Round until VoiceOver has read it.

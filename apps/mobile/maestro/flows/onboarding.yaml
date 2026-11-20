@@ -1,4 +1,4 @@
-# Onboarding (ADR 0067): a fresh install shows the welcome over the Feed;
+# Onboarding: a fresh install shows the welcome over the Feed;
 # «Почати» leads to the first Word, «КРОК 2 З 5», today's Word of the Day on
 # its card; «Далі» to «Хто ви?», «КРОК 3 З 5», whose answer leads to «Навіщо
 # вам рідкісні слова?», «КРОК 4 З 5», whose «Пізніше» keeps the defaults and

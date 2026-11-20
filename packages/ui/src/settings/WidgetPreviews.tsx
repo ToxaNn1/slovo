@@ -17,7 +17,7 @@ const FIRST: SampleWidgetSize = 'medium';
  * reader picks, «Малий», «Середній» and, while the lock-screen widget is on,
  * «Екран блокування». A preview is only a look: the pick is kept by nothing
  * and marked with no ✓, since the reader picks a widget's size on the home
- * screen (ADR 0026). The drawing is a picture, so VoiceOver skips it. The
+ * screen. The drawing is a picture, so VoiceOver skips it. The
  * `testID` names each segment (`${testID}-small`) and the widget drawn
  * (`${testID}-widget-small`).
  */

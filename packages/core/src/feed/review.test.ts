@@ -138,7 +138,7 @@ async function markUnknown(
   for (const id of ids) await app.knowledge.tap(id, 'unknown');
 }
 
-// Spec #461, ADR 0043: a Word due for Review comes back in every 3rd slot of the Feed.
+// Spec #461: a Word due for Review comes back in every 3rd slot of the Feed.
 describe('Review in the Feed', () => {
   it('puts a due Word in slots 3, 6 and 9, even one Seen in this Cycle, the one shown longest ago first', async () => {
     const records = new Map<string, string>();
@@ -273,7 +273,7 @@ describe('Review in the Feed', () => {
     expect([ids[2], ids[5], ids[8], ids[11]]).toEqual([due[0], due[0], due[0], due[0]]);
   });
 
-  // Spec #461, ADR 0043: a card brought back for Review is labelled «Повторення».
+  // Spec #461: a card brought back for Review is labelled «Повторення».
   it('tells the card of a due Word or Correction it is a Review, and no other card', async () => {
     const records = new Map<string, string>();
     const [dueWord] = await markSeenWordsUnknown(records, {
@@ -298,7 +298,7 @@ describe('Review in the Feed', () => {
     ]);
   });
 
-  // Spec #461, ADR 0043: a Correction due for Review takes the next Correction slot.
+  // Spec #461: a Correction due for Review takes the next Correction slot.
   describe('a due Correction', () => {
     it('takes the Correction slots, every 5th card, until the reader answers it', async () => {
       const records = new Map<string, string>();
@@ -350,7 +350,7 @@ describe('Review in the Feed', () => {
     });
   });
 
-  // Spec #549, ADR 0043: an Idiom due for Review takes the next Idiom turn.
+  // Spec #549: an Idiom due for Review takes the next Idiom turn.
   describe('a due Idiom', () => {
     it('takes the Idiom turns, every 7th card, until the reader answers it', async () => {
       const records = new Map<string, string>();
@@ -397,7 +397,7 @@ describe('Review in the Feed', () => {
     expect(kinds).toBe('WWRWCRIWRCWRWICWWRWCI');
   });
 
-  // Spec #730, ADR 0043, 0051: a due Synonym Row or Tip takes its kind's next turn before a new one.
+  // Spec #730: a due Synonym Row or Tip takes its kind's next turn before a new one.
   describe('a due Synonym Row and a due Tip', () => {
     /** 'R' for the due Word, 'S' for the due row, 'T' for the due Tip, lower case for a new one, 'W' for any other Word. */
     function kindsOf(

@@ -12,7 +12,7 @@ import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support
 import { renderApp } from '../shell/test-app';
 import { CELEBRATION_MS, MascotCelebrations } from './mascot';
 
-/** The UA Edition as it ships, with the Daily Crossword on, so its Badges show (ADR 0176). */
+/** The UA Edition as it ships, with the Daily Crossword on, so its Badges show. */
 const edition: Edition = {
   ...shipped,
   isFeatureEnabled: (feature) => feature === 'dailyCrossword' || shipped.isFeatureEnabled(feature),
@@ -186,7 +186,7 @@ describe('the Mascot’s celebrations', () => {
     });
     expect(shownMascot()).toBeNull();
 
-    // The first Word Seen meets a Daily Goal of 1 Word (ADR 0074).
+    // The first Word Seen meets a Daily Goal of 1 Word.
     await act(async () => {
       await composition.xpLog.setDailyGoal(1);
       await composition.feed.show(0);

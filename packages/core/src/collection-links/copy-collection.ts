@@ -36,9 +36,9 @@ export type CollectionLinkPreview =
     }
   | { readonly ok: false; readonly reason: 'offline' | 'unavailable' };
 
-/** The Core's side of a Collection Link opened by its recipient (ADR 0058). */
+/** The Core's side of a Collection Link opened by its recipient. */
 export interface CollectionLinkCopy {
-  /** Reads the link of the id, through the one retry rule (ADR 0037), and previews it. */
+  /** Reads the link of the id, through the one retry rule, and previews it. */
   preview(linkId: string): Promise<CollectionLinkPreview>;
 }
 

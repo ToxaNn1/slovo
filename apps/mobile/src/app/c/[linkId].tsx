@@ -27,7 +27,7 @@ const strings = collectionStrings.link;
 
 /**
  * The recipient sheet of a Collection Link opened from outside the app,
- * `https://<domain>/<edition>/c/<id>` or `slovo://c/<id>?edition=<edition>` (ADR 0058, 0065):
+ * `https://<domain>/<edition>/c/<id>` or `slovo://c/<id>?edition=<edition>` (ADR 0065):
  * the shared Collection's name, how many Entries it holds and its first 5
  * Entries this Language Pack has, how many it lacks, and «Додати собі», which
  * makes the reader's own copy and opens it in the link screen's place, or says

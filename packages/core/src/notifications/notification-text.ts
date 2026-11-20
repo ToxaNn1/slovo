@@ -35,7 +35,7 @@ export function notificationBody(text: string, ellipsis: string): string {
 
 /**
  * What a notification of a Synonym Row or a Tip would read, decided by the
- * Core. The widget shows it; the notification plan carries Words only (ADR 0051).
+ * Core. The widget shows it; the notification plan carries Words only.
  */
 export interface NotificationText {
   /** The Entry a tap on the notification opens. */

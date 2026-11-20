@@ -24,7 +24,7 @@ function refusalOf(error: unknown): string {
 }
 
 /**
- * The TOTP prompt of a locked Vault (ADR 0164): a fresh code from the
+ * The TOTP prompt of a locked Vault: a fresh code from the
  * authenticator opens «Показати» and «Копіювати» for 15 minutes in this
  * session, and then the read it was asked for runs.
  */

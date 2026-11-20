@@ -82,7 +82,7 @@ function snapshotWithRetiredEntries(): ContentSnapshot {
   };
 }
 
-/** The Categories and Entries of the fixture Edition with these records, through the one reader (ADR 0035). */
+/** The Categories and Entries of the fixture Edition with these records, through the one reader. */
 function authored(snapshot: ContentSnapshot) {
   const config = editionFiles(fixtureDir('valid')).read('config');
   const { words, corrections, idioms, synonymRows } = snapshotEntries(snapshot);

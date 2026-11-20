@@ -24,7 +24,7 @@ export interface CorrectionTypeScreen {
 }
 
 /**
- * A Correction Type's screen (ADR 0076): its Corrections, read again each
+ * A Correction Type's screen: its Corrections, read again each
  * time the tiles change, so a Correction revealed here or Seen on the Feed
  * shows its standard form.
  */

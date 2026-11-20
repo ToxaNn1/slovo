@@ -86,7 +86,7 @@ async function quizOf(app: Composition) {
   return undefined;
 }
 
-// Spec #1842, ADR 0130: the board XFeed f5.
+// Spec #1842: the board XFeed f5.
 describe('the Feed Notice page', () => {
   it('puts the Weekly Recap and Yesterday on one page, the week first, when both are due', async () => {
     const app = await run(records(), monday);
@@ -163,7 +163,7 @@ describe('the Yesterday quiz', () => {
     expect(await quizOf(await run(kept, monday))).toEqual(first);
   });
 
-  // ADR 0101: meanings are told apart by their Comparison Key for a Definition.
+  // Meanings are told apart by their Comparison Key for a Definition.
   it('takes meanings that differ only in case or spacing as one', async () => {
     const shouted = word('w_07', { primaryDefinition: yesterdays.primaryDefinition.toUpperCase() });
     const spaced = word('w_12', {

@@ -108,7 +108,7 @@ export function useSearchScreen(query: string): SearchScreenModel {
 
 /**
  * Opens a result's Entry card over Search, and keeps the query it was opened
- * from among the recent queries. Opening it makes nothing Seen (ADR 0054).
+ * from among the recent queries. Opening it makes nothing Seen.
  */
 export function useOpenSearchResult(query: string): (entryId: string) => void {
   const composition = useComposition();

@@ -36,7 +36,7 @@ import { TimePickerSheet, timePickerAvailable } from '../notifications/time-pick
 const { onboarding: strings } = editionStrings;
 
 /**
- * The onboarding adapter (ADR 0067): it draws the step the Core onboarding is
+ * The onboarding adapter: it draws the step the Core onboarding is
  * on, over the Feed, and passes the taps to it. The Core holds the steps,
  * their order, what each answer sets and the rule that ends them.
  */
@@ -178,7 +178,7 @@ function FirstWord({
       mascot={mascot}
       onSkip={onSkip}
       footer={<Button testID="onboarding-next" label={strings.firstWord.next} onPress={onNext} />}
-      // The sample card is the Feed's tabbed card in its fixed frame, which scrolls inside itself (ADR 0091).
+      // The sample card is the Feed's tabbed card in its fixed frame, which scrolls inside itself.
       framed
     >
       <View style={stepStyles.heading}>

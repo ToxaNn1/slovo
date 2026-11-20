@@ -92,7 +92,7 @@ async function newReader(on: string): Promise<Map<string, string>> {
   return records;
 }
 
-// Ticket #1380, ADR 0067: the later questions come through Feed Notices, one a local day, each once.
+// Ticket #1380: the later questions come through Feed Notices, one a local day, each once.
 describe('The later questions', () => {
   it('gives an existing reader the Daily Goal choice once, with no goal until they choose', async () => {
     const records = await existingReader();

@@ -90,7 +90,7 @@ export type AccountState =
  * The reader's Account («SLOVO ID») on this device, with every rule of
  * signing in, by a Sign-in code, with Google or with Apple, out and deleting it. While a
  * request of the reader is in flight no other starts, signing out aside. A request that fails with no answer or a server
- * error is tried again, at most 3 times, with backoff and jitter (ADR 0037).
+ * error is tried again, at most 3 times, with backoff and jitter.
  * Whenever the server says the Session has ended, the device forgets
  * it and shows signed out, with no problem. Nothing here touches the user
  * state but the installed marker: the reader's words stay whatever happens to
@@ -189,7 +189,7 @@ const signedIn = (email: string): AccountState => ({
 
 /**
  * Opens the Account from the Session the device keeps, apart from the Core
- * composition, since it needs no Language Pack (ADR 0037). A fresh install
+ * composition, since it needs no Language Pack. A fresh install
  * starts signed out: when the user state lacks the installed marker, a Session
  * kept is one an earlier install left in the Keychain, so it is forgotten, the
  * server is told in the background, and the marker is written.

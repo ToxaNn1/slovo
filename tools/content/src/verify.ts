@@ -1,6 +1,6 @@
 /**
  * `verify`: checks that the quoted text of each Entry it is given is on the
- * page its first source cites (ADR 0012, 0080). A goroh page is read as the
+ * page its first source cites. A goroh page is read as the
  * sourcing tool reads it, block by block, and a quote only a language model's
  * block holds is refused; any other page is its plain text. Pages come through
  * the sourcing tool's polite client, so a page is fetched once across runs.

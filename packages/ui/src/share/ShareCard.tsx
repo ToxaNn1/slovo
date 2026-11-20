@@ -62,7 +62,7 @@ function useShrinkToFit(floor: number): [number, (measuredAt: number, fits: bool
 
 /** What the Share Card draws: the content the Core built, and the watermark. */
 export interface ShareCardProps {
-  /** What the card shows, as the Core built it (ADR 0017). */
+  /** What the card shows, as the Core built it. */
   content: ShareCardContent;
   /** The watermark: the Edition's display name. */
   watermark: string;

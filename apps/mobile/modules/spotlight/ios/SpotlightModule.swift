@@ -22,7 +22,7 @@ struct SpotlightItem: Record {
   }
 }
 
-/// Writes the Spotlight Snapshot the Core decided into CoreSpotlight (ADR 0057).
+/// Writes the Spotlight Snapshot the Core decided into CoreSpotlight.
 /// It holds no rule about Entries: it only replaces the app's whole index.
 public class SpotlightModule: Module {
   public func definition() -> ModuleDefinition {

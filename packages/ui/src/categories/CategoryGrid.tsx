@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
+// Reanimated code: the React Compiler skips this module.
 
 import type { ReactElement, ReactNode } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
@@ -36,7 +36,7 @@ export interface GridTile {
  * baseline, then the tiles in `columns` columns, each in the tone `toneAt`
  * gives its position and the shape pair at its position, wrapping past the
  * set, unless `shapes` gives each tile's pair by its position, or none. The tiles cascade in one after another; under Reduce Motion they only
- * fade in (ADR 0055). A tile opens its id. A `header` goes over the title,
+ * fade in. A tile opens its id. A `header` goes over the title,
  * across the whole width from the top, as a list's header would, and `empty`
  * shows in place of the tiles while there are none.
  */

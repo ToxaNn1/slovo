@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
+// Reanimated code: the React Compiler skips this module.
 
 import {
   createContext,
@@ -51,7 +51,7 @@ const OfflinePlateContext = createContext<(() => void) | undefined>(undefined);
 
 /**
  * Shows the offline plate «Немає з’єднання. Спробуй пізніше.» (board
- * XSettings m6, ADR 0158) over everything it wraps, under the status bar,
+ * XSettings m6) over everything it wraps, under the status bar,
  * when an action that needs the network finds none. A second ask while it
  * shows starts it again. It hides by the `schedule` it is given, the system
  * clock unless a test injects one.

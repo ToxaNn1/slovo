@@ -13,7 +13,7 @@ import { dueQuiz, fontScaleCap, space, typeStyle } from '../tokens';
 
 /**
  * The Due Quiz card «Перевір себе» over the «Вчу» list (board 09, screen
- * 73, ADR 0131): red, the number of Words behind its text, how many Words it
+ * 73): red, the number of Words behind its text, how many Words it
  * asks today and the ink «Почати», which presses down and opens the sheet.
  */
 export function DueQuizCard({ count, onStart }: { count: number; onStart: () => void }) {
@@ -72,7 +72,7 @@ function useResultText(): (known: number, count: number) => string {
 }
 
 /**
- * The Due Quiz sheet (board 09, ADR 0131): «1 з N» and a segment per Word,
+ * The Due Quiz sheet (board 09): «1 з N» and a segment per Word,
  * the Lemma, «Що це означає?» and its three meanings marked «А», «Б», «В».
  * The first pick is the answer, told to `onAnswer`: the right meaning lights
  * red and pops, a wrong pick turns ink, struck through, and shakes, the

@@ -427,7 +427,7 @@ describe('«Повідомити про помилку»', () => {
   });
 });
 
-describe('the side swipes of an Entry card (ADR 0077)', () => {
+describe('the side swipes of an Entry card', () => {
   it('mark the Word Known on a swipe right, and the toast undoes it', async () => {
     await renderCard(word.id);
 

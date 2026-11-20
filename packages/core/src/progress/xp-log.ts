@@ -19,7 +19,7 @@ import { xpEntryOf } from './xp-entry';
 
 const { xpLog: xpRecords } = userStateRecords;
 
-/** The Daily Goal of a local day and whether the day met it (ADR 0074). */
+/** The Daily Goal of a local day and whether the day met it. */
 export interface DailyGoalState {
   /**
    * The Words to See on the day: the last goal set on or before it. A past
@@ -63,7 +63,7 @@ export interface XpLogDays {
   /** The XP earned on each local date that has any. */
   readonly byDate: ReadonlyMap<string, number>;
   /**
-   * The Active Days the log makes (ADR 0074): a day with a Daily Goal once
+   * The Active Days the log makes: a day with a Daily Goal once
    * it is met, a day without one with at least 5 XP.
    */
   readonly active: ReadonlySet<string>;
@@ -71,7 +71,7 @@ export interface XpLogDays {
   readonly frozen: ReadonlySet<string>;
   /**
    * The Breaks: the days each covers by the local date it starts on, cut at
-   * the day a Break ended early (ADR 0180); a Break ended on its first day
+   * the day a Break ended early; a Break ended on its first day
    * covers none and is left out.
    */
   readonly breaks: ReadonlyMap<string, number>;
@@ -83,9 +83,9 @@ export interface XpLogMilestones {
   readonly wins: ReadonlySet<string>;
   /** The right Game answers that earned XP, by Game Mode. */
   readonly rightByMode: ReadonlyMap<string, number>;
-  /** The Game Modes with a finished Game right in every Round (ADR 0085). */
+  /** The Game Modes with a finished Game right in every Round. */
   readonly flawless: ReadonlySet<string>;
-  /** Each Game answer, right (one that earned XP) or wrong, with its Game Mode, in the order given (ADR 0085). */
+  /** Each Game answer, right (one that earned XP) or wrong, with its Game Mode, in the order given. */
   readonly answers: readonly { readonly mode: string; readonly right: boolean }[];
   /** The rarities of the Words with a right Game answer that earned XP. */
   readonly rightRarities: ReadonlySet<number>;
@@ -93,7 +93,7 @@ export interface XpLogMilestones {
   readonly crosswords: ReadonlySet<string>;
   /** The Badges earned: the local date each was earned on, by Badge id. */
   readonly badges: ReadonlyMap<string, string>;
-  /** The Badges the reader has opened, which ends their «НОВА» mark (ADR 0085), by Badge id. */
+  /** The Badges the reader has opened, which ends their «НОВА» mark, by Badge id. */
   readonly opened: ReadonlySet<string>;
 }
 
@@ -104,14 +104,14 @@ export interface XpLogMilestones {
  */
 export type XpLogChange = 'daily-goal-set' | 'progress-reset' | 'other';
 
-/** The latest reset marker of a Progress reset (ADR 0133): the fold counts only the records after its instant. */
+/** The latest reset marker of a Progress reset: the fold counts only the records after its instant. */
 export interface ResetMarker {
   readonly id: string;
   readonly date: string;
   readonly at: string;
 }
 
-/** A solved Daily Crossword as its XP log record keeps it (ADR 0087). */
+/** A solved Daily Crossword as its XP log record keeps it. */
 export interface CrosswordSolve {
   readonly solveSeconds: number | undefined;
   readonly hinted: boolean;
@@ -148,7 +148,7 @@ export interface XpLog {
   startBreak(days: number): StagedPiece;
   /**
    * The record that ends the Break starting on `start` today, for another
-   * write (ADR 0180): the Break covers the days before today only. A Break has
+   * write: the Break covers the days before today only. A Break has
    * one such record by its id; of two from two devices the earlier day holds.
    */
   endBreak(start: string): StagedPiece;
@@ -160,10 +160,10 @@ export interface XpLog {
    * earned Badge is never earned again or removed.
    */
   earn(badges: readonly string[]): StagedPiece;
-  /** The record of a Game Round answered wrong in `mode`, for another write; it earns no XP (ADR 0085). */
+  /** The record of a Game Round answered wrong in `mode`, for another write; it earns no XP. */
   answeredWrong(mode: string): StagedPiece;
   /**
-   * The Badge-opened record of a Badge (ADR 0085), for another write. A Badge
+   * The Badge-opened record of a Badge, for another write. A Badge
    * has one such record by its id, so two devices that open it merge into one.
    */
   open(badge: string): StagedPiece;
@@ -173,7 +173,7 @@ export interface XpLog {
    * The Daily Crossword solve of a local date `YYYY-MM-DD`, if it is solved:
    * its Solve time in seconds, if one was kept, and whether the Crossword
    * Hint was used. A solve recorded before them reads as no time and no
-   * hint (ADR 0087).
+   * hint.
    */
   crosswordSolveOn(date: string): CrosswordSolve | undefined;
   /**
@@ -208,7 +208,7 @@ export interface XpLog {
   /** The latest reset marker, after which every progress value counts; none before the first Progress reset. */
   readonly resetMarker: ResetMarker | undefined;
   /**
-   * The Progress reset (ADR 0133): writes a reset marker and the Daily Goal in
+   * The Progress reset: writes a reset marker and the Daily Goal in
    * force after it, so every progress value counts from zero and the goal
    * stays. Nothing with the `progressReset` switch off.
    */
@@ -439,7 +439,7 @@ export async function openXpLog({
 
   /**
    * A past day with no goal in Words but a goal in XP from before Words
-   * counted (ADR 0074): met, as it was then, once the day's XP reached the
+   * counted: met, as it was then, once the day's XP reached the
    * goal in force at that moment, the last `daily-goal` set before the day
    * or that day. `undefined` without such a goal.
    */
@@ -606,7 +606,7 @@ export async function openXpLog({
           const xp = (byDate.get(record.date) ?? 0) + amount;
           byDate.set(record.date, xp);
           // A day with a goal is active once met: its `goal-met` record says so.
-          // A day that reached 5 XP before its goal was set stays active (ADR 0188).
+          // A day that reached 5 XP before its goal was set stays active.
           if (goalFor(record.date) === undefined) {
             if (xp >= ACTIVE_DAY_XP) active.add(record.date);
           } else if (goalOf(record.date, record.at) === undefined) {

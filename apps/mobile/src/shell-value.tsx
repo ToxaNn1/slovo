@@ -46,7 +46,7 @@ export interface DeviceSources {
 export interface DevicePorts extends Omit<DeviceSources, 'userState'> {
   readonly userState: TrackedUserState;
   /**
-   * The Edition in effect, remote switches included (ADR 0040): the one of
+   * The Edition in effect, remote switches included: the one of
    * the last change when read, and each of them reads the last answer
    * whenever it is asked.
    */
@@ -83,7 +83,7 @@ export interface SharedFile {
 export type ShareFile = (file: SharedFile) => Promise<'shared' | 'cancelled'>;
 
 /**
- * What the shell opens once per app run and every screen shares (ADR 0036):
+ * What the shell opens once per app run and every screen shares:
  * each resource as its Opening, and the device's Share Card capture. One
  * value, built once (`createShell`) and handed down by `ShellProvider`; a
  * screen reads it with `useShell`, and a test hands a route one of its own.
@@ -95,7 +95,7 @@ export interface Shell {
   readonly remoteSwitches: Opening<EditionSwitches>;
   readonly languagePack: Opening<LaunchPack<PackReader>>;
   readonly composition: Opening<Composition>;
-  /** Undefined when the Edition has no Account (ADR 0037). */
+  /** Undefined when the Edition has no Account. */
   readonly account: Opening<Account> | undefined;
   /** Undefined when the Edition has no Account or no Sync. */
   readonly sync: Opening<Sync> | undefined;

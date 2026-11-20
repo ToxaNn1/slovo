@@ -45,11 +45,11 @@ import { useCardFeatures } from './card-features';
  * naming them. A member the Core links to a Word is a button that opens it;
  * any other member is plain text. VoiceOver reads the dominant with the
  * whole row, then each member. Under Self-check it keeps the kicker and the
- * dominant (ADR 0051); the Entry card draws the button that reveals the rest
+ * dominant; the Entry card draws the button that reveals the rest
  * under them. The members sit four to a page, a tab each
  * («Ряд · 1/2»), the meaning on the first page and the Example and the
- * sources on the last (ADR 0114). With `sourceTab` the sources leave the
- * last page for their own last tab «Джерело» (ADR 0116).
+ * sources on the last. With `sourceTab` the sources leave the
+ * last page for their own last tab «Джерело».
  */
 export function SynonymRowCardBody({
   card,
@@ -114,7 +114,7 @@ export function SynonymRowCardBody({
               typeRole="synonymDominant"
               testID="synonym-row-dominant"
               stepped
-              // A title of 36 or more keeps its size at every OS text size (ADR 0157).
+              // A title of 36 or more keeps its size at every OS text size.
               allowFontScaling={false}
               // The dominant stays on one line and shrinks rather than wrap (board e8).
               lines={1}

@@ -223,7 +223,7 @@ export function createContentStore({
           .delete(table)
           .where(and(eq(table.editionId, editionId), inArray(table.id, [...ids])));
       }
-      // Every record starts again at version 1, checked in CI (ADR 0084).
+      // Every record starts again at version 1, checked in CI.
       await tx.delete(quoteChecks).where(eq(quoteChecks.editionId, editionId));
       await inChunks(words, (rows) => tx.insert(contentWords).values(rows));
       await inChunks(rowsOf(content.idioms), (rows) => tx.insert(contentIdioms).values(rows));

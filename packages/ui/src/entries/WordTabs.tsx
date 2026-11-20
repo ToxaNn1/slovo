@@ -23,10 +23,10 @@ import {
 import { wordTabsOf, type WordTab } from './word-tabs';
 
 /**
- * The Word card's tabs under its Lemma (ADR 0091, 0186): «Суть», «Приклад»,
+ * The Word card's tabs under its Lemma: «Суть», «Приклад»,
  * «Зв’язки» and «Історія», without the empty ones, «Суть» selected first, in
  * the Entry card's tabs (`CardTabs`), and while `sourceTab` is on «Джерело»
- * last (ADR 0116).
+ * last.
  */
 export function WordTabs({
   card,
@@ -40,7 +40,7 @@ export function WordTabs({
   onOpenCorrection: ((correctionId: string) => void) | undefined;
   onOpenSynonymRow: ((synonymRowId: string) => void) | undefined;
   onHistoryShown: (() => void) | undefined;
-  /** The names of the Word's sources for the «Джерело» tab, only while `sourceTab` is on (ADR 0116). */
+  /** The names of the Word's sources for the «Джерело» tab, only while `sourceTab` is on. */
   sources: readonly string[] | undefined;
   /** Self-check conceals the card: the tabs are there but disabled until the reveal. */
   disabled?: boolean;

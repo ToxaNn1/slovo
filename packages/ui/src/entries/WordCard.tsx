@@ -55,7 +55,7 @@ export function WordHeadline({
   concealed: boolean;
   /** The Word of the Day's Lemma, which the card's calligraphic font, if any, is set in. */
   wordOfTheDay: boolean;
-  /** The tabbed card's headline (ADR 0091, board p1). */
+  /** The tabbed card's headline (board p1). */
   tabbed: boolean;
 }) {
   const tokens = useTokens();
@@ -118,7 +118,7 @@ export function WordHeadline({
           size={lemmaSize}
           typeRole="heroWord"
           testID="word-lemma"
-          // A title of 36 or more keeps its size at every OS text size (ADR 0157).
+          // A title of 36 or more keeps its size at every OS text size.
           allowFontScaling={false}
           falling={falling}
           accessibilityRole="header"
@@ -163,8 +163,8 @@ export function WordHeadline({
 }
 
 /**
- * The Word's Illustration above its Definition, the same in both Themes
- * (ADR 0055): none while the device has no file for the Word, drawn when
+ * The Word's Illustration above its Definition, the same in both Themes:
+ * none while the device has no file for the Word, drawn when
  * the file arrives (ADR 0099).
  */
 export function WordIllustration({ card }: { card: WordCardModel }) {
@@ -311,7 +311,7 @@ export function WordHistory({
 
 /**
  * «У синонімічному ряду: {домінанта}», the row the Word is a member of, as a
- * button that opens the row (ADR 0051).
+ * button that opens the row.
  */
 export function SynonymRowLine({
   synonymRow: { synonymRowId, dominant },

@@ -82,7 +82,7 @@ function limitsOf(read: UsageAnswer): readonly LimitUsage[] {
   return read.state === 'read' && read.reading.kind !== 'cron' ? read.reading.usage : [];
 }
 
-/** Whether a limit of the reading is used to 90 % or more: the block's yellow mark (ADR 0164). */
+/** Whether a limit of the reading is used to 90 % or more: the block's yellow mark. */
 export const nearLimitOf = (read: UsageAnswer | undefined) =>
   read !== undefined && limitsOf(read).some(nearLimit);
 
@@ -101,7 +101,7 @@ function NearLimitMark({ read }: { readonly read: UsageAnswer }) {
 const minutesUntil = (iso: string, now: Date) =>
   Math.max(0, Math.ceil((new Date(iso).getTime() - now.getTime()) / 60_000));
 
-/** A Railway service's «Online» or «Offline», as a dot and a word (ADR 0164). */
+/** A Railway service's «Online» or «Offline», as a dot and a word. */
 export function RailwayState({ read }: { readonly read: UsageAnswer | undefined }) {
   if (read?.state !== 'read' || read.reading.kind !== 'railway') return null;
   const online = read.reading.state === 'online';
@@ -168,7 +168,7 @@ function Bar({ usage, thick = false }: { readonly usage: LimitUsage; readonly th
 const percentOf = (usage: LimitUsage) => Math.round((usage.used / usage.limit) * 100);
 
 /**
- * The usage on a block (ADR 0164): the state lines, a bar per limit with its share, a mark when
+ * The usage on a block: the state lines, a bar per limit with its share, a mark when
  * the reading is stale, or «не вдалося прочитати» while no read succeeded.
  */
 export function BlockUsage({ id, read }: { readonly id: string; readonly read: UsageAnswer }) {

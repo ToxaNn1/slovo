@@ -73,7 +73,7 @@ describe('reports.send', () => {
         appVersion: '0.8.14',
         contentVersion: 42,
         receivedAt: arrived,
-        // Sent with no Session, the report names no Account (ADR 0159).
+        // Sent with no Session, the report names no Account.
         accountId: null,
       },
     ]);
@@ -119,7 +119,7 @@ describe('reports.send', () => {
     expect(kept).not.toContain('203.0.113.7');
   });
 
-  it('keeps the Account of a signed-in reader, and nothing else that names them (ADR 0159)', async () => {
+  it('keeps the Account of a signed-in reader, and nothing else that names them', async () => {
     const backend = testApp();
     const { database, ip } = backend;
     const email = newEmail();

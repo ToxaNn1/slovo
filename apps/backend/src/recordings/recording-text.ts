@@ -2,7 +2,7 @@ import { RecordingKindSchema, renderStress, type RecordingKind, type Word } from
 
 /**
  * What a Recording of each Recording Kind reads: `plain` is the Lemma in its
- * first Stress (ADR 0083). The Recordings job makes one Recording per Kind
+ * first Stress. The Recordings job makes one Recording per Kind
  * in the contract.
  */
 export const RECORDING_TEXTS: Record<

@@ -19,7 +19,7 @@ export interface Section {
   readonly ownerOnly?: true;
 }
 
-/** The eight sections in sidebar order (ADR 0088, 0164); Магазини is deferred whole. */
+/** The eight sections in sidebar order (ADR 0088); Магазини is deferred whole. */
 const SECTIONS = [
   {
     path: '/',

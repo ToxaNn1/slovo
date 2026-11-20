@@ -44,7 +44,7 @@ export interface WordOfTheDay {
    * over while the Cycle has other unseen Words.
    *
    * When every Word is Seen but a Correction or an Idiom of the Cycle isn't,
-   * the Cycle goes on (ADR 0016): the day takes a Seen Word, the next in the
+   * the Cycle goes on: the day takes a Seen Word, the next in the
    * Cycle order after the day before's. Only when every Entry of the Cycle is
    * Seen does it start a new Cycle first (`startedCycle`), where nothing is
    * Seen and `avoid` no longer counts. The new Cycle and the choice are kept

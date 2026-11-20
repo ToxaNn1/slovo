@@ -1,8 +1,7 @@
 # The image of the Recordings service (ADR 0099), built from the repository
 # root: docker build --file recordings.Dockerfile --tag slovo-recordings .
 # It is the backend's image (`Dockerfile`) plus the Recordings generator: the
-# locked Python 3.10 environment, ffmpeg and the checked model files (ADR
-# 0083). They stay out of the backend's own image, which they would grow by
+# locked Python 3.10 environment, ffmpeg and the checked model files. They stay out of the backend's own image, which they would grow by
 # gigabytes. `.railway/railway.ts` names its hourly command.
 FROM node:22.23.4-bookworm-slim AS base
 ENV NODE_ENV=production \

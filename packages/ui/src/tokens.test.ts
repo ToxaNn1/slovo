@@ -237,7 +237,7 @@ describe('the Core’s shape, type and motion roles', () => {
 });
 
 describe('titleScale', () => {
-  it('sets the card titles on one fixed scale at M, largest first (ADR 0157)', () => {
+  it('sets the card titles on one fixed scale at M, largest first', () => {
     expect(titleScale).toEqual([50, 44, 40, 36, 32, 28, 26, 24, 22, 20]);
   });
 

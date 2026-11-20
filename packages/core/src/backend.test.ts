@@ -15,7 +15,7 @@ import { fakeClock, randomOf, testEdition, testSchedule, word } from './test-sup
 import { createMemoryUserStatePort, openUserState } from './user-state/user-state';
 
 // ADR 0064: the Core reaches the backend through one port, the contract's
-// client, and answers, retries and maps every call itself (ADR 0037); its
+// client, and answers, retries and maps every call itself; its
 // tests serve the contract in process (ADR 0064).
 
 /** The Backend port over a backend that serves the contract's `procedures`. */

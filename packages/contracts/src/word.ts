@@ -146,10 +146,10 @@ const wordRules = (
  * one; the Language Pack build checks them.
  *
  * `origin` names the language the Word comes from, a code from the Edition's
- * `originLanguages` list, which the Language Pack build checks (ADR 0052).
+ * `originLanguages` list, which the Language Pack build checks.
  *
  * `illustration` names the Word's Illustration, a PNG file in the Edition's
- * illustrations bundled in the app, not in the Language Pack (ADR 0055). It
+ * illustrations bundled in the app, not in the Language Pack. It
  * is a bare file name, never a path, so it can't point outside that folder.
  *
  * `correctionIds` links the Corrections the Word is the standard form for.

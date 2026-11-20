@@ -11,7 +11,7 @@ import {
   type TypeRole,
 } from '../tokens';
 
-/** The step on the three-step text size ladder a Word text starts from (ADR 0134). */
+/** The step on the three-step text size ladder a Word text starts from. */
 export type TextSizeStep = LadderStep;
 
 /** A font size and the line height that goes with it. */
@@ -25,7 +25,7 @@ export interface TextSize {
  * sizes in points: iOS Dynamic Type multiplies the Definition and the Example
  * again when they are drawn, so the setting and the system's text size stack.
  * The Lemma, as every title that starts at 36 or more, ignores the system's
- * text size (ADR 0157).
+ * text size.
  */
 export interface WordTextSizes {
   readonly size: TextSizeStep;
@@ -37,9 +37,9 @@ export interface WordTextSizes {
 /**
  * The type sizes of a step from `textSizeSteps`, the OS text size
  * (`fontScale`) taken only up to `fontScaleCap.text`, so a very large system
- * size does not break the card frame (ADR 0134). iOS multiplies every size by
+ * size does not break the card frame. iOS multiplies every size by
  * `fontScale` when it draws, so a capped size is given divided by the excess.
- * The Lemma takes the step alone: it is drawn without the OS text size (ADR 0157).
+ * The Lemma takes the step alone: it is drawn without the OS text size.
  */
 function wordTextSizes(size: TextSizeStep, fontScale: number): WordTextSizes {
   const { lemma, definition, example } = textSizeSteps[size];
@@ -81,7 +81,7 @@ export function useCompactLayout(): boolean {
  * The Lemma's size at the user's font size, as the Feed and the Settings
  * preview both draw it: the table's size, or the compact layout's smaller
  * one on a narrow screen. The OS text size never changes it: the Lemma is
- * drawn with `allowFontScaling` off (ADR 0157).
+ * drawn with `allowFontScaling` off.
  */
 export function useLemmaSize(): TextSize {
   const { lemma } = useWordTextSizes();
@@ -97,8 +97,7 @@ export function useLemmaSize(): TextSize {
 
 /**
  * How much the steps of `titleScale` grow or shrink here: the Lemma's size at
- * the user's in-app text size and the compact layout, over its size at M
- * (ADR 0157).
+ * the user's in-app text size and the compact layout, over its size at M.
  */
 export function useTitleFactor(): number {
   return useLemmaSize().fontSize / textSizeSteps.system.lemma;
@@ -106,7 +105,7 @@ export function useTitleFactor(): number {
 
 /**
  * A card title's start size here: its role's step of `titleScale`, grown or
- * shrunk as the Lemma is (ADR 0157).
+ * shrunk as the Lemma is.
  */
 export function useTitleSize(role: TypeRole): TextSize {
   const lemma = useLemmaSize();

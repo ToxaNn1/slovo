@@ -18,8 +18,7 @@ const strings = editionStrings.settings.narratorVoice;
 
 /**
  * Settings › «Голос диктора»: the Narrator Voices to choose from over the
- * sample Word. A tap on a voice chooses it and reads the sample in it at once
- * (ADR 0083).
+ * sample Word. A tap on a voice chooses it and reads the sample in it at once.
  */
 export default function NarratorVoiceScreen() {
   const tokens = useTokens();

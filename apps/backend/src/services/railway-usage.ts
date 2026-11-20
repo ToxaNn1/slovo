@@ -25,7 +25,7 @@ const PRICE_USD = {
 } as const;
 const MEASUREMENTS = ['CPU_USAGE', 'MEMORY_USAGE_GB', 'NETWORK_TX_GB', 'DISK_USAGE_GB'] as const;
 
-/** The part of the spend each measurement is (ADR 0173). */
+/** The part of the spend each measurement is. */
 const PART = {
   CPU_USAGE: 'cpu',
   MEMORY_USAGE_GB: 'memory',
@@ -97,7 +97,7 @@ export interface RailwaySettings {
 const ENDED: Readonly<Record<string, boolean>> = { SUCCESS: true, CRASHED: false, FAILED: false };
 
 /**
- * Railway's usage ports (ADR 0164), by Service name: `Railway` answers the
+ * Railway's usage ports, by Service name: `Railway` answers the
  * backend Online while its latest deployment is up, and this month's spend
  * against the plan's included usage; each Cron its last run and its next.
  * One GraphQL request answers them all: the reads that come together share it.

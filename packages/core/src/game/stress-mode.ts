@@ -31,7 +31,7 @@ function vowelRound(
   return { form: 'vowel', prompt: text, vowels, stressed, sheet };
 }
 
-/** Where in the text without its Stress marks each stressed vowel stands (ADR 0045). */
+/** Where in the text without its Stress marks each stressed vowel stands. */
 function markedStressOf(text: string): number[] {
   const stress: number[] = [];
   let place = 0;
@@ -43,7 +43,7 @@ function markedStressOf(text: string): number[] {
 }
 
 /**
- * «Наголос», the Core's Stress mode (ADR 0052), on when the Edition marks
+ * «Наголос», the Core's Stress mode, on when the Edition marks
  * Stress and turns the mode on: a Round shows a Word's Lemma without Stress,
  * each of its vowels, by the Edition's vowels, a button; any of its stressed
  * vowels is right. A Word with one vowel never plays, since its Round would
@@ -51,7 +51,7 @@ function markedStressOf(text: string): number[] {
  * Example, if it has one. A stress trap, a `wrongStress` Correction in the
  * Mix, plays too: its main standard equivalent without Stress, the answer
  * that form's Stress, its sheet the form with its Stress and the
- * Correction's explanation (ADR 0045).
+ * Correction's explanation.
  */
 export const stressMode: GameMode = {
   id: 'stress',

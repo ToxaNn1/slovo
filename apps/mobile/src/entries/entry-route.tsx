@@ -19,11 +19,11 @@ interface EntryStack {
   /** The name of the link back when the URL names none; a hook, as a Collection reads its name. */
   useDefaultBack: (params: EntryRouteParams) => string;
   openedFrom: (params: EntryRouteParams) => EntryLinkSource | 'search' | undefined;
-  /** Whether the stack is a tab of Saved, where an Entry takes no side swipes (ADR 0144). */
+  /** Whether the stack is a tab of Saved, where an Entry takes no side swipes. */
   inSaved: boolean;
 }
 
-/** Opened from a list, which makes nothing Seen by its opening (ADR 0054). */
+/** Opened from a list, which makes nothing Seen by its opening. */
 const fromList = (): undefined => undefined;
 
 /** The Collection's name, or the Collections title for a Collection that is gone. */
@@ -39,7 +39,7 @@ const stacks = {
     openedFrom: linkSourceOf,
     inSaved: false,
   },
-  /** A Search result, which makes nothing Seen (ADR 0054). */
+  /** A Search result, which makes nothing Seen. */
   search: {
     useDefaultBack: () => editionStrings.search.title,
     openedFrom: () => 'search',

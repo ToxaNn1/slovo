@@ -70,7 +70,7 @@ async function sawWordOfTheDay(on: string, records = new Map<string, string>()) 
   return { records, wordId };
 }
 
-// Spec #832, ADR 0054: «Пам’ятаєш учорашнє слово?» shows yesterday's Word of the Day.
+// Spec #832: «Пам’ятаєш учорашнє слово?» shows yesterday's Word of the Day.
 describe('Yesterday', () => {
   it("shows yesterday's Word of the Day on the second card, as a Word card", async () => {
     const { records, wordId } = await sawWordOfTheDay('2026-10-26');
@@ -152,7 +152,7 @@ describe('Yesterday', () => {
     expect(app.knowledge.state.learning).toMatchObject([{ entryId: wordId, daysUntilReview: 1 }]);
   });
 
-  // Spec #886 story 44, ADR 0060.
+  // Spec #886 story 44.
   it('counts its marks for the Community Counters as on any card', async () => {
     const { records, wordId } = await sawWordOfTheDay('2026-10-26');
     const app = await run({

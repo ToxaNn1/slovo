@@ -19,7 +19,7 @@ import {
 import type { GameEdition, GameMode, RoundContent, RoundInput, RoundOption } from './game-mode';
 import { GAME_ROUNDS } from './round-plan';
 
-// The play of a Game through `openGame` (ADR 0052): the Rounds a Game Mode
+// The play of a Game through `openGame`: the Rounds a Game Mode
 // builds, the moves through them and what each leaves to show, over stub
 // Game Modes and fakes. `game.test.ts` keeps the Game in the Core
 // composition: the offers, the Knowledge Marks, the Best result and the play time.
@@ -478,7 +478,7 @@ describe('the Lives and the Round limit a Game Mode sets', () => {
   });
 });
 
-describe('the answer banner (ADR 0138)', () => {
+describe('the answer banner', () => {
   it('holds a right answer in the answered state with the XP the XP log records for it', async () => {
     const { game } = await start(pick, {}, undefined, { roundXp: 10 });
 

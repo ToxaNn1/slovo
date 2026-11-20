@@ -11,7 +11,7 @@ coverage/
 .turbo/
 .astro/
 
-# Stryker's reports, incremental file and sandboxes (packages/core/stryker.config.js, ADR 0097)
+# Stryker's reports, incremental file and sandboxes (packages/core/stryker.config.js)
 packages/core/reports/
 .stryker-tmp/
 

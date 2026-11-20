@@ -84,7 +84,7 @@ afterEach(() => {
   jest.useRealTimers();
 });
 
-// Spec #1358, ticket #1379: the onboarding of 1.0 (ADR 0067).
+// Spec #1358, ticket #1379: the onboarding of 1.0.
 describe('the onboarding', () => {
   it('goes from the welcome to the first Word, «ГРАЙ!», «Рівень», «Навіщо», the Daily Goal and «Коли нагадати?», then the Feed', async () => {
     await renderOnboarding();
@@ -97,7 +97,7 @@ describe('the onboarding', () => {
       throw new Error('No first Word');
     const firstWord = state.step;
     expect(screen.getAllByText(firstWord.word.primaryDefinition).length).toBeGreaterThan(0);
-    // The sample card is the Feed's tabbed card in its fixed frame (ADR 0091).
+    // The sample card is the Feed's tabbed card in its fixed frame.
     expect(screen.getByTestId('word-tab-panel')).toBeTruthy();
 
     await press('onboarding-next');
@@ -107,7 +107,7 @@ describe('the onboarding', () => {
     expect(screen.getByText(strings.level.title)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Мовний гурман' })).toBeTruthy();
     await press('onboarding-answer-good');
-    // «Рівень» sets no Rarity Range (ADR 0183).
+    // «Рівень» sets no Rarity Range.
     expect(composition.rarityRange.state).toEqual({ from: 1, to: 5 });
 
     expect(screen.getByText(strings.why.title)).toBeTruthy();
@@ -163,7 +163,7 @@ describe('the onboarding', () => {
     expect(screen.queryByText(editionStrings.rarityTest.done)).toBeNull();
     await press('onboarding-rarity-next');
 
-    // The rarest Word asked about is of rarity 3, and the reader knows it (ADR 0182).
+    // The rarest Word asked about is of rarity 3, and the reader knows it.
     expect(composition.rarityRange.state).toEqual({ from: 1, to: 3 });
     expect(screen.getByText(strings.why.title)).toBeTruthy();
   });

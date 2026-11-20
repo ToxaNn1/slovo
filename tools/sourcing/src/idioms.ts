@@ -33,8 +33,8 @@ export type IdiomSourcingOptions = PipelineOptions & {
  * Drafts Idioms from goroh «Фразеологія»: every phraseologism the page lists
  * for a Lemma becomes a draft, cited to the dictionary goroh names for it,
  * and they are written with a review report to the `idioms` folder of the
- * review folder. What goroh attributes to a language model is refused
- * (ADR 0012); proper names are left out, since their story is their etymology.
+ * review folder. What goroh attributes to a language model is refused;
+ * proper names are left out, since their story is their etymology.
  */
 export function sourceIdioms(options: IdiomSourcingOptions): Promise<SourcingResult> {
   return runSourcing(options.idiomList, options, idiomsKind);
@@ -101,7 +101,7 @@ async function draftLemma(request: IdiomRequest, context: DraftContext): Promise
     const expressions = blocks.map((block) => block.expression).join('; ');
     flags.push({ kind: 'check', message: `Left out, ${why}: ${expressions}` });
   };
-  leftOut(byModel, 'goroh attributes them to a language model (ADR 0012)');
+  leftOut(byModel, 'goroh attributes them to a language model');
   leftOut(properNames, 'proper names, whose story is their etymology');
   leftOut(uncited, 'goroh cites no dictionary for them');
   return {

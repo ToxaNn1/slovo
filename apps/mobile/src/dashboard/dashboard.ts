@@ -23,7 +23,7 @@ export interface DashboardScreen {
   readonly today: LocalDate;
   /** A Mood tile: chooses today's Mood, or changes it. */
   readonly chooseMood: (moodId: string) => void;
-  /** A second tap on the chosen Mood's tile: unpicks today's Mood (ADR 0185). */
+  /** A second tap on the chosen Mood's tile: unpicks today's Mood. */
   readonly unpickMood: () => void;
   /** A row of «Попередні слова»: opens its Entry card as Search does, making nothing Seen. */
   readonly openPreviousWord: (entryId: string) => void;
@@ -49,7 +49,7 @@ let feedOpenedFor: LandingAsked | undefined;
 /**
  * The Dashboard's blocks and actions. A landing on the Word of the Day card,
  * asked by «До картки →» or by the «Слово дня» App Intent, opens the Feed
- * over the Dashboard, where the Feed lands it (ADR 0076). Each ask opens the
+ * over the Dashboard, where the Feed lands it. Each ask opens the
  * Feed once: it keeps waiting there for the card, such as on a cold start, so
  * a return to the Dashboard while the Feed lacks the card stays on it.
  */

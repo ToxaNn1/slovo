@@ -70,7 +70,7 @@ describe('the Railway project file', () => {
     expect(services.get('backend')?.variables?.['DEPLOYMENT']).toBeUndefined();
   });
 
-  it('runs the Recordings service on 2 vCPU and 5 GB, the size its generator needs (ADR 0172)', async () => {
+  it('runs the Recordings service on 2 vCPU and 5 GB, the size its generator needs', async () => {
     const recordings = servicesOf(await projectIn('production')).get('recordings');
 
     expect(recordings?.deploy?.limitOverride).toEqual({

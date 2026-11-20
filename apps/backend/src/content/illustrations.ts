@@ -22,7 +22,7 @@ export type IllustrationUpload =
   | WriteRefusal;
 
 /**
- * The Illustrations the content editor saves (ADR 0055, 0099): a file is
+ * The Illustrations the content editor saves (ADR 0099): a file is
  * checked by the content rules where it is saved, kept in the Media Store
  * under its content hash and made its Word's live Illustration, which the
  * next Patch carries.

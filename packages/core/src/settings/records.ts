@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { declareRecord } from '../user-state/user-state-record';
 
-/** The most characters the reader's name holds (ADR 0136). */
+/** The most characters the reader's name holds. */
 export const READER_NAME_AT_MOST = 24;
 
 /** How many characters a name holds: code points, so an emoji or another astral character is one. */
@@ -24,19 +24,19 @@ export const settingsRecords = {
   theme: declareRecord('settings.theme', ThemeSchema),
   /**
    * Reserved (ADR 0013): the user's S…XL font size before the three-step text
-   * size. The S…XL scale is gone (ADR 0176) and only the user state migration
+   * size. The S…XL scale is gone and only the user state migration
    * to `settings.textSize` reads it; it stays declared so the key is never
    * given to another record.
    */
   fontSize: declareRecord('settings.fontSize', z.enum(['S', 'M', 'L', 'XL'])),
   /**
-   * The user's three-step text size (ADR 0134). A new encoding takes a new
+   * The user's three-step text size. A new encoding takes a new
    * key (ADR 0013). It syncs last write wins like the Theme (ADR 0041);
    * without it, the Edition's default.
    */
   textSize: declareRecord('settings.textSize', TextSizeSchema),
   /**
-   * The reader's name on the Profile (ADR 0136): trimmed, 1 to
+   * The reader's name on the Profile: trimmed, 1 to
    * {@link READER_NAME_AT_MOST} characters. It syncs last write wins like the
    * Theme (ADR 0041); without it, the reader has no name.
    */
@@ -58,14 +58,13 @@ export const settingsRecords = {
    */
   selfCheck: declareRecord('settings.selfCheck', z.boolean()),
   /**
-   * Whether the user has «Сезонний декор» on (ADR 0055). It syncs last write
+   * Whether the user has «Сезонний декор» on. It syncs last write
    * wins like the Theme (ADR 0041); a new key needs no migration, since
    * without it Seasonal Decor is on.
    */
   seasonalDecor: declareRecord('settings.seasonalDecor', z.boolean()),
   /**
-   * The id of the Narrator Voice the reader chose on «Голос диктора» (ADR
-   * 0083). It syncs last write wins like the Theme (ADR 0041); without it
+   * The id of the Narrator Voice the reader chose on «Голос диктора». It syncs last write wins like the Theme (ADR 0041); without it
    * the Edition's default voice reads, as for an id the Edition no longer
    * declares.
    */
@@ -80,19 +79,19 @@ export const settingsRecords = {
   rarityRange: declareRecord('settings.rarityRange', RarityRangeSchema),
   /**
    * Whether the user has «Ділитися анонімною статистикою» on: this device
-   * counts and sends its Community Counters (ADR 0060). It stays on the
+   * counts and sends its Community Counters. It stays on the
    * device, since syncing it would tie the counters to an Account; a new key
    * needs no migration, since without it sharing is on.
    */
   shareCounters: declareRecord('settings.shareCounters', z.boolean(), { sync: 'device-only' }),
   /**
-   * Whether the user has «Менше руху» on (ADR 0055). It stays on the device,
+   * Whether the user has «Менше руху» on. It stays on the device,
    * like the system's Reduce Motion it joins; a new key needs no migration,
    * since without it the full motion plays.
    */
   reduceMotion: declareRecord('settings.reduceMotion', z.boolean(), { sync: 'device-only' }),
   /**
-   * The Daily Limit of 0.9 (ADR 0054), retired in 1.0 for the Daily Goal
+   * The Daily Limit of 0.9, retired in 1.0 for the Daily Goal
    * (ADR 0066): no longer read, and kept declared so it still syncs last
    * write wins between devices on an older app.
    */

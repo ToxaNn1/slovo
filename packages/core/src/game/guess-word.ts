@@ -72,7 +72,7 @@ const idiomOptions = {
   keyOf: ({ expression }: Idiom) => expression,
 };
 
-/** An idiom proper: a place name never plays (ADR 0046). */
+/** An idiom proper: a place name never plays. */
 const isIdiomProper = (entry: Entry): entry is Idiom =>
   entry.kind === 'idiom' && entry.idiomType === 'idiom';
 
@@ -236,11 +236,11 @@ function tipRound({ gameQuestion, example }: Tip, random: Random): RoundContent 
 
 /**
  * «Вгадай слово», the Core's Definition → Word mode, which asks about idioms
- * too (ADR 0046). A Round shows the answer's primary Definition and four
+ * too. A Round shows the answer's primary Definition and four
  * options, none with the answer's primary Definition, so the prompt fits one
  * option only. In Rounds 6–10 a Word's Round shows instead its first Example
  * with the Lemma as written, a gap in its place, which the Round marks; a
- * Word with no such Example is asked by its Definition (ADR 0052). From Round
+ * Word with no such Example is asked by its Definition. From Round
  * 11 a Word's Round asks its Definition for the Word typed, compared by its
  * Comparison Key as a typed answer, and its sheet shows the Lemma with its Stress; a
  * Word whose Definition another eligible Word shares is asked by a pick

@@ -35,7 +35,7 @@ const strings = collectionStrings.screen;
 const { toasts } = collectionStrings;
 
 /**
- * A Collection in the board style (board 09, ADR 0132): the back tile and
+ * A Collection in the board style (board 09): the back tile and
  * «⋯» over the Collection's name and «N слів», its Entries newest first as
  * rows with a chevron, and «Поділитися посиланням» at the foot while
  * Collection Links are on and the Collection holds an Entry. «⋯» opens the

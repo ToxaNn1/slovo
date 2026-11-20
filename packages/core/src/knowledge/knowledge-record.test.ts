@@ -20,7 +20,7 @@ function answered(...answers: [KnowledgeRecord['mark'], string][]): KnowledgeRec
   );
 }
 
-// ADR 0043, "The interval rule".
+// "The interval rule".
 describe('the interval rule of a Knowledge Mark', () => {
   it('makes an Entry Unknown with no earlier mark due tomorrow', () => {
     const record = answerKnowledge(undefined, 'unknown', monday);

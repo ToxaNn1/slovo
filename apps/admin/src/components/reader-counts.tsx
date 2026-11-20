@@ -29,7 +29,7 @@ const Figure = ({ children }: { readonly children: ReactNode }) => (
 /**
  * How many people read SLOVO (ADR 0163): the registered readers of every
  * Edition, the unregistered ones at least, the switch-offs of statistics, and
- * the Accounts with Sync records in the filtered Editions (ADR 0162).
+ * the Accounts with Sync records in the filtered Editions.
  */
 export function ReaderCounts({ counts }: { readonly counts: Counts }) {
   return (

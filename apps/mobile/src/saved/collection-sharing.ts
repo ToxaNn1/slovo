@@ -25,8 +25,8 @@ function refusalText(reason: Exclude<CollectionShareRefusal, 'offline'>): string
 }
 
 /**
- * Says why a Collection is not shared: no connection on the offline plate
- * (ADR 0158), anything else in a toast. It needs an `UndoToastProvider` above it.
+ * Says why a Collection is not shared: no connection on the offline plate,
+ * anything else in a toast. It needs an `UndoToastProvider` above it.
  */
 function useSayRefused(): (reason: CollectionShareRefusal) => void {
   const showToast = useUndoToast();
@@ -51,7 +51,7 @@ export interface CollectionShareSheetProps {
 }
 
 /**
- * «Поділитися посиланням» of board 09 (ADR 0058, 0132): whether it is offered,
+ * «Поділитися посиланням» of board 09: whether it is offered,
  * while `collectionLinks` is on in effect, and `share`, which asks the backend
  * for a Collection Link over the composition open at the tap and opens the
  * share sheet with it, or says why not, such as «Немає з’єднання. Спробуй

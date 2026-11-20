@@ -3,7 +3,7 @@ import UIKit
 import WidgetKit
 
 /// SLOVO's home-screen widget: an Entry of its Widget Mode every five
-/// minutes, in the Edition's colours, fonts and Mascot (ADR 0001, 0026). Each
+/// minutes, in the Edition's colours, fonts and Mascot (ADR 0001). Each
 /// widget chooses its mode, Улюблене, a Collection or Усі слова, and its «Тло».
 @main
 struct SlovoWidgets: WidgetBundle {
@@ -67,7 +67,7 @@ struct EntryView: View {
           GoalRingView(ring: ring, tint: color("accent"))
         }
         if moment.wordOfTheDaySeen {
-          // A quiet ✓ in the corner once today's Word of the Day is Seen (ADR 0026).
+          // A quiet ✓ in the corner once today's Word of the Day is Seen.
           Image(systemName: "checkmark")
             .font(.system(size: 11, weight: .semibold))
             .foregroundStyle(color("inkSecondary"))
@@ -103,7 +103,7 @@ struct EntryView: View {
     }
     // One element for VoiceOver: the Widget Mode's name, then the Entry's
     // VoiceOver text, which has no Stress mark, or the mode's state, then the
-    // ✓'s label (ADR 0026).
+    // ✓'s label.
     .accessibilityElement(children: .combine)
     .accessibilityLabel(accessibilityText)
   }

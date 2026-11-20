@@ -1,5 +1,5 @@
 /**
- * The Recordings job (ADR 0083, 0099, 0195): records every Word of an Edition
+ * The Recordings job (ADRs 0099 and 0195): records every Word of an Edition
  * that misses a live Recording in one of its Recording Kinds, or whose Lemma
  * or Stress changed: in the default Narrator Voice, and in every declared one
  * for the Words in all voices and the sample Word. It puts the files in the Media Store and
@@ -8,7 +8,7 @@
  * Patch that old still asks for. After STALL_RUNS stuck runs in a row, whose
  * generator made no file of the Words it had or hit its time limit, it tells
  * the owner and stops for the Edition until its content or the job's
- * deployment changes (ADR 0169, 0172).
+ * deployment changes.
  */
 import { createHash, randomUUID } from 'node:crypto';
 
@@ -415,7 +415,7 @@ export function createRecordings({
   return { run };
 }
 
-/** Why a run was stuck (ADR 0172). */
+/** Why a run was stuck. */
 type StuckCause = Extract<Alert, { kind: 'recordings-stalled' }>['cause'];
 
 const readOf = ({ lemma, stress }: Pick<Word, 'lemma' | 'stress'>) => ({ lemma, stress });

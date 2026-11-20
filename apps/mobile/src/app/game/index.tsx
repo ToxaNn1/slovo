@@ -38,7 +38,7 @@ const { game: strings, settings: settingsStrings } = editionStrings;
  * background. The Game stays in the Core composition, so another tab and back
  * finds it where it was.
  * A Round's question stands on the ground and the Mascot beside it while
- * their switches are on (ADR 0139).
+ * their switches are on.
  */
 export default function GameScreen() {
   // Turned off remotely while the reader is on it: its tab goes, and so does the screen.

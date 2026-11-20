@@ -20,7 +20,7 @@ const listeners = new Set<() => void>();
 
 /**
  * Hands the undo of a Collection deleted on its own screen to the Collections
- * grid, which shows the toast once it is in front (ADR 0132); its undo opens
+ * grid, which shows the toast once it is in front; its undo opens
  * the Collection again.
  */
 export function handDeleteUndo(deleted: DeletedCollection): void {

@@ -9,8 +9,8 @@ function bearerToken(headers: Headers): string | undefined {
 
 /**
  * The Session the request's token carries, when one is on, for a procedure
- * that takes a request with or without one, such as a Mistake Report
- * (ADR 0159): a token that carries none makes the request anonymous.
+ * that takes a request with or without one, such as a Mistake Report:
+ * a token that carries none makes the request anonymous.
  */
 export async function sessionIfAny(accounts: Accounts, headers: Headers) {
   const opened = await accounts.session(bearerToken(headers));

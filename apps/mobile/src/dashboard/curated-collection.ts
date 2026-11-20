@@ -46,7 +46,7 @@ export interface CuratedCollectionScreen {
   readonly screen: Screen | null | undefined;
   /** Set once the read failed: reads the collection again. */
   readonly retry: (() => void) | undefined;
-  /** The pictogram its tile draws, whose big shape is the hero's glyph (ADR 0178). */
+  /** The pictogram its tile draws, whose big shape is the hero's glyph. */
   readonly pictogram: CuratedCollectionPictogram | undefined;
   /** «+ Додати»: copies it into the reader's Collections and says so in a toast. */
   readonly add: () => void;
@@ -54,13 +54,13 @@ export interface CuratedCollectionScreen {
   readonly openCopy: () => void;
   /**
    * Opens the collection's Feed from an Entry while `curatedCollectionFeed` is
-   * on (ADR 0178), else its card; neither makes anything Seen (ADR 0076).
+   * on, else its card; neither makes anything Seen.
    */
   readonly openEntry: (entryId: string) => void;
 }
 
 /**
- * A Curated Collection's screen (ADR 0076), read again on each change the
+ * A Curated Collection's screen, read again on each change the
  * Core tells of, so a Knowledge Mark or a copy shows at once.
  */
 export function useCuratedCollectionScreen(collectionId: string): CuratedCollectionScreen {

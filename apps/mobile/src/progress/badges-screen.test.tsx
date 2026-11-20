@@ -10,7 +10,7 @@ import { opened, switchedTo, testShell } from '../shell/test-support';
 import { renderApp } from '../shell/test-app';
 import { BadgesScreen } from './badges-screen';
 
-/** The UA Edition as it ships, with the Daily Crossword on, so its Badges show (ADR 0176). */
+/** The UA Edition as it ships, with the Daily Crossword on, so its Badges show. */
 const edition: Edition = {
   ...shipped,
   isFeatureEnabled: (feature) => feature === 'dailyCrossword' || shipped.isFeatureEnabled(feature),

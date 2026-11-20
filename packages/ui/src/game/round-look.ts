@@ -1,7 +1,7 @@
 import { createContext, useContext, type ReactNode } from 'react';
 
 /**
- * How a Game's Round draws its question (ADR 0139): on the background with
+ * How a Game's Round draws its question: on the background with
  * no card and the Mascot beside it
  * (`gameRoundMascot`), and its options in the board's look. The Game Round provides it for its form's parts; a
  * Quick Question, which provides none, keeps the card, the keyed options

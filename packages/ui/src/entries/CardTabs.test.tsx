@@ -126,7 +126,7 @@ function DrawnAt() {
   return <Text testID="drawn-at">{size}</Text>;
 }
 
-describe("an Entry card's tab on the three-step ladder (ADR 0134)", () => {
+describe("an Entry card's tab on the three-step ladder", () => {
   it('steps down one step at a time to the system step, then keeps the frame and offers More', async () => {
     await render(
       <GestureHandlerRootView>
@@ -229,7 +229,7 @@ describe("an Entry card's clamped tab (owner 13.11)", () => {
   });
 });
 
-describe("an Entry card's Source tab (ADR 0116)", () => {
+describe("an Entry card's Source tab", () => {
   it('comes last and names each source on its own line, with no prefix', async () => {
     await renderTabs(['A dictionary', 'A style guide']);
 
@@ -245,13 +245,13 @@ describe("an Entry card's Source tab (ADR 0116)", () => {
     expect(screen.getByTestId('word-source-1')).toHaveTextContent('A style guide', { exact: true });
   });
 
-  it("is not there when the only source is the Edition's own editing (ADR 0154)", async () => {
+  it("is not there when the only source is the Edition's own editing", async () => {
     await renderTabs(['Our own editing']);
     expect(screen.queryByTestId('word-tab-source')).toBeNull();
     expect(screen.getByTestId('word-tab-essence')).toBeTruthy();
   });
 
-  it("leaves the Edition's own editing out of the sources it names (ADR 0154)", async () => {
+  it("leaves the Edition's own editing out of the sources it names", async () => {
     await renderTabs(['Our own editing', 'A dictionary']);
 
     await fireEvent.press(screen.getByTestId('word-tab-source'));

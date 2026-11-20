@@ -17,7 +17,7 @@ export interface GameRoundEntry extends Logged {
   readonly rarity?: Rarity | undefined;
 }
 
-/** A finished Game: its Game Mode, right answers and Rounds played, for the Badges (ADR 0085); none before them. */
+/** A finished Game: its Game Mode, right answers and Rounds played, for the Badges; none before them. */
 export interface GameFinishedEntry extends Logged {
   readonly source: 'game-finished';
   readonly mode?: string | undefined;
@@ -25,7 +25,7 @@ export interface GameFinishedEntry extends Logged {
   readonly played?: number | undefined;
 }
 
-/** A Daily Crossword solve: its Solve time and whether the Crossword Hint was used (ADR 0087); none before them. */
+/** A Daily Crossword solve: its Solve time and whether the Crossword Hint was used; none before them. */
 export interface DailyCrosswordEntry extends Logged {
   readonly source: 'daily-crossword';
   readonly solveSeconds?: number | undefined;

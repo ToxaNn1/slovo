@@ -1,5 +1,5 @@
 // `pnpm smoke:halves`: the full Maestro smoke as two halves at once, on two
-// simulators (ticket #452, ADR 0126). Half 1 is `smoke-1.yaml`, half 2
+// simulators (ticket #452). Half 1 is `smoke-1.yaml`, half 2
 // `smoke-2.yaml`; each runs on its own simulator, both against the one Metro
 // and one backend. It ends with a pass/fail list per half.
 //

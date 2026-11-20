@@ -27,30 +27,29 @@ export interface LifecycleDevice {
 /**
  * The lifecycle adapter: it tells everything that follows the app's moments
  * (`reportForeground`), each once its own opening is open, so none waits for
- * another: the Account opens apart (ADR 0037). The composition hears each
+ * another: the Account opens apart. The composition hears each
  * return to the foreground and each next local day, and decides what changed
  * (a new local day, the permission). The Widget Snapshot is written when the
  * composition opens and each time the app goes to the background. The remote
  * Feature Switches are asked for at launch and each time the app comes back,
  * and a changed answer reopens the composition over the Edition in effect and
- * writes the Widget Snapshot again (ADR 0040). Sync follows the foreground and
+ * writes the Widget Snapshot again. Sync follows the foreground and
  * the background, and a sync that changed the user state reopens the settings
  * and the composition and writes the Widget Snapshot (spec #378). The
  * Spotlight Snapshot is handed to the iPhone search when the composition
  * opens or reopens, each time the app goes to the background and after each
- * change of Favorites, the Collections or the Word of the Day archive (ADR
- * 0057). The Content update module checks then too, when content updates
+ * change of Favorites, the Collections or the Word of the Day archive. The Content update module checks then too, when content updates
  * are on in effect, at most once a day; the Account checks its Session then,
  * when it is on in effect, at most once an hour. Mistake Reports send their
- * queue at launch and on each return (ADR 0056). The Community Counters send
+ * queue at launch and on each return. The Community Counters send
  * their unsent changes at launch, on each return and every few minutes while
- * the app is in the foreground (ADR 0060). Returns the call that stops
+ * the app is in the foreground. Returns the call that stops
  * listening.
  */
 export function listen(shell: Shell, device: LifecycleDevice): () => void {
   const { composition, remoteSwitches, languagePack, account, sync } = shell;
   const { writeWidgetSnapshot } = device;
-  /** Whether the feature is on in effect, by the remote Feature Switches the app knows (ADR 0040). */
+  /** Whether the feature is on in effect, by the remote Feature Switches the app knows. */
   async function isOnInEffect(feature: FeatureSwitch): Promise<boolean> {
     return (await remoteSwitches.opened()).edition.isFeatureEnabled(feature);
   }

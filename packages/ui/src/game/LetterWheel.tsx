@@ -40,7 +40,7 @@ const centresOf = (count: number) =>
 const STEP = { easing: ease, reduceMotion: ReduceMotion.Never } as const;
 
 /**
- * The Letter Wheel of the crossing Daily Crossword (ADR 0087, board 08): the
+ * The Letter Wheel of the crossing Daily Crossword (board 08): the
  * current Word's letters on square tiles round a sunken disc, traced by finger
  * with a red line, and, at the top of the room it fills, the slot where the
  * path chips spell the trace and `help` shows while there is no trace. The drag runs on the UI

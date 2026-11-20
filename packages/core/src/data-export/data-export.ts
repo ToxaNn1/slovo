@@ -30,14 +30,14 @@ export interface ExportedEntry {
  *
  * - `format`, `version`, `edition`, `exportedAt`: what the file is, which
  *   format version it follows, the Edition it comes from and when it was made.
- * - `reader.name`: the reader's name (ADR 0136), or `null`.
+ * - `reader.name`: the reader's name, or `null`.
  * - `settings`: only the settings the reader chose, by name; a default is left out.
  * - `favorites`, `collections` (each with its Entries), `history`: the
  *   reader's words, with the instant each was added or Seen.
  * - `knowledgeMarks`: each marked Entry's Knowledge Mark, whether it is
  *   Learned, its next Review day and when it was marked; a mark kept before
  *   its instant was recorded has none and comes first.
- * - `progress`: the Active Days, the XP log as kept (ADR 0066, 0133), the
+ * - `progress`: the Active Days, the XP log as kept (ADR 0066), the
  *   confirmed Entries and the best result of each Game Mode.
  */
 export interface DataExport {

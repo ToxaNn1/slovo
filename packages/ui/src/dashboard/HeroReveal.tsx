@@ -1,5 +1,5 @@
 'use no memo';
-// Reanimated code: the React Compiler skips this module (ADR 0059).
+// Reanimated code: the React Compiler skips this module.
 
 import { useEffect, type ReactNode } from 'react';
 import {
@@ -30,8 +30,8 @@ const flyEasing = Easing.bezier(...entryReveal.headlineEasing);
 const fadeEasing = Easing.bezier(...motion.reduceMotion.easing);
 
 /**
- * The open hero's Lemma flying in letter by letter as the hero opens
- * (ADR 0105): each letter from below, small and turned, `stagger` ms after
+ * The open hero's Lemma flying in letter by letter as the hero opens:
+ * each letter from below, small and turned, `stagger` ms after
  * the one before, and the row drawn small enough to fit its line, as the
  * Lemma under it is. Under Reduce Motion the letters only fade in. It is
  * drawn for the eye alone: VoiceOver reads the Lemma under it.
@@ -118,7 +118,7 @@ function FlyingLetter({
   );
 }
 
-/** A part of the opening hero that rises in at its moment: the card, then the button (ADR 0105). */
+/** A part of the opening hero that rises in at its moment: the card, then the button. */
 export function RisesIn({
   at,
   style,

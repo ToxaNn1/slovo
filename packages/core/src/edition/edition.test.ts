@@ -319,7 +319,7 @@ describe('loadEdition', () => {
     );
   });
 
-  it('reports the questionnaire: the options of the level question and «Навіщо» and what each sets (ADR 0067)', () => {
+  it('reports the questionnaire: the options of the level question and «Навіщо» and what each sets', () => {
     expect(loadEdition(validConfig).questionnaire).toEqual(validConfig.questionnaire);
   });
 
@@ -389,7 +389,7 @@ describe('loadEdition', () => {
     expect(load).toThrow('\nbadges.0.family: ');
   });
 
-  it('reads the checker shape of a Badge family and a Badge stamp kicker (ADR 0087)', () => {
+  it('reads the checker shape of a Badge family and a Badge stamp kicker', () => {
     const [run, skill] = validConfig.badgeFamilies;
     const [week, sharpStress] = validConfig.badges;
     const badgeFamilies = [run, { ...skill, shape: 'checker' }];

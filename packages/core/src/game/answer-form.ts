@@ -56,7 +56,7 @@ export interface Judged<Answer> {
 export interface AnswerForm<Content, Shown, Given, Answer> {
   /**
    * Whether an answer in the form shows the answer banner, which moves the
-   * Game on by itself (ADR 0138): not a pair of a pairs grid, whose grid
+   * Game on by itself: not a pair of a pairs grid, whose grid
    * stays for its other pairs.
    */
   readonly bannerAfterAnswer: boolean;

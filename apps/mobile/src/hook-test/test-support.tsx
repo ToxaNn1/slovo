@@ -55,7 +55,7 @@ const content = createMemoryContentPort({
  * and the user state `facts` give, under the Edition and an undo toast. Gives
  * back the composition, so a test reads what the hook changed, and `reopen`,
  * which opens the composition again over the same user state and closes the
- * one before, as a sync does (ADR 0018): the Shell's opening gives the new
+ * one before, as a sync does: the Shell's opening gives the new
  * one from then on, while what is drawn keeps the one it was drawn with.
  */
 export async function renderOverComposition<T>(hook: () => T, facts: UserStateFacts = {}) {

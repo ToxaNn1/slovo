@@ -144,7 +144,7 @@ const idiomCard: EntryFeedCard = {
 
 const CARDS = [wordCard('first'), wordCard('second')];
 const TURN_LABELS = { next: 'Next page', previous: 'Previous page' };
-/** How long a page turn's motion takes (ADR 0055). */
+/** How long a page turn's motion takes. */
 const SWIPE_MS = 300;
 
 const haptics: Haptics = {

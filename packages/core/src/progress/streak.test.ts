@@ -453,7 +453,7 @@ describe('the Break', () => {
     expect(breaks(records)).toHaveLength(3);
   });
 
-  // ADR 0180: «Завершити перерву» ends it early and its unused days come back.
+  // «Завершити перерву» ends it early and its unused days come back.
   it('ends early: today counts again and the days not used come back for a later Break', async () => {
     const records = earned(new Map<string, string>(), 5, ...october(10, 13));
     await (await openOn(records, '2026-10-14', BREAK_ON)).app.streakBreak.start(7);

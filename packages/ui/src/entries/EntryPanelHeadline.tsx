@@ -30,7 +30,7 @@ export function headlineOf(card: OtherKindCard): string {
  * The headline of an Entry of another kind in Entry details' red panel, as a
  * Word's Lemma and part of speech stand there (owner 15.11): its expression,
  * dominant or title in the key ink at `panelHeadline`'s size, on at most two
- * lines (ADR 0157), or a Correction's struck form; under it, the name of its
+ * lines, or a Correction's struck form; under it, the name of its
  * kind where a Word names its part of speech.
  */
 export function EntryPanelHeadline({ card }: { card: OtherKindCard }) {

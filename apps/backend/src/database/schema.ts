@@ -228,7 +228,7 @@ export const userRecords = pgTable(
 );
 
 /**
- * The Mistake Reports still to check (ADR 0056): one row per report, with
+ * The Mistake Reports still to check: one row per report, with
  * its time of arrival. It holds no IP address, no device id and no Account.
  * The owner deletes a report once it is checked, so the table keeps only
  * those still to check.
@@ -252,7 +252,7 @@ export const mistakeReports = pgTable(
     /**
      * The Account of the Session a signed-in reader sent the report with, so
      * the owner can thank them; none for an anonymous report. Deleting the
-     * Account empties it and keeps the report (ADR 0159).
+     * Account empties it and keeps the report.
      */
     accountId: uuid('account_id').references(() => accounts.id, { onDelete: 'set null' }),
   },
@@ -266,7 +266,7 @@ export const mistakeReports = pgTable(
 );
 
 /**
- * The Community Counters (ADR 0060): one row per Edition and Entry with its
+ * The Community Counters: one row per Edition and Entry with its
  * totals, each never below zero. A row holds no reader, IP address, device id
  * or Account, and there is no per-reader row, so nothing links two changes to
  * one reader.
@@ -289,7 +289,7 @@ export const communityCounters = pgTable(
 
 /**
  * The Favorites adds of each Edition, Entry and ISO week (UTC), for the
- * Community Word (ADR 0060): a week's adds only grow, since a Favorite removed
+ * Community Word: a week's adds only grow, since a Favorite removed
  * takes nothing from the week it was added in. Like the Community Counters, a
  * row holds no reader.
  */
@@ -343,7 +343,7 @@ export const statisticsOffCounters = pgTable(
 );
 
 /**
- * The Collection Links (ADR 0058): one row per link with the Collection as it
+ * The Collection Links: one row per link with the Collection as it
  * was shared. A row is never updated, and holds no IP address, device id or
  * Account; only the owner's script deletes one.
  */
@@ -394,7 +394,7 @@ function contentColumns<Fields>() {
     /**
      * The record version an Admin user last marked checked in «Перегляд»; none
      * while never checked. The record is checked while it equals `recordVersion`,
-     * so any later write leaves it unchecked again (ADR 0143).
+     * so any later write leaves it unchecked again.
      */
     checkedVersion: integer('checked_version'),
     changedBy: text('changed_by').$type<ContentAuthor>().notNull(),
@@ -515,7 +515,7 @@ export const recordingLeases = pgTable('recording_leases', {
  * The Recordings job's runs in a row whose generator made no file of the
  * Words it had, per Edition, with the job's deployment and the Edition's content
  * version they ran at; a row stops the job for the Edition once it reached
- * the limit, until either changes (ADR 0169).
+ * the limit, until either changes.
  */
 export const recordingStalls = pgTable('recording_stalls', {
   editionId: text('edition_id').primaryKey(),
@@ -577,7 +577,7 @@ export const mediaIllustrations = pgTable('media_illustrations', mediaColumns(),
 ]);
 
 /**
- * The quote check's last finding per quoted record (ADR 0084), at the record
+ * The quote check's last finding per quoted record, at the record
  * version it checked. A record changed since, by any write other than an
  * import, has no row at its version: it is unverified.
  */
@@ -598,7 +598,7 @@ export const quoteChecks = pgTable(
 
 /**
  * The sourcing cache: the source pages the quote check fetched, each with
- * when, and the NBU's page of the dollar's rate, one a Kyiv day (ADR 0164).
+ * when, and the NBU's page of the dollar's rate, one a Kyiv day.
  */
 export const sourcingCache = pgTable('sourcing_cache', {
   pageUrl: text('page_url').primaryKey(),
@@ -759,7 +759,7 @@ export interface StoredServiceLimit {
 }
 
 /**
- * The Services of «Сервіси» (ADR 0164), seeded with the eleven known ones.
+ * The Services of «Сервіси», seeded with the eleven known ones.
  * A block's place on the canvas is fixed data; a link names the other Service.
  */
 export const services = pgTable(
@@ -785,7 +785,7 @@ export const services = pgTable(
 );
 
 /**
- * The Service entries of «Сервіси» (ADR 0164): a login or a link keeps its
+ * The Service entries of «Сервіси»: a login or a link keeps its
  * value in the open, a password, token or recovery codes only sealed in the
  * Vault under `VAULT_KEY`. An entry goes with its Service.
  */

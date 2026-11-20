@@ -28,7 +28,7 @@ const { learning: strings } = editionStrings;
  * Core's own: it has no rename, delete or swipe action, and an Entry leaves it
  * once it is Learned or its mark is removed. Over the rows, while Words are
  * due today, the Due Quiz card «Перевір себе» opens its sheet, which asks the
- * questions as they were when it opened and ends with a toast (ADR 0131).
+ * questions as they were when it opened and ends with a toast.
  */
 export function LearningList({ header }: { header: ListHeader }) {
   return (

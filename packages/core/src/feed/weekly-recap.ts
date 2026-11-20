@@ -36,8 +36,7 @@ export interface WeeklyRecapModel {
 }
 
 /**
- * The Weekly Recap: a Feed Notice on a local Monday about the week before it
- * (ADR 0054).
+ * The Weekly Recap: a Feed Notice on a local Monday about the week before it.
  */
 export interface WeeklyRecap {
   /**

@@ -27,7 +27,7 @@ import { GAME_ROUNDS, roundLimitOf, type PlannedRound, type RoundPlanner } from 
 /**
  * A Round as the reader plays it, in its answer form, the right answer kept
  * out, and resolved for the shell to draw: whether its prompt has a gap, how
- * each blank shows and when a wrong answer costs its Life (ADR 0017).
+ * each blank shows and when a wrong answer costs its Life.
  */
 export type Round = {
   /** Which Round of the Game it is, from 1 up to the mode's Round limit, `GAME_ROUNDS` by default. */
@@ -117,7 +117,7 @@ export interface GameRounds {
 }
 
 /**
- * What the answer banner after an answer shows (ADR 0138): a right answer
+ * What the answer banner after an answer shows: a right answer
  * with the XP the XP log records for it, none when it records none; or a
  * wrong one with the right answer's text, and whether it took the last Life.
  */
@@ -139,8 +139,7 @@ export type PlayingGame = GameRounds & {
         readonly answered: AnsweredRound;
         /**
          * Whether the answered Round shows the answer banner and moves on by
-         * itself after its delay, in place of the sheet and its «Далі» (ADR
-         * 0138): always, but never after a pair of a pairs grid or in a Game
+         * itself after its delay, in place of the sheet and its «Далі»: always, but never after a pair of a pairs grid or in a Game
          * with no schedule to move on by.
          */
         readonly banner: boolean;

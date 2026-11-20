@@ -56,7 +56,7 @@ const POP_UP = {
 };
 
 /**
- * The crossing Daily Crossword's grid (ADR 0087, board 08): blocks as silhouettes,
+ * The crossing Daily Crossword's grid (board 08): blocks as silhouettes,
  * white cells with their numbers and letters, the current Word's cells
  * highlighted and a solved Word's cells red, with a short pop as they turn,
  * calmed under Reduce Motion. A tap on a white cell asks `onSelect`; the grid

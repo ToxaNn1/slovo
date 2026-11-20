@@ -121,7 +121,7 @@ afterEach(() => {
   screenSettled();
 });
 
-// Spec #1553, ticket #1562: the whole onboarding flow lands on the home, the Dashboard (ADR 0076).
+// Spec #1553, ticket #1562: the whole onboarding flow lands on the home, the Dashboard.
 describe('the whole onboarding flow', () => {
   it('walks СЛОВО → ПЕРШЕ → ГРАЙ! → РІВЕНЬ? → НАВІЩО? → ЦІЛЬ → НАГАДУВАННЯ and lands on the Dashboard', async () => {
     await openApp();

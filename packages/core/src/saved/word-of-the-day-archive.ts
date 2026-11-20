@@ -11,7 +11,7 @@ import { userStateRecords } from '../user-state-schema';
 const { wordOfTheDayArchive: archiveRecords } = userStateRecords;
 
 /**
- * How the Feed records the Word of the Day archive («Слова дня», ADR 0054)
+ * How the Feed records the Word of the Day archive («Слова дня»)
  * in its Seen write: one synced record per local date, holding the id of the
  * Word whose card the reader Seen on it. The shell never gets it.
  */
@@ -40,8 +40,7 @@ export interface WordOfTheDayArchiveDay {
 }
 
 /**
- * The Word of the Day archive as «Слова дня» in «Збережене» lists it (ADR
- * 0054). It is read from the user state once, when it opens, like Favorites,
+ * The Word of the Day archive as «Слова дня» in «Збережене» lists it. It is read from the user state once, when it opens, like Favorites,
  * and again only when it changes: once the Feed keeps a day, and on the first
  * day of a year, which gives the dates of the year before their year.
  */

@@ -6,7 +6,7 @@ import { useQueryParam, useSegmentParam } from '@/route-params';
 import { useEditionInEffect } from '@/edition/remote-switches';
 
 /**
- * A Category's Feed, from a tap on a Word of its screen (ADR 0110), opened
+ * A Category's Feed, from a tap on a Word of its screen, opened
  * on the Word `from`. An id the Language Pack doesn't have, or
  * `categoryFeed` off, returns to the Dashboard.
  */

@@ -74,7 +74,7 @@ function starterMedia(edition) {
 }
 
 /**
- * The Interface sounds of an Edition (ADR 0070): each of
+ * The Interface sounds of an Edition: each of
  * `assets/sounds/{shout,right,wrong,tap}.wav` it brings.
  */
 function sounds(edition) {

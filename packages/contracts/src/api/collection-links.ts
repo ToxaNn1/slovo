@@ -10,7 +10,7 @@ const ofCollectionLinks = procedure.errors({
 });
 
 /**
- * The Collection Link procedures (ADR 0058). They need no Account and send no
+ * The Collection Link procedures. They need no Account and send no
  * Session, even when the reader is signed in.
  */
 export const collectionLinksContract = {
@@ -20,7 +20,7 @@ export const collectionLinksContract = {
       path: '/collection-links',
       summary: 'Share a Collection behind a link',
       description:
-        "Stores the Collection as it is now and answers the link's id and its URL, `https://<domain>/<edition>/c/<id>`. The backend checks the shape, not whether the Entries are in a pack: a name of 1 to 60 characters once trimmed, 1 to 200 Entries, each once. A link never changes and never expires; it is kept with its Edition, name, Entry ids and the time it was made only: no Account, no device id, no IP address (ADR 0058).",
+        "Stores the Collection as it is now and answers the link's id and its URL, `https://<domain>/<edition>/c/<id>`. The backend checks the shape, not whether the Entries are in a pack: a name of 1 to 60 characters once trimmed, 1 to 200 Entries, each once. A link never changes and never expires; it is kept with its Edition, name, Entry ids and the time it was made only: no Account, no device id, no IP address.",
       tags: ['collection-links'],
     })
     .errors({
@@ -39,7 +39,7 @@ export const collectionLinksContract = {
       path: '/collection-links/{id}',
       summary: 'A shared Collection',
       description:
-        'The Collection as it was stored when it was shared: its Edition, its name and its Entry ids in its order. An unknown id answers 404 and a malformed id answers 400. Reading a link is not limited (ADR 0058).',
+        'The Collection as it was stored when it was shared: its Edition, its name and its Entry ids in its order. An unknown id answers 404 and a malformed id answers 400. Reading a link is not limited.',
       tags: ['collection-links'],
     })
     .input(z.strictObject({ id: CollectionLinkIdSchema }))

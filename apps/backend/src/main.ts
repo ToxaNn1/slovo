@@ -58,7 +58,7 @@ const app = createApp({
   trustedProxyHops: config.TRUSTED_PROXY_HOPS,
   adminDist: existsSync(join(adminDist, 'index.html')) ? adminDist : undefined,
   sentry: sentryOf(config, systemClock),
-  // «Сервіси» reads usage with the keys Якість and the Аналітика already hold (ADR 0164).
+  // «Сервіси» reads usage with the keys Якість and the Аналітика already hold.
   usage: usagePortsOf(
     { ...config, R2_ACCOUNT_ID: config.r2?.accountId, R2_BUCKET: config.r2?.bucket },
     { clock: systemClock, logger },
@@ -66,7 +66,7 @@ const app = createApp({
   ciToken: config.CI_HISTORY_TOKEN,
   mediaBase: config.mediaBase,
   mediaStore: ports.mediaStore,
-  // Without VAULT_KEY the Vault is off: no Service entry is written (ADR 0164).
+  // Without VAULT_KEY the Vault is off: no Service entry is written.
   vault: config.VAULT_KEY === undefined ? VAULT_OFF : createVault(config.VAULT_KEY),
 });
 const server = await startServer({ app, database, port: config.PORT });

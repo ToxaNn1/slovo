@@ -23,7 +23,7 @@ export const LearningStringsSchema = z.strictObject({
   }),
   /** The empty list. */
   empty: z.strictObject({ title: TextSchema, message: TextSchema }),
-  /** The Due Quiz «Перевір себе» over the Words due today: its card over the list, its sheet and its toast (ADR 0131). */
+  /** The Due Quiz «Перевір себе» over the Words due today: its card over the list, its sheet and its toast. */
   dueQuiz: z.strictObject({
     /** The card's title and the sheet's title. */
     title: TextSchema,

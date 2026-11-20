@@ -6,8 +6,8 @@ const twoDigits = (value: number) => String(value).padStart(2, '0');
 /**
  * The status line under the email of the SLOVO ID screen: that a sync runs,
  * or when the words were last synced (the time today, or the date, with the
- * year only in another year). The offline plate says there is no network
- * (ADR 0158), so the line gives the last sync then too. Nothing before a first
+ * year only in another year). The offline plate says there is no network,
+ * so the line gives the last sync then too. Nothing before a first
  * sync has gone through.
  */
 export function syncStatusLine({

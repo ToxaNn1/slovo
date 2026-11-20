@@ -3,10 +3,10 @@ import type { CuratedCollection, EditionConfig, Entry } from '@slovo/contracts';
 import type { Authored, Refusal } from './refusal';
 
 /**
- * The checks the schema can't make on one Curated Collection alone (ADR 0076):
+ * The checks the schema can't make on one Curated Collection alone:
  * every Entry it names is authored and, unless the collection is Retired
  * itself, not Retired; its pictogram names a Category or Correction Category
- * of the Edition (ADR 0178), and no two files share a collection id.
+ * of the Edition, and no two files share a collection id.
  */
 export function checkCuratedCollections(
   { categories, correctionCategories }: Pick<EditionConfig, 'categories' | 'correctionCategories'>,

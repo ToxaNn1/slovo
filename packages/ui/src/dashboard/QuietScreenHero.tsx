@@ -11,8 +11,8 @@ import { HeroBack, useHeroRoom } from './HeroBack';
  * The hero of a quiet Category's screen (board 05.2 k3): the sunken surface
  * with no halftone, cut at the bottom as the loud hero is, the back tile on
  * the background, `label` («Категорія») over the Category's name and its
- * description in the muted ink, and the Mascot in its quiet hat-off state
- * (ADR 0070). It has no right button, no icon tile and no progress.
+ * description in the muted ink, and the Mascot in its quiet hat-off state.
+ * It has no right button, no icon tile and no progress.
  */
 export function QuietScreenHero({
   id,

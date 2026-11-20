@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Pushes this CI run on `main` to the backend's history for Якість (ADR 0096):
+ * Pushes this CI run on `main` to the backend's history for Якість:
  * the tests and failed tests of every JUnit report, the coverage per package
  * of its coverage maps merged, so a sharded run's parts make one number, and
  * how long each finished job took.

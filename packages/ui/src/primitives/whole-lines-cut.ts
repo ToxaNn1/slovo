@@ -5,8 +5,8 @@ export interface DrawnLine {
 }
 
 /**
- * Where content clamped to `limit` is cut so that it shows whole lines only
- * (ADR 0091): under the lowest line that ends within the limit, where no
+ * Where content clamped to `limit` is cut so that it shows whole lines only:
+ * under the lowest line that ends within the limit, where no
  * other line is cut through. With no line reported it is the limit itself.
  */
 export function wholeLinesCut(limit: number, lines: readonly DrawnLine[]): number {

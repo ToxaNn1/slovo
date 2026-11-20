@@ -37,7 +37,7 @@ function asSentences(round: RoundContent): RoundContent {
 }
 
 /**
- * «Англіцизми», the Core's anglicism mode (ADR 0052), on while the Edition
+ * «Англіцизми», the Core's anglicism mode, on while the Edition
  * turns the mode and Corrections on: «Обери правильне» with Correction Type
  * `anglicism` only. Its Rounds ask about anglicisms alone and their three
  * Distractors are the main standard equivalents of other anglicisms, so it

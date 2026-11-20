@@ -5,11 +5,11 @@ import { shuffled } from '../shuffled';
 
 const optionOf = (text: string): RoundOption => ({ text, stressedVowels: [] });
 
-/** An idiom proper or a proverb: a place name never plays, its meaning being its story (ADR 0046). */
+/** An idiom proper or a proverb: a place name never plays, its meaning being its story. */
 const plays = (idiom: Idiom): boolean => idiom.idiomType !== 'placeName';
 
 /**
- * «Фразеологізми», the Core's Idiom meaning mode (ADR 0052), on while the
+ * «Фразеологізми», the Core's Idiom meaning mode, on while the
  * Edition turns Idioms on: a Round shows an idiom's or a proverb's expression
  * and four meanings, its primary Definition among them, asked by its
  * meaning (`labelKind` `meaning`). The three

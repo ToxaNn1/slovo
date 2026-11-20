@@ -2,7 +2,7 @@
 // on the database DATABASE_URL names, puts the files in the Media Store,
 // deletes the files of rows retired 30 days ago, prints the counts and exits.
 // After two runs in a row whose generator made no file it stops for the
-// Edition and tells the owner in Telegram (ADR 0169).
+// Edition and tells the owner in Telegram.
 // The Railway Cron service «recordings» runs it hourly from
 // recordings.Dockerfile, which holds the voice model (docs/deploy.md).
 import { fileURLToPath } from 'node:url';

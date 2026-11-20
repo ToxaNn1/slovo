@@ -20,7 +20,7 @@ interface CountersContext {
  * Community Counters. An Edition with Community Counters switched off answers
  * `NOT_FOUND`, which the app shows as no line and no Community Word, and a
  * batch over the day's limit of events of its IP address `TOO_MANY_REQUESTS`
- * with `Retry-After` (ADR 0060). The counters read may be kept for 24 hours,
+ * with `Retry-After`. The counters read may be kept for 24 hours,
  * as the device keeps them. An Edition with the Community Word switched off
  * answers its Community Word `NOT_FOUND` too, so the Community Word needs both
  * switches on. A questionnaire answer of an Edition with the questionnaire

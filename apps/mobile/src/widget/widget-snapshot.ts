@@ -35,7 +35,7 @@ export interface WidgetDevice {
 }
 
 /**
- * Writes the Widget Snapshot into the App Group (ADR 0026), each time it is
+ * Writes the Widget Snapshot into the App Group, each time it is
  * asked: the lifecycle adapter asks when the composition opens and every time
  * the app goes to the background, where every change a reader can make has
  * already happened. Each write is whole: the snapshot is staged in a file of

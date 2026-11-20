@@ -7,13 +7,13 @@ import {
 } from '@slovo/contracts';
 
 /**
- * The Decor the app draws (ADR 0014, `docs/design/README.md`): the Mascot, the
+ * The Decor the app draws (`docs/design/README.md`): the Mascot, the
  * Season's or Holiday's accessory it wears, and the Category art. A part the
  * Decor leaves out shows nothing. Shapes and colours only: Decor never
  * carries text or behaviour.
  */
 export interface Decor {
-  /** The Mascot's vector (ADR 0070); without it the Mascot is its line alone. */
+  /** The Mascot's vector; without it the Mascot is its line alone. */
   readonly mascot: MascotFigure | undefined;
   /** The Season's or Holiday's accessory the Mascot wears while seasonal Decor is on. */
   readonly mascotAccessory: MascotAccessory | undefined;

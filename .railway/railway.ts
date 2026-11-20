@@ -82,7 +82,7 @@ export default defineRailway((ctx) => {
       POSTHOG_PERSONAL_API_KEY: backend.env.POSTHOG_PERSONAL_API_KEY,
       POSTHOG_PROJECT_ID: backend.env.POSTHOG_PROJECT_ID,
       BACKEND_HEALTH_URL: preserve(),
-      // The usage ports' keys for the 90 % Alert (ADR 0164); Railway sets the project and environment.
+      // The usage ports' keys for the 90 % Alert; Railway sets the project and environment.
       RAILWAY_READ_TOKEN: backend.env.RAILWAY_READ_TOKEN,
       NEON_API_KEY: backend.env.NEON_API_KEY,
       NEON_PROJECT_ID: backend.env.NEON_PROJECT_ID,
@@ -102,7 +102,7 @@ export default defineRailway((ctx) => {
 
   const recordings = service('recordings', {
     build: dockerfile('recordings.Dockerfile'),
-    // 2 vCPU for the generator's two threads and 5 GB over its 3–4 GB peak (ADR 0172).
+    // 2 vCPU for the generator's two threads and 5 GB over its 3–4 GB peak.
     deploy: {
       ...cron('pnpm recordings', '0 * * * *'),
       limitOverride: { containers: { cpu: 2, memoryBytes: 5 * 1024 ** 3 } },

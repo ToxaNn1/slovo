@@ -74,7 +74,7 @@ let composition: Composition;
  * The app of a new reader on 2026-10-28 in Kyiv, with the Onboarding over the
  * home as the root layout draws it. Today's Word of the Day is сумирний,
  * yesterday's лагідний, the gestures hint has been shown, and the Edition turns the Curated Collections rail on,
- * which the UA Edition ships off till a content spec (ADR 0076).
+ * which the UA Edition ships off till a content spec.
  */
 async function openApp(feedScreen: () => ReactElement = FeedScreen) {
   const shipped = loadEdition(config);
@@ -196,7 +196,7 @@ async function back(testID: string) {
   screenSettled();
 }
 
-// Spec #1564, ticket #1575: one walk over every block of the Dashboard (ADR 0076).
+// Spec #1564, ticket #1575: one walk over every block of the Dashboard.
 describe('the whole Dashboard', () => {
   it('walks onboarding → hero → Mood → «Попередні слова» → Correction Type → Curated Collection → their grid → «До картки →» Feed → wordmark → Dashboard', async () => {
     const app = await openApp();
@@ -304,7 +304,7 @@ describe('the whole Dashboard', () => {
       expect(composition.feed.cards[composition.feed.position]?.entryId).toBe('w_sumyrnyi');
     });
 
-    // The wordmark of the Feed's header leads back to the Dashboard (ADR 0079).
+    // The wordmark of the Feed's header leads back to the Dashboard.
     screenSettled();
     await settle(() =>
       fireEvent.press(screen.getByRole('button', { name: editionStrings.dashboard.open })),

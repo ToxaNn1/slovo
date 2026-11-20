@@ -9,7 +9,7 @@ import { ExampleOutputSchema, ExampleSchema, WordIdSchema } from './word';
  */
 export const SynonymRowIdSchema = recordIdSchema('synonymRow', 'a Synonym Row');
 
-/** The most a member's shade note may say (ADR 0051). */
+/** The most a member's shade note may say. */
 export const SHADE_NOTE_MAX_LENGTH = 60;
 
 /**
@@ -74,7 +74,7 @@ const synonymRowShape = (
  * A Synonym Row as authored in an Edition's content and as returned by the
  * Core: a dominant, a short meaning line that says the sense of the dominant
  * the row is about, and 5 to 12 members in the order the card shows them. It
- * has no Category, rarity or Pronunciation (ADR 0051).
+ * has no Category, rarity or Pronunciation.
  *
  * `kind` tells Entries apart. Authored files may leave it out, because the
  * folder already says what they hold. `retired` defaults to false; a Retired

@@ -148,7 +148,7 @@ async function withDueEntries(): Promise<Map<string, string>> {
   return records;
 }
 
-// Spec #832, ADR 0054: Feed Notices take no turn and make nothing Seen.
+// Spec #832: Feed Notices take no turn and make nothing Seen.
 describe('Feed Notices', () => {
   it('come from the second card and leave the turns of every kind and of Review where they were', async () => {
     const records = await withDueEntries();
@@ -293,7 +293,7 @@ describe('Feed Notices', () => {
   });
 });
 
-// ADR 0022: the Feed asks for the Feed Notices of the day the composition turned to.
+// The Feed asks for the Feed Notices of the day the composition turned to.
 describe('The Feed Notices of a day', () => {
   it('are those of the day the composition turned to, not of the clock, until the app comes back', async () => {
     const asked: string[] = [];

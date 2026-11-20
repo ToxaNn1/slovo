@@ -1,5 +1,5 @@
 # Settings › Сповіщення on a fresh install, the permission not asked yet: the
-# onboarding asks for nothing (ADR 0067), so after it the Settings row reads
+# onboarding asks for nothing, so after it the Settings row reads
 # «Вимкнено», and the screen shows the Edition's default times with
 # «Увімкнути сповіщення» above them, which asks once; a grant makes the row
 # count what a day brings: «2 на день» from 3 times, the Word of the Day at the

@@ -37,7 +37,7 @@ struct EntryTimeline: AppIntentTimelineProvider {
   /// The mode's Entries from `start`, one every five minutes up to the next
   /// local midnight and one at it, in a shuffle taken in turn, so none comes
   /// back before every one has shown. The timeline ends at midnight, so the ✓
-  /// goes with the day it speaks of (ADR 0026). The widget shuffles with the
+  /// goes with the day it speaks of. The widget shuffles with the
   /// system random source.
   static func moments<R: RandomNumberGenerator>(
     of content: ModeContent, on background: BackgroundChoice, from start: Date,

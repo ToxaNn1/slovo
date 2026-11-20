@@ -2,7 +2,7 @@ import type { CrossingCrossword } from '@slovo/core';
 
 /**
  * Lemmas of the Edition's alphabet, three to five letters long, enough to
- * fill the crossing Daily Crossword's grid (ADR 0087) in a screen test.
+ * fill the crossing Daily Crossword's grid in a screen test.
  */
 export const CROSSING_LEMMAS = (
   'кіт дім сік лис рак кит вуж сом бик лев мак сад ліс сон рів тин бук дуб віз гай ' +

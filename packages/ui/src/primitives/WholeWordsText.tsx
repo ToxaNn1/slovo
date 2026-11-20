@@ -26,7 +26,7 @@ const LINES_SHRINK = 0.5;
  * `adjustsFontSizeToFit` shrinks text only when it runs past its lines, and a
  * word wider than the line is broken inside it, which still fits, so the text
  * keeps its size and the word splits. Here the widest word is measured first.
- * A card's title (`stepped`, ADR 0157) is tried at `size`, then at each lower
+ * A card's title (`stepped`) is tried at `size`, then at each lower
  * step of `titleScale` (grown as the Lemma is at the user's text size), and
  * drawn at the largest step at which its widest word fits the line and the
  * whole text its lines; one too big even at the smallest step shrinks there,
@@ -61,7 +61,7 @@ export function WholeWordsText({
   /** The most lines a phrase takes; a single word takes one. */
   lines?: number | undefined;
   /**
-   * Whether the text is a card's title, drawn at a step of `titleScale` (ADR 0157);
+   * Whether the text is a card's title, drawn at a step of `titleScale`;
    * any other text too wide for its line shrinks just enough for its widest word.
    */
   stepped?: boolean | undefined;

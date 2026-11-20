@@ -39,10 +39,10 @@ export function markStateOf(badge: BadgeGridItem): BadgeMarkState {
  * filled by its progress; an earned one not yet opened carries «НОВА». A
  * Badge is announced by its name, with `statusOf` as its value, and pressing
  * it calls `onPress`. On the Profile the marks stand five to a row; on the
- * Badges screen each Badge is a card (ADR 0145): its mark at 96 over its
+ * Badges screen each Badge is a card: its mark at 96 over its
  * name, `conditionOf` and `statusOf` (`badge-<id>-name`,
  * `badge-<id>-condition`, `badge-<id>-status`).
- * With `counts` false («Без лічильників», ADR 0188) a family's count is left out.
+ * With `counts` false («Без лічильників») a family's count is left out.
  * The marks carry the test IDs `badge-<id>-mark`, a family's count
  * `badge-family-<family>-count`.
  */

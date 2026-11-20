@@ -58,7 +58,7 @@ export interface NotificationEnvironment {
  *
  * Each notification comes on a calendar trigger built from its local date and
  * time parts with no time zone, so iOS fires it at that wall-clock time in
- * whatever zone the device is in (ADR 0021).
+ * whatever zone the device is in.
  */
 export function createNotificationScheduler(
   notifications: NotificationsModule | undefined,

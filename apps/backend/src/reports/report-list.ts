@@ -12,8 +12,8 @@ export interface ReportFilter {
 }
 
 /**
- * The lines `reports list` prints of the Mistake Reports still to check
- * (ADR 0056), newest first: one with the time, Edition, Entry id, type and
+ * The lines `reports list` prints of the Mistake Reports still to check,
+ * newest first: one with the time, Edition, Entry id, type and
  * comment, then one with the id `reports resolve` takes and the versions the
  * report came from.
  */

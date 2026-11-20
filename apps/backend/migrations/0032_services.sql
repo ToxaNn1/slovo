@@ -29,7 +29,7 @@ CREATE TABLE "services" (
 --> statement-breakpoint
 ALTER TABLE "service_entries" ADD CONSTRAINT "service_entries_service_id_services_id_fk" FOREIGN KEY ("service_id") REFERENCES "public"."services"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 CREATE INDEX "service_entries_service_id_idx" ON "service_entries" USING btree ("service_id");--> statement-breakpoint
--- The eleven known Services and their fixed places on the canvas (ADR 0164).
+-- The eleven known Services and their fixed places on the canvas.
 INSERT INTO "services" ("name", "kind", "x", "y", "links") VALUES
 	('GitHub', 'metered', 40, 40, '[{"to":"Railway","kind":"constant"},{"to":"Cloudflare","kind":"constant"}]'),
 	('Cloudflare', 'metered', 40, 260, '[{"to":"Railway","kind":"constant"}]'),

@@ -86,7 +86,7 @@ export type OnboardingState =
   | { readonly status: 'finished'; readonly finishedAt: Date };
 
 /**
- * The onboarding (ADR 0067): the welcome, the first Word, «ГРАЙ!», «Рівень» (whose
+ * The onboarding: the welcome, the first Word, «ГРАЙ!», «Рівень» (whose
  * «Не знаю» opens the Rarity Test) and «Навіщо», the Daily Goal, «Коли
  * нагадати?», then the Feed; and whether the reader finished
  * it, which is also when they skipped it. It opens on launch until then, at
@@ -115,7 +115,7 @@ export interface Onboarding {
   next(): Promise<void>;
   /**
    * Answers the question on screen with the option `answerId` and goes on:
-   * «Рівень» sets nothing (ADR 0183), or with «Не знаю» opens the Rarity Test,
+   * «Рівень» sets nothing, or with «Не знаю» opens the Rarity Test,
    * and «Навіщо» sets the Mix kind weights by the Edition's mapping. The answer is counted by the backend with no reader id
    * while the reader shares their anonymous statistics; a count that fails is
    * lost. An id that is no option, or another step on screen, does nothing.
@@ -268,12 +268,12 @@ export async function openOnboarding({
 
   async function keepFinished(skipped: boolean): Promise<void> {
     const finishedAt = clock.now();
-    // The first week counts from this day (ADR 0054).
+    // The first week counts from this day.
     await userState.write(
       new Map([
         ...onboardingFinished.change(finishedAt.toISOString()),
         ...firstWeekFrom.change(todayKey(clock)),
-        // A reader asked the Daily Goal here gets no later Feed Notice for it (ADR 0067).
+        // A reader asked the Daily Goal here gets no later Feed Notice for it.
         ...(steps.includes('dailyGoal') ? await dailyGoalAsked(userState) : []),
       ]),
     );

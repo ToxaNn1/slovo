@@ -1,5 +1,5 @@
 'use no memo';
-// Gesture-handler and Worklets code: the React Compiler skips this module (ADR 0059).
+// Gesture-handler and Worklets code: the React Compiler skips this module.
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { usePanGesture, type PanGestureConfig } from 'react-native-gesture-handler';

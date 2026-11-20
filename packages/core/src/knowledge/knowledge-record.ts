@@ -10,7 +10,7 @@ export type ReviewStep = 1 | 3 | 7 | 30 | 90;
 interface Marked {
   /**
    * The instant the mark was set or changed, ISO 8601 in UTC, which the
-   * Weekly Recap counts (ADR 0054); none on a mark kept before 0.8.13.
+   * Weekly Recap counts; none on a mark kept before 0.8.13.
    */
   readonly markedAt?: string;
 }
@@ -34,7 +34,7 @@ export interface ReviewRecord extends Marked {
 }
 
 /**
- * The Knowledge Mark of one Entry and where its Review stands (ADR 0043):
+ * The Knowledge Mark of one Entry and where its Review stands:
  * Learned, or in Review. An Entry without a record has no mark. Both forms
  * hold the fields of the stored record, in its order, so a record is kept as
  * it is.
@@ -117,7 +117,7 @@ export function isDue(record: KnowledgeRecord | undefined, day: LocalDate): bool
 
 /**
  * Whether answering the record Known confirms the Entry: it is on a Review of
- * 7 days or later (ADR 0043).
+ * 7 days or later.
  */
 export const confirmsOnKnown = (record: KnowledgeRecord | undefined): boolean =>
   record?.learned === false && record.step >= 7;

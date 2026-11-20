@@ -12,7 +12,7 @@ const line = (
   tip = 0,
 ) => knownLine(strings.stats, { word, correction, idiom, synonymRow, tip }, kinds, count);
 
-// Spec #461, #549, #730, ADR 0020: the row of the Known Entries of the stats sheet, in the plural forms of Ukrainian.
+// Spec #461, #549, #730: the row of the Known Entries of the stats sheet, in the plural forms of Ukrainian.
 describe('the row of the Known Entries, in the UA Edition', () => {
   it('names the Known Words alone while Corrections and Idioms are left out', () => {
     expect(line(['word'], 12, 3, 8)).toBe('знаю 12 слів');

@@ -119,7 +119,7 @@ const DaySchema = z
   // A day of the calendar, checked past the description: a `date` format there would break /v1 (ADR 0031).
   .refine((day) => z.iso.date().safeParse(day).success, 'Expected a day of the calendar');
 
-/** A count of one key (a day, a device, a version, a Variant): never a person or an id (ADR 0060). */
+/** A count of one key (a day, a device, a version, a Variant): never a person or an id. */
 export const AnalyticsCountSchema = z.object({ key: z.string(), count: z.number().int().min(0) });
 export type AnalyticsCount = z.infer<typeof AnalyticsCountSchema>;
 
@@ -180,7 +180,7 @@ export const ReaderCountsSchema = z.object({
   unregisteredAtLeast: z.number().int().min(0).nullable(),
   /** The switch-offs of anonymous statistics over the period. */
   statisticsOff: z.number().int().min(0),
-  /** The Accounts with Sync records in the filtered Editions, a tombstone not one (ADR 0162). */
+  /** The Accounts with Sync records in the filtered Editions, a tombstone not one. */
   syncing: z.number().int().min(0),
 });
 export type ReaderCounts = z.infer<typeof ReaderCountsSchema>;
@@ -322,7 +322,7 @@ const LiveIllustrationSchema = z.object({
 
 /**
  * An Illustration file in base64: room for a file somewhat over the 150 KB
- * limit, so the backend refuses it by the rule's name (ADR 0055).
+ * limit, so the backend refuses it by the rule's name.
  */
 const IllustrationFileSchema = z.base64().max(1_000_000);
 
@@ -353,7 +353,7 @@ const ContentRecordSummarySchema = z.object({
     .optional(),
 });
 
-/** One reader Account in the Безпека list (ADR 0162). */
+/** One reader Account in the Безпека list. */
 export const AccountRowSchema = z.object({
   id: z.string(),
   email: z.string(),
@@ -371,7 +371,7 @@ const KeptEntrySchema = z.object({
 });
 
 /**
- * One reader Account on its own page in Безпека (ADR 0162): its row and, for
+ * One reader Account on its own page in Безпека: its row and, for
  * every Edition it syncs, the records Sync keeps of it, as a pull answers
  * them, in the order they were kept, a tombstone left out, and the Entries
  * its Favorites, Collections, Hidden Entries and «Знаю» / «Не знаю» marks
@@ -422,7 +422,7 @@ const WrittenSchema = z.object({
   recordVersion: z.number().int().positive(),
   contentVersion: z.number().int().positive(),
   batchId: z.string(),
-  /** Words only: whether the Word's Recordings no longer read its text (ADR 0083). */
+  /** Words only: whether the Word's Recordings no longer read its text. */
   needsNewRecording: z.boolean().optional(),
 });
 
@@ -502,7 +502,7 @@ const contentWriteContract = {
       path: '/admin/content/{editionId}/records/word/{id}/illustration',
       summary: "Upload a Word's Illustration: checked, kept in the Media Store and published",
       description:
-        'A PNG, square, at most 150 KB (ADR 0055). It becomes the live Illustration, retires the one it replaces and raises the content version (ADR 0099).',
+        'A PNG, square, at most 150 KB. It becomes the live Illustration, retires the one it replaces and raises the content version (ADR 0099).',
       tags: ['admin'],
     })
     .errors({ REFUSED: writeErrors.REFUSED })
@@ -608,7 +608,7 @@ const contentWriteContract = {
         fields: z.record(z.string(), z.unknown()),
         recordVersion: z.number().int().positive(),
         retired: z.boolean(),
-        /** Words only: whether the Word's Recordings no longer read its text (ADR 0083). */
+        /** Words only: whether the Word's Recordings no longer read its text. */
         needsNewRecording: z.boolean().optional(),
         /** Words only: the live Illustration, when the Word has one. */
         illustration: LiveIllustrationSchema.optional(),
@@ -657,7 +657,7 @@ const contentWriteContract = {
       summary:
         'The next live record of a kind not checked yet, for «Перегляд», with the count of them all',
       description:
-        'Records whose last change came in the newest batch come first. A record is checked at the record version an Admin user marked; any later write leaves it unchecked again (ADR 0143).',
+        'Records whose last change came in the newest batch come first. A record is checked at the record version an Admin user marked; any later write leaves it unchecked again.',
       tags: ['admin'],
     })
     .input(
@@ -687,7 +687,7 @@ const contentWriteContract = {
       method: 'POST',
       path: `${recordPath}/{id}/check`,
       summary: 'Mark a record checked at its record version: no content changes, an Action log row',
-      description: 'An Admin user only, with no reason; an Агент token is refused (ADR 0143).',
+      description: 'An Admin user only, with no reason; an Агент token is refused.',
       tags: ['admin'],
     })
     .errors({ STALE: writeErrors.STALE })
@@ -707,7 +707,7 @@ const contentWriteContract = {
       summary:
         'Mark every live record of a kind not checked yet checked at its record version, at one confirmation',
       description:
-        'An Admin user only, with a reason; an Агент token is refused. Each record leaves the Action log row of a single check, with the reason; `total` is the count the confirmation named, and a different count now is refused (ADR 0152).',
+        'An Admin user only, with a reason; an Агент token is refused. Each record leaves the Action log row of a single check, with the reason; `total` is the count the confirmation named, and a different count now is refused.',
       tags: ['admin'],
     })
     .errors({
@@ -744,7 +744,7 @@ const contentWriteContract = {
         /** Each target the content falls short of. */
         missed: z.array(z.object({ target: z.string(), message: z.string() })),
         /**
-         * The quote check (ADR 0084): records changed since their last check, and
+         * The quote check: records changed since their last check, and
          * records whose quote was not found on their source page.
          */
         quoteCheck: z.object({
@@ -781,7 +781,7 @@ const QueueFlagSchema = z.object({
   at: z.string(),
 });
 
-/** A Mistake Report still to check (ADR 0056, 0159). */
+/** A Mistake Report still to check. */
 const QueueReportSchema = z.object({
   id: z.string(),
   editionId: EditionIdSchema,
@@ -884,7 +884,7 @@ const contentQueueContract = {
     .route({
       method: 'POST',
       path: `${queuePath}/reports/{id}/resolve`,
-      summary: '«Вирішено»: deletes the Mistake Report (ADR 0056)',
+      summary: '«Вирішено»: deletes the Mistake Report',
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
@@ -1271,7 +1271,7 @@ export const adminContract = {
       summary:
         "Every reader's Account, newest first, a page of 50 at a time with the count of every match",
       description:
-        'A Безпека procedure: a Власник only (ADR 0162), and never logged. A `search` keeps the Accounts whose email holds it, in any case.',
+        'A Безпека procedure: a Власник only, and never logged. A `search` keeps the Accounts whose email holds it, in any case.',
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
@@ -1296,7 +1296,7 @@ export const adminContract = {
       path: '/admin/accounts/{accountId}',
       summary: "One reader's Account with its Sync records in every Edition, read only",
       description:
-        'A Безпека procedure: a Власник only (ADR 0162), and never logged. Answers the email, the date, the Google and Apple sign-in methods and, per Edition, the records Sync keeps, without tombstones; `null` for an id with no Account.',
+        'A Безпека procedure: a Власник only, and never logged. Answers the email, the date, the Google and Apple sign-in methods and, per Edition, the records Sync keeps, without tombstones; `null` for an id with no Account.',
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
@@ -1309,7 +1309,7 @@ export const adminContract = {
       path: '/admin/accounts/{email}/delete',
       summary: "Deletes a reader's Account for good, as the app's own deletion does",
       description:
-        'A Власник only (ADR 0127). Its Sessions, sign-in methods and Sync records go with it. Refused with `unknown` for an email with no Account.',
+        'A Власник only. Its Sessions, sign-in methods and Sync records go with it. Refused with `unknown` for an email with no Account.',
       tags: ['admin'],
     })
     .errors(ACCESS_WRITE_ERRORS)
@@ -1577,7 +1577,7 @@ export const adminContract = {
       path: '/admin/ci-runs',
       summary: 'CI pushes a run on main to the history',
       description:
-        'Called by CI after each run on main, with the CI history token as Bearer (ADR 0096). A run already kept stays as it is.',
+        'Called by CI after each run on main, with the CI history token as Bearer. A run already kept stays as it is.',
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)

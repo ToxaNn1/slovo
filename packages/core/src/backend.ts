@@ -12,7 +12,7 @@ type DefinedError<E> = Extract<E, ORPCError<string, unknown>>;
 
 /**
  * What a call of the backend comes to for a Core module; it never rejects
- * (ADR 0037, 0062). Success carries the call's output. An error the contract
+ * (ADR 0062). Success carries the call's output. An error the contract
  * defines for the procedure comes to the failure `failureOf` makes of it, if
  * any; its code is typed by the contract, so comparing it with a code the
  * procedure doesn't define, or renaming one in the contract, fails typecheck.
