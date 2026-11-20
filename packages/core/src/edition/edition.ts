@@ -142,7 +142,7 @@ export class InvalidEditionConfigError extends Error {
  * kept are read (ADR 0202).
  */
 export function inEffectWithoutRules(shipped: ShippedEdition): Edition {
-  const { featureSwitches, isShippedOn, ...edition } = shipped;
+  const { featureSwitches: _shippedStates, isShippedOn, ...edition } = shipped;
   return { ...edition, isFeatureEnabled: isShippedOn };
 }
 
