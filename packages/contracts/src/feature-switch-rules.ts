@@ -6,6 +6,13 @@ import { EditionIdSchema, FeatureSwitchStateSchema } from './edition';
 /** An app version as the stores name it: three numbers. */
 export const AppVersionSchema = z.string().regex(/^\d+\.\d+\.\d+$/, 'Expected an app version');
 
+/** Whether app version `a` comes after `b`, compared number by number. */
+function isLaterVersion(a: string, b: string): boolean {
+  const [partsA, partsB] = [a.split('.').map(Number), b.split('.').map(Number)];
+  const differing = partsA.findIndex((part, i) => part !== partsB[i]);
+  return differing !== -1 && (partsA[differing] ?? 0) > (partsB[differing] ?? 0);
+}
+
 /** The platforms the app has a build for. */
 export const PlatformSchema = z.enum(['ios', 'android']);
 
@@ -42,6 +49,10 @@ export const RuleTargetsSchema = z.strictObject({
   /** The app versions in the range, both ends included; an end left out is open. */
   appVersion: z
     .strictObject({ from: AppVersionSchema.optional(), until: AppVersionSchema.optional() })
+    .refine(
+      ({ from, until }) => from === undefined || until === undefined || !isLaterVersion(from, until),
+      'Expected `from` no later than `until`',
+    )
     .optional(),
   platform: PlatformSchema.optional(),
   /** The phone's region setting, read through the JavaScript locale, one of these. */
@@ -52,6 +63,11 @@ export const RuleTargetsSchema = z.strictObject({
   /** The moments the Rule holds between, both ends included, on the device's clock corrected by the backend's. */
   schedule: z
     .strictObject({ from: z.iso.datetime().optional(), until: z.iso.datetime().optional() })
+    .refine(
+      ({ from, until }) =>
+        from === undefined || until === undefined || Date.parse(from) <= Date.parse(until),
+      'Expected `from` no later than `until`',
+    )
     .optional(),
   /** The Update channel the build listens to: `beta` targets the owner's testers. */
   channel: UpdateChannelSchema.optional(),

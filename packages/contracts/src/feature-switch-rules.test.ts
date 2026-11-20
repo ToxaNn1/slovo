@@ -45,11 +45,34 @@ describe('a Rule', () => {
     ['a region that is no country code', { targets: { region: ['Ukraine'] } }],
     ['an app version that is no version', { targets: { appVersion: { from: 'latest' } } }],
     ['a schedule that is no moment', { targets: { schedule: { from: 'tomorrow' } } }],
+    [
+      'an app version range that ends before it begins',
+      { targets: { appVersion: { from: '1.10.0', until: '1.9.0' } } },
+    ],
+    [
+      'a schedule that ends before it begins',
+      {
+        targets: {
+          schedule: { from: '2026-12-01T00:00:00.000Z', until: '2026-11-10T09:00:00.000Z' },
+        },
+      },
+    ],
     ['an Update channel the app has none of', { targets: { channel: 'alpha' } }],
     ['a target it does not know', { targets: { weather: 'sunny' } }],
     ['an order below zero', { order: -1 }],
   ])('refuses %s', (_name, change) => {
     expect(RuleSchema.safeParse({ ...rule, ...change }).success).toBe(false);
+  });
+
+  it.each([
+    ['an app version range of one version', { appVersion: { from: '1.9.0', until: '1.9.0' } }],
+    ['an app version range over a tenth', { appVersion: { from: '1.9.0', until: '1.10.0' } }],
+    [
+      'a schedule of one moment',
+      { schedule: { from: '2026-12-01T00:00:00.000Z', until: '2026-12-01T00:00:00.000Z' } },
+    ],
+  ])('reads %s', (_name, targets) => {
+    expect(RuleSchema.parse({ ...rule, targets }).targets).toEqual(targets);
   });
 });
 
