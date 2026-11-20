@@ -213,16 +213,32 @@ describe('The Community Word', () => {
     expect(api.calls).toHaveLength(1);
   });
 
-  it('asks again on a later card when the week could not be read', async () => {
+  // Audit 1.9: a week that could not be read is not asked for again in the app run, so no later card waits for the backend.
+  it('asks once in an app run when the week could not be read, and again on the next run', async () => {
+    const records = new Map<string, string>();
     const api = apiOfWord();
     api.failNext('offline');
-    const app = await run({ records: new Map(), at: monday, api });
+    const app = await run({ records, at: monday, api });
 
     const cards = await firstCards(app.feed, 4);
 
-    expect(cards.map((card) => card.kind)).toEqual(['word', 'word', 'notice', 'word']);
-    expect(shownBy(cards)[2]).toBe('communityWord');
+    expect(cards.map((card) => card.kind)).toEqual(['word', 'word', 'word', 'word']);
+    expect(api.calls).toHaveLength(1);
+
+    const later = await firstCards((await run({ records, at: mondayEvening, api })).feed, 3);
+
+    expect(shownBy(later)[1]).toBe('communityWord');
     expect(api.calls).toHaveLength(2);
+  });
+
+  it('asks once in an app run when the backend answers out of shape', async () => {
+    const api = createFakeBackend();
+    api.counters.answerCommunityWord({ entryId: 'w_07', adds: -1 });
+    const app = await run({ records: new Map(), at: monday, api });
+
+    await firstCards(app.feed, 4);
+
+    expect(api.calls).toHaveLength(1);
   });
 
   it('does not show on a local Sunday west of UTC whose UTC date is already Monday, and shows once the local Monday starts', async () => {

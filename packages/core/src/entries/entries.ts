@@ -367,18 +367,25 @@ export function createEntries({
   /** The ids of the eligible Entries of the kind, under the kind's name. */
   const idsOfKind = (kind: AskableKind, ids: EntryIds) => ids[ENTRY_KINDS[kind].name];
 
-  async function eligibleOfKind(
+  async function eligibleOfKind<Also extends AskableKind = never>(
     kind: ShownKind,
-    alsoOf: readonly AskableKind[] = [],
-  ): Promise<EligibleOfKind<AskableEntry>> {
+    alsoOf: readonly Also[] = [],
+  ): Promise<EligibleOfKind<Extract<AskableEntry, { kind: ShownKind | Also }>>> {
     if (kind !== 'word' && !kindsOf(choices.mix())[kind]) {
       return { refusal: `${featureOfKind(kind)}-out-of-mix` };
     }
-    const kinds = [kind, ...alsoOf];
+    const kinds: readonly AskableKind[] = [kind, ...alsoOf];
+    const asked = (
+      entry: Entry | undefined,
+    ): entry is Extract<AskableEntry, { kind: ShownKind | Also }> =>
+      entry !== undefined && kinds.includes(entry.kind);
     const [ids, ...entries] = await Promise.all([eligible(), ...kinds.map((each) => live[each]())]);
     return {
       entries: kinds.flatMap((each, index) =>
-        idsOfKind(each, ids).flatMap((id) => entries[index]?.get(id) ?? []),
+        idsOfKind(each, ids).flatMap((id) => {
+          const entry = entries[index]?.get(id);
+          return asked(entry) ? [entry] : [];
+        }),
       ),
     };
   }
@@ -429,8 +436,7 @@ export function createEntries({
     wordsInRarityRange,
     liveCorrections,
     ofCategory,
-    // The kinds asked for pick the Entries returned, as the generic signature says.
-    eligibleOfKind: eligibleOfKind as Entries['eligibleOfKind'],
+    eligibleOfKind,
     async get(id) {
       return (await readShown([id]))[0];
     },

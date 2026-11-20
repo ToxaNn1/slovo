@@ -198,7 +198,9 @@ export async function openCuratedCollections({
   }
   if (on) {
     dayTurned.subscribe(() => refresh());
-    collections.subscribe(() => void refresh());
+    // Nobody awaits this refresh. One whose read fails rejects nothing: the
+    // rail stays as it was, and the next change reads again.
+    collections.subscribe(() => void refresh().catch(() => undefined));
     hiddenEntries.subscribe(() => {
       subscribers.tell();
     });

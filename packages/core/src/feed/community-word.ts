@@ -17,8 +17,9 @@ const { communityWord: kept } = userStateRecords;
  * The Community Word («Слово тижня спільноти»): on a local Monday, the card of
  * the Entry readers most added to Favorites last ISO week, with its adds,
  * while that Entry is in the Language Pack and neither Hidden nor Retired. The
- * week is read once a day: the answer is kept for its local date, and a read
- * that fails is tried again on the next card. The backend names the week by
+ * week is read once a day: the answer is kept for its local date. A read that
+ * fails is not tried again in the app run, so no later card of the day waits
+ * for a backend that does not answer; the next run asks again. The backend names the week by
  * UTC, so while the UTC date is still before the local one, as just past a
  * local midnight east of UTC, the week is not asked for yet. It is there only
  * while the Feature Switches `communityCounters` and `communityWord` are both
@@ -39,19 +40,31 @@ export function createCommunityWord({
   backend: Pick<Backend, 'counters'>;
   clock: Clock;
 }): FeedNotices {
-  /** The Community Word of the day, read once a day; none when there is none or it can't be read. */
-  async function ofDay(day: LocalDate): Promise<CommunityWordAnswer | undefined> {
-    const date = dateKeyOf(day);
-    const keptOfDay = await userState.read(kept);
-    if (keptOfDay?.date === date) return keptOfDay.communityWord ?? undefined;
-    if (clock.now().toISOString().slice(0, 10) < date) return undefined;
+  /** The local date whose week this app run asked for and could not read. */
+  let unreadOn: string | undefined;
+
+  /** The week as the backend answers it now; none when it can't be read. */
+  async function asked(): Promise<{ communityWord: CommunityWordAnswer | null } | undefined> {
     // `counters.communityWord` needs no Account and carries no device id.
     const answer = await answerOf(backend.counters.communityWord({ edition: edition.id }));
     if (!answer.ok) return undefined;
     // The client does not check answers: one out of the contract's shape is unexpected and kept nowhere.
     const parsed = CommunityWordOutputSchema.safeParse(answer.output);
-    if (!parsed.success) return undefined;
-    const { communityWord } = parsed.data;
+    return parsed.success ? parsed.data : undefined;
+  }
+
+  /** The Community Word of the day, read once a day; none when there is none or it can't be read. */
+  async function ofDay(day: LocalDate): Promise<CommunityWordAnswer | undefined> {
+    const date = dateKeyOf(day);
+    const keptOfDay = await userState.read(kept);
+    if (keptOfDay?.date === date) return keptOfDay.communityWord ?? undefined;
+    if (unreadOn === date || clock.now().toISOString().slice(0, 10) < date) return undefined;
+    const read = await asked();
+    if (read === undefined) {
+      unreadOn = date;
+      return undefined;
+    }
+    const { communityWord } = read;
     await userState.write(kept.change({ date, communityWord }));
     return communityWord ?? undefined;
   }

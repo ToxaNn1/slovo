@@ -267,11 +267,16 @@ export async function openDashboard({
     shownKey = key;
     subscribers.tell();
   }
+  /**
+   * A refresh nobody awaits. One whose read fails rejects nothing: the blocks
+   * stay as they were, and the next change reads again.
+   */
+  const refreshUnawaited = () => void refresh().catch(() => undefined);
   seen.subscribe(() => refresh());
   dayTurned.subscribe(() => refresh());
-  mood.subscribe(() => void refresh());
-  correctionTypes.subscribe(() => void refresh());
-  curatedCollections.subscribe(() => void refresh());
+  mood.subscribe(refreshUnawaited);
+  correctionTypes.subscribe(refreshUnawaited);
+  curatedCollections.subscribe(refreshUnawaited);
 
   return {
     get blocks() {
