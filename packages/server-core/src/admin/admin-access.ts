@@ -1,31 +1,9 @@
-import type { Clock, Json, Random } from '../ports';
+import type { Action, ActionEntry, Actor, Clock, Json, Random } from '../ports';
+
+export type { Action, ActionEntry, Actor } from '../ports';
 
 /** The role of an Admin user: Власник does everything, Адмін everything but Безпека (ADR 0088). */
 export type AdminRole = 'owner' | 'admin';
-
-/** Who made a change the Action log records. */
-export type Actor =
-  | { readonly kind: 'admin-user'; readonly email: string }
-  | { readonly kind: 'agent'; readonly name: string }
-  | { readonly kind: 'command'; readonly command: string };
-
-/** What a change brings to the Action log; the log adds when. */
-export interface ActionEntry {
-  readonly who: Actor;
-  /** What changed, such as `admin.owner.add` or `content.entry.edit`. */
-  readonly what: string;
-  readonly before: Json;
-  readonly after: Json;
-  readonly reason: string | null;
-  readonly editionId: string | null;
-  /** The batch the change belongs to: one CLI run of an Агент is one batch. */
-  readonly batchId: string | null;
-}
-
-/** One row of the Action log, kept forever and never edited. */
-export interface Action extends ActionEntry {
-  readonly at: Date;
-}
 
 /** Where an Admin user's TOTP stands: none yet, set up but never used to sign in, or on. */
 export type AdminTotp =

@@ -13,7 +13,6 @@ import type {
   Platform,
   Rule,
 } from '@slovo/contracts';
-import type { Action } from './admin/admin-access';
 import type { EasBuild, MainCi, Milestone, PullRequest, Release } from '@slovo/contracts/admin-api';
 
 /** The current time, injected so the rules that read it stay testable. */
@@ -594,4 +593,28 @@ export interface CiRunStore {
   add(run: CiRun): Promise<void>;
   /** The runs from `from` up to `to`, oldest first. */
   between(from: Date, to: Date): Promise<readonly CiRun[]>;
+}
+
+/** Who made a change the Action log records. */
+export type Actor =
+  | { readonly kind: 'admin-user'; readonly email: string }
+  | { readonly kind: 'agent'; readonly name: string }
+  | { readonly kind: 'command'; readonly command: string };
+
+/** What a change brings to the Action log; the log adds when. */
+export interface ActionEntry {
+  readonly who: Actor;
+  /** What changed, such as `admin.owner.add` or `content.entry.edit`. */
+  readonly what: string;
+  readonly before: Json;
+  readonly after: Json;
+  readonly reason: string | null;
+  readonly editionId: string | null;
+  /** The batch the change belongs to: one CLI run of an Агент is one batch. */
+  readonly batchId: string | null;
+}
+
+/** One row of the Action log, kept forever and never edited. */
+export interface Action extends ActionEntry {
+  readonly at: Date;
 }
