@@ -6,7 +6,7 @@ import { describe, expect, it, onTestFinished } from 'vitest';
 import { runAdminCommand } from '../admin/admin-command';
 import { createAdminStore, hashToken } from '../admin/admin-store';
 import { createDatabase } from '../database/database';
-import { mistakeReports } from '../database/schema';
+import { actionLog, mistakeReports } from '../database/schema';
 import { systemRandom } from '../random';
 import {
   adminCommandDeps,
@@ -132,6 +132,25 @@ describe('the Content queue', () => {
     expect(rollbacks[0]?.reason).toBe('Погана пачка');
     const { batches } = await owner.admin.contentQueue.batches({ editionId: 'uk' });
     expect(batches.map(({ id }) => id)).toEqual([later.batchId]);
+  });
+
+  it("reads only the restored write's record before it, not a later write's of the same record", async () => {
+    const { client, agent, owner, database } = await queueBackend();
+    const { batchId, first } = await agentBatch(client, agent);
+    // A later write of the same record whose logged record before it no longer reads as one.
+    await database.db.insert(actionLog).values({
+      who: { kind: 'agent', name: 'claude-content' },
+      at: new Date(),
+      what: 'content.word.edit',
+      before: 'broken',
+      after: { recordVersion: 3, fields: { id: first.id } },
+      editionId: 'uk',
+      batchId,
+    });
+
+    const answer = await owner.admin.contentQueue.rollback({ batchId, reason: 'Погана пачка' });
+
+    expect(answer.restored).toContain(first.id);
   });
 
   it('leaves a Word needing a new Recording when it rolls back an edit of its Lemma (ADR 0099, 0195)', async () => {

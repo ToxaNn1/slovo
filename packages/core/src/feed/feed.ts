@@ -795,11 +795,11 @@ export async function openFeed({
       becomesSeen && seen.wordOfTheDay !== undefined
         ? archive.record(seen.wordOfTheDay, seen.entryId)
         : undefined;
-    const joined = becomesSeen
-      ? await history.record({ ...seen, wordOfTheDay: seen.wordOfTheDay !== undefined })
-      : undefined;
     // History first, then the Seen mark, then the archive's day.
-    await writeStaged(userState, [joined, mark, archived, ...pieces]);
+    const rest = [mark, archived, ...pieces];
+    if (becomesSeen)
+      await history.record({ ...seen, wordOfTheDay: seen.wordOfTheDay !== undefined }, rest);
+    else await writeStaged(userState, rest);
     return becomesSeen ? seen.entryId : undefined;
   }
 
