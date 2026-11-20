@@ -95,7 +95,7 @@ const word = (index: number): Word => ({
 async function settle(action: () => unknown = () => undefined) {
   await act(async () => {
     await action();
-    jest.runOnlyPendingTimers();
+    jest.advanceTimersByTime(0);
   });
 }
 
@@ -417,6 +417,7 @@ describe('the crossing Daily Crossword', () => {
     });
     await openFromCard();
     const { words } = await crossingPuzzle();
+    await pass(33);
 
     for (const target of words) await solveWord(target);
 
@@ -481,6 +482,24 @@ describe('the crossing Daily Crossword', () => {
     });
 
     expect(app.pathname()).toBe('/game');
+  });
+
+  it('turns to the next local day’s crossword on a return to the foreground after midnight', async () => {
+    const app = await renderGame();
+    await openFromCard();
+    expect(screen.getByTestId('crossing-crossword-grid')).toBeOnTheScreen();
+    // The next local day has no crossword: no pattern fills it.
+    jest.spyOn(composition, 'openDailyCrossword').mockResolvedValue({ kind: 'none' });
+
+    await moveApp('background');
+    await moveApp('foreground');
+    expect(app.pathname()).toBe('/game/crossword');
+
+    await moveApp('background');
+    jest.setSystemTime(Date.now() + 24 * 60 * 60 * 1000);
+    await moveApp('foreground');
+    expect(app.pathname()).toBe('/game');
+    expect(screen.queryByTestId('daily-crossword')).toBeNull();
   });
 
   it('drops «без підказок» from the share line once «Підказка» filled a letter', async () => {

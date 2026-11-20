@@ -12,7 +12,9 @@ import { useCallback, useState } from 'react';
 
 import { useComposition, useCompositionRead } from '../composition';
 import { edition, editionStrings } from '../edition/edition';
+import { deviceClock } from '../device/device-clock';
 import { logError } from '../diagnostics/log';
+import { useTodayKey } from '../foreground/today';
 import { crossingMiniGrid, crossingProgress, crossingSolveOf } from './crossing-crossword';
 import { solveTimeText } from './crossword-share';
 
@@ -85,9 +87,6 @@ interface CrossingCardState {
   readonly solve: CrosswordSolve | undefined;
 }
 
-/** What the card shows of the Daily Crossword the Core opened today: none when it opens none. */
-const openDailyCrossword = (composition: Composition) => composition.openDailyCrossword();
-
 async function cardState(composition: Composition): Promise<CrossingCardState | undefined> {
   const opening = await composition.openDailyCrossword();
   if (opening.kind === 'none') return undefined;
@@ -97,43 +96,56 @@ async function cardState(composition: Composition): Promise<CrossingCardState | 
 
 /**
  * Today's Daily Crossword for its screen, as the Core opened it, opened as the
- * screen opens and again in a composition reopened: `undefined` while it
- * opens. An opening that fails is logged and opens none.
+ * screen opens, again in a composition reopened and again once the next
+ * local day has started: `undefined` while it first opens. An opening that
+ * fails is logged and opens none.
  */
 export function useDailyCrossword(): DailyCrosswordOpening | undefined {
-  const reading = useCompositionRead(openDailyCrossword, 'Could not open the Daily Crossword');
+  const today = useTodayKey(deviceClock);
+  const open = useCallback(
+    // Read again for each day: the Core opens the crossword of the day it is.
+    (composition: Composition) => composition.openDailyCrossword(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `today` is the cue to read again
+    [today],
+  );
+  const reading = useCompositionRead(open, 'Could not open the Daily Crossword');
   if (reading.status === 'loading') return undefined;
   return reading.status === 'ready' ? reading.value : { kind: 'none' };
 }
 
 /**
  * The card of today's Daily Crossword, read each time the screen that shows
- * it comes into view, so it shows what the crossword's screen left, and again
- * in a composition reopened; nothing while it is first read, with its Feature
+ * it comes into view, so it shows what the crossword's screen left, again
+ * in a composition reopened and again once the next local day has started; nothing while it is first read, with its Feature
  * Switch off or with no day for the local date in the Language Pack. A read
  * that fails is logged and shows no card.
  */
 export function useDailyCrosswordCard(): DailyCrosswordCardContent | undefined {
   const composition = useComposition();
-  const [read, setRead] = useState<{ in: Composition; state: CrossingCardState | undefined }>();
+  const today = useTodayKey(deviceClock);
+  const [read, setRead] = useState<{
+    in: Composition;
+    on: string;
+    state: CrossingCardState | undefined;
+  }>();
   useFocusEffect(
     useCallback(() => {
       let active = true;
       cardState(composition).then(
         (state) => {
-          if (active) setRead({ in: composition, state });
+          if (active) setRead({ in: composition, on: today, state });
         },
         (error: unknown) => {
           logError('Could not open the Daily Crossword', error);
-          if (active) setRead({ in: composition, state: undefined });
+          if (active) setRead({ in: composition, on: today, state: undefined });
         },
       );
       return () => {
         active = false;
       };
-    }, [composition]),
+    }, [composition, today]),
   );
-  const state = read?.in === composition ? read.state : undefined;
+  const state = read?.in === composition && read.on === today ? read.state : undefined;
   if (state === undefined) return undefined;
   const { dailyCrossword: strings } = editionStrings.game;
   const { months } = editionStrings.dates;

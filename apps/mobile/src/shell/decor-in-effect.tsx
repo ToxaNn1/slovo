@@ -1,31 +1,11 @@
-import { dateKeyOf, decorOf, localDayOf, parseLocalDate, type Clock } from '@slovo/core';
+import { decorOf, parseLocalDate, type Clock } from '@slovo/core';
 import { DecorProvider } from '@slovo/ui';
-import { useCallback, useSyncExternalStore, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 import { editionDecor, seasonalMotifs } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
-import { useInForeground } from '../foreground/in-foreground';
-import { everyNextLocalDay } from '../foreground/next-local-day';
+import { useTodayKey } from '../foreground/today';
 import { useSettings } from '../settings/settings';
-
-/** Today's local date as its key, which stays the same string all day. */
-const todayKeyOf = (clock: Clock) => dateKeyOf(localDayOf(clock.now(), clock).date);
-
-/**
- * Today's local date, read again at the start of each local day and on each
- * return to the foreground, as a timer may not run in the background.
- */
-function useToday(clock: Clock) {
-  // Draws again on a return to the foreground, which reads the date anew.
-  useInForeground();
-  // A stable subscription, so a draw does not start the timer again.
-  const subscribe = useCallback(
-    (onChange: () => void) => everyNextLocalDay(clock, onChange),
-    [clock],
-  );
-  const todayKey = useSyncExternalStore(subscribe, () => todayKeyOf(clock));
-  return parseLocalDate(todayKey);
-}
 
 /**
  * Gives everything below the Decor of today: the Mascot wears the
@@ -37,7 +17,7 @@ export function DecorInEffect({ clock, children }: { clock: Clock; children: Rea
   const decor = decorOf({
     decor: editionDecor,
     motifs: seasonalMotifs,
-    date: useToday(clock),
+    date: parseLocalDate(useTodayKey(clock)),
     edition: useEditionInEffect(),
     settings: useSettings().current,
   });
