@@ -210,6 +210,19 @@ describe('the XP log of days older than 30 days', () => {
     ]);
   });
 
+  it('skips a row whose instant is no instant, and still opens with the other rows of the day', async () => {
+    const records = new Map([
+      [
+        'xpDay.2026-09-01-2-broken',
+        '{"date":"2026-09-01","rows":{"round-a":{"t":1e20,"source":"game-round","amount":1,"mode":"definition","rarity":4},"review-a":{"t":32400000,"source":"review-answer","amount":6}}}',
+      ],
+    ]);
+
+    const { xpLog } = await open(records, '2026-10-14T09:00:00.000Z');
+
+    expect(xpLog.state.total).toBe(6);
+  });
+
   it('lists the folded records in the Data export as it lists records', async () => {
     const asRecords = await (await open(stored(), '2026-09-20T12:00:00+03:00')).dataExport();
     const records = stored();
