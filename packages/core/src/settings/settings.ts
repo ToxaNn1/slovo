@@ -1,7 +1,7 @@
 import type { TextSize, Theme } from '@slovo/contracts';
 
 import type { Analytics } from '../analytics/analytics';
-import { forgetUnsentCounters } from '../community-counters/counter-deltas';
+import { countersTurnOf, forgetUnsentCounters } from '../community-counters/counter-deltas';
 import type { Edition } from '../edition/edition';
 import type { Backend } from '../ports';
 import type { UserState } from '../user-state/user-state';
@@ -137,30 +137,38 @@ export function createSettings({
       const changed = Object.entries(changes).filter(
         ([setting, value]) => before.get(setting) !== value,
       );
-      await userState.write(
-        new Map([
-          ...('theme' in changes ? userStateRecords.theme.change(changes.theme) : []),
-          ...('textSize' in changes ? userStateRecords.textSize.change(changes.textSize) : []),
-          ...('vibration' in changes ? userStateRecords.vibration.change(changes.vibration) : []),
-          ...('sounds' in changes ? userStateRecords.sounds.change(changes.sounds) : []),
-          ...('noCounters' in changes
-            ? userStateRecords.noCounters.change(changes.noCounters)
-            : []),
-          ...('selfCheck' in changes ? userStateRecords.selfCheck.change(changes.selfCheck) : []),
-          ...('seasonalDecor' in changes
-            ? userStateRecords.seasonalDecor.change(changes.seasonalDecor)
-            : []),
-          ...('shareCounters' in changes
-            ? userStateRecords.shareCounters.change(changes.shareCounters)
-            : []),
-          ...('reduceMotion' in changes
-            ? userStateRecords.reduceMotion.change(changes.reduceMotion)
-            : []),
-          ...('narratorVoice' in changes
-            ? userStateRecords.narratorVoice.change(changes.narratorVoice)
-            : []),
-          ...(changes.shareCounters === false ? await forgetUnsentCounters(userState) : []),
-        ]),
+      // Turning sharing off forgets the unsent changes in the counters' turn,
+      // so a mark being counted is written first and forgotten with them.
+      const inTurn =
+        changes.shareCounters === false
+          ? countersTurnOf(userState)
+          : (write: () => Promise<void>) => write();
+      await inTurn(async () =>
+        userState.write(
+          new Map([
+            ...('theme' in changes ? userStateRecords.theme.change(changes.theme) : []),
+            ...('textSize' in changes ? userStateRecords.textSize.change(changes.textSize) : []),
+            ...('vibration' in changes ? userStateRecords.vibration.change(changes.vibration) : []),
+            ...('sounds' in changes ? userStateRecords.sounds.change(changes.sounds) : []),
+            ...('noCounters' in changes
+              ? userStateRecords.noCounters.change(changes.noCounters)
+              : []),
+            ...('selfCheck' in changes ? userStateRecords.selfCheck.change(changes.selfCheck) : []),
+            ...('seasonalDecor' in changes
+              ? userStateRecords.seasonalDecor.change(changes.seasonalDecor)
+              : []),
+            ...('shareCounters' in changes
+              ? userStateRecords.shareCounters.change(changes.shareCounters)
+              : []),
+            ...('reduceMotion' in changes
+              ? userStateRecords.reduceMotion.change(changes.reduceMotion)
+              : []),
+            ...('narratorVoice' in changes
+              ? userStateRecords.narratorVoice.change(changes.narratorVoice)
+              : []),
+            ...(changes.shareCounters === false ? await forgetUnsentCounters(userState) : []),
+          ]),
+        ),
       );
       if (changes.shareCounters === false) analytics?.stop();
       if (

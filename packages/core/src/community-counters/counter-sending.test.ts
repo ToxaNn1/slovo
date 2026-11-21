@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createSettings, openComposition, openCounterSending, type FeatureSwitch } from '../index';
 import type { UserStatePort } from '../ports';
 import { createFakeBackend, createMemoryContentPort } from '../testing';
-import { fakeClock, randomOf, testEdition, testSchedule, word } from '../test-support';
+import { fakeClock, randomOf, settle, testEdition, testSchedule, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -396,6 +396,23 @@ describe('sharing the Community Counters', () => {
       [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
       [{ entryId: 'w_000', known: -1, unknown: 0, saved: 0 }],
     ]);
+  });
+
+  it('turned off while a mark is being counted, leaves nothing waiting', async () => {
+    const held = holdingPort('counters.unsent.w_000');
+    const phone = await device(held.port);
+    held.hold();
+    const tapped = phone.app.knowledge.tap('w_000', 'known');
+    await settle();
+
+    const off = phone.settings.update({ shareCounters: false });
+    await settle();
+    held.release();
+    await Promise.all([tapped, off]);
+
+    expect(await phone.unsent()).toEqual([]);
+    await phone.foreground();
+    expect(phone.api.calls).toHaveLength(0);
   });
 
   it('turned off while a request is out, counts from what the backend counted', async () => {
