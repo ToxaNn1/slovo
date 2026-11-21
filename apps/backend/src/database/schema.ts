@@ -133,6 +133,12 @@ export const signInCodes = pgTable(
     identifier: text('identifier').notNull(),
     /** The code's SHA-256 and the tries spent, in better-auth's form. */
     value: text('value').notNull(),
+    /**
+     * The Edition the code was requested in, so a Kill of its Account stops
+     * the code too. better-auth writes the row without it and the
+     * Authenticator adds it at once; a code sent before it was kept has none.
+     */
+    editionId: text('edition_id'),
     expiresAt: time('expires_at'),
     createdAt: time('created_at'),
     updatedAt: time('updated_at'),

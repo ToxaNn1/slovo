@@ -59,9 +59,7 @@
         "accounts_email_unique": {
           "name": "accounts_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -135,10 +133,7 @@
         "content_packs_edition_id_content_version_unique": {
           "name": "content_packs_edition_id_content_version_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "edition_id",
-            "content_version"
-          ]
+          "columns": ["edition_id", "content_version"]
         }
       },
       "policies": {},
@@ -221,12 +216,8 @@
           "name": "sessions_account_id_accounts_id_fk",
           "tableFrom": "sessions",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -236,9 +227,7 @@
         "sessions_token_unique": {
           "name": "sessions_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -417,12 +406,8 @@
           "name": "sign_in_methods_account_id_accounts_id_fk",
           "tableFrom": "sign_in_methods",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

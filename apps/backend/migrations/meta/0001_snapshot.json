@@ -71,10 +71,7 @@
         "content_packs_edition_id_content_version_unique": {
           "name": "content_packs_edition_id_content_version_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "edition_id",
-            "content_version"
-          ]
+          "columns": ["edition_id", "content_version"]
         }
       },
       "policies": {},

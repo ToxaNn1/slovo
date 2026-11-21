@@ -116,9 +116,15 @@ export interface SignedIn {
 export interface Authenticator {
   /**
    * Makes a new Sign-in code for the email, in place of any code made for it
-   * before, and gives it back to be sent. It keeps only the code's hash.
+   * before, and gives it back to be sent. It keeps only the code's hash and
+   * the Edition it was requested in.
    */
-  createCode(email: string): Promise<string>;
+  createCode(email: string, editionId: string): Promise<string>;
+  /**
+   * The Edition the code waiting for the email was requested in; none when
+   * no code waits, or the code was sent before its Edition was kept.
+   */
+  codeEdition(email: string): Promise<string | undefined>;
   /**
    * Checks the code against the one last made for the email. The first right
    * code for an email creates its Account; a right code starts a Session.

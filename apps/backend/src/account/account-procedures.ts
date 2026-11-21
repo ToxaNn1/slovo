@@ -44,6 +44,10 @@ export function accountProcedures(accounts: Accounts) {
         case 'wrong-code':
           throw errors.WRONG_CODE({ data: { triesLeft: check.triesLeft } });
         case 'code-expired':
+        // The code's Edition no longer serves the Account: the code signs no
+        // one in, and a new code request answers NOT_FOUND.
+        case 'unknown-edition':
+        case 'switched-off':
           throw errors.CODE_EXPIRED();
         case 'too-many-requests':
           retryAfter(context, check);
