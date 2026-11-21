@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { fakeClock, strings } from '../test-support';
 import { syncStatusLine } from './sync-status';
 
-const idle: SyncState = { syncedAt: undefined, running: false, offline: false, refused: false };
+const idle: SyncState = { syncedAt: undefined, running: false, offline: false, refused: undefined };
 
 function statusOf(state: Partial<SyncState>, clock = fakeClock('2026-10-18T12:00:00Z').clock) {
   return syncStatusLine({
@@ -64,11 +64,27 @@ describe('the status line of the SLOVO ID screen', () => {
     expect(statusOf({ syncedAt, offline: true })?.synced).toBe(false);
   });
 
-  it('marks nothing synced while the Account refuses the changes for good, and gives the last sync', () => {
-    expect(statusOf({ refused: true, syncedAt: new Date('2026-10-18T09:05:00Z') })).toEqual({
-      text: 'Синхронізовано сьогодні, 12:05',
-      synced: false,
-    });
+  it.each(['not-found', 'unexpected'] as const)(
+    'marks nothing synced while the Account refuses the changes for good with `%s`, and gives the last sync',
+    (refused) => {
+      expect(statusOf({ refused, syncedAt: new Date('2026-10-18T09:05:00Z') })).toEqual({
+        text: 'Синхронізовано сьогодні, 12:05',
+        synced: false,
+      });
+    },
+  );
+
+  it('says Sync stopped for too many records while the Account is at its record limit', () => {
+    const stopped = { text: 'Синхронізацію зупинено: забагато записів', synced: false };
+    expect(
+      statusOf({ refused: 'too-many-records', syncedAt: new Date('2026-10-18T09:05:00Z') }),
+    ).toEqual(stopped);
+    // A first sync refused so has no last sync to give, and still says it.
+    expect(statusOf({ refused: 'too-many-records' })).toEqual(stopped);
+  });
+
+  it('says a sync runs while one does, at the record limit too', () => {
+    expect(lineOf({ running: true, refused: 'too-many-records' })).toBe('Синхронізація…');
   });
 
   it('has no line before a first sync has gone through', () => {

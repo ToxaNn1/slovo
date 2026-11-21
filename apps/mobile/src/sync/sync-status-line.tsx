@@ -18,8 +18,9 @@ import { useEditionInEffect } from '../edition/remote-switches';
  * while Sync opens, when the Edition has none or it is turned off remotely, or
  * before a first sync has gone through. While the offline plate is on in
  * effect, a sync that finds no network shows the plate once and the
- * line keeps the last sync. While the Account refuses this device's changes
- * for good, the line keeps the last sync with no ✓.
+ * line keeps the last sync. While the Account's records are at their limit,
+ * the line says Sync stopped for it; while the Account refuses this device's
+ * changes for good otherwise, the line keeps the last sync with no ✓.
  */
 export function SyncStatusLine() {
   const { sync } = useShell();

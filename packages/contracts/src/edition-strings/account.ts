@@ -37,6 +37,8 @@ const SyncStatusStringsSchema = z.strictObject({
   syncedOn: templateOf('day', 'month'),
   /** The last sync was in another year. Takes `{day}`, `{month}` and `{year}`. */
   syncedOnInYear: templateOf('day', 'month', 'year'),
+  /** While the Account refuses this device's changes because its records are at their limit. */
+  stoppedTooManyRecords: TextSchema,
 });
 
 /**
