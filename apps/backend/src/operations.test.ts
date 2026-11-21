@@ -280,6 +280,82 @@ describe('the logs', () => {
 
     expect(lines[0]?.['err']).toMatchObject({ errorCode: 'ECONNREFUSED' });
   });
+
+  it('carry no email, code or token at any depth of a line', () => {
+    const { lines, logger } = logLines();
+
+    logger.info({
+      a: { b: { c: { email: 'anna@mail.com', idToken: 'abc', code: '123456' } } },
+      list: [{ d: { e: { authorization: 'Bearer secret-token' } } }],
+    });
+
+    const written = JSON.stringify(lines);
+    for (const personal of ['anna@mail.com', 'abc', '123456', 'secret-token']) {
+      expect(written).not.toContain(personal);
+    }
+  });
+
+  it("scrub the inner errors of an AggregateError as they scrub the error's own", () => {
+    const { lines, logger } = logLines();
+
+    logger.error({
+      err: new AggregateError([new Error('anna@mail.com sent 123456')], 'many failed'),
+    });
+
+    expect(JSON.stringify(lines)).not.toMatch(/anna@mail\.com|123456/);
+    expect(lines[0]?.['err']).toMatchObject({
+      message: 'many failed',
+      errors: [{ message: '[email] sent [code]' }],
+    });
+  });
+
+  it("scrub an error's other fields and redact them down any chain of causes", () => {
+    const { lines, logger } = logLines();
+    const deepest = Object.assign(new Error('deepest'), { email: 'anna@mail.com' });
+    const middle = new Error('middle', { cause: deepest });
+
+    logger.error({
+      err: Object.assign(new Error('boom', { cause: middle }), {
+        detail: 'sent to anna@mail.com',
+        idToken: 'abc',
+        response: { body: { code: '123456' }, headers: { authorization: 'Bearer secret-token' } },
+      }),
+    });
+
+    const written = JSON.stringify(lines);
+    for (const personal of ['anna@mail.com', 'abc', '123456', 'secret-token']) {
+      expect(written).not.toContain(personal);
+    }
+    expect(lines[0]?.['err']).toMatchObject({
+      message: 'boom',
+      detail: 'sent to [email]',
+      cause: { message: 'middle', cause: { message: 'deepest', email: '[redacted]' } },
+    });
+  });
+
+  it('show a thrown string scrubbed, and a thrown object only by its kind', () => {
+    const { lines, logger } = logLines();
+
+    logger.error({ err: 'string anna@mail.com 123456' });
+    logger.error({ err: { email: 'anna@mail.com', note: 'anna@mail.com' } });
+    logger.error({ err: new Error('wrapped', { cause: 'from anna@mail.com' }) });
+
+    expect(JSON.stringify(lines)).not.toMatch(/anna@mail\.com|123456/);
+    expect(lines.map((line) => line['err'])).toMatchObject([
+      { type: 'NonError', message: 'string [email] [code]' },
+      { type: 'NonError', message: 'object' },
+      { message: 'wrapped', cause: { type: 'NonError', message: 'from [email]' } },
+    ]);
+  });
+
+  it('scrub an email a URL quotes, percent-encoded', () => {
+    const { lines, logger } = logLines();
+
+    logger.warn({ err: new Error('GET /check?e=anna%40mail.com failed') });
+
+    expect(JSON.stringify(lines)).not.toContain('anna%40mail.com');
+    expect(lines[0]?.['err']).toMatchObject({ message: 'GET /check?e=[email] failed' });
+  });
 });
 
 // Starting the entry point loads TypeScript through tsx, which takes seconds on

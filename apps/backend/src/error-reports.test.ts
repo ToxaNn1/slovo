@@ -7,6 +7,8 @@ import { createDatabase } from './database/database';
 import { createTestDatabase, newIp, silentLogger, testApp, testDatabaseUrl } from './test-support';
 
 const EMAIL = 'anna@mail.com';
+/** The email as a URL or a form body quotes it. */
+const ENCODED_EMAIL = 'anna%40mail.com';
 const CODE = '123456';
 /** A random run of token characters, made when the test runs, so the repo holds no token. */
 const randomToken = () => randomBytes(24).toString('base64url');
@@ -40,7 +42,7 @@ describe('an unexpected failure', () => {
         verify: (token) =>
           Promise.reject(
             new Error(
-              `${EMAIL} from ${ip} sent ${token} with code ${CODE} and Bearer ${SESSION_TOKEN}`,
+              `${EMAIL} (${ENCODED_EMAIL}) from ${ip} sent ${token} with code ${CODE} and Bearer ${SESSION_TOKEN}`,
             ),
           ),
       },
@@ -59,7 +61,7 @@ describe('an unexpected failure', () => {
     expect(response.status).toBe(500);
     expect(reports).toHaveLength(1);
     const sent = JSON.stringify(reports);
-    for (const personal of [EMAIL, ip, idToken, CODE, SESSION_TOKEN]) {
+    for (const personal of [EMAIL, ENCODED_EMAIL, ip, idToken, CODE, SESSION_TOKEN]) {
       expect(sent).not.toContain(personal);
     }
   });
