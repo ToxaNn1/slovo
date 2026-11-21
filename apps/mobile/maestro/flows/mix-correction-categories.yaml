@@ -1,4 +1,4 @@
-# The Categories of Corrections in Мій Мікс: chips under the «Виправлення»
+# The Categories of Corrections in Мої теми: chips under the «Виправлення»
 # switch, all in by default. Taking one out leaves the Words' «Усі» on; with
 # the switch off the chips are hidden, and on again they come back as they
 # were; the last one in is disabled; «Усі» puts back every Category, the
@@ -6,14 +6,8 @@
 # putting every Category and Corrections back into the Mix, and leaves it so.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
-- runFlow:
-    file: ../open-settings-row.yaml
-    env:
-      ROW: settings-row-my-mix
-# A tap while Settings still glides only stops it.
-- waitForAnimationToEnd
 - tapOn:
-    id: settings-row-my-mix
+    id: tab-mix
 - assertVisible:
     id: mix
 # Start from the full Mix, whatever an earlier run left: «Усі» puts back every
@@ -150,13 +144,3 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: mix-correction-chip-school
     enabled: true
-# The back link sits at the top of the list.
-- scrollUntilVisible:
-    element:
-      id: mix-back
-    direction: UP
-- tapOn:
-    id: mix-back
-- assertVisible:
-    id: settings-row-my-mix
-    text: Мій Мікс, Усі

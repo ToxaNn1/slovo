@@ -130,9 +130,7 @@ describe('the Game screen', () => {
 
       await fireEvent.press(screen.getByTestId('game-mode-correction'));
 
-      expect(
-        screen.getByText('Виправлення вимкнено. Увімкни їх у Налаштуваннях, розділ «Мій Мікс».'),
-      ).toBeTruthy();
+      expect(screen.getByText('Виправлення вимкнено. Увімкни їх на вкладці «Теми».')).toBeTruthy();
       expect(screen.queryByText(/ще розминається/)).toBeNull();
       expect(composition.game.state.current).toBeUndefined();
     });

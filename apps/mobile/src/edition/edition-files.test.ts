@@ -242,7 +242,7 @@ describe('the 0.8.13 strings', () => {
       retake: 'Перевірити рівень ще раз',
       resultChanged: 'Рідкість тепер {range}',
       resultKept: 'Рідкість лишається {range}',
-      known: '{known} з {total} слів знайомі. Змінити рідкість можна в Налаштуваннях.',
+      known: '{known} з {total} слів знайомі. Змінити рідкість можна на вкладці «Теми».',
     });
     expect(parsed.knowledge).toMatchObject({ known: 'Знаю', unknown: 'Не знаю' });
   });
@@ -872,12 +872,12 @@ describe('the strings of the Category screens and the board style (spec #1604)',
       curatedCollectionsGrid: 'Добірки',
       quiet: 'Категорія',
       add: 'ДОДАТИ',
-      inMix: 'У МІКСІ',
+      inMix: 'У ТЕМАХ',
       known: 'ЗНАЮ 3 З 12',
       knownStamp: 'ЗНАЮ',
       feedKicker: 'Категорія · Емоції · 2 з 4',
-      addedToMix: '«Емоції» тепер у твоєму Міксі.',
-      removedFromMix: '«Емоції» прибрано з Міксу.',
+      addedToMix: '«Емоції» тепер у твоїх темах.',
+      removedFromMix: '«Емоції» прибрано з твоїх тем.',
       curatedAdd: 'ДОДАТИ СОБІ',
       curatedAdded: 'У КОЛЕКЦІЯХ',
     });
@@ -1018,7 +1018,7 @@ describe('the board 11 strings', () => {
       question: 'Чи знаєш ти це слово?',
       resultChanged: 'Рідкість тепер {range}',
       resultKept: 'Рідкість лишається {range}',
-      known: '{known} з {total} слів знайомі. Змінити рідкість можна в Налаштуваннях.',
+      known: '{known} з {total} слів знайомі. Змінити рідкість можна на вкладці «Теми».',
       again: 'Перевірити рівень ще раз',
     });
     expect(parsed.mix.selectedOf).toBe('{selected} з {total} обрано');

@@ -74,6 +74,7 @@ function SettingsList() {
   const { colors } = useTokens();
   const openScreen = useOpenScreen();
   const edition = useEditionInEffect();
+  const mixTab = edition.isFeatureEnabled('mixTab');
   const { dailyGoal } = useXpLogState();
   const { range, setRange } = useRarityRange();
   const mixSummary = useMixSummary();
@@ -250,7 +251,8 @@ function SettingsList() {
                 }}
               />
             )}
-            {edition.isFeatureEnabled('rarityCeiling') && (
+            {/* «Рідкість» and «Мої теми» live on the tab «Теми» while it is shown (ADR 0201). */}
+            {!mixTab && edition.isFeatureEnabled('rarityCeiling') && (
               <RarityRangePicker
                 testID="settings-rarity"
                 rarities={RARITIES}
@@ -258,19 +260,21 @@ function SettingsList() {
                 onChange={setRange}
               />
             )}
-            <SettingsRow
-              testID="settings-row-my-mix"
-              icon="diamond"
-              label={strings.rows.myMix}
-              subtitle={subtitles.myMix}
-              end={{
-                kind: 'chevron',
-                value: mixSummary,
-                onPress: () => {
-                  openScreen('/settings/mix');
-                },
-              }}
-            />
+            {!mixTab && (
+              <SettingsRow
+                testID="settings-row-my-mix"
+                icon="diamond"
+                label={strings.rows.myMix}
+                subtitle={subtitles.myMix}
+                end={{
+                  kind: 'chevron',
+                  value: mixSummary,
+                  onPress: () => {
+                    openScreen('/settings/mix');
+                  },
+                }}
+              />
+            )}
             {edition.isFeatureEnabled('rarityTest') && (
               <SettingsRow
                 testID="settings-row-rarity-test"

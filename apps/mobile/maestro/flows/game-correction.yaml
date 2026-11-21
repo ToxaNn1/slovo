@@ -6,12 +6,8 @@
 # and leaves them there and no Game in play.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
-- runFlow:
-    file: ../open-settings-row.yaml
-    env:
-      ROW: settings-row-my-mix
 - tapOn:
-    id: settings-row-my-mix
+    id: tab-mix
 - runFlow:
     when:
       visible:
@@ -21,8 +17,6 @@ appId: ${APP_ID || 'app.slovo.uk'}
       - tapOn:
           id: mix-corrections
 - tapOn:
-    id: mix-back
-- tapOn:
     id: tab-game
 - scrollUntilVisible:
     element:
@@ -30,7 +24,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     direction: DOWN
 - assertVisible:
     id: game-mode-correction
-    text: .*Виправлень немає у вашому Міксі.*
+    text: .*Виправлення вимкнено.*
     enabled: false
 - tapOn:
     id: game-mode-correction
@@ -39,19 +33,13 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertNotVisible:
     id: game-round
 # Corrections back in the Mix: the card can start.
-- runFlow:
-    file: ../open-settings-row.yaml
-    env:
-      ROW: settings-row-my-mix
 - tapOn:
-    id: settings-row-my-mix
+    id: tab-mix
 - tapOn:
     id: mix-corrections
 - assertVisible:
     id: mix-corrections
     checked: true
-- tapOn:
-    id: mix-back
 - tapOn:
     id: tab-game
 - scrollUntilVisible:

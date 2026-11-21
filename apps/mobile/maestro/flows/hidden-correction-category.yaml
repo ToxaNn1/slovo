@@ -72,15 +72,10 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: hidden-correction-category-school
 - tapOn:
     id: hidden-back
+- runFlow: ../leave-settings.yaml
 # Leave «У школі» the last Category of Corrections in the Mix.
-- runFlow:
-    file: ../open-settings-row.yaml
-    env:
-      ROW: settings-row-my-mix
-# A tap while Settings still glides only stops it.
-- waitForAnimationToEnd
 - tapOn:
-    id: settings-row-my-mix
+    id: tab-mix
 - assertVisible:
     id: mix
 - scrollUntilVisible:
@@ -105,13 +100,6 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: mix-correction-chip-school
     enabled: false
-# The back link sits at the top of the list.
-- scrollUntilVisible:
-    element:
-      id: mix-back
-    direction: UP
-- tapOn:
-    id: mix-back
 # Its row on the card's hide action is disabled now. The reason under it is
 # hidden from the accessibility tree (VoiceOver reads it as the row's hint),
 # so Maestro cannot see it; the screenshot records it.
@@ -137,20 +125,17 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn:
     id: entry-screen-back
 # «Усі» puts every Category back.
-- runFlow:
-    file: ../open-settings-row.yaml
-    env:
-      ROW: settings-row-my-mix
-# A tap while Settings still glides only stops it.
-- waitForAnimationToEnd
 - tapOn:
-    id: settings-row-my-mix
+    id: tab-mix
 - assertVisible:
     id: mix
+- scrollUntilVisible:
+    element:
+      id: mix-chip-all
+    direction: UP
+    centerElement: true
 - tapOn:
     id: mix-chip-all
-- tapOn:
-    id: mix-back
 - assertVisible:
-    id: settings-row-my-mix
-    text: Мій Мікс, Усі
+    id: mix-chip-all
+    selected: true
