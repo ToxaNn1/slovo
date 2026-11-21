@@ -2016,7 +2016,8 @@
       "syncing": "Синхронізація…",
       "syncedToday": "Синхронізовано сьогодні, {time}",
       "syncedOn": "Синхронізовано {day} {month}",
-      "syncedOnInYear": "Синхронізовано {day} {month} {year}"
+      "syncedOnInYear": "Синхронізовано {day} {month} {year}",
+      "stoppedTooManyRecords": "Синхронізацію зупинено: забагато записів"
     },
     "delete": {
       "button": "Видалити «{name}»",

@@ -31,6 +31,8 @@ import {
   type UsagePort,
   type ServiceVault,
 } from '@slovo/server-core';
+import { BlockList, isIPv4, isIPv6 } from 'node:net';
+
 import type { HttpBindings } from '@hono/node-server';
 import { Hono } from 'hono';
 import { bodyLimit } from 'hono/body-limit';
@@ -143,14 +145,64 @@ interface Env {
 }
 
 /**
+ * Cloudflare's published ranges (cloudflare.com/ips, read 21.11.2026): the
+ * addresses Railway's proxy sees when a request came through Cloudflare.
+ */
+const CLOUDFLARE = (() => {
+  const ranges = new BlockList();
+  for (const range of [
+    '173.245.48.0/20',
+    '103.21.244.0/22',
+    '103.22.200.0/22',
+    '103.31.4.0/22',
+    '141.101.64.0/18',
+    '108.162.192.0/18',
+    '190.93.240.0/20',
+    '188.114.96.0/20',
+    '197.234.240.0/22',
+    '198.41.128.0/17',
+    '162.158.0.0/15',
+    '104.16.0.0/13',
+    '104.24.0.0/14',
+    '172.64.0.0/13',
+    '131.0.72.0/22',
+  ]) {
+    const [network = '', prefix] = range.split('/');
+    ranges.addSubnet(network, Number(prefix), 'ipv4');
+  }
+  for (const range of [
+    '2400:cb00::/32',
+    '2606:4700::/32',
+    '2803:f800::/32',
+    '2405:b500::/32',
+    '2405:8100::/32',
+    '2a06:98c0::/29',
+    '2c0f:f248::/32',
+  ]) {
+    const [network = '', prefix] = range.split('/');
+    ranges.addSubnet(network, Number(prefix), 'ipv6');
+  }
+  return ranges;
+})();
+
+/** Whether an address, an IPv4-mapped IPv6 one included, is Cloudflare's. */
+function isCloudflare(address: string): boolean {
+  const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(address)?.[1];
+  const v4 = mapped ?? address;
+  if (isIPv4(v4)) return CLOUDFLARE.check(v4, 'ipv4');
+  return isIPv6(address) && CLOUDFLARE.check(address, 'ipv6');
+}
+
+/**
  * The IP address the request came from (ADR 0030). With no trusted proxy
- * hop, the address of its connection. Behind trusted proxies, each appends
- * the address it was reached from to `X-Forwarded-For`, so the client is the
- * address as many places from the end as there are hops; whatever stands
- * before it, the client wrote itself. Without that many addresses the
- * request did not come through the proxies, so its connection counts. Node
- * gives every request its connection; a request made in process without one
- * has none.
+ * hop, the address of its connection. Behind Railway's proxy, the last
+ * address of `X-Forwarded-For`, the one that proxy appended; whatever stands
+ * before it, the client wrote itself. With two hops, Cloudflare in front,
+ * the address before the last counts only when the last is Cloudflare's:
+ * a request sent straight to Railway's domain has its caller last, and the
+ * forged address before it is ignored. A header with no address did not come
+ * through the proxy, so its connection counts. Node gives every request its
+ * connection; a request made in process without one has none.
  */
 function clientIp(
   bindings: Partial<HttpBindings> | undefined,
@@ -163,7 +215,10 @@ function clientIp(
     .split(',')
     .map((address) => address.trim())
     .filter((address) => address !== '');
-  return forwarded.at(-trustedProxyHops) ?? connection;
+  const last = forwarded.at(-1);
+  if (last === undefined) return connection;
+  if (trustedProxyHops === 1 || !isCloudflare(last)) return last;
+  return forwarded.at(-2) ?? last;
 }
 
 /**

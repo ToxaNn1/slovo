@@ -92,10 +92,11 @@ export function createMonitor({
   /** Logs a check that threw: the run goes on with the other checks. */
   logFailure: (message: string, error: unknown) => void;
 }): Monitor {
-  /** The number Sentry answers for the window ending now, or `null`. */
+  /** The number Sentry answers for the window ending now, a count's floor included, or `null`. */
   async function sentryNumber(read: Parameters<SentryReader['read']>[0], ms: number, now: Date) {
     const answer = await sentry.read(read, { from: new Date(now.getTime() - ms), to: now });
-    return answer.ok ? answer.value : null;
+    if (!answer.ok) return null;
+    return 'atLeast' in answer ? answer.atLeast : answer.value;
   }
 
   /** People active on each Kyiv day of the period, summed over the Editions. */

@@ -5,7 +5,7 @@ import type { Backend, Clock, Random, Schedule } from '../ports';
 import { withRetries } from '../retry';
 import type { TrackedUserState } from '../user-state/tracked-user-state';
 import { userStateRecords } from '../user-state-schema';
-import { createSyncExchange, isRefusedForGood, type SyncResult } from './exchange';
+import { createSyncExchange, refusalOf, type SyncRefusal, type SyncResult } from './exchange';
 
 /** How long after the last tracked write a sync starts, in milliseconds. */
 export const SYNC_AFTER_WRITE = 5_000;
@@ -19,11 +19,12 @@ export interface SyncState {
   /** Whether the last sync of this Session failed for want of network, through every try. */
   readonly offline: boolean;
   /**
-   * Whether the last sync of this Session was refused for good, as when the
-   * Account's records are at their limit: changes of this device stay on it,
-   * and are sent again at the next launch or to the next Session.
+   * Why the last sync of this Session was refused for good, as when the
+   * Account's records are at their limit (`too-many-records`): changes of
+   * this device stay on it, and are sent again at the next launch or to the
+   * next Session. None while no sync was.
    */
-  readonly refused: boolean;
+  readonly refused: SyncRefusal | undefined;
 }
 
 /**
@@ -130,7 +131,7 @@ export async function openSync({
     syncedAt: kept === undefined ? undefined : new Date(kept),
     running: false,
     offline: false,
-    refused: false,
+    refused: undefined,
   };
   let inForeground = false;
   /** The syncs running and asked for after them, if one runs. */
@@ -188,7 +189,7 @@ export async function openSync({
       change({
         running: false,
         offline: result.reason === 'offline',
-        refused: isRefusedForGood(result.reason),
+        refused: refusalOf(result.reason),
       });
       return;
     }
@@ -198,7 +199,7 @@ export async function openSync({
     // A Session that ended meanwhile cleared the snapshot, and its time is forgotten next.
     change(
       session === endedSessions
-        ? { running: false, offline: false, refused: false, syncedAt }
+        ? { running: false, offline: false, refused: undefined, syncedAt }
         : { running: false },
     );
   }
@@ -278,7 +279,7 @@ export async function openSync({
     cancelHeld?.();
     cancelHeld = undefined;
     exchange.forgetRefused();
-    change({ syncedAt: undefined, offline: false, refused: false });
+    change({ syncedAt: undefined, offline: false, refused: undefined });
     sessionOutdated = true;
     startDraining();
   });

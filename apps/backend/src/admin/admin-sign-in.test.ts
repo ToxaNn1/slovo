@@ -351,3 +351,15 @@ describe('an admin session', () => {
     await expect(backend.owner.client.admin.actions({})).resolves.toHaveProperty('actions');
   });
 });
+
+describe("the vault of the admin's TOTP secrets", () => {
+  it('opens what it sealed and refuses a value whose tag was cut short', () => {
+    const vault = createSecretVault(`fake-secret-${randomUUID()}`);
+    const sealed = vault.seal('JBSWY3DPEHPK3PXP');
+    const [iv = '', tag = '', body = ''] = sealed.split('.');
+    const short = Buffer.from(tag, 'base64url').subarray(0, 4).toString('base64url');
+
+    expect(vault.open(sealed)).toBe('JBSWY3DPEHPK3PXP');
+    expect(vault.open([iv, short, body].join('.'))).toBeUndefined();
+  });
+});

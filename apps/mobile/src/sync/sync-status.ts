@@ -14,9 +14,10 @@ export interface SyncStatus {
  * The status line under the email of the SLOVO ID screen: that a sync runs,
  * or when the words were last synced (the time today, or the date, with the
  * year only in another year). The offline plate says there is no network,
- * so the line gives the last sync then too. While the Account refuses this
- * device's changes for good (`refused`) the line gives the last sync and
- * marks nothing synced. Nothing before a first sync has gone through.
+ * so the line gives the last sync then too. While the Account's records are
+ * at their limit the line says Sync stopped for it; while the Account refuses
+ * this device's changes for good otherwise, the line gives the last sync and
+ * marks nothing synced. Else nothing before a first sync has gone through.
  */
 export function syncStatusLine({
   state,
@@ -31,10 +32,13 @@ export function syncStatusLine({
   clock: Clock;
 }): SyncStatus | undefined {
   if (state.running) return { text: strings.syncing, synced: false };
+  if (state.refused === 'too-many-records') {
+    return { text: strings.stoppedTooManyRecords, synced: false };
+  }
   if (state.syncedAt === undefined) return undefined;
   return {
     text: lastSync(state.syncedAt, strings, months, clock),
-    synced: !state.offline && !state.refused,
+    synced: !state.offline && state.refused === undefined,
   };
 }
 

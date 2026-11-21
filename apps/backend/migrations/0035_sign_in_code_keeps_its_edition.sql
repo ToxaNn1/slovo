@@ -1,0 +1,1 @@
+ALTER TABLE "sign_in_codes" ADD COLUMN "edition_id" text;

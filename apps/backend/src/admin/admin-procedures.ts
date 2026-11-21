@@ -544,6 +544,7 @@ export function adminProcedures({
         onboardingNotificationTimes,
         badges,
         narratorVoices,
+        languageTraits: { stress },
       } = edition.config;
       return {
         id,
@@ -559,6 +560,7 @@ export function adminProcedures({
           id: voiceId,
           name,
         })),
+        stressVowels: stress.marked ? [...stress.vowels] : [],
       };
     }),
 

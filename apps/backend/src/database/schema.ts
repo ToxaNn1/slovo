@@ -133,6 +133,12 @@ export const signInCodes = pgTable(
     identifier: text('identifier').notNull(),
     /** The code's SHA-256 and the tries spent, in better-auth's form. */
     value: text('value').notNull(),
+    /**
+     * The Edition the code was requested in, so a Kill of its Account stops
+     * the code too. better-auth writes the row without it and the
+     * Authenticator adds it at once; a code sent before it was kept has none.
+     */
+    editionId: text('edition_id'),
     expiresAt: time('expires_at'),
     createdAt: time('created_at'),
     updatedAt: time('updated_at'),
@@ -602,7 +608,11 @@ export const quoteChecks = pgTable(
  */
 export const sourcingCache = pgTable('sourcing_cache', {
   pageUrl: text('page_url').primaryKey(),
-  /** The page's HTTP status: 200, or 404 for no such page; an NBU read that found no rate is 0. */
+  /**
+   * The page's HTTP status: 200, 404 for no such page, or the refusal (403,
+   * 429, 5xx) the quote check asks again a day later; an NBU read that found
+   * no rate is 0.
+   */
   httpStatus: integer('http_status').notNull(),
   body: text('body').notNull(),
   fetchedAt: time('fetched_at'),

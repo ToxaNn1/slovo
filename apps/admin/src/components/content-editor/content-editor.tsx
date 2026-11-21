@@ -7,6 +7,7 @@ import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-quer
 import { useRef, useState } from 'react';
 
 import { adminApi } from '../../api';
+import { formatMoment } from '../../format';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
 import { IllustrationUpload } from './illustration';
@@ -285,6 +286,11 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
           )}
           {(written?.needsNewRecording ?? record.data?.needsNewRecording) === true && (
             <p className="text-sm text-destructive">потребує нового запису</p>
+          )}
+          {record.data?.sourceRefused !== undefined && (
+            <p className="text-sm text-destructive">
+              {`Джерело відмовило перевірці цитати: HTTP ${String(record.data.sourceRefused.status)}, ${formatMoment(record.data.sourceRefused.at)}. Наступна спроба через добу.`}
+            </p>
           )}
           {record.data?.retired === true && (
             <p className="text-sm text-muted-foreground">Виведено з ужитку</p>

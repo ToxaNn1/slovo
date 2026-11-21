@@ -46,6 +46,31 @@ test('Якість charts the coverage, the flaky tests and the CI durations of 
   expect(durations.getByText(/^c6f01b8 · .* · 4,2 хв · раннери 5,2 хв$/)).toBeDefined();
 });
 
+test('Якість shows a count of new issues Sentry has more of as «N+»', async () => {
+  server.use(
+    override('quality', () => ({
+      ...FIXTURES.quality,
+      kpis: {
+        ...FIXTURES.quality.kpis,
+        newIssues: {
+          state: 'ok',
+          value: 1000,
+          yesterday: 40,
+          atLeast: true,
+          fetchedAt: '2026-11-08T10:00:00.000Z',
+        },
+      },
+    })),
+  );
+  window.history.replaceState(null, '', '/admin/quality');
+  render(<Admin />);
+
+  const newIssues = within(await screen.findByRole('listitem', { name: 'Нові помилки' }));
+  expect(newIssues.getByText('1 000+')).toBeDefined();
+  // A floor has no honest change against yesterday.
+  expect(newIssues.queryByText(/проти вчора/)).toBeNull();
+});
+
 test('Якість says which source is down: Sentry per number, GitHub for the CI history', async () => {
   server.use(
     override('quality', () => ({

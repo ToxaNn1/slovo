@@ -324,15 +324,19 @@ export function createSecretVault(secret: string): SecretVault {
     },
     open(sealed) {
       const [iv = '', tag = '', body = ''] = sealed.split('.');
-      const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(iv, 'base64url'));
-      decipher.setAuthTag(Buffer.from(tag, 'base64url'));
+      // A tag of exactly 16 bytes: GCM would otherwise check a shorter one.
+      const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(iv, 'base64url'), {
+        authTagLength: 16,
+      });
       try {
+        decipher.setAuthTag(Buffer.from(tag, 'base64url'));
         return Buffer.concat([
           decipher.update(Buffer.from(body, 'base64url')),
           decipher.final(),
         ]).toString('utf8');
       } catch {
-        // The tag fails: another key sealed it, as before `AUTH_SECRET` was rotated.
+        // The tag fails or is cut short: another key sealed it, as before
+        // `AUTH_SECRET` was rotated, or the value was changed.
         return undefined;
       }
     },

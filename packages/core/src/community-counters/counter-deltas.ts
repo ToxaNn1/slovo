@@ -1,4 +1,5 @@
 import type { Edition } from '../edition/edition';
+import { createInTurn } from '../in-turn';
 import type { KnowledgeMark } from '../knowledge/knowledge-record';
 import type { CounterChange, CounterDelta, CounterEvent, UserStateChanges } from '../ports';
 import type { UserState } from '../user-state/user-state';
@@ -16,25 +17,46 @@ export interface CommunityCounters {
    */
   unsent(): Promise<ReadonlyMap<string, CounterDelta>>;
   /**
-   * The changes to write with the Entry's new mark, none for no mark, that
+   * Writes, through `write`, the changes to write with the Entry's new mark, none for no mark, that
    * count the difference between what this device counted and the mark: a
    * new mark adds one, a move Known ↔ Unknown moves one, removing a mark this
    * device counted takes one away. A mark from before the update was never
    * counted, so removing it changes nothing and changing it counts as new.
    * None with the `communityCounters` Feature Switch off or sharing off. The
    * Knowledge Marks call it when the reader taps a mark on a card, the
-   * Yesterday card's included, and never for a Game answer.
+   * Yesterday card's included, and never for a Game answer. The changes are
+   * made and `write` runs in the counters' turn (`countersTurnOf`), so what
+   * they were made from is still kept when they are written.
    */
-  countMark(entryId: string, mark: KnowledgeMark | undefined): Promise<UserStateChanges>;
+  countMark(entryId: string, mark: KnowledgeMark | undefined, write: WriteCounted): Promise<void>;
   /**
-   * The changes to write with the Entry going into Favorites or out of them,
+   * Writes, through `write` and in the same turn, the changes to write with the Entry going into Favorites or out of them,
    * by the same rule: adding it saves one, removing an Entry this device
    * counted saved takes one away. A Favorite from before the update was never
    * counted, so removing it changes nothing and adding it again counts as new.
    * None with the `communityCounters` Feature Switch off or sharing off.
    * Favorites call it when the reader adds or removes an Entry.
    */
-  countSaved(entryId: string, saved: boolean): Promise<UserStateChanges>;
+  countSaved(entryId: string, saved: boolean, write: WriteCounted): Promise<void>;
+}
+
+/** The write of a mark or a Favorite with the counters' changes that count it. */
+type WriteCounted = (counted: UserStateChanges) => Promise<void>;
+
+const turns = new WeakMap<object, ReturnType<typeof createInTurn>>();
+
+/**
+ * The turn of the Community Counters' records of a user state: whoever
+ * changes what this device counted or the unsent changes from what it read of
+ * them reads and writes in it, so the counting of a mark and a batch leaving
+ * the unsent changes never start from the same records. One per user state
+ * as it is handed to the Core composition and to `openCounterSending`, which
+ * are opened apart over the one user state.
+ */
+export function countersTurnOf(userState: object): ReturnType<typeof createInTurn> {
+  const turn = turns.get(userState) ?? createInTurn();
+  turns.set(userState, turn);
+  return turn;
 }
 
 /** What this device counted for an Entry. */
@@ -95,9 +117,12 @@ const isUnchanged = (delta: CounterDelta) =>
 export function openCommunityCounters({
   edition,
   userState,
+  inTurn,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   userState: UserState;
+  /** The counters' turn of the user state (`countersTurnOf`). */
+  inTurn: ReturnType<typeof createInTurn>;
 }): CommunityCounters {
   const { countersCounted, countersUnsent } = userStateRecords;
 
@@ -126,10 +151,18 @@ export function openCommunityCounters({
     ]);
   }
 
+  const writeCounted = (
+    entryId: string,
+    next: (counted: Counted) => Counted,
+    write: WriteCounted,
+  ) => inTurn(async () => write(await count(entryId, next)));
+
   return {
     unsent: () => userState.list(countersUnsent),
-    countMark: (entryId, mark) => count(entryId, (counted) => ({ ...counted, mark: mark ?? null })),
-    countSaved: (entryId, saved) => count(entryId, (counted) => ({ ...counted, saved })),
+    countMark: (entryId, mark, write) =>
+      writeCounted(entryId, (counted) => ({ ...counted, mark: mark ?? null }), write),
+    countSaved: (entryId, saved, write) =>
+      writeCounted(entryId, (counted) => ({ ...counted, saved }), write),
   };
 }
 

@@ -775,7 +775,7 @@ describe('the 0.8 Sync strings', () => {
     expect(issuesOf({ ...strings, account: without(account, 'sync') })).toEqual(['account.sync']);
   });
 
-  it.each(['syncing', 'syncedToday', 'syncedOn', 'syncedOnInYear'])(
+  it.each(['syncing', 'syncedToday', 'syncedOn', 'syncedOnInYear', 'stoppedTooManyRecords'])(
     'the UA Edition needs account.sync.%s',
     (key) => {
       const changed = { ...strings, account: { ...account, sync: without(sync, key) } };

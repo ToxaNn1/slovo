@@ -77,13 +77,14 @@ export interface Accounts {
   /**
    * Signs in with the code last sent to the email; the first right code
    * creates the Account. A check from the IP address `ip` or for the email
-   * over its limit is refused.
+   * over its limit is refused, and so is a code whose Edition no longer
+   * serves the Account, as after a Kill of it.
    */
   verifyCode(
     email: string,
     code: string,
     ip: string,
-  ): Promise<CodeCheck | InvalidEmail | TooManyRequests>;
+  ): Promise<CodeCheck | InvalidEmail | NotServing | TooManyRequests>;
   /**
    * Signs in with a Google identity token (ADR 0047): the token must check
    * against Google's keys, be for SLOVO and carry an email Google verified.
@@ -206,7 +207,7 @@ export function createAccounts({
       const overLimit = await limits.codeRequest(email, ip);
       if (overLimit !== undefined) return overLimit;
 
-      const code = await authenticator.createCode(email);
+      const code = await authenticator.createCode(email, editionId);
       const values = { code, name: edition.config.accountName };
       await mailer.send({
         to: email,
@@ -220,7 +221,14 @@ export function createAccounts({
     async verifyCode(typedEmail, code, ip) {
       const email = normalised(typedEmail);
       if (email === undefined) return invalidEmail;
-      return (await limits.codeCheck(email, ip)) ?? authenticator.checkCode(email, code);
+      const overLimit = await limits.codeCheck(email, ip);
+      if (overLimit !== undefined) return overLimit;
+      const editionId = await authenticator.codeEdition(email);
+      if (editionId !== undefined) {
+        const serving = await editions.serving(editionId, 'account');
+        if (!serving.ok) return serving;
+      }
+      return authenticator.checkCode(email, code);
     },
 
     async signInWithGoogle(idToken, editionId, ip) {

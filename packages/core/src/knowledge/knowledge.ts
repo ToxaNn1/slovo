@@ -205,8 +205,8 @@ const sameState = (one: KnowledgeState, other: KnowledgeState) =>
 /**
  * Opens the Knowledge Marks over the user state, for the Core composition.
  * The state follows `dayStarted`, the new local day the day change turns to,
- * and a tapped mark writes `countMark`, the Community Counters' changes that
- * count it, with it; the marks name what they need of the counters, as the
+ * and a tapped mark is written through `countMark`, with the Community
+ * Counters' changes that count it; the marks name what they need of the counters, as the
  * counters read the marks' type.
  */
 export async function openKnowledge({
@@ -225,7 +225,11 @@ export async function openKnowledge({
   hiddenEntries: Pick<HiddenEntries, 'has' | 'subscribe'>;
   userState: UserState;
   clock: Clock;
-  countMark: (entryId: string, mark: KnowledgeMark | undefined) => Promise<UserStateChanges>;
+  countMark: (
+    entryId: string,
+    mark: KnowledgeMark | undefined,
+    write: (counted: UserStateChanges) => Promise<void>,
+  ) => Promise<void>;
   dayStarted: Pick<Subject<LocalDate>, 'subscribe'>;
   /** The XP log, which a Review answer earns XP in. */
   xp: ReviewXp;
@@ -335,33 +339,36 @@ export async function openKnowledge({
     also?: UserStateChanges,
   ): Promise<void> {
     undoable = undefined;
-    const counted = counts ? await countMark(entryId, record?.mark) : new Map();
-    const today = todayKey(clock);
-    const confirmedAt = clock.now().toISOString();
-    const reviewXp = review ? xp.award({ source: 'review-answer', entryId }) : undefined;
-    const confirmationChange =
-      confirming === 'add'
-        ? confirmation(entryId, confirmedAt)
-        : confirming === 'remove'
-          ? confirmedRecords.record(entryId).change(undefined)
-          : new Map();
-    await writeStaged(userState, [
-      staged(knowledge.record(entryId).change(record)),
-      staged(counted),
-      staged(confirmationChange),
-      reviewXp,
-      review ? staged(reviewDays.record(entryId).change(today)) : undefined,
-      also === undefined ? undefined : staged(also),
-    ]);
-    if (review) reviewedOn = new Map([...reviewedOn, [entryId, today]]);
-    const changed = new Map(records);
-    if (record === undefined) changed.delete(entryId);
-    else changed.set(entryId, record);
-    records = changed;
-    if (confirming === 'add') confirmed = new Map([...confirmed, [entryId, confirmedAt]]);
-    if (confirming === 'remove')
-      confirmed = new Map([...confirmed].filter(([id]) => id !== entryId));
-    follow();
+    const write = async (counted: UserStateChanges): Promise<void> => {
+      const today = todayKey(clock);
+      const confirmedAt = clock.now().toISOString();
+      const reviewXp = review ? xp.award({ source: 'review-answer', entryId }) : undefined;
+      const confirmationChange =
+        confirming === 'add'
+          ? confirmation(entryId, confirmedAt)
+          : confirming === 'remove'
+            ? confirmedRecords.record(entryId).change(undefined)
+            : new Map();
+      await writeStaged(userState, [
+        staged(knowledge.record(entryId).change(record)),
+        staged(counted),
+        staged(confirmationChange),
+        reviewXp,
+        review ? staged(reviewDays.record(entryId).change(today)) : undefined,
+        also === undefined ? undefined : staged(also),
+      ]);
+      if (review) reviewedOn = new Map([...reviewedOn, [entryId, today]]);
+      const changed = new Map(records);
+      if (record === undefined) changed.delete(entryId);
+      else changed.set(entryId, record);
+      records = changed;
+      if (confirming === 'add') confirmed = new Map([...confirmed, [entryId, confirmedAt]]);
+      if (confirming === 'remove')
+        confirmed = new Map([...confirmed].filter(([id]) => id !== entryId));
+      follow();
+    };
+    if (counts) await countMark(entryId, record?.mark, write);
+    else await write(new Map());
   }
 
   /**

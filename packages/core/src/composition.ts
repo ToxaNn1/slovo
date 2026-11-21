@@ -44,7 +44,11 @@ import { openDueQuiz, type DueQuiz } from './knowledge/due-quiz';
 import { openKnowledge, type Knowledge } from './knowledge/knowledge';
 import { seededRandomOf } from './game/seeded-random';
 import { openBadges, type Badges } from './progress/badges';
-import { openCommunityCounters, type CommunityCounters } from './community-counters/counter-deltas';
+import {
+  countersTurnOf,
+  openCommunityCounters,
+  type CommunityCounters,
+} from './community-counters/counter-deltas';
 import type { HiddenEntries } from './mix/hidden-entries';
 import { createHiding, type Hiding } from './mix/hiding';
 import type { Mix } from './entries/mix';
@@ -461,7 +465,12 @@ export async function openComposition({
     dayTurned,
     returned,
   });
-  const communityCounters = openCommunityCounters({ edition, userState });
+  const communityCounters = openCommunityCounters({
+    edition,
+    userState,
+    // The turn of the user state as it was handed over, which the counters' sending is opened over too.
+    inTurn: countersTurnOf(ports.userState),
+  });
   /** Emits an event about the Entry with its kind, rarity and Category; a failure is lost, never thrown. */
   async function withEntryProperties(
     entryId: string,
@@ -501,9 +510,9 @@ export async function openComposition({
     hiddenEntries,
     userState,
     clock,
-    countMark: async (entryId, mark) => {
+    countMark: async (entryId, mark, write) => {
       if (mark !== undefined) void entryEvent(mark, entryId);
-      return communityCounters.countMark(entryId, mark);
+      return communityCounters.countMark(entryId, mark, write);
     },
     dayStarted,
     xp: xpLog,
@@ -648,9 +657,9 @@ export async function openComposition({
       userState,
       clock,
       communityCounters: {
-        countSaved: async (entryId, saved) => {
+        countSaved: async (entryId, saved, write) => {
           void entryEvent(saved ? 'favoriteAdded' : 'favoriteRemoved', entryId);
-          return communityCounters.countSaved(entryId, saved);
+          return communityCounters.countSaved(entryId, saved, write);
         },
       },
     }),

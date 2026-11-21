@@ -18,6 +18,20 @@ export interface Keychain {
 /** The Keychain item that holds this device's Session. */
 const SESSION_KEY = 'slovo.session';
 
+/** The Keychain item that holds the tokens of the sign-outs the server has not heard of. */
+const UNTOLD_KEY = 'slovo.session.untold';
+
+const UntoldSchema = z.array(z.string());
+
+/** The tokens an item holds, or none when it holds nothing the store wrote. */
+function untoldIn(item: string): readonly string[] {
+  try {
+    return UntoldSchema.safeParse(JSON.parse(item)).data ?? [];
+  } catch {
+    return [];
+  }
+}
+
 /** A Session as the store writes it into its Keychain item. */
 const KeptSessionSchema = z.object({ token: z.string(), email: z.string() });
 
@@ -32,7 +46,8 @@ function sessionIn(item: string): KeptSession | undefined {
 
 /**
  * The Session store of the shell: in the Keychain through `expo-secure-store`,
- * on this device only, so neither another app nor a backup reads it. Without
+ * the Session in one item and the sign-outs the server has not heard of in
+ * another, on this device only, so neither another app nor a backup reads it. Without
  * the Keychain module (`undefined`, on a dev client built before the 0.7
  * batch), in memory: the Session lasts until the app restarts. Never in the
  * user state or in a file.
@@ -47,5 +62,13 @@ export function createSessionStore(keychain: Keychain | undefined): SessionStore
       return item === null ? undefined : sessionIn(item);
     },
     forget: () => keychain.deleteItemAsync(SESSION_KEY, options),
+    async untold() {
+      const item = await keychain.getItemAsync(UNTOLD_KEY, options);
+      return item === null ? [] : untoldIn(item);
+    },
+    keepUntold: (tokens) =>
+      tokens.length === 0
+        ? keychain.deleteItemAsync(UNTOLD_KEY, options)
+        : keychain.setItemAsync(UNTOLD_KEY, JSON.stringify(tokens), options),
   };
 }

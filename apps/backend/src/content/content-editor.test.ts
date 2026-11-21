@@ -119,6 +119,8 @@ describe('the content editor through an admin session', () => {
     expect(card.displayName.length).toBeGreaterThan(0);
     expect(card.questionnaire.level.map(({ label }) => label)).toContain('Добре');
     expect(card.onboardingNotificationTimes.morning).toBe('09:00');
+    // The Stress control offers the Edition's vowels, not a list of its own.
+    expect(card.stressVowels).toEqual(['а', 'е', 'є', 'и', 'і', 'ї', 'о', 'у', 'ю', 'я']);
   });
 
   it('lists the Words and Corrections of one Category, and no other kind under a Category', async () => {
