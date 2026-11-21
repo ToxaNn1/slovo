@@ -193,6 +193,42 @@ describe('the XP days of two devices of one Account', () => {
 });
 
 describe('a push of Sync', () => {
+  it('never deletes a folded record from the Account before the XP day that holds it is there', async () => {
+    const { time, server, device } = account();
+    // 600 Rounds over 20 days: more than one push of deletions once they fold.
+    const old = new Map(
+      Array.from({ length: 600 }, (_, index): [string, string] => [
+        `xp.round-${String(index).padStart(3, '0')}`,
+        round(`2026-08-${String((index % 20) + 1).padStart(2, '0')}`, index % 24),
+      ]),
+    );
+    let pushes = 0;
+    let failing = false;
+    const phone = await device(old, {
+      sync: {
+        pull: (input, options) => server.backend.sync.pull(input, options),
+        push: (input, options) => {
+          pushes += 1;
+          return failing && pushes > 1
+            ? Promise.reject(new TypeError('Network request failed'))
+            : server.backend.sync.push(input, options);
+        },
+      },
+    });
+    await phone.sync();
+    time.set('2026-10-14T09:00:00.000Z');
+    expect(await phone.launch()).toBe(600);
+    pushes = 0;
+    failing = true;
+
+    // The first push of the fold reaches the Account, the next fails.
+    expect(await phone.sync()).toMatchObject({ ok: false, reason: 'offline' });
+
+    const fresh = await device();
+    await fresh.sync();
+    expect(await fresh.launch()).toBe(600);
+  });
+
   it('sends the deletions first, so they free room in the Account before a record is added', async () => {
     const { time, server, device } = account();
     const pushes: { key: string; value: unknown }[][] = [];
