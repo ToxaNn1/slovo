@@ -82,20 +82,25 @@ async function device({
   off?: MediaSwitch[];
   needsNewRecording?: string[];
 } = {}) {
-  const store = createMemoryContentStore({ contentVersion: 1, needsNewRecording });
-  const patch = patchOf(1, {
+  const held = {
     recordings: [...starterRows.recordings, ...(rows.recordings ?? [])],
     illustrations: [...starterRows.illustrations, ...(rows.illustrations ?? [])],
+  };
+  const store = createMemoryContentStore({
+    contentVersion: 2,
+    etag: '"uk.2.p3"',
+    mediaBase: BASE,
+    needsNewRecording,
+    media: held,
   });
-  await store.apply(patch, '"uk.2.p3"');
   const cache = createMemoryMediaCache();
   const fetcher = createFakeMediaFetcher();
-  for (const row of patch.recordings)
+  for (const row of held.recordings)
     fetcher.serve(
       `${BASE}/recordings/${row.narratorVoice}/plain/${row.wordId}.${row.hash}.mp3`,
       row.size,
     );
-  for (const row of patch.illustrations)
+  for (const row of held.illustrations)
     fetcher.serve(`${BASE}/illustrations/${row.wordId}.${row.hash}.png`, row.size);
   const time = fakeClock();
   const media = createMedia({
@@ -370,6 +375,24 @@ describe('the media cache', () => {
 });
 
 describe('a Patch applied', () => {
+  it('answers the new Recording of a marked Word once a Patch brings it', async () => {
+    const { media, store } = await device({
+      rows: { recordings: [recording('w1', hashOf('a'))] },
+      needsNewRecording: ['w1'],
+    });
+    const patch = patchOf(2, {
+      recordings: [recording('w1', hashOf('a'), { retired: true }), recording('w1', hashOf('d'))],
+    });
+    await store.apply(patch, '"uk.3.p3"');
+
+    await media.patchApplied(patch);
+
+    expect((await media.ofWord('w1', 'oksana')).recording).toEqual({
+      kind: 'remote',
+      url: `${BASE}/recordings/oksana/plain/w1.${hashOf('d')}.mp3`,
+    });
+  });
+
   it('evicts the file of a retired row, and the card answers the new URL', async () => {
     const { media, store, cache } = await device({
       rows: {
