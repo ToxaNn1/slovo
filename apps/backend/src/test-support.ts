@@ -875,7 +875,11 @@ export const TEST_CI_TOKEN = 'a-test-ci-history-token-of-32-characters-at-least'
 /** A Sentry that answers the numbers a test sets, and counts the reads it was asked. */
 export interface FakeSentry extends SentryReader {
   /** The number every later read of the kind answers, for a window ending at or before `until` (now unless given). */
-  set(read: SentryRead | SentryAlertRead, value: number | null, window?: 'now' | 'yesterday'): void;
+  set(
+    read: SentryRead | SentryAlertRead,
+    value: number | null | { readonly atLeast: number },
+    window?: 'now' | 'yesterday',
+  ): void;
   /** Every later read answers rate-limited until the time, or answers again when `undefined`. */
   limit(retryAt: Date | undefined): void;
   /** The windows of the reads asked, oldest first. */
@@ -888,7 +892,7 @@ export interface FakeSentry extends SentryReader {
  * `now` number; numbers not set answer `null`.
  */
 export function createFakeSentry(): FakeSentry {
-  const numbers = new Map<string, number | null>();
+  const numbers = new Map<string, number | null | { readonly atLeast: number }>();
   const asked: ({ read: SentryRead | SentryAlertRead } & SentryWindow)[] = [];
   let limitedUntil: Date | undefined;
   return {
@@ -902,7 +906,9 @@ export function createFakeSentry(): FakeSentry {
       }
       const behind = Date.now() - window.to.getTime() >= 24 * 60 * 60 * 1000;
       const value = numbers.get(`${read}|${behind ? 'yesterday' : 'now'}`) ?? null;
-      return Promise.resolve({ ok: true, value });
+      return Promise.resolve(
+        value !== null && typeof value === 'object' ? { ok: true, ...value } : { ok: true, value },
+      );
     },
   };
 }

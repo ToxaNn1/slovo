@@ -124,9 +124,11 @@ function TileValue({
     <>
       <span className="font-display text-2xl font-semibold">
         {number(kpi.value)}
+        {/* Only a floor: Sentry has more than the backend counted. */}
+        {kpi.atLeast ? '+' : null}
         {unit}
       </span>
-      {kpi.yesterday === null ? null : (
+      {kpi.yesterday === null || kpi.atLeast ? null : (
         <span className="text-xs text-muted-foreground">{delta(kpi.value, kpi.yesterday)}</span>
       )}
     </>

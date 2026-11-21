@@ -140,10 +140,26 @@ describe('the Sentry numbers of Якість', () => {
       state: 'ok',
       value: 99.5,
       yesterday: 98,
+      atLeast: false,
       fetchedAt: now.toISOString(),
     });
     expect(answer.kpis.newIssues).toMatchObject({ state: 'ok', value: 0 });
     expect(answer.kpis.backendP95).toMatchObject({ state: 'ok', value: null });
+  });
+
+  it('says the new issues are at least the count when Sentry had more pages than it reads', async () => {
+    const backend = await backendWithOwner();
+    backend.sentry.set('newIssues', { atLeast: 1000 });
+    backend.sentry.set('newIssues', 12, 'yesterday');
+
+    const answer = await backend.owner.client.admin.quality({ period: '1d' });
+
+    expect(answer.kpis.newIssues).toMatchObject({
+      state: 'ok',
+      value: 1000,
+      yesterday: 12,
+      atLeast: true,
+    });
   });
 
   it('cuts a period over 30 days to 30 and says so', async () => {
@@ -178,6 +194,7 @@ describe('the Sentry numbers of Якість', () => {
       state: 'ok',
       value: 4,
       yesterday: null,
+      atLeast: false,
       fetchedAt: new Date().toISOString(),
     });
   });

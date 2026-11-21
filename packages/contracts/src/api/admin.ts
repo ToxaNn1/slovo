@@ -55,6 +55,8 @@ const QualityKpiSchema = z.discriminatedUnion('state', [
     value: z.number().nullable(),
     /** The same number a day earlier. */
     yesterday: z.number().nullable(),
+    /** `value` is only a floor: Sentry has more than the backend counted (shown as «N+»). */
+    atLeast: z.boolean(),
     /** When the backend read it of Sentry: its freshness. */
     fetchedAt: z.iso.datetime(),
   }),

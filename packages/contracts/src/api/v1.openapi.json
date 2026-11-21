@@ -32361,6 +32361,9 @@
                                     }
                                   ]
                                 },
+                                "atLeast": {
+                                  "type": "boolean"
+                                },
                                 "fetchedAt": {
                                   "type": "string",
                                   "format": "date-time"
@@ -32370,6 +32373,7 @@
                                 "state",
                                 "value",
                                 "yesterday",
+                                "atLeast",
                                 "fetchedAt"
                               ]
                             },
@@ -32414,6 +32418,9 @@
                                     }
                                   ]
                                 },
+                                "atLeast": {
+                                  "type": "boolean"
+                                },
                                 "fetchedAt": {
                                   "type": "string",
                                   "format": "date-time"
@@ -32423,6 +32430,7 @@
                                 "state",
                                 "value",
                                 "yesterday",
+                                "atLeast",
                                 "fetchedAt"
                               ]
                             },
@@ -32467,6 +32475,9 @@
                                     }
                                   ]
                                 },
+                                "atLeast": {
+                                  "type": "boolean"
+                                },
                                 "fetchedAt": {
                                   "type": "string",
                                   "format": "date-time"
@@ -32476,6 +32487,7 @@
                                 "state",
                                 "value",
                                 "yesterday",
+                                "atLeast",
                                 "fetchedAt"
                               ]
                             },
@@ -32520,6 +32532,9 @@
                                     }
                                   ]
                                 },
+                                "atLeast": {
+                                  "type": "boolean"
+                                },
                                 "fetchedAt": {
                                   "type": "string",
                                   "format": "date-time"
@@ -32529,6 +32544,7 @@
                                 "state",
                                 "value",
                                 "yesterday",
+                                "atLeast",
                                 "fetchedAt"
                               ]
                             },
@@ -32573,6 +32589,9 @@
                                     }
                                   ]
                                 },
+                                "atLeast": {
+                                  "type": "boolean"
+                                },
                                 "fetchedAt": {
                                   "type": "string",
                                   "format": "date-time"
@@ -32582,6 +32601,7 @@
                                 "state",
                                 "value",
                                 "yesterday",
+                                "atLeast",
                                 "fetchedAt"
                               ]
                             },
@@ -32626,6 +32646,9 @@
                                     }
                                   ]
                                 },
+                                "atLeast": {
+                                  "type": "boolean"
+                                },
                                 "fetchedAt": {
                                   "type": "string",
                                   "format": "date-time"
@@ -32635,6 +32658,7 @@
                                 "state",
                                 "value",
                                 "yesterday",
+                                "atLeast",
                                 "fetchedAt"
                               ]
                             },

@@ -543,11 +543,13 @@ export interface SentryWindow {
 
 /**
  * Sentry's answer to one read: the number, or `null` while Sentry keeps no
- * data for it; or why there is none: Sentry is unreachable or not set up, or
- * it limits the reads until `retryAt`.
+ * data for it; a count that stopped at the most pages the backend reads, so
+ * Sentry has at least that many; or why there is none: Sentry is unreachable
+ * or not set up, or it limits the reads until `retryAt`.
  */
 export type SentryAnswer =
   | { readonly ok: true; readonly value: number | null }
+  | { readonly ok: true; readonly atLeast: number }
   | { readonly ok: false; readonly reason: 'unavailable' }
   | { readonly ok: false; readonly reason: 'rate-limited'; readonly retryAt: Date };
 

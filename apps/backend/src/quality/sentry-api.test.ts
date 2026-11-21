@@ -87,7 +87,7 @@ describe('the Sentry API', () => {
 
     expect(await sentry.read('newIssues', window)).toEqual({
       ok: true,
-      value: NEW_ISSUES_MAX_PAGES * 100,
+      atLeast: NEW_ISSUES_MAX_PAGES * 100,
     });
     expect(fetched).toBe(NEW_ISSUES_MAX_PAGES);
   });
