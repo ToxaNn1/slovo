@@ -1,6 +1,13 @@
 import { type PlayingGame } from '@slovo/core/testing';
 import type { Tip } from '@slovo/contracts';
-import type { GivenAnswer, Haptics, PlayedRound, RoundAnswer, RoundBlank } from '@slovo/core';
+import type {
+  GivenAnswer,
+  Haptics,
+  PlayedRound,
+  RoundAnswer,
+  RoundBlank,
+  RoundContent,
+} from '@slovo/core';
 import {
   coreTokens,
   EditionProvider,
@@ -1632,6 +1639,45 @@ describe('QuickQuestionRound', () => {
     expect(String(screen.getByTestId('game-prompt').props['accessibilityLabel'])).toContain(
       `${tip.gameQuestion.prompt} not frank. Open and honest.`,
     );
+  });
+
+  it('announces an answer once though the Feed draws the card again while its sheet is open', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockReturnValue();
+    announce.mockClear();
+    const round: Extract<RoundContent, { readonly form: 'pick' }> = {
+      form: 'pick',
+      prompt: tip.gameQuestion.prompt,
+      labelKind: 'tip',
+      options: OPTIONS.map((text) => ({ text, stressedVowels: [] })),
+      correct: CORRECT,
+      sheet: { answer: { text: OPTIONS[CORRECT], stressedVowels: [] }, example: undefined },
+    };
+    function Feed({ tick }: { tick: number }) {
+      const [answered, setAnswered] = useState<number>();
+      return (
+        <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+          <GestureHandlerRootView testID={`feed-${String(tick)}`}>
+            <HapticsProvider haptics={haptics}>
+              <QuickQuestionRound
+                title="Quick question"
+                round={round}
+                entry={tip}
+                label="Definition"
+                answered={answered}
+                onAnswer={setAnswered}
+              />
+            </HapticsProvider>
+          </GestureHandlerRootView>
+        </EditionProvider>
+      );
+    }
+    const view = await render(<Feed tick={0} />);
+    await fireEvent.press(screen.getByRole('button', { name: 'candid' }));
+    await view.rerender(<Feed tick={1} />);
+    await view.rerender(<Feed tick={2} />);
+
+    expect(announce.mock.calls.filter(([said]) => said.startsWith('Spot on!'))).toHaveLength(1);
+    announce.mockRestore();
   });
 
   it('shows no «instead» line for a Tip with no non-standard form', async () => {
