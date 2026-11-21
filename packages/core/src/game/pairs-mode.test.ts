@@ -28,10 +28,17 @@ const numbered = (prefix: string, count: number) =>
 /**
  * The pack: 13 nouns in Test, among them two homonyms «коса» and «вирій»,
  * whose primary Definition is the one of `w_n01`, and 6 verbs in Crafts. No
- * Word carries Stress, so each shows as its Lemma.
+ * Word carries Stress, so each shows as its Lemma. «n02» lists «n03» as a
+ * synonym, and «n05» has the Definition of «n04» as an extra one.
  */
 const words: Word[] = [
-  ...numbered('w_n', 10).map((id) => word(id, { stress: [] })),
+  ...numbered('w_n', 10).map((id) =>
+    word(id, {
+      stress: [],
+      synonyms: id === 'w_n02' ? ['n03'] : [],
+      extraDefinitions: id === 'w_n05' ? ['The meaning of n04.'] : [],
+    }),
+  ),
   word('w_коса1', { lemma: 'коса', stress: [], primaryDefinition: 'A braid.' }),
   word('w_коса2', { lemma: 'коса', stress: [], primaryDefinition: 'A scythe.' }),
   word('w_вирій', { stress: [], primaryDefinition: 'The meaning of n01.' }),
@@ -277,6 +284,18 @@ describe('the grids of «Пари»', () => {
   });
 
   // The weak Entries take places drawn at random among the first 15 Rounds.
+  it('never puts in one grid two Words of which one fits the Definition of the other: synonyms, or an extra Definition', async () => {
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const grids = gridsOf(await playGame(await run({ seed })));
+
+      for (const grid of grids) {
+        const texts = grid.words.map(({ shown: { text } }) => text);
+        expect(['n02', 'n03'].filter((lemma) => texts.includes(lemma)).length).toBeLessThan(2);
+        expect(['n04', 'n05'].filter((lemma) => texts.includes(lemma)).length).toBeLessThan(2);
+      }
+    }
+  });
+
   it('puts the Words the reader marked «Не знаю» in grids drawn anew for each Game, not always the first', async () => {
     const weak = ['w_n03', 'w_n07', 'w_n09'];
     const places: number[] = [];
