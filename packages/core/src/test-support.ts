@@ -58,7 +58,7 @@ const testEditionConfig = {
     theme: 'system',
     textSize: 'system',
     vibration: true,
-    notificationTimes: [],
+    notificationTimes: ['09:00'],
     rarityCeiling: 5,
     mix: {
       categories: ['test'],

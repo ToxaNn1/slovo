@@ -587,8 +587,12 @@ export const UserSettingDefaultsConfigSchema = z.strictObject({
   textSize: TextSizeSchema,
   /** Whether haptics are on for a new user. */
   vibration: z.boolean(),
-  /** The default notification times, kept in time order: the Word's first, the Reminder's last (ADR 0200). */
-  notificationTimes: NotificationTimesSchema.transform((times) => [...times].sort()),
+  /**
+   * The default notification times, kept in time order: the Word's first, the
+   * Reminder's last (ADR 0200). At least the Word's: turning the notifications
+   * on writes the defaults, and none would leave them off.
+   */
+  notificationTimes: NotificationTimesSchema.min(1).transform((times) => [...times].sort()),
   /** The top of the Rarity Range a new user starts with, «до 1» to «до 5» (ADR 0156). */
   rarityCeiling: RaritySchema,
   mix: MixConfigSchema,

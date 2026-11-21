@@ -733,6 +733,11 @@ describe('loadEdition', () => {
       'userSettingDefaults.notificationTimes.0',
     ],
     [
+      'no default notification time, which would leave the notifications off when turned on',
+      { userSettingDefaults: { ...userSettingDefaults, notificationTimes: [] } },
+      'userSettingDefaults.notificationTimes',
+    ],
+    [
       'more than 10 notification times',
       {
         userSettingDefaults: {
