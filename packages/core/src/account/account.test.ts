@@ -310,7 +310,7 @@ async function signedIn(options: Parameters<typeof setup>[0] = {}) {
 }
 
 /** A Session store whose `failing` step is refused, as a locked Keychain refuses it. */
-function sessionStoreFailingTo(failing: 'keep' | 'forget'): SessionStore {
+function sessionStoreFailingTo(failing: 'keep' | 'forget' | 'keepUntold'): SessionStore {
   return {
     ...createMemorySessionStore(),
     [failing]: () => Promise.reject(new Error(`cannot ${failing} the Session`)),
@@ -502,6 +502,30 @@ describe('the Account signed in', () => {
     expect(api.account.sessionTokens).toEqual([]);
     await account.refresh();
     expect(api.calls.filter((call) => call === 'account.signOut')).toHaveLength(5);
+  });
+
+  it('keeps a sign-out the server has not heard of for the next launch, and forgets it once told', async () => {
+    const { account, api, sessions, open } = await signedIn();
+    api.failNext('offline', 'offline', 'offline', 'offline');
+    await account.signOut();
+    expect(await sessions.untold()).toEqual(['session-1']);
+
+    // The app is killed and launched again: the Session is still to be told.
+    const relaunched = await open();
+    expect(relaunched.state).toMatchObject({ status: 'signed-out' });
+    await relaunched.refresh();
+
+    expect(api.account.sessionTokens).toEqual([]);
+    expect(await sessions.untold()).toEqual([]);
+  });
+
+  it('signs out and tells the server even when the sign-out fails to be kept on the device', async () => {
+    const { account, api } = await signedIn({ sessions: sessionStoreFailingTo('keepUntold') });
+
+    await account.signOut();
+
+    expect(account.state).toMatchObject({ status: 'signed-out', problem: undefined });
+    expect(api.account.sessionTokens).toEqual([]);
   });
 
   it('signs out at once while a check is in flight, and the check changes nothing after', async () => {
