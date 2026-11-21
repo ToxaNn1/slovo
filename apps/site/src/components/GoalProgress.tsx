@@ -1,7 +1,7 @@
 import { barWidth, formatCount, GOAL, shareOfGoal } from '../goal';
 import { useCountUp } from './useCountUp';
 
-/** The mission's count towards a million, its bar and its share of the way. */
+/** The mission's count towards a hundred thousand, its bar and its share of the way. */
 export function GoalProgress({ count }: { count: number }) {
   const shown = useCountUp(count);
   return (
