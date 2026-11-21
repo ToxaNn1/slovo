@@ -11,6 +11,7 @@ import { ScreenStack } from '../entries/screen-stack';
 import { screenSettled } from '../use-open-screen';
 import { editionStrings } from '../edition/edition';
 import { editionAtLaunch as edition } from '../edition/edition-at-launch';
+import * as settingsLayout from '../app/settings/_layout';
 import { EditionTabs } from './edition-tabs';
 import { opened, settingsAt, switchedTo, testShell } from './test-support';
 
@@ -40,7 +41,7 @@ async function renderTabs(
       'mix/index': () => <Text>My Mix</Text>,
       'saved/_layout': () => <ScreenStack />,
       'saved/index': () => <Text>Saved</Text>,
-      'settings/_layout': () => <ScreenStack initialRouteName="profile" />,
+      'settings/_layout': settingsLayout,
       'settings/profile': () => <Text>Profile</Text>,
       'settings/index': () => <Text>Settings</Text>,
       'entry/_layout': () => <ScreenStack />,
@@ -145,6 +146,30 @@ describe('the tab bar', () => {
 
     expect(await screen.findByText('Profile')).toBeOnTheScreen();
     expect(screen.getByText(tabs.profile)).toBeVisible();
+  });
+
+  it('opens the Profile after a Settings screen was opened from the Feed', async () => {
+    await renderTabs('/feed', edition, { 'settings/mix': () => <Text>Mix settings</Text> });
+    await settle(() => {
+      router.push('/settings/mix');
+    });
+    expect(await screen.findByText('Mix settings')).toBeOnTheScreen();
+    await settle(() => {
+      router.back();
+    });
+    await settle(() => fireEvent.press(screen.getByText(tabs.profile)));
+
+    expect(await screen.findByText('Profile')).toBeOnTheScreen();
+  });
+
+  it('opens Settings on the fourth tab while the Profile is off', async () => {
+    await renderTabs('/', {
+      ...edition,
+      isFeatureEnabled: (feature) => feature !== 'profile' && edition.isFeatureEnabled(feature),
+    });
+    await settle(() => fireEvent.press(screen.getByText(editionStrings.settings.title)));
+
+    expect(await screen.findByText('Settings')).toBeOnTheScreen();
   });
 
   it('shows on the first screen of a tab', async () => {

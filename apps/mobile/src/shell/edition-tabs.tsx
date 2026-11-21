@@ -277,17 +277,15 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
           ...options.settings,
           ...barOn(atRoot(route, inEffect.isFeatureEnabled('profile') ? 'profile' : 'index')),
         })}
-        listeners={({ route }) => ({
+        listeners={{
           tabPress: (event) => {
-            // Expo Router 58 builds a tab's stack from the route files alone, before the
-            // layout's `initialRouteName` is read, so the first press on the tab would open
-            // Settings under no Profile. While the Profile is shown it opens the Profile.
-            const stackBuilt = getFocusedRouteNameFromRoute(route) !== undefined;
-            if (!inEffect.isFeatureEnabled('profile') || stackBuilt) return;
+            // The stack is built on the Profile (`settings/_layout`'s anchor). While the Profile
+            // is off the tab is Settings, which opens over it.
+            if (inEffect.isFeatureEnabled('profile')) return;
             event.preventDefault();
-            router.navigate('/settings/profile');
+            router.navigate('/settings');
           },
-        })}
+        }}
       />
       {/* An Entry opened from a link, such as a notification's; no tab leads to it. */}
       <Tabs.Screen name="entry" options={offTabs} />
