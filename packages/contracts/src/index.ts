@@ -15,6 +15,7 @@ export {
  * oRPC.
  */
 export {
+  CategoryGroupSchema,
   CategorySchema,
   DailyGoalSchema,
   DailyGoalsSchema,
@@ -43,6 +44,7 @@ export {
   TimeOfDaySchema,
   UserSettingDefaultsConfigSchema,
   type Category,
+  type CategoryGroup,
   type DailyGoal,
   type DailyGoals,
   type OnboardingNotificationTimes,

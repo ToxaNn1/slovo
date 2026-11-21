@@ -315,6 +315,33 @@
     }
   ],
   "categoriesRequiringHistory": ["repressed-words", "chameleon-words"],
+  "categoryGroups": [
+    { "name": "Про людину", "categories": ["human-body", "emotions-character"] },
+    {
+      "name": "Світ навколо",
+      "categories": ["nature-weather", "household-crafts", "technology", "science"]
+    },
+    {
+      "name": "Мова",
+      "categories": [
+        "language-speech",
+        "dialects",
+        "witty-insults",
+        "folk-names",
+        "chameleon-words"
+      ]
+    },
+    {
+      "name": "Історія й культура",
+      "categories": [
+        "arts-culture",
+        "history-antiquity",
+        "military",
+        "old-crafts",
+        "repressed-words"
+      ]
+    }
+  ],
   "curatedCollectionPictogram": "language-speech",
   "originLanguages": [
     {

@@ -957,7 +957,7 @@
     "undo": "Скасувати"
   },
   "mix": {
-    "title": "Мої теми",
+    "title": "Мої Теми",
     "subtitle": "Які слова показувати у Стрічці. Зміни діють одразу.",
     "all": "Усі",
     "categories": {
@@ -986,6 +986,8 @@
     },
     "kindWeight": {
       "title": "{kind} у Стрічці",
+      "off": "Вимк",
+      "on": "Увімк",
       "less": "Менше",
       "normal": "Помірно",
       "more": "Більше"
@@ -996,15 +998,41 @@
       "off": "Ніколи",
       "rare": "Рідко",
       "normal": "Помірно",
-      "often": "Часто"
+      "often": "Часто",
+      "lines": {
+        "off": "без питань",
+        "rare": "1 на 20 карток",
+        "normal": "1 на 10",
+        "often": "1 на 6"
+      }
     },
-    "lastCategoryHint": "Хоча б одна категорія лишається завжди, щоб було слово дня.",
-    "selectedOf": "{selected} з {total} обрано",
-    "groups": {
+    "tiles": {
       "rarity": "РІДКІСТЬ",
-      "categories": "КАТЕГОРІЇ",
-      "kinds": "ТИПИ КАРТОК"
-    }
+      "kinds": "ТИПИ",
+      "quickQuestion": "ПИТАННЯ",
+      "rarityAll": "усі"
+    },
+    "sheets": {
+      "rarity": "РІДКІСТЬ",
+      "kinds": "ТИПИ КАРТОК",
+      "correctionCategories": "ТЕМИ ВИПРАВЛЕНЬ",
+      "quickQuestion": "ШВИДКЕ ПИТАННЯ",
+      "done": "ГОТОВО"
+    },
+    "correctionCategories": {
+      "row": "Теми виправлень",
+      "count": "{selected} з {total}",
+      "heading": "ТЕМИ · {selected} з {total}",
+      "line": "Де трапляються помилки, які ти хочеш виправляти.",
+      "back": "← Типи"
+    },
+    "group": {
+      "toggle": "{selected} з {total} · {action}",
+      "all": "усі",
+      "none": "зняти"
+    },
+    "count": "{selected} з {total}",
+    "lastCategoryHint": "Хоча б одна категорія лишається завжди, щоб було слово дня."
   },
   "hidden": {
     "title": "Приховані записи",

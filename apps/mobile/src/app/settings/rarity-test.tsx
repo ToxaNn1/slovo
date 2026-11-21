@@ -58,7 +58,13 @@ export default function RarityTestScreen() {
       <View style={styles.top}>
         <BackLink testID="rarity-test-back" label={editionStrings.settings.title} onPress={back} />
       </View>
-      <ScrollView contentContainerStyle={styles.content}>{children}</ScrollView>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
+        {children}
+      </ScrollView>
       <View style={styles.footer}>{footer}</View>
     </SafeAreaView>
   );

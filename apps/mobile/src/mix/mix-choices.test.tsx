@@ -34,24 +34,34 @@ async function settle() {
   });
 }
 
-/** Taps a chip and lets the Mix keep the change. */
+/** Taps a tile, a cover or a chip and lets the Mix keep the change. */
 async function press(id: string) {
-  await fireEvent.press(screen.getByTestId(id));
+  await fireEvent.press(screen.getByTestId(id, { includeHiddenElements: true }));
   await settle();
 }
 
-/** Turns the «Виправлення» switch and lets the Mix keep the change. */
-async function turnCorrections() {
-  await fireEvent.press(screen.getByTestId('mix-corrections'));
-  await settle();
+/** Opens the kinds' sheet and, from it, the sheet of the Categories of Corrections. */
+async function openCorrectionCategories() {
+  await press('mix-tile-kinds');
+  await press('mix-correction-categories');
 }
 
 beforeEach(async () => {
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [
-        { id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' },
-        { id: 'crafts', displayName: 'Ремесла', description: 'Ремесла.', tone: 'loud' },
+        {
+          id: 'human-body',
+          displayName: 'Людина і тіло',
+          description: 'Людина.',
+          tone: 'loud',
+        },
+        {
+          id: 'emotions-character',
+          displayName: 'Емоції та характер',
+          description: 'Емоції.',
+          tone: 'loud',
+        },
       ],
       correctionCategories,
     }),
@@ -82,55 +92,63 @@ async function renderChoices(url = '/settings/mix', editionInEffect: Edition = s
 
 const mixStrings = editionStrings.mix;
 
-/** «N з M обрано» above the Category tiles. */
-const selected = (count: number) =>
-  fill(mixStrings.selectedOf, { selected: String(count), total: '2' });
+/** «N з 2» beside the title. */
+const selected = (count: number) => fill(mixStrings.count, { selected: String(count), total: '2' });
 
-describe('the Category tiles on the Мій Мікс screen', () => {
-  it('shows a tile for each Category, every one chosen, under «N з M обрано» and no subtitle', async () => {
+const hidden = { includeHiddenElements: true };
+const cover = (id: string) => screen.getByTestId(`mix-chip-${id}`, hidden);
+
+describe('the Category covers on the Мій Мікс screen', () => {
+  it('shows a cover for each Category, every one chosen, in its group, under «N з M»', async () => {
     await renderChoices();
-    expect(screen.getByRole('button', { name: 'Природа' })).toBeSelected();
-    expect(screen.getByRole('button', { name: 'Ремесла' })).toBeSelected();
+    expect(screen.getByRole('button', { name: 'Людина і тіло' })).toBeSelected();
+    expect(screen.getByRole('button', { name: 'Емоції та характер' })).toBeSelected();
     expect(screen.getByTestId('mix-selected')).toHaveTextContent(selected(2));
-    expect(screen.getByText(mixStrings.groups.categories)).toBeOnTheScreen();
-    expect(screen.queryByText(mixStrings.subtitle)).toBeNull();
+    expect(screen.getByRole('header', { name: 'Про людину' })).toBeOnTheScreen();
+    expect(screen.getByTestId('mix-group-0')).toHaveTextContent(
+      fill(mixStrings.group.toggle, { selected: '2', total: '2', action: mixStrings.group.none }),
+    );
   });
 
-  it('counts the choice as a tile turns off and on', async () => {
+  it('counts the choice as a cover turns off and on', async () => {
     await renderChoices();
-    await press('mix-chip-crafts');
-    expect(screen.getByRole('button', { name: 'Ремесла' })).not.toBeSelected();
+    await press('mix-chip-emotions-character');
+    expect(screen.getByRole('button', { name: 'Емоції та характер' })).not.toBeSelected();
     expect(screen.getByTestId('mix-selected')).toHaveTextContent(selected(1));
-    await press('mix-chip-crafts');
+    await press('mix-chip-emotions-character');
     expect(screen.getByTestId('mix-selected')).toHaveTextContent(selected(2));
   });
 
   it('keeps the last Category in the Mix and says why', async () => {
     await renderChoices();
-    await press('mix-chip-crafts');
-    const last = screen.getByRole('button', { name: 'Природа' });
+    await press('mix-chip-emotions-character');
+    const last = screen.getByRole('button', { name: 'Людина і тіло' });
     expect(last).toBeDisabled();
-    expect(
-      screen.getByTestId('mix-last-category-hint', { includeHiddenElements: true }),
-    ).toHaveTextContent(mixStrings.lastCategoryHint);
-    await press('mix-chip-nature');
+    expect(screen.getByTestId('mix-last-category-hint', hidden)).toHaveTextContent(
+      mixStrings.lastCategoryHint,
+    );
+    await press('mix-chip-human-body');
     expect(last).toBeSelected();
     expect(screen.getByTestId('mix-selected')).toHaveTextContent(selected(1));
   });
 
-  it('turns every Category back on with «Усі»', async () => {
+  it('puts every Category of a group back in with «усі»', async () => {
     await renderChoices();
-    await press('mix-chip-crafts');
-    await press('mix-chip-all');
+    await press('mix-chip-emotions-character');
+    expect(screen.getByTestId('mix-group-0')).toHaveTextContent(
+      fill(mixStrings.group.toggle, { selected: '1', total: '2', action: mixStrings.group.all }),
+    );
+    await press('mix-group-0');
     expect(screen.getByTestId('mix-selected')).toHaveTextContent(selected(2));
   });
 });
 
-const chipOf = (id: string) => screen.getByTestId(`mix-correction-chip-${id}`);
+const chipOf = (id: string) => screen.getByTestId(`mix-correction-chip-${id}`, hidden);
 
 describe('the Categories of Corrections on the Мій Мікс screen', () => {
   it('shows a chip for each, all on, that VoiceOver reads as a Category of Corrections', async () => {
     await renderChoices();
+    await openCorrectionCategories();
 
     for (const { id, displayName } of correctionCategories) {
       expect(chipOf(id)).toHaveAccessibleName(fill(strings.category, { category: displayName }));
@@ -141,11 +159,12 @@ describe('the Categories of Corrections on the Мій Мікс screen', () => {
 
   it('takes one out of the Mix and puts it back, leaving the others and the Words’ Categories as they are', async () => {
     await renderChoices();
+    await openCorrectionCategories();
 
     await press('mix-correction-chip-work');
     expect(chipOf('work')).not.toBeSelected();
     expect(chipOf('shop')).toBeSelected();
-    expect(screen.getByTestId('mix-chip-nature')).toBeSelected();
+    expect(cover('human-body')).toBeSelected();
     expect(composition.mix.state.correctionCategories.categoryIds).toEqual(['shop']);
 
     await press('mix-correction-chip-work');
@@ -154,28 +173,30 @@ describe('the Categories of Corrections on the Мій Мікс screen', () => {
 
   it('disables the last one in the Mix and says why', async () => {
     await renderChoices();
+    await openCorrectionCategories();
 
     await press('mix-correction-chip-work');
 
     expect(chipOf('shop')).toBeDisabled();
     expect(chipOf('shop')).toHaveProp('accessibilityHint', strings.lastCategoryHint);
     // The line is hidden from VoiceOver, which reads it as the chip's hint instead.
-    const hidden = { includeHiddenElements: true };
     expect(screen.getByTestId('mix-correction-last-category-hint', hidden)).toHaveTextContent(
       strings.lastCategoryHint,
     );
     expect(screen.queryByTestId('mix-last-category-hint', hidden)).toBeNull();
   });
 
-  it('follows the «Виправлення» switch: gone while it is off, back as they were when it is on', async () => {
+  it('follows the «Виправлення» choice: gone while it is off, back as they were when it is on', async () => {
     await renderChoices();
+    await openCorrectionCategories();
     await press('mix-correction-chip-work');
+    await press('mix-correction-categories-back');
 
-    await turnCorrections();
-    expect(screen.queryByTestId('mix-correction-chip-work')).toBeNull();
-    expect(screen.queryByTestId('mix-correction-chip-shop')).toBeNull();
+    await press('mix-corrections-off');
+    expect(screen.queryByTestId('mix-correction-categories', hidden)).toBeNull();
 
-    await turnCorrections();
+    await press('mix-corrections-normal');
+    await press('mix-correction-categories');
     expect(chipOf('work')).not.toBeSelected();
     expect(chipOf('shop')).toBeSelected();
   });
@@ -194,6 +215,7 @@ describe('the Мій Мікс screen', () => {
 
   it('sets «Рідкість», the same Rarity Range as Settings (ADR 0156)', async () => {
     await renderChoices();
+    await press('mix-tile-rarity');
     expect(screen.getByTestId('mix-rarity-bar-5')).toBeSelected();
 
     await press('mix-rarity-bar-3');
@@ -209,7 +231,8 @@ describe('the Мій Мікс screen', () => {
         feature !== 'rarityCeiling' && shippedEdition.isFeatureEnabled(feature),
     });
 
-    expect(screen.queryByTestId('mix-rarity')).toBeNull();
+    expect(screen.queryByTestId('mix-tile-rarity')).toBeNull();
+    expect(screen.getByTestId('mix-tile-kinds')).toBeOnTheScreen();
     expect(screen.getByTestId('mix-selected')).toBeOnTheScreen();
   });
 
@@ -218,7 +241,7 @@ describe('the Мій Мікс screen', () => {
 
     expect(screen.getByRole('header', { name: mixStrings.title })).toBeOnTheScreen();
     expect(screen.queryByTestId('mix-back')).toBeNull();
-    expect(screen.getByTestId('mix-rarity')).toBeOnTheScreen();
+    expect(screen.getByTestId('mix-tile-rarity')).toBeOnTheScreen();
     expect(screen.getByTestId('mix-selected')).toHaveTextContent(selected(2));
   });
 });

@@ -56,6 +56,8 @@ export function OptionScreen<T extends string>({
         <BackHeader titleRole="settingsSubTitle" title={title} back={back} />
       </View>
       <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         testID={testID === undefined ? undefined : `${testID}-list`}
         contentContainerStyle={styles.content}
       >

@@ -1,3 +1,5 @@
+import type { Wedge } from './base';
+
 /** The tokens of Settings and its panels. */
 
 /**
@@ -104,25 +106,308 @@ export const narratorVoiceDrawing = {
   descriptionOpacity: 0.75,
 } as const;
 
-/** A Category tile of the Mix (board 11, screen 87): pictogram, name and a check corner while on. */
-export const mixTileDrawing = {
-  minHeight: 50,
-  radius: 13,
-  padding: 8,
-  /** The room on the right the check corner takes. */
-  paddingRight: 26,
-  gap: 10,
-  /** The pictogram's square and its corner radius. */
-  pictogram: 30,
-  pictogramRadius: 9,
-  /** The pictogram's shape inside its square. */
-  glyph: 18,
-  /** The check corner, a triangle in the tile's top right corner. */
-  corner: 26,
-  check: { width: 10, height: 9, inset: 4 },
-  /** The space between the tiles of the two-column grid. */
-  gridGap: 8,
+/**
+ * «Мої Теми» (board XMix, variant E): the three setting tiles over the
+ * Category groups, each tile with its small bars; a group's covers in two
+ * columns while it holds `twoColumnsUpTo` Categories or fewer, else three,
+ * each cover with its pictogram, the pictogram's offset shadow, a halftone
+ * spot under it, the small shape and the check box in its corner.
+ */
+export const mixScreenDrawing = {
+  tile: { height: 118, radius: 18, padding: 12, gap: 10, barsHeight: 22, barGap: 3 },
+  /** A bar's height on a tile: the lowest, and how much each step adds. */
+  bar: { base: 6, rarityStep: 4, levelStep: 5, radius: 3 },
+  groupGap: 22,
+  twoColumnsUpTo: 4,
+  cover: {
+    radius: 20,
+    check: {
+      side: 24,
+      radius: 7,
+      inset: 8,
+      border: 2,
+      /** The empty box's fill, white through, as the board's. */
+      emptyFill: 'rgba(255, 255, 255, 0.6)',
+      mark: { width: 12, height: 10 },
+    },
+    /** The line over a cover's name. */
+    nameRule: 2,
+    shadowOffset: 7,
+    offAlpha: 0.45,
+    /** The pictogram's middle, a share of the picture's height. */
+    glyphMiddle: 0.46,
+    /** The small shape's side, and a big small shape's (`MixCoverPictogram.bigAccent`). */
+    two: {
+      gap: 12,
+      height: 132,
+      glyph: 78,
+      small: 20,
+      bigSmall: 30,
+      name: { x: 14, top: 12, bottom: 14 },
+    },
+    three: {
+      gap: 8,
+      height: 92,
+      glyph: 50,
+      small: 14,
+      bigSmall: 20,
+      name: { x: 10, top: 9, bottom: 11 },
+    },
+  },
+  sheetOption: { height: 56, radius: 14 },
+  /** The dashed row of the kinds' sheet that opens the Categories of Corrections. */
+  subRow: { radius: 12, border: 1.5 },
 } as const;
+
+/** The board's points, in per cent of the box, as a Wedge in fractions of it. */
+const percent = (points: readonly (readonly [number, number])[]): Wedge =>
+  points.map(([x, y]) => [x / 100, y / 100] as const);
+const radians = (degrees: number) => (degrees * Math.PI) / 180;
+/** The point `r` per cent from (`cx`, `cy`) at `degrees`. */
+const around = (cx: number, cy: number, r: number, degrees: number) =>
+  [cx + r * Math.cos(radians(degrees)), cy + r * Math.sin(radians(degrees))] as const;
+
+const person = (() => {
+  const head: (readonly [number, number])[] = [];
+  for (let d = 90; d >= -270; d -= 20) head.push(around(50, 14, 13, d));
+  return percent([
+    ...head,
+    [50, 27],
+    [46, 27],
+    [46, 33],
+    [22, 36],
+    [10, 60],
+    [18, 63],
+    [28, 46],
+    [30, 100],
+    [46, 100],
+    [50, 70],
+    [54, 100],
+    [70, 100],
+    [72, 46],
+    [82, 63],
+    [90, 60],
+    [78, 36],
+    [54, 33],
+    [54, 27],
+    [50, 27],
+  ]);
+})();
+const gear = (() => {
+  const points: (readonly [number, number])[] = [];
+  for (let k = 0; k < 8; k++) {
+    const a = k * 45;
+    for (const [d, r] of [
+      [a - 9, 50],
+      [a + 9, 50],
+      [a + 16, 37],
+      [a + 36, 37],
+    ] as const)
+      points.push(around(50, 50, r, d));
+  }
+  return percent(points);
+})();
+const pin = (() => {
+  const points: (readonly [number, number])[] = [];
+  for (let d = 140; d <= 400; d += 15) points.push(around(50, 38, 36, d));
+  return percent([...points, [50, 100]]);
+})();
+const leaf = (() => {
+  const right: (readonly [number, number])[] = [];
+  for (let k = 0; k < 5; k++) {
+    const y = 10 + k * 16;
+    right.push([52, y + 10], [82, y], [84, y + 8], [52, y + 18]);
+  }
+  const left: (readonly [number, number])[] = [];
+  for (let k = 4; k >= 0; k--) {
+    const y = 10 + k * 16;
+    left.push([48, y + 18], [16, y + 8], [18, y], [48, y + 10]);
+  }
+  return percent([
+    [46, 2],
+    [50, 0],
+    [54, 2],
+    [54, 10],
+    ...right,
+    [54, 96],
+    [52, 100],
+    [48, 100],
+    [46, 96],
+    ...left,
+    [46, 10],
+  ]);
+})();
+const spiral = (() => {
+  const outer: (readonly [number, number])[] = [];
+  const inner: (readonly [number, number])[] = [];
+  for (let i = 0; i <= 40; i++) {
+    const a = (i / 40) * Math.PI * 2.6;
+    const r = 48 - a * 5.2;
+    outer.push([50 + r * Math.cos(a), 50 + r * Math.sin(a)]);
+    inner.unshift([50 + (r - 13) * Math.cos(a), 50 + (r - 13) * Math.sin(a)]);
+  }
+  return percent([...outer, ...inner]);
+})();
+
+/**
+ * The pictograms of the Category covers of «Мої Теми» (board XMix), in the
+ * order of the Edition's Categories: a person, a heart, a sun over
+ * mountains, a house, a gear, a shield, a sword, columns, a flask, a speech
+ * bubble, a pin, a lightning bolt, a leaf, a T, a tower and a spiral. Each
+ * has its small shape's place, in shares of the picture, and whether the
+ * small shape is a big circle, as the sun's, and its turn.
+ */
+export const mixCoverPictograms: readonly {
+  readonly glyph: Wedge;
+  readonly accent: {
+    readonly left: number;
+    readonly top: number;
+    readonly big: boolean;
+    /** Its turn, in degrees. */
+    readonly rotate: number;
+  };
+}[] = (
+  [
+    person,
+    percent([
+      [50, 100],
+      [0, 35],
+      [25, 5],
+      [50, 25],
+      [75, 5],
+      [100, 35],
+    ]),
+    percent([
+      [0, 100],
+      [32, 38],
+      [50, 62],
+      [70, 28],
+      [100, 100],
+    ]),
+    percent([
+      [50, 0],
+      [100, 45],
+      [100, 100],
+      [0, 100],
+      [0, 45],
+    ]),
+    gear,
+    percent([
+      [6, 0],
+      [94, 0],
+      [94, 52],
+      [50, 100],
+      [6, 52],
+      [6, 0],
+      [20, 30],
+      [20, 44],
+      [50, 66],
+      [80, 44],
+      [80, 30],
+      [50, 52],
+      [20, 30],
+      [6, 0],
+    ]),
+    percent([
+      [85, 0],
+      [100, 15],
+      [55, 62],
+      [40, 80],
+      [8, 100],
+      [20, 60],
+      [38, 45],
+    ]),
+    percent([
+      [0, 30],
+      [50, 0],
+      [100, 30],
+      [100, 40],
+      [88, 40],
+      [88, 100],
+      [70, 100],
+      [70, 40],
+      [59, 40],
+      [59, 100],
+      [41, 100],
+      [41, 40],
+      [30, 40],
+      [30, 100],
+      [12, 100],
+      [12, 40],
+      [0, 40],
+    ]),
+    percent([
+      [38, 0],
+      [62, 0],
+      [62, 8],
+      [58, 8],
+      [58, 38],
+      [100, 92],
+      [94, 100],
+      [6, 100],
+      [0, 92],
+      [42, 38],
+      [42, 8],
+      [38, 8],
+    ]),
+    percent([
+      [0, 0],
+      [100, 0],
+      [100, 75],
+      [35, 75],
+      [15, 100],
+      [15, 75],
+      [0, 75],
+    ]),
+    pin,
+    percent([
+      [58, 0],
+      [14, 56],
+      [46, 56],
+      [36, 100],
+      [86, 42],
+      [54, 42],
+      [66, 0],
+    ]),
+    leaf,
+    percent([
+      [8, 4],
+      [92, 4],
+      [92, 30],
+      [58, 30],
+      [58, 100],
+      [42, 100],
+      [42, 30],
+      [8, 30],
+    ]),
+    percent([
+      [50, 0],
+      [62, 18],
+      [56, 30],
+      [64, 30],
+      [64, 100],
+      [36, 100],
+      [36, 30],
+      [44, 30],
+      [38, 18],
+    ]),
+    spiral,
+  ] as const
+).map((glyph, at) => {
+  const rotate = ((at * 37) % 60) - 30;
+  return {
+    glyph,
+    accent:
+      at === 2
+        ? { left: 0.68, top: 0.1, big: true, rotate }
+        : {
+            left: at % 2 === 1 ? 0.14 : 0.7,
+            top: at % 3 === 0 ? 0.58 : 0.14,
+            big: false,
+            rotate,
+          },
+  };
+});
 
 /** A stepper's drawing (board 11, 90): the sunken track's padding and corner, and the − and + tiles. */
 export const stepperDrawing = { padding: 10, radius: 20, tile: 64, tileRadius: 16 } as const;

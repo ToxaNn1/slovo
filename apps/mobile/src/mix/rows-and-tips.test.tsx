@@ -147,47 +147,65 @@ const kinds = [
   },
 ] as const;
 
+/** Opens the sheet a setting tile of the Мій Мікс screen opens. */
+async function openSheet(tile: 'kinds' | 'quickQuestion') {
+  await fireEvent.press(screen.getByTestId(`mix-tile-${tile}`));
+  await settle();
+}
+
+/** Taps a segment or a choice of the open sheet and lets the Mix keep the change. */
+async function choose(id: string) {
+  await fireEvent.press(screen.getByTestId(id));
+  await settle();
+}
+
 describe.each(kinds)('$name', ({ kind, feature, entry, title, subtitle }) => {
-  it('have a switch on the Мій Мікс screen that takes them out of the Mix and puts them back', async () => {
+  it('have a choice on the kinds sheet of the Мій Мікс screen that takes them out of the Mix and puts them back', async () => {
     await renderInApp(<MixChoices />);
-    const toggle = screen.getByTestId(`mix-${feature}`);
-    expect(toggle).toHaveAccessibleName(title);
-    expect(screen.getByHintText(subtitle)).toBe(toggle);
+    await openSheet('kinds');
+    expect(screen.getByText(title)).toBeOnTheScreen();
+    expect(screen.getByText(subtitle)).toBeOnTheScreen();
 
-    await fireEvent.press(toggle);
-    await settle();
+    await choose(`mix-${feature}-off`);
     expect(composition.mix.state.kinds[kind]).toBe(false);
+    expect(screen.getByTestId(`mix-${feature}-off`)).toBeSelected();
 
-    await fireEvent.press(toggle);
-    await settle();
+    await choose(`mix-${feature}-normal`);
     expect(composition.mix.state.kinds[kind]).toBe(true);
   });
 
-  it('have a Mix kind weight under their switch that sets how often they come in the Feed', async () => {
+  it('have a Mix kind weight that sets how often they come in the Feed', async () => {
     await renderInApp(<MixChoices />);
-    const normal = screen.getByTestId(`mix-${feature}-weight-normal`);
+    await openSheet('kinds');
+    const normal = screen.getByTestId(`mix-${feature}-normal`);
     expect(normal).toHaveAccessibleName(`${title} у Стрічці: Помірно`);
     expect(normal).toBeSelected();
 
-    await fireEvent.press(screen.getByTestId(`mix-${feature}-weight-more`));
-    await settle();
+    await choose(`mix-${feature}-more`);
     expect(composition.mix.state.kindWeights[kind]).toBe('more');
-    expect(screen.getByTestId(`mix-${feature}-weight-more`)).toBeSelected();
+    expect(screen.getByTestId(`mix-${feature}-more`)).toBeSelected();
 
-    await fireEvent.press(screen.getByTestId(`mix-${feature}-weight-less`));
-    await settle();
+    await choose(`mix-${feature}-less`);
     expect(composition.mix.state.kindWeights[kind]).toBe('less');
   });
 
-  it('have no Mix kind weight while they are out of the Mix or the Edition turns the weights off', async () => {
+  it('come back in at the weight chosen while they are out of the Mix', async () => {
     await composition.mix.setKind(kind, false);
     await renderInApp(<MixChoices />);
-    expect(screen.queryByTestId(`mix-${feature}-weight-normal`)).toBeNull();
+    await openSheet('kinds');
 
+    await choose(`mix-${feature}-more`);
+    expect(composition.mix.state.kinds[kind]).toBe(true);
+    expect(composition.mix.state.kindWeights[kind]).toBe('more');
+    expect(screen.getByTestId(`mix-${feature}-more`)).toBeSelected();
+  });
+
+  it('have only «Вимк» and «Увімк» while the Edition turns the weights off', async () => {
     await open(true, false);
     await renderInApp(<MixChoices />);
-    expect(screen.getByTestId(`mix-${feature}`)).toBeOnTheScreen();
-    expect(screen.queryByTestId(`mix-${feature}-weight-normal`)).toBeNull();
+    await openSheet('kinds');
+    expect(screen.getByTestId(`mix-${feature}-on`)).toBeSelected();
+    expect(screen.queryByTestId(`mix-${feature}-normal`)).toBeNull();
   });
 
   it('show a hidden one as an Entry on the Hidden screen until it is shown again', async () => {
@@ -234,7 +252,8 @@ describe.each(kinds)('$name', ({ kind, feature, entry, title, subtitle }) => {
     await composition.mix.setKind(kind, false);
 
     await renderInApp(<MixChoices />);
-    expect(screen.queryByTestId(`mix-${feature}`)).toBeNull();
+    await openSheet('kinds');
+    expect(screen.queryByTestId(`mix-${feature}-off`)).toBeNull();
 
     await renderInApp(<HiddenScreen />);
     expect(screen.queryByTestId(`hidden-${feature}`)).toBeNull();
@@ -246,15 +265,16 @@ describe.each(kinds)('$name', ({ kind, feature, entry, title, subtitle }) => {
 describe('the Quick Question frequency on the Мій Мікс screen', () => {
   it('starts at every 10th card and keeps the frequency chosen', async () => {
     await renderInApp(<MixChoices />);
-    expect(screen.getByText(editionStrings.mix.quickQuestion.title)).toBeTruthy();
+    await openSheet('quickQuestion');
+    expect(screen.getByText(editionStrings.mix.sheets.quickQuestion)).toBeOnTheScreen();
     expect(composition.mix.state.quickQuestionEvery).toBe(10);
+    expect(screen.getByTestId('mix-quick-question-normal')).toBeSelected();
 
-    await fireEvent.press(screen.getByTestId('mix-quick-question-6'));
-    await settle();
+    await choose('mix-quick-question-often');
     expect(composition.mix.state.quickQuestionEvery).toBe(6);
+    expect(screen.getByTestId('mix-quick-question-often')).toBeSelected();
 
-    await fireEvent.press(screen.getByTestId('mix-quick-question-off'));
-    await settle();
+    await choose('mix-quick-question-off');
     expect(composition.mix.state.quickQuestionEvery).toBe('off');
   });
 });

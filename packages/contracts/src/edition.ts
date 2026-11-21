@@ -58,6 +58,15 @@ export const CategorySchema = z.discriminatedUnion('tone', [
 
 export type Category = z.infer<typeof CategorySchema>;
 
+/** A named group of Categories of Words, as the Mix screen shows them, by id in their order. */
+export const CategoryGroupSchema = z.strictObject({
+  /** The group's heading, in the Edition's language. */
+  name: z.string().min(1),
+  categories: z.array(KebabCaseIdSchema).min(1),
+});
+
+export type CategoryGroup = z.infer<typeof CategoryGroupSchema>;
+
 /**
  * The band of rarities a Mood puts first in the Feed: `upper` is
  * the top of the Rarity Range and the one below it, `lower` its bottom and
@@ -772,6 +781,12 @@ export const EditionConfigSchema = z
      */
     categoriesRequiringHistory: z.array(KebabCaseIdSchema),
     /**
+     * The groups the Mix screen shows the Categories of Words in, in their
+     * order, each Category in exactly one; unset, the Categories show as one
+     * list.
+     */
+    categoryGroups: z.array(CategoryGroupSchema).min(1).optional(),
+    /**
      * The id of the Category or Correction Category whose pictogram a Curated
      * Collection's tile draws when the collection names none;
      * unset, such a tile draws no pictogram.
@@ -839,6 +854,7 @@ export const EditionConfigSchema = z
         categories,
         correctionCategories,
         categoriesRequiringHistory,
+        categoryGroups,
         curatedCollectionPictogram,
         originLanguages,
         moods,
@@ -887,6 +903,31 @@ export const EditionConfigSchema = z
           });
         }
       });
+      if (categoryGroups !== undefined) {
+        const grouped = new Set<string>();
+        categoryGroups.forEach(({ categories: ids }, group) => {
+          ids.forEach((id, index) => {
+            const path = ['categoryGroups', group, 'categories', index];
+            if (!known.categories.has(id))
+              context.addIssue({ code: 'custom', path, message: `Unknown Category id "${id}"` });
+            else if (grouped.has(id))
+              context.addIssue({
+                code: 'custom',
+                path,
+                message: `Category "${id}" is in two groups`,
+              });
+            grouped.add(id);
+          });
+        });
+        known.categories.forEach((id) => {
+          if (!grouped.has(id))
+            context.addIssue({
+              code: 'custom',
+              path: ['categoryGroups'],
+              message: `Category "${id}" is in no group`,
+            });
+        });
+      }
       if (
         curatedCollectionPictogram !== undefined &&
         !known.categories.has(curatedCollectionPictogram) &&

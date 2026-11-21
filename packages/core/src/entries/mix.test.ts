@@ -257,6 +257,39 @@ describe('the Mix', () => {
     expect(records.has('mix.categories.speech')).toBe(false);
   });
 
+  it('takes a group of Categories out in one change, telling the subscribers once, and puts it back', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+    let told = 0;
+    app.mix.subscribe(() => {
+      told += 1;
+    });
+
+    await app.mix.setCategories(['speech', 'crafts', 'unknown'], false);
+
+    expect(app.mix.state.categoryIds).toEqual(['nature']);
+    expect(told).toBe(1);
+    expect(mixRecordsOf(records)).toEqual({
+      'mix.categories.speech': 'false',
+      'mix.categories.crafts': 'false',
+    });
+
+    await app.mix.setCategories(['speech', 'crafts'], true);
+
+    expect(app.mix.state.categoryIds).toEqual(['nature', 'speech', 'crafts']);
+    expect(told).toBe(2);
+  });
+
+  it('keeps the group’s last Category in when taking the group out would leave none', async () => {
+    const app = await run();
+    await app.mix.takeOut('nature');
+
+    await app.mix.setCategories(['speech', 'crafts'], false);
+
+    expect(app.mix.state.categoryIds).toEqual(['crafts']);
+    expect(app.mix.state.lastCategoryId).toBe('crafts');
+  });
+
   it('applies the Edition default to every Category the user never touched', async () => {
     const records = new Map<string, string>();
     const app = await run({ records, defaultCategoryIds: ['speech'] });
@@ -1009,6 +1042,25 @@ describe('the Categories of Corrections in the Mix', () => {
     expect(app.mix.state).toEqual(first.mix.state);
     expect(app.mix.state.correctionCategories.categoryIds).toEqual(['shop']);
     expect(await correctionsOffered(app.feed)).toEqual(['c_two']);
+  });
+});
+
+describe('a kind of Entry put in the Mix at a weight', () => {
+  it('comes in at that weight in one change, telling the subscribers once', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+    await app.mix.setKind('tip', false);
+    let told = 0;
+    app.mix.subscribe(() => {
+      told += 1;
+    });
+
+    await app.mix.setKind('tip', true, 'more');
+
+    expect(app.mix.state.kinds.tip).toBe(true);
+    expect(app.mix.state.kindWeights.tip).toBe('more');
+    expect(told).toBe(1);
+    expect((await run({ records })).mix.state.kindWeights.tip).toBe('more');
   });
 });
 

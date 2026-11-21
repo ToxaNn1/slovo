@@ -46,7 +46,12 @@ export default function NarratorVoiceScreen() {
           }}
         />
       </View>
-      <ScrollView testID="narrator-voice-scroll" contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        testID="narrator-voice-scroll"
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.header}>
           <Text {...voice} style={[typeStyle('sub', tokens), { color: colors.muted }]}>
             {strings.lead}

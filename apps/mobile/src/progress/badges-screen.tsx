@@ -95,7 +95,12 @@ export function BadgesScreen() {
           }}
         />
       </View>
-      <ScrollView testID="badges-scroll" contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        testID="badges-scroll"
+        contentContainerStyle={styles.content}
+      >
         <Badges />
       </ScrollView>
     </SafeAreaView>

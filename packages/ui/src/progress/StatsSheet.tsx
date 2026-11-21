@@ -96,9 +96,10 @@ export function StatsSheet({
   return (
     <BottomSheet visible={visible} onClose={onClose} testID="stats-sheet">
       <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         style={styles.scroll}
         contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
       >
         {/* VoiceOver reads the sheet's name first, then the texts in the order they show, as it reads a group. */}
         {!hideStreak && (

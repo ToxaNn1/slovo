@@ -56,7 +56,12 @@ export default function NotificationsScreen() {
           }}
         />
       </View>
-      <ScrollView testID="notifications-scroll" contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        testID="notifications-scroll"
+        contentContainerStyle={styles.content}
+      >
         {state.permission === 'not-asked' && (
           <View style={styles.enable}>
             <Button testID="notifications-enable" label={strings.enable} onPress={askPermission} />

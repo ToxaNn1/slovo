@@ -74,7 +74,8 @@ export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { Chip } from './primitives/Chip';
 export { AnswerTiles, type AnswerTile } from './primitives/AnswerTiles';
 export { ChipChoice } from './mix/ChipChoice';
-export { MixCategoryTile } from './mix/MixCategoryTile';
+export { coverToneAt, MixCategoryCover, type MixCoverTone } from './mix/MixCategoryCover';
+export { MixSettingTile, type MixSettingBar } from './mix/MixSettingTile';
 export { LaterButton, OnboardingStep, stepStyles } from './onboarding/OnboardingStep';
 export { OnboardingWelcome, type HeroWord } from './onboarding/OnboardingWelcome';
 export {

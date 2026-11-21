@@ -31,7 +31,13 @@ const frame = { x: 0, y: 0, width: 390, height: 844 };
 const noInsets: EdgeInsets = { top: 0, left: 0, right: 0, bottom: 0 };
 
 /** A route map as Expo Router's test renderer takes it: a screen or a layout per route. */
-type Routes = Readonly<Record<string, ComponentType>>;
+/** A route file with its settings, as a layout's `unstable_settings.anchor`. */
+interface RouteFile {
+  readonly default: ComponentType;
+  readonly unstable_settings?: object;
+}
+
+type Routes = Readonly<{ _layout?: ComponentType } & Record<string, ComponentType | RouteFile>>;
 
 export interface InApp {
   /**

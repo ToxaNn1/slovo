@@ -96,7 +96,12 @@ function SheetContent({
           {entryTitle}
         </Text>
       </View>
-      <ScrollView style={styles.list} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        style={styles.list}
+        keyboardShouldPersistTaps="handled"
+      >
         {collections.map((collection, index) => {
           const filed = isFiled(collection.id);
           return (

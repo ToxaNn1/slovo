@@ -55,6 +55,8 @@ function Learning({ header }: { header: ListHeader }) {
   return (
     <>
       <FlatList
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         ref={listRef}
         onScroll={onListScroll}
         testID="learning"

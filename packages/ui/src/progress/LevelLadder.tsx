@@ -45,9 +45,10 @@ export function LevelLadder({
 
   return (
     <ScrollView
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
       testID={testID}
       horizontal
-      showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.row}
     >
       {rungs.map((rung, index) => {

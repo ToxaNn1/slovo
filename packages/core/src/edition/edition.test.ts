@@ -148,6 +148,45 @@ const validConfig = {
   },
 };
 
+describe('the Category groups of the Edition', () => {
+  const groups = [
+    { name: 'World', categories: ['nature'] },
+    { name: 'Language', categories: ['speech'] },
+  ];
+
+  it('reports the groups the Categories of Words are shown in, in their order', () => {
+    expect(loadEdition({ ...validConfig, categoryGroups: groups }).categoryGroups).toEqual(groups);
+  });
+
+  it('reports no groups when the Edition names none', () => {
+    expect(loadEdition(validConfig).categoryGroups).toBeUndefined();
+  });
+
+  it('refuses a group that names an unknown Category', () => {
+    const categoryGroups = [{ name: 'World', categories: ['nature', 'speech', 'sea'] }];
+
+    expect(() => loadEdition({ ...validConfig, categoryGroups })).toThrow(
+      'Unknown Category id "sea"',
+    );
+  });
+
+  it('refuses a Category in two groups', () => {
+    const categoryGroups = [...groups, { name: 'Again', categories: ['nature'] }];
+
+    expect(() => loadEdition({ ...validConfig, categoryGroups })).toThrow(
+      'Category "nature" is in two groups',
+    );
+  });
+
+  it('refuses groups that leave a Category out', () => {
+    const categoryGroups = [{ name: 'World', categories: ['nature'] }];
+
+    expect(() => loadEdition({ ...validConfig, categoryGroups })).toThrow(
+      'Category "speech" is in no group',
+    );
+  });
+});
+
 describe('loadEdition', () => {
   it('reports the Edition id, locale and whether it marks Stress', () => {
     const edition = loadEdition(validConfig);

@@ -51,7 +51,11 @@ function TypeGrid() {
   const { correctionTypes } = useComposition();
   const openScreen = useOpenScreen();
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <ScrollView
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.content}
+    >
       {/* The gap under the back link is k1's, between its back link and its title. */}
       <View style={[styles.bar, styles.barOverTitle]}>
         <Back />

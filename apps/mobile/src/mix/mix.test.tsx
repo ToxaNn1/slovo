@@ -13,12 +13,12 @@ describe('the Mix hooks', () => {
     expect(hook.result.current.state.categoryIds).toEqual([nature.id, crafts.id]);
 
     await settled(() => {
-      hook.result.current.changes.toggleCategory(nature.id, false);
+      void hook.result.current.changes.toggleCategory(nature.id, false);
     });
     expect(hook.result.current.state.categoryIds).toEqual([crafts.id]);
 
     await settled(() => {
-      hook.result.current.changes.turnAllOn();
+      void hook.result.current.changes.turnAllOn();
     });
     expect(hook.result.current.state.categoryIds).toEqual([nature.id, crafts.id]);
   });
@@ -27,9 +27,9 @@ describe('the Mix hooks', () => {
     const { hook } = await renderMix();
 
     await settled(() => {
-      hook.result.current.changes.setKind('idiom', false);
-      hook.result.current.changes.setKindWeight('correction', 'more');
-      hook.result.current.changes.setQuickQuestionEvery(6);
+      void hook.result.current.changes.setKind('idiom', false);
+      void hook.result.current.changes.setKindWeight('correction', 'more');
+      void hook.result.current.changes.setQuickQuestionEvery(6);
     });
 
     expect(hook.result.current.state.kinds.idiom).toBe(false);

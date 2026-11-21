@@ -172,12 +172,20 @@ export interface Mix {
    * list doesn't have in the Language Pack.
    */
   setCategory(categoryId: string, inMix: boolean, of?: CategoryKind): Promise<boolean>;
+  /**
+   * Puts the Categories of the kind's list, the Words' unless given, in the
+   * Mix (`inMix`) or takes them out in one change, as a group's «усі» and
+   * «зняти» do. Taking them out never leaves the list without a Category: when
+   * it would, the last of them that is in stays. One the list doesn't have in
+   * the Language Pack is skipped.
+   */
+  setCategories(categoryIds: readonly string[], inMix: boolean, of?: CategoryKind): Promise<void>;
   /** Puts the Category of the kind's list, the Words' unless given, back in the Mix. One the list doesn't have is skipped. */
   putBack(categoryId: string, of?: CategoryKind): Promise<void>;
   /** Puts every Category, of Words and of Corrections, in the Mix at once. The kinds as a whole stay as they are. */
   turnAllOn(): Promise<void>;
-  /** Puts the kind of Entry, as a whole, in the Mix or takes it out. */
-  setKind(kind: MixKind, inMix: boolean): Promise<void>;
+  /** Puts the kind of Entry, as a whole, in the Mix or takes it out; with a `weight`, sets its Mix kind weight in the same change. */
+  setKind(kind: MixKind, inMix: boolean, weight?: MixKindWeight): Promise<void>;
   /** Sets the Mix kind weight of the kind; Words fill the rest of the Feed. */
   setKindWeight(kind: MixKind, weight: MixKindWeight): Promise<void>;
   /** Sets how often the Feed asks a Quick Question. It changes nothing eligible. */
@@ -585,12 +593,36 @@ export async function openMix({
     await change({ [of]: new Map([[categoryId, true]]) });
   }
 
+  async function setCategories(
+    categoryIds: readonly string[],
+    inMix: boolean,
+    of: CategoryKind,
+  ): Promise<void> {
+    const known = categoryIds.filter((id) => isCategory(id, of));
+    if (inMix) {
+      await change({ [of]: new Map(known.map((id) => [id, true])) });
+      return;
+    }
+    const inList = categoriesInMix(state, of).categoryIds;
+    const out = known.filter((id) => inList.includes(id));
+    if (inList.every((id) => out.includes(id))) out.pop();
+    if (out.length === 0) return;
+    await change({ [of]: new Map(out.map((id) => [id, false])) });
+  }
+
   async function turnAllOn(): Promise<void> {
     await change(eachList((of) => new Map(categories[of].map(({ id }) => [id, true]))));
   }
 
-  async function setKind(kind: MixKind, inMix: boolean): Promise<void> {
-    await change({}, { kinds: { ...state.kinds, [kind]: inMix } });
+  async function setKind(kind: MixKind, inMix: boolean, weight?: MixKindWeight): Promise<void> {
+    await change(
+      {},
+      {
+        kinds: { ...state.kinds, [kind]: inMix },
+        kindWeights:
+          weight === undefined ? state.kindWeights : { ...state.kindWeights, [kind]: weight },
+      },
+    );
   }
 
   async function setKindWeight(kind: MixKind, weight: MixKindWeight): Promise<void> {
@@ -606,9 +638,11 @@ export async function openMix({
     takeOut: (categoryId, of = 'word') => inTurn(() => takeOut(categoryId, of)),
     setCategory: (categoryId, inMix, of = 'word') =>
       inTurn(() => setCategory(categoryId, inMix, of)),
+    setCategories: (categoryIds, inMix, of = 'word') =>
+      inTurn(() => setCategories(categoryIds, inMix, of)),
     putBack: (categoryId, of = 'word') => inTurn(() => putBack(categoryId, of)),
     turnAllOn: () => inTurn(turnAllOn),
-    setKind: (kind, inMix) => inTurn(() => setKind(kind, inMix)),
+    setKind: (kind, inMix, weight) => inTurn(() => setKind(kind, inMix, weight)),
     setKindWeight: (kind, weight) => inTurn(() => setKindWeight(kind, weight)),
     setQuickQuestionEvery: (quickQuestionEvery) => inTurn(() => change({}, { quickQuestionEvery })),
     hideOptions: (entry) => hideOptionsOf(edition, state, entry),

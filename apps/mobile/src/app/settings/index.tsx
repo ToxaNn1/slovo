@@ -115,7 +115,12 @@ function SettingsList() {
           }
         />
       </View>
-      <ScrollView testID="settings-scroll" contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        testID="settings-scroll"
+        contentContainerStyle={styles.content}
+      >
         <View testID="settings-group-look" style={styles.section}>
           <SettingsGroup title={strings.groups.look}>
             <ChoiceRow

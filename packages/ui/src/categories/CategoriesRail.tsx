@@ -36,9 +36,10 @@ export function CategoriesRail({
         onPress={onOpenAll}
       />
       <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         testID="dashboard-categories"
         horizontal
-        showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.rail}
       >
         {tiles.map(({ id, name, accessibilityLabel }, index) => (

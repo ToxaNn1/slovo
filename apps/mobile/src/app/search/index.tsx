@@ -61,6 +61,8 @@ export default function SearchScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <SectionList<SearchGroup['data'][number], SearchGroup>
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         ref={listRef}
         onScroll={onListScroll}
         contentContainerStyle={styles.content}

@@ -1021,7 +1021,7 @@ describe('the board 11 strings', () => {
       known: '{known} з {total} слів знайомі. Змінити рідкість можна на вкладці «Теми».',
       again: 'Перевірити рівень ще раз',
     });
-    expect(parsed.mix.selectedOf).toBe('{selected} з {total} обрано');
+    expect(parsed.mix.count).toBe('{selected} з {total}');
     expect(parsed.settings.profile.headerLevel).toBe('Рівень {level} — {name}');
     expect(parsed.settings.profile.readerName.row).toBe('Ім’я');
     expect(parsed.account).toMatchObject({

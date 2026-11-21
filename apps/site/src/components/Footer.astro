@@ -2,7 +2,7 @@
 import { sitePath } from '../site-path';
 ---
 
-<footer class="bg-coal text-cream">
+<footer class="overflow-hidden bg-coal text-cream">
   <div class="mx-auto flex max-w-[1312px] flex-wrap gap-x-8 gap-y-3 px-[clamp(20px,4vw,56px)] pt-[clamp(40px,5vw,64px)] text-[15px] font-semibold">
     <a href={sitePath('#faq')} class="text-cream">
       Підтримка
@@ -17,7 +17,7 @@ import { sitePath } from '../site-path';
   </div>
   <div
     aria-hidden="true"
-    class="mx-auto max-w-[1312px] origin-bottom-left -skew-x-6 px-[clamp(20px,4vw,56px)] pt-6 pb-2 font-word text-[16vw] leading-none font-black tracking-[-0.06em] whitespace-nowrap text-red"
+    class="pointer-events-none mx-auto max-w-[1312px] origin-bottom-left -skew-x-6 select-none px-[clamp(20px,4vw,56px)] pt-6 pb-2 font-word text-[16vw] leading-none font-black tracking-[-0.06em] whitespace-nowrap text-red"
   >
     SLOVO
   </div>

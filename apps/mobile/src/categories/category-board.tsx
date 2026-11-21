@@ -143,6 +143,8 @@ function QuietBoard({ of, category }: { of: CategoryKind; category: Category }) 
   return (
     <View testID="category" style={[styles.screen, { backgroundColor: colors.background }]}>
       <FlatList
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         ref={listRef}
         onScroll={onListScroll}
         data={cards ?? []}

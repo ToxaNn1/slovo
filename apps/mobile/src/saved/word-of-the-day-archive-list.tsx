@@ -28,6 +28,8 @@ export function WordOfTheDayArchiveList({ header }: { header: ListHeader }) {
   return (
     <>
       <FlatList<WordOfTheDayArchiveDay>
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         ref={listRef}
         onScroll={onListScroll}
         testID="words-of-the-day"

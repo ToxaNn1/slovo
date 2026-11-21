@@ -63,6 +63,27 @@
     -webkit-tap-highlight-color: transparent;
     /* The header's links glide to their sections; from 720 px the header sticks, so a section lands below it. */
     scroll-behavior: smooth;
+    /* A scroll that stops near a section's start settles on it; a long section still reads freely. */
+    scroll-snap-type: y proximity;
+    /* The page's own scroll bar: thin, the red thumb on the page's ground. */
+    scrollbar-width: thin;
+    scrollbar-color: var(--red) var(--bg);
+  }
+  main > section,
+  footer {
+    scroll-snap-align: start;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: var(--bg);
+  }
+  ::-webkit-scrollbar-thumb {
+    border: 3px solid var(--bg);
+    border-radius: 999px;
+    background: var(--red);
   }
   @media (width >= 720px) {
     html {

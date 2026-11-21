@@ -1,8 +1,8 @@
 /**
- * The goal of the mission: a million rare Words in SLOVO. The
+ * The goal of the mission: a hundred thousand rare Words in SLOVO. The
  * count towards it is the live Words of the snapshot the site is built from.
  */
-export const GOAL = 1_000_000;
+export const GOAL = 100_000;
 
 /** A count with a space between thousands, as the design writes it: 18 342. */
 export function formatCount(count: number): string {

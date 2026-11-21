@@ -107,6 +107,8 @@ export function GameEndPoster({
 
   return (
     <ScrollView
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
       testID={`game-end-${end.kind}`}
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.screen}
