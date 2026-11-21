@@ -1,13 +1,15 @@
 import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
+import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { EditionConfigSchema, type EditionConfig } from '@slovo/contracts';
 import { ContentSnapshotSchema, type ContentSnapshot } from '@slovo/contracts/api';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
 import {
   downloadStarterMedia,
+  fetchMedia,
   starterMediaFiles,
   starterWordIds,
   starterMediaOf,
@@ -192,5 +194,23 @@ describe('The Starter Media folder', () => {
       Promise.resolve(new Uint8Array()),
     );
     expect(starterWordIds(dir)).toEqual(['w1', 'w2']);
+  });
+});
+
+describe('a Media Store download', () => {
+  it('gives up on a server that never answers, instead of hanging the build', async () => {
+    // A server that takes the request and never answers it.
+    const server = createServer(() => undefined);
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+    onTestFinished(() => {
+      server.closeAllConnections();
+      server.close();
+    });
+    const address = server.address();
+    const port = typeof address === 'object' && address !== null ? address.port : 0;
+
+    const download = fetchMedia({ timeoutMs: 50 })(`http://127.0.0.1:${String(port)}/a.mp3`);
+
+    await expect(download).rejects.toThrow();
   });
 });
