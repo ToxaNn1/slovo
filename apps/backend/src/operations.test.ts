@@ -417,6 +417,13 @@ describe('the server', { timeout: 30_000 }, () => {
     expect(server.output().stderr).toContain('TRUSTED_PROXY_HOPS:');
   });
 
+  it('refuses to start with a TRUSTED_PROXY_HOPS above 2, the hops of Cloudflare and Railway, naming it', async () => {
+    const server = runServer({ ...VALID_ENV, TRUSTED_PROXY_HOPS: '3' });
+
+    expect(await server.exited).toBe(1);
+    expect(server.output().stderr).toContain('TRUSTED_PROXY_HOPS: must be 2 or less');
+  });
+
   it('stops on SIGTERM', async () => {
     const server = runServer({ ...VALID_ENV, DATABASE_URL: testDatabaseUrl(), PORT: '0' });
     await server.listening;

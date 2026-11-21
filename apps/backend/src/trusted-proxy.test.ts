@@ -60,6 +60,40 @@ describe('with one trusted proxy hop', () => {
   });
 });
 
+describe('with two trusted proxy hops, Cloudflare in front of Railway', () => {
+  /** An address in Cloudflare's published ranges: the hop Railway's proxy appends behind Cloudflare. */
+  const cloudflare = '172.64.1.10';
+
+  it('counts the client Cloudflare forwarded for, whatever it wrote before', async () => {
+    const { requestCode, useUpTheLimit } = behindProxy(2);
+    const client = newIp();
+    await useUpTheLimit(() => `${newIp()}, ${client}, ${cloudflare}`);
+
+    expect((await requestCode(`${client}, ${cloudflare}`)).status).toBe(429);
+    expect((await requestCode(`${newIp()}, ${cloudflare}`)).status).toBe(200);
+  });
+
+  it('trusts a Cloudflare IPv6 hop and an IPv4-mapped one', async () => {
+    const { requestCode, useUpTheLimit } = behindProxy(2);
+    const client = newIp();
+    let sent = 0;
+    await useUpTheLimit(() =>
+      sent++ % 2 === 0 ? `${client}, 2606:4700::6810:1` : `${client}, ::ffff:104.16.0.1`,
+    );
+
+    expect((await requestCode(`${client}, ${cloudflare}`)).status).toBe(429);
+  });
+
+  it('counts the caller, not its forged header, when the request skipped Cloudflare', async () => {
+    const { requestCode, useUpTheLimit } = behindProxy(2);
+    const caller = newIp();
+    // Straight to Railway's domain: the last hop is the caller itself.
+    await useUpTheLimit(() => `${newIp()}, ${caller}`);
+
+    expect((await requestCode(`${newIp()}, ${caller}`)).status).toBe(429);
+  });
+});
+
 describe('with no trusted proxy hop', () => {
   it('ignores the forwarded header and counts the connection', async () => {
     const { requestCode, useUpTheLimit } = behindProxy(0);
