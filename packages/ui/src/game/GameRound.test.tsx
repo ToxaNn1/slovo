@@ -1217,6 +1217,29 @@ describe('GameRound', () => {
         jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
       });
 
+      it('slides no banner in before the system says Reduce Motion is on, and stands it in place once it does', async () => {
+        let answer: (on: boolean) => void = () => undefined;
+        jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockReturnValue(
+          new Promise((resolve) => {
+            answer = resolve;
+          }),
+        );
+        const shown = answeredPick(first, { form: 'pick', option: CORRECT });
+        if (shown.status !== 'answered') throw new Error('Not answered');
+        await renderRound(jest.fn(), jest.fn(), { ...shown, banner: true });
+        const banner = () => styleOf(screen.getByTestId('game-answer-banner')).translateY;
+        const below = banner();
+
+        await wait(100);
+        expect(banner()).toBe(below);
+
+        await act(async () => {
+          answer(true);
+          await Promise.resolve();
+        });
+        expect(banner()).toBe(0);
+      });
+
       it('turns a right answer red in place, popping nothing', async () => {
         await renderRound();
 

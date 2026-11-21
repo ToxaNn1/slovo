@@ -16,7 +16,7 @@ import { Wedge } from '../primitives/Wedge';
 import { bezier } from '../primitives/timing';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { InvertedTokens, SchemeTokens, useTokens } from '../providers/TokensProvider';
-import { useReduceMotion } from '../providers/useReduceMotion';
+import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { motion, roundLayout, space, typeStyle, wedges } from '../tokens';
 import { NextButton, VerdictTitle } from './AnswerCard';
 
@@ -78,10 +78,12 @@ export function AnswerBanner({
     );
   }, [shown]);
 
-  const reduceMotion = useReduceMotion();
+  // Unknown until the system answers: a slide started before then would show in part.
+  const reduceMotion = useReduceMotionKnown();
   const { height } = useWindowDimensions();
-  const rise = useSharedValue(reduceMotion ? 0 : height);
+  const rise = useSharedValue(reduceMotion === true ? 0 : height);
   useEffect(() => {
+    if (reduceMotion === undefined) return;
     if (reduceMotion) {
       rise.value = 0;
       return;

@@ -78,7 +78,7 @@ export function GameEndPoster({
       mascot={mascot}
       banner={
         <View style={styles.banner}>
-          <FlyIn>
+          <FlyIn testID="game-end-finish">
             <Text
               {...voice}
               maxFontSizeMultiplier={fontScaleCap.number}
