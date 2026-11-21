@@ -14710,6 +14710,12 @@
                           "name"
                         ]
                       }
+                    },
+                    "stressVowels": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     }
                   },
                   "required": [
@@ -14722,7 +14728,8 @@
                     "questionnaire",
                     "onboardingNotificationTimes",
                     "badges",
-                    "narratorVoices"
+                    "narratorVoices",
+                    "stressVowels"
                   ]
                 }
               }

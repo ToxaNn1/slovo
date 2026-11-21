@@ -96,6 +96,7 @@ export function RecordForm({
     queryFn: () => adminApi.editionCard({ editionId }),
   });
   const categories = categoryOptionsOf(card.data);
+  const vowels = card.data?.stressVowels ?? [];
 
   /** The record's fields as the form holds them over `onto`, or undefined when one can't be read. */
   const read = (onto: Fields): Fields | undefined => {
@@ -270,11 +271,14 @@ export function RecordForm({
             value={values[field.name]}
             siblings={values}
             categories={categories}
+            vowels={vowels}
             editionId={editionId}
             error={fieldErrors[field.name]}
             fixed={appeared && field.control.type === 'publish-date'}
             onChange={(value) => {
-              setValues((previous) => withFieldValue(editor.fields, previous, field.name, value));
+              setValues((previous) =>
+                withFieldValue(editor.fields, previous, field.name, value, vowels),
+              );
             }}
           />
         ))}

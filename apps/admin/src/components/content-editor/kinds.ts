@@ -330,8 +330,9 @@ export const isList = (value: FormValue): value is readonly FormValue[] => Array
 export const isObject = (value: FormValue): value is FormObject =>
   typeof value === 'object' && !Array.isArray(value);
 
-/** The letters a Stress can fall on. */
-export const VOWEL = /[аеєиіїоуюяaeiouy]/iu;
+/** Whether a letter is one of the Edition's vowels, the letters a Stress can fall on. */
+export const isVowel = (vowels: readonly string[], letter: string) =>
+  vowels.includes(letter.toLowerCase());
 
 /**
  * The fields' values with one field set to `value`: a Stress of that field's
@@ -343,6 +344,7 @@ export function withFieldValue(
   values: FormObject,
   name: string,
   value: FormValue,
+  vowels: readonly string[],
 ): FormObject {
   const letters = Array.from(typeof value === 'string' ? value : '');
   const stresses = fields.filter(({ control }) => control.type === 'stress' && control.of === name);
@@ -351,7 +353,7 @@ export function withFieldValue(
       const positions = next[stress.name];
       if (!isList(positions)) return next;
       const kept = positions.filter(
-        (position) => typeof position === 'number' && VOWEL.test(letters[position] ?? ''),
+        (position) => typeof position === 'number' && isVowel(vowels, letters[position] ?? ''),
       );
       return { ...next, [stress.name]: kept };
     },

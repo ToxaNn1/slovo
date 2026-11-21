@@ -280,6 +280,15 @@ test('an Entry whose source refused the quote check says so, with the status and
   ).toBeDefined();
 });
 
+test("the Stress control offers the Edition's vowels only", async () => {
+  server.use(override('editionCard', () => ({ ...FIXTURES.editionCard, stressVowels: ['у'] })));
+  await openWord();
+
+  const stress = within(await screen.findByRole('group', { name: 'Наголос' }));
+  expect(await stress.findByRole('button', { name: 'у' })).toBeDefined();
+  expect(stress.queryByRole('button', { name: 'о' })).toBeNull();
+});
+
 test('an Entry save goes through with an empty reason', async () => {
   const bodies = edits(() => FIXTURES.content.edit);
   const user = await openWord();

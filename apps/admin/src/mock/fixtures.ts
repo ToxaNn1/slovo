@@ -380,6 +380,7 @@ export const FIXTURES: AdminApiOutputs = {
     },
     onboardingNotificationTimes: { morning: '09:00', midday: '13:00', evening: '20:30' },
     badges: [{ id: 'streak-7', name: 'Тиждень поспіль' }],
+    stressVowels: ['а', 'е', 'є', 'и', 'і', 'ї', 'о', 'у', 'ю', 'я'],
     narratorVoices: [
       { id: 'oksana', name: 'Оксана' },
       { id: 'taras', name: 'Тарас' },

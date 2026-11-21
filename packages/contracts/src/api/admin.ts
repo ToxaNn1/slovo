@@ -416,6 +416,8 @@ const EditionCardSchema = z.object({
   badges: z.array(z.object({ id: z.string(), name: z.string() })),
   /** The Narrator Voices the Edition offers, which name an Account's chosen voice. */
   narratorVoices: z.array(z.object({ id: z.string(), name: z.string() })),
+  /** The lowercase vowels a Stress may fall on; none for a language that marks no Stress. */
+  stressVowels: z.array(z.string()),
 });
 
 /** What a write answers: the record's new version and the Edition's content version it published. */
