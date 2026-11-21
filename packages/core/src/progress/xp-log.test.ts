@@ -1338,6 +1338,31 @@ describe('the Progress reset', () => {
     expect(app.xpLog.state.total).toBe(first);
   });
 
+  // Audit 1121 a1.16: an award reads the clock once, so its id and its record name one local date.
+  it('gives a Review answer earned as the day turns one local date, in its id and in its record', async () => {
+    const time = fakeClock('2026-10-14T23:59:59.999+03:00');
+    let ticking = false;
+    /** A clock that moves a millisecond on with every reading, once ticking. */
+    const clock = {
+      now() {
+        const now = time.clock.now();
+        if (ticking) time.advance(1);
+        return now;
+      },
+      timeZone: () => time.clock.timeZone(),
+    };
+    const { app } = await run({ time: { ...time, clock } });
+    ticking = true;
+
+    const award = app.xpLog.award({ source: 'review-answer', entryId: 'word-1' });
+    ticking = false;
+
+    const [[key, text] = []] = [...award.changes];
+    const date = /review-answer-(\d{4}-\d{2}-\d{2})-word-1$/.exec(key ?? '')?.[1];
+    expect(date).toBeDefined();
+    expect(JSON.parse(text ?? '{}')).toMatchObject({ kind: 'xp', date });
+  });
+
   it('counts only the Entries confirmed after a reset toward a Badge, and keeps the confirmed Entries', async () => {
     const time = fakeClock('2026-10-14T08:00:00+03:00');
     const confirmedOne: Edition['badges'] = [

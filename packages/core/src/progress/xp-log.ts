@@ -778,16 +778,18 @@ export async function openXpLog({
   }
 
   function award(action: XpAction): XpAward {
-    const fixedId = fixedIdOf(action, todayKey(clock), scoped);
+    // One reading of the clock: the fixed id and the record name the local date of the record's instant.
+    const at = clock.now();
+    const today = todayKey({ now: () => at, timeZone: () => clock.timeZone() });
+    const fixedId = fixedIdOf(action, today, scoped);
     if (!on || (fixedId !== undefined && records.has(fixedId))) return NOTHING_EARNED;
     const amount = amountOf(edition.xp, action, derived.reviewToday);
     if (amount === 0) return NOTHING_EARNED;
-    const at = clock.now();
     const id = fixedId ?? newId(at);
     const record = xpEntryOf({
       ...action,
       kind: 'xp',
-      date: todayKey(clock),
+      date: today,
       at: at.toISOString(),
       amount,
     });
