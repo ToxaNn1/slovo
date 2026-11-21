@@ -15,7 +15,7 @@ import {
   type WheelMiss,
 } from '@slovo/ui';
 import { testStrings } from '../test-strings';
-import { crossingCrosswordLayout, offsetShadow } from '../tokens';
+import { crossingCrosswordLayout, minTouchTarget, offsetShadow } from '../tokens';
 
 const answer = ['c', 'a', 't'];
 const wheelLetters = ['t', 'c', 'a'];
@@ -271,6 +271,33 @@ describe('CrossingGrid and CrossingClueBar', () => {
       nativeEvent: { layout: { width: 20, height: 10 } },
     });
     expect(screen.getByTestId('grid-1-1-face')).toHaveStyle({ width: minCell, height: minCell });
+  });
+
+  it('widens the tap area of a cell smaller than a touch target into the gaps around it, never past them', async () => {
+    const { minCell, cellGap } = crossingCrosswordLayout;
+    await renderIn(
+      <CrossingGrid
+        cells={[
+          [cell({ label: 'r0c0' }), cell({ label: 'r0c1' })],
+          [cell({ label: 'r1c0' }), cell({ label: 'r1c1' })],
+        ]}
+        onSelect={jest.fn()}
+        testID="grid"
+      />,
+    );
+    // At the board's side a cell is a touch target by itself.
+    expect(screen.getByTestId('grid-1-1').props['hitSlop']).toBeUndefined();
+
+    await fireEvent(screen.getByTestId('grid-room'), 'layout', {
+      nativeEvent: { layout: { width: 20, height: 10 } },
+    });
+    const slop = Math.min(cellGap / 2, (minTouchTarget - minCell) / 2);
+    expect(screen.getByTestId('grid-1-1')).toHaveProp('hitSlop', {
+      left: slop,
+      right: slop,
+      top: slop,
+      bottom: slop,
+    });
   });
 
   it('fits letter cells with their pressed edge into the room the screen leaves', async () => {
