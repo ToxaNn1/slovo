@@ -37,3 +37,17 @@ export const qualityQuery = (input: Parameters<typeof adminApi.quality>[0]) =>
     queryFn: () => adminApi.quality(input),
     retry: false,
   });
+
+/** Розробка: GitHub and EAS, read by Розробка and Огляд. */
+export const developmentQuery = queryOptions({
+  queryKey: ['development'],
+  queryFn: () => adminApi.development(),
+  retry: false,
+});
+
+/** The latest alerts the owner was told of. */
+export const latestAlertsQuery = queryOptions({
+  queryKey: ['alerts'],
+  queryFn: () => adminApi.latestAlerts(),
+  retry: false,
+});

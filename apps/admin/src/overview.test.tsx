@@ -126,6 +126,21 @@ test('a failing source shows its own unavailable state in its blocks', async () 
   expect(await block(overview, 'Відкриті пачки').findByText('1')).toBeDefined();
 });
 
+test('a failed read of Розробка or the alerts shows unavailable at once, with no retries', async () => {
+  server.use(
+    override('development', () => refusal(500, { code: 'INTERNAL_SERVER_ERROR' })),
+    override('latestAlerts', () => refusal(500, { code: 'INTERNAL_SERVER_ERROR' })),
+  );
+  window.history.replaceState(null, '', '/admin/');
+  render(<Admin />);
+  const overview = within(await screen.findByRole('region', { name: 'Огляд' }));
+
+  expect(await block(overview, 'CI на main').findByText('GitHub недоступний')).toBeDefined();
+  expect(
+    await block(overview, 'Останні сповіщення').findByText('Сповіщення недоступні'),
+  ).toBeDefined();
+});
+
 test('an empty queue and no alerts read as such', async () => {
   server.use(
     override('contentQueue.batches', () => ({ batches: [] })),

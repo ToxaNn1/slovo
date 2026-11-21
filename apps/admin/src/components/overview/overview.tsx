@@ -3,8 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useSearch } from '@tanstack/react-router';
 import type { ReactNode } from 'react';
 
-import { adminApi } from '../../api';
-import { analyticsQuery, qualityQuery, readerCountsQuery } from '../../queries';
+import {
+  analyticsQuery,
+  developmentQuery,
+  latestAlertsQuery,
+  qualityQuery,
+  readerCountsQuery,
+} from '../../queries';
 import { DEFAULT_PERIOD, periodDays, qualityPeriod } from '../../filters';
 import { useWide } from '../../screen-width';
 import { useSignedInAdmin } from '../../session';
@@ -120,16 +125,9 @@ export function Overview() {
   const quality = useQuery(
     qualityQuery({ editionId: search.edition, period: qualityPeriod(period) }),
   );
-  const development = useQuery({
-    queryKey: ['development'],
-    queryFn: () => adminApi.development(),
-  });
+  const development = useQuery(developmentQuery);
   const batches = useQueueBatches();
-  const alerts = useQuery({
-    queryKey: ['alerts'],
-    queryFn: () => adminApi.latestAlerts(),
-    enabled: owner,
-  });
+  const alerts = useQuery({ ...latestAlertsQuery, enabled: owner });
 
   const posthog = readOf(analytics, 'PostHog недоступний', analytics.data?.fetchedAt);
   const newestActive = analytics.data?.activeByDay.at(-1);

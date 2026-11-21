@@ -71,6 +71,16 @@ test('Аналітика says PostHog is down when its read fails', async () => 
   expect(await screen.findByText('PostHog недоступний')).toBeDefined();
 });
 
+test('Аналітика says at once when the Counters, the Edition cards or the Variants are down', async () => {
+  const down = () => refusal(500, { code: 'INTERNAL_SERVER_ERROR' });
+  server.use(override('counters', down), override('editionCard', down), override('switches', down));
+  const { section } = await openAnalytics();
+
+  expect(await section.findByText('Лічильники спільноти недоступні')).toBeDefined();
+  expect(section.getByText('Назви відповідей недоступні')).toBeDefined();
+  expect(section.getByText('Варіанти недоступні')).toBeDefined();
+});
+
 test('Аналітика counts the readers, each number with the one line saying what it counts', async () => {
   const requests: string[] = [];
   server.events.on('request:start', ({ request }) => {
