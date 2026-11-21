@@ -47,8 +47,9 @@ export interface EntryList<Listed extends ListedEntry> {
  * change is written and made in memory, so what it reads finds the new list,
  * and before the subscribers hear of it, so a subscriber finds what it
  * changed done. The list follows
- * the written change even when `afterWrite` fails. `changesWith`, when given,
- * gives the changes to write together with the Entry going in or out.
+ * the written change even when `afterWrite` fails. `writeWith`, when given,
+ * makes the write of the Entry going in or out, giving it the changes to
+ * write together with it.
  */
 export async function openEntryList<Listed extends ListedEntry>({
   records,
@@ -58,7 +59,7 @@ export async function openEntryList<Listed extends ListedEntry>({
   userState,
   clock,
   afterWrite,
-  changesWith,
+  writeWith,
 }: {
   records: UserStateRecords<string>;
   /** An Entry of the list: its id, what its row in a list shows, and the time it went in under the list's own name. */
@@ -69,7 +70,11 @@ export async function openEntryList<Listed extends ListedEntry>({
   userState: UserState;
   clock: Clock;
   afterWrite?: () => Promise<void>;
-  changesWith?: (entryId: string, isIn: boolean) => Promise<UserStateChanges>;
+  writeWith?: (
+    entryId: string,
+    isIn: boolean,
+    write: (changes: UserStateChanges) => Promise<void>,
+  ) => Promise<void>;
 }): Promise<EntryList<Listed>> {
   const newest = newestFirst(timeOf, (entry) => entry.entryId);
 
@@ -94,10 +99,11 @@ export async function openEntryList<Listed extends ListedEntry>({
 
   /** Writes the Entry's record, or deletes it for none, with the changes that go with it. */
   async function write(entryId: string, at: Date | undefined): Promise<void> {
-    const withIt = (await changesWith?.(entryId, at !== undefined)) ?? new Map();
-    await userState.write(
-      new Map([...records.record(entryId).change(at?.toISOString()), ...withIt]),
-    );
+    const writeIt = (withIt: UserStateChanges) =>
+      userState.write(new Map([...records.record(entryId).change(at?.toISOString()), ...withIt]));
+    await (writeWith === undefined
+      ? writeIt(new Map())
+      : writeWith(entryId, at !== undefined, writeIt));
   }
 
   const has = (entryId: string) => list.some((entry) => entry.entryId === entryId);

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createSettings, openComposition, openCounterSending, type FeatureSwitch } from '../index';
+import type { UserStatePort } from '../ports';
 import { createFakeBackend, createMemoryContentPort } from '../testing';
 import { fakeClock, randomOf, testEdition, testSchedule, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
@@ -20,7 +21,7 @@ const content = createMemoryContentPort({ words: ids.map((id) => word(id)) });
  * sending of the Community Counters over one user state and a fake backend,
  * with `knowledge` and `communityCounters` on unless the test turns one off.
  */
-async function device() {
+async function device(port: UserStatePort = createMemoryUserStatePort()) {
   const time = fakeClock('2026-10-28T09:00:00.000Z');
   const timers = testSchedule(time);
   const api = createFakeBackend();
@@ -31,7 +32,7 @@ async function device() {
       mix: { kinds: { correction: false, idiom: false, synonymRow: false, tip: false } },
     },
   });
-  const userState = await openUserState({ port: createMemoryUserStatePort() });
+  const userState = await openUserState({ port });
   const app = await openComposition({
     content,
     edition,
@@ -71,6 +72,37 @@ async function device() {
     },
     /** The unsent changes as plain entries, for comparing. */
     unsent: async () => [...(await app.communityCounters.unsent())],
+  };
+}
+
+/**
+ * A user-state port that, once `hold` is called, keeps the next write of the
+ * record back until `release`, so a test puts another change between what a
+ * module read and what it writes.
+ */
+function holdingPort(key: string) {
+  const port = createMemoryUserStatePort();
+  let armed = false;
+  let release: () => void = () => undefined;
+  return {
+    port: {
+      ...port,
+      async write(changes) {
+        if (armed && changes.has(key)) {
+          armed = false;
+          await new Promise<void>((resolve) => {
+            release = resolve;
+          });
+        }
+        await port.write(changes);
+      },
+    } satisfies UserStatePort,
+    hold() {
+      armed = true;
+    },
+    release: () => {
+      release();
+    },
   };
 }
 
@@ -140,6 +172,53 @@ describe('sending the Community Counters', () => {
     expect(phone.api.counters.sent).toEqual([
       [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
       [{ entryId: 'w_000', known: -1, unknown: 1, saved: 0 }],
+    ]);
+    expect(await phone.unsent()).toEqual([]);
+  });
+
+  it('keeps a change counted while a sent batch leaves the unsent changes', async () => {
+    const unsentKey = userStateRecords.countersUnsent.record('w_000').key;
+    const held = holdingPort(unsentKey);
+    const phone = await device(held.port);
+    await phone.app.knowledge.tap('w_000', 'known');
+
+    // The backend counted the batch, and the write that takes it off waits.
+    held.hold();
+    phone.sending.foreground();
+    await phone.advance(0);
+    expect(phone.api.counters.sent).toHaveLength(1);
+    const added = phone.app.favorites.add('w_000');
+    await phone.advance(0);
+    held.release();
+    await added;
+    await phone.advance(0);
+
+    expect(await phone.unsent()).toEqual([['w_000', { known: 0, unknown: 0, saved: 1 }]]);
+  });
+
+  it('sends a change once when a batch is counted while another change is being kept', async () => {
+    const unsentKey = userStateRecords.countersUnsent.record('w_000').key;
+    const held = holdingPort(unsentKey);
+    const phone = await device(held.port);
+    await phone.app.knowledge.tap('w_000', 'known');
+
+    // The Favorite's write waits, having read the unsent changes, while the batch is counted.
+    held.hold();
+    const added = phone.app.favorites.add('w_000');
+    await phone.advance(0);
+    phone.sending.foreground();
+    await phone.advance(0);
+    expect(phone.api.counters.sent).toEqual([
+      [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
+    ]);
+    held.release();
+    await added;
+    await phone.advance(0);
+
+    // The drain goes on with the Favorite alone: the mark is not sent again.
+    expect(phone.api.counters.sent).toEqual([
+      [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
+      [{ entryId: 'w_000', known: 0, unknown: 0, saved: 1 }],
     ]);
     expect(await phone.unsent()).toEqual([]);
   });
