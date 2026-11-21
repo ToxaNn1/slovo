@@ -57,6 +57,7 @@ export function CrosswordSolvedPoster({
       />
       <View style={styles.body}>
         <Text
+          {...voice}
           maxFontSizeMultiplier={fontScaleCap.text}
           accessibilityRole="header"
           style={[typeStyle('eyebrow', tokens), { color: colors.muted }]}

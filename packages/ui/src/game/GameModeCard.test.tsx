@@ -1,4 +1,10 @@
-import { coreTokens, EditionProvider, GameModeCard } from '@slovo/ui';
+import {
+  coreTokens,
+  EditionProvider,
+  GameModeCard,
+  GameModeGroupTitle,
+  GamesTitle,
+} from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
@@ -35,6 +41,20 @@ function Card({
     </EditionProvider>
   );
 }
+
+describe('the Games hub headings', () => {
+  it('reads the big title and a group title in the Edition’s language', async () => {
+    await render(
+      <EditionProvider edition={{ locale: 'uk' }} strings={testStrings({})}>
+        <GamesTitle>Games</GamesTitle>
+        <GameModeGroupTitle>Quick</GameModeGroupTitle>
+      </EditionProvider>,
+    );
+
+    expect(screen.getByRole('header', { name: 'Games' })).toHaveProp('accessibilityLanguage', 'uk');
+    expect(screen.getByRole('header', { name: 'Quick' })).toHaveProp('accessibilityLanguage', 'uk');
+  });
+});
 
 describe('GameModeCard', () => {
   it('cascades in as the third row and still reads and takes a tap as one', async () => {

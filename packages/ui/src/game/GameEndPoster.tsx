@@ -92,6 +92,7 @@ export function GameEndPoster({
           {end.newBest ? (
             <View testID="game-end-new-best" style={[styles.stamp, { borderColor: keyInk }]}>
               <Text
+                {...voice}
                 maxFontSizeMultiplier={fontScaleCap.text}
                 style={[typeStyle('eyebrow', tokens), { color: keyInk }]}
               >

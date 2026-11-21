@@ -96,6 +96,12 @@ describe('GameEndPoster', () => {
     jest.useRealTimers();
   });
 
+  it('reads the «NEW BEST!» stamp in the Edition’s language', async () => {
+    await renderPoster({ ended: { ...end, newBest: true } });
+
+    expect(screen.getByText('NEW BEST!')).toHaveProp('accessibilityLanguage', 'en');
+  });
+
   it('heads a Game that lost its last Life like one short of its target, as the board does: «FINISH», «ONE MORE ROUND!», the count and the XP tile', async () => {
     await renderPoster();
 
