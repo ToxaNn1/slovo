@@ -619,6 +619,12 @@ const contentWriteContract = {
          * Once it has passed, a change of its publish date is refused.
          */
         appearedAt: z.iso.datetime().optional(),
+        /**
+         * Entries only: the first source refused the quote check's fetch (a
+         * 403, 429 or 5xx), when; the check asks it again a day later and the
+         * record stays unchecked until it answers.
+         */
+        sourceRefused: z.object({ status: z.number().int(), at: z.iso.datetime() }).optional(),
       }),
     ),
   records: contentProcedure

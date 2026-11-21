@@ -608,7 +608,11 @@ export const quoteChecks = pgTable(
  */
 export const sourcingCache = pgTable('sourcing_cache', {
   pageUrl: text('page_url').primaryKey(),
-  /** The page's HTTP status: 200, or 404 for no such page; an NBU read that found no rate is 0. */
+  /**
+   * The page's HTTP status: 200, 404 for no such page, or the refusal (403,
+   * 429, 5xx) the quote check asks again a day later; an NBU read that found
+   * no rate is 0.
+   */
   httpStatus: integer('http_status').notNull(),
   body: text('body').notNull(),
   fetchedAt: time('fetched_at'),

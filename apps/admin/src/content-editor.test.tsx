@@ -264,6 +264,22 @@ test('after a Word Stress change the record shows «потребує новог�
   expect(await screen.findByText('потребує нового запису')).toBeDefined();
 });
 
+test('an Entry whose source refused the quote check says so, with the status and the day', async () => {
+  server.use(
+    override('content.record', () => ({
+      ...FIXTURES.content.record,
+      sourceRefused: { status: 403, at: '2026-11-20T09:00:00.000Z' },
+    })),
+  );
+  await openWord();
+
+  expect(
+    screen.getByText(
+      'Джерело відмовило перевірці цитати: HTTP 403, 20 лист. 2026 р., 11:00. Наступна спроба через добу.',
+    ),
+  ).toBeDefined();
+});
+
 test('an Entry save goes through with an empty reason', async () => {
   const bodies = edits(() => FIXTURES.content.edit);
   const user = await openWord();

@@ -30,7 +30,7 @@ import {
   writeLogged,
 } from './content-records';
 import { mediaGaps, voicesRecorded } from './media-rows';
-import { quoteCheckCounts } from './quote-check';
+import { quoteCheckCounts, sourceRefusal } from './quote-check';
 import {
   actionLog,
   contentBatches,
@@ -621,6 +621,8 @@ export function createContentWrites({
                 ),
               )
           : [];
+      const source = 'sources' in current.fields ? current.fields.sources[0]?.url : undefined;
+      const refused = source === undefined ? undefined : await sourceRefusal(tx, source);
       return {
         ok: true,
         fields: current.fields,
@@ -628,6 +630,9 @@ export function createContentWrites({
         retired: 'retired' in current.fields && current.fields.retired === true,
         ...('needsNewRecording' in current ? { needsNewRecording: current.needsNewRecording } : {}),
         ...(appeared === undefined ? {} : { appearedAt: appeared.appearedAt.toISOString() }),
+        ...(refused === undefined
+          ? {}
+          : { sourceRefused: { status: refused.status, at: refused.at.toISOString() } }),
       } as const;
     }, readOnly);
   }

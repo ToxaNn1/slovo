@@ -184,6 +184,24 @@ describe('the quote check job', () => {
     expect(pages.fetched).toEqual([url, url]);
   });
 
+  it("shows a source's refusal on its record until the source answers", async () => {
+    const { client, agent, batchId, job } = await quoteCheckBackend();
+    const { id } = await createQuoted(client, agent, batchId);
+    const open = () => agent.admin.content.record({ editionId: 'uk', kind: 'word', id });
+    expect((await open()).sourceRefused).toBeUndefined();
+    const before = Date.now();
+
+    await job(fakePages({}, 403));
+
+    const { sourceRefused } = await open();
+    expect(sourceRefused?.status).toBe(403);
+    expect(Date.parse(sourceRefused?.at ?? '')).toBeGreaterThanOrEqual(before);
+
+    passTime(QUOTE_CHECK_FAILURE_FRESHNESS_MS + 1);
+    await job(fakePages({}, 404));
+    expect((await open()).sourceRefused).toBeUndefined();
+  });
+
   it('keeps no more of a page than the check reads', async () => {
     const { client, agent, batchId, job, database } = await quoteCheckBackend();
     const { url } = await createQuoted(client, agent, batchId);

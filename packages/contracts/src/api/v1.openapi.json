@@ -19428,6 +19428,24 @@
                     "appearedAt": {
                       "type": "string",
                       "format": "date-time"
+                    },
+                    "sourceRefused": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "at": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "at"
+                      ]
                     }
                   },
                   "required": [

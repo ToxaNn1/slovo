@@ -187,6 +187,19 @@ async function unverifiedRecords(db: Db, editionId: string): Promise<Unverified[
   });
 }
 
+/**
+ * The refusal the sourcing cache keeps of the page, a 403, 429 or 5xx the
+ * check is asked again a day later: its status and when it was answered;
+ * none when the page answered, or was never fetched.
+ */
+export async function sourceRefusal(db: Db, url: string) {
+  const [cached] = await db
+    .select({ status: sourcingCache.httpStatus, at: sourcingCache.fetchedAt })
+    .from(sourcingCache)
+    .where(eq(sourcingCache.pageUrl, url));
+  return cached === undefined || answered(cached.status) ? undefined : cached;
+}
+
 /** The content report's quote check counts for the Edition, from each record's id, version and url alone. */
 export async function quoteCheckCounts(db: Db, editionId: string) {
   const counts = { unverified: 0, failed: 0 };
