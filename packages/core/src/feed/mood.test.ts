@@ -129,6 +129,7 @@ describe('the Feed under a Mood', () => {
     await low.mood.choose('lower');
     const [first, ...chosen] = (await cycleIds(low.feed)).map(rarityOf);
     expect(first).toBe(4);
+    expect(chosen).toHaveLength(words.length - 1);
     expect(chosen.slice(0, 8).every((rarity) => rarity <= 2)).toBe(true);
     expect(chosen.slice(8).every((rarity) => rarity > 2)).toBe(true);
 

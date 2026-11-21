@@ -148,22 +148,33 @@ describe('the Active Day', () => {
     expect(app.progress.state).toMatchObject({ streak: 3, bestStreak: 3 });
   });
 
-  it('fires a celebration on a Streak day of 1 to 7, 14, 30, 50, 100, 200 and 365', async () => {
-    const records = earned(new Map<string, string>(), 5, ...october(1, 13));
+  /** The celebrations fired by the XP that makes today the Streak's day of that number. */
+  async function celebratedOn(streakDay: number) {
+    const today = Date.parse('2026-10-14T00:00:00.000Z');
+    const before = Array.from({ length: streakDay - 1 }, (_, index) =>
+      new Date(today - (index + 1) * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+    );
+    const records = earned(new Map<string, string>(), 5, ...before);
     const { app } = await run({ records });
     const celebrated: number[] = [];
     app.progress.onStreakMilestone((streak) => celebrated.push(streak));
-
     await earnRounds(app, 5, records);
-    expect(celebrated).toEqual([14]);
+    return celebrated;
+  }
 
-    // The 8th Streak day is no celebration.
-    const next = await run({ records: earned(new Map(), 5, ...october(6, 12)) });
-    const none: number[] = [];
-    next.app.progress.onStreakMilestone((streak) => none.push(streak));
-    await earnRounds(next.app, 5, new Map());
-    expect(none).toEqual([]);
-  });
+  it.each([1, 2, 3, 4, 5, 6, 7, 14, 30, 50, 100, 200, 365])(
+    'fires a celebration on Streak day %i',
+    async (streakDay) => {
+      expect(await celebratedOn(streakDay)).toEqual([streakDay]);
+    },
+  );
+
+  it.each([8, 13, 15, 31, 99, 364, 366])(
+    'fires no celebration on Streak day %i',
+    async (streakDay) => {
+      expect(await celebratedOn(streakDay)).toEqual([]);
+    },
+  );
 
   it('fires no celebration when setting the Daily Goal, «Без цілі» included, keeps today', async () => {
     const records = earned(new Map<string, string>(), 5, ...october(11, 13));
