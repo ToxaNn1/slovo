@@ -43,6 +43,8 @@ export function CrosswordSolvedPoster({
 
   return (
     <ScrollView
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
       testID="crossword-solved-screen"
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.screen}

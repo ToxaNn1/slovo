@@ -11,7 +11,7 @@ const categories = Array.from({ length: 10 }, (_, index): Category => ({
   id: `category-${String(index)}`,
   displayName: `Категорія ${String(index)}`,
   description: `Опис ${String(index)}.`,
-  tone: 'loud',
+  tone: index === 9 ? 'quiet' : 'loud',
 }));
 
 /** The Language Pack's three Categories of Corrections, in its order. */
@@ -43,6 +43,9 @@ describe('the Мій Мікс screen', () => {
     expect(model.chips.map(({ id }) => id)).toEqual(categories.map(({ id }) => id));
     expect(model.chips.map(({ name }) => name)).toEqual(
       categories.map(({ displayName }) => displayName),
+    );
+    expect(model.chips.map(({ quiet }) => quiet)).toEqual(
+      categories.map(({ tone }) => tone === 'quiet'),
     );
     expect(model.chips.every(({ on }) => on)).toBe(true);
     expect(model.allOn).toBe(true);
@@ -142,9 +145,10 @@ describe('the Categories of Corrections on the Мій Мікс screen', () => {
     const { mix } = await open(ukrainian);
 
     expect(mixScreenModel({ screen: mix.screen() }).correctionCategories).toEqual({
-      chips: correctionCategories.map(({ id, displayName }) => ({
+      chips: correctionCategories.map(({ id, displayName, tone }) => ({
         id,
         name: displayName,
+        quiet: tone === 'quiet',
         on: true,
         disabled: false,
       })),

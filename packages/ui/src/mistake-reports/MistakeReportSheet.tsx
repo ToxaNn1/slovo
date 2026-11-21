@@ -93,6 +93,8 @@ export function MistakeReportSheet({
   return (
     <BottomSheet visible={visible} onClose={onClose} testID={testID}>
       <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         ref={scroll}
         testID={`${testID}-content`}
         bounces={false}

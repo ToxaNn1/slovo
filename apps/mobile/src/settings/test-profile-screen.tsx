@@ -113,7 +113,11 @@ export function TestProfileScreen({ load }: { readonly load: Load }) {
           }}
         />
       </View>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
         <Profiles load={load} />
       </ScrollView>
     </SafeAreaView>

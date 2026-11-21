@@ -78,6 +78,8 @@ export function CategoryGrid({
   const width = columnWidth[columns];
   return (
     <FlatList<GridTile>
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
       ref={scroll?.list}
       onScroll={scroll?.onScroll}
       testID={testID}

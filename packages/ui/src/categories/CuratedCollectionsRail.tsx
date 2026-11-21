@@ -47,9 +47,10 @@ export function CuratedCollectionsRail({
         onPress={onOpenAll}
       />
       <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         testID="dashboard-curated-collections"
         horizontal
-        showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.rail}
       >
         {cards.map((card, index) => {

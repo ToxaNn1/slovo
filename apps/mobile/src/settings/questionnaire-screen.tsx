@@ -88,7 +88,12 @@ export function QuestionnaireScreen() {
           }}
         />
       </View>
-      <ScrollView testID="questionnaire-scroll" contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        testID="questionnaire-scroll"
+        contentContainerStyle={styles.content}
+      >
         {questions.map(({ question, title }) => (
           <View key={question} style={styles.section}>
             <SectionLabel>{title}</SectionLabel>

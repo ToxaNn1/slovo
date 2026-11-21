@@ -14,6 +14,7 @@ import {
   type Theme,
   type XpTable,
   type Badge,
+  type CategoryGroup,
   type BadgeFamily,
   type MascotLines,
   type Levels,
@@ -107,6 +108,11 @@ export interface Edition {
    */
   readonly curatedCollectionPictogram: string | undefined;
   /**
+   * The groups the Mix screen shows the Categories of Words in, each Category
+   * in exactly one; unset, the Categories show as one list.
+   */
+  readonly categoryGroups: readonly CategoryGroup[] | undefined;
+  /**
    * Whether the given Core feature is in effect (ADR 0203): by the remote
    * Rules the device read last, else as the Edition shipped it (ADR 0089),
    * and every switch it depends on in effect.
@@ -189,6 +195,7 @@ export function loadShippedEdition(config: unknown): ShippedEdition {
     badges,
     mascot,
     curatedCollectionPictogram,
+    categoryGroups,
   } = result.data;
   const moodOf = (id: string) => moods.find((mood) => mood.id === id);
   const voiceOf = (id: string | undefined) =>
@@ -231,6 +238,7 @@ export function loadShippedEdition(config: unknown): ShippedEdition {
     badges,
     mascot,
     curatedCollectionPictogram,
+    categoryGroups,
     featureSwitches,
     isShippedOn: switchedOn((feature) => featureSwitches[feature] === 'on'),
   };

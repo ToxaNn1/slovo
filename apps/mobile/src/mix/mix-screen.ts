@@ -12,6 +12,8 @@ import {
 export interface MixChipModel {
   readonly id: string;
   readonly name: string;
+  /** A quiet Category, drawn held back. */
+  readonly quiet: boolean;
   readonly on: boolean;
   /** The last Category left in the Mix: its chip can't be turned off. */
   readonly disabled: boolean;
@@ -73,9 +75,10 @@ export function mixScreenModel({ screen }: { screen: MixScreen }): MixScreenMode
 /** The chips of one list of Categories, the Words' or the Corrections'. */
 function categoriesModel(chips: readonly MixChip[]): MixCategoriesModel {
   return {
-    chips: chips.map(({ category: { id, displayName }, place }) => ({
+    chips: chips.map(({ category: { id, displayName, tone }, place }) => ({
       id,
       name: displayName,
+      quiet: tone === 'quiet',
       on: place !== 'out',
       disabled: place === 'last',
     })),

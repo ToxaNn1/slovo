@@ -1,32 +1,29 @@
-import { RARITIES } from '@slovo/contracts';
-import { BackHeader, RarityRangePicker, space, useTokens } from '@slovo/ui';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { BackHeader, space, typeStyle, useEdition, useTokens } from '@slovo/ui';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
-import { MixChoices } from './mix-choices';
-import { useRarityRange } from './rarity-range';
-import { useEditionInEffect } from '@/edition/remote-switches';
+import { MixChoices, useMixCount } from './mix-choices';
 
 const strings = editionStrings.mix;
 
 /**
- * «Мій Мікс» (board 11, screen 87), with no line under the title: «Рідкість»
- * while the rarityCeiling switch is on, the same control as in Settings
- * (ADR 0156), then a tile for every Category of the Edition under «N з M
- * обрано» and «Усі», and the switches of Corrections, Idioms, Synonym Rows and
- * Tips, each when the Edition turns it on. A change applies at once (the Core's
- * Mix). The header stays above the scroll. It is the root of the tab
- * «Мікс», with no way back (ADR 0201), and a screen of Settings, with `back`.
+ * «Мої Теми» (board XMix, variant E): the title with how many Categories of
+ * Words are in, «12 з 16», beside it; the setting tiles «Рідкість», «Типи»
+ * and «Питання», each opening its sheet; then the Categories as covers in
+ * the Edition's groups. A change applies at once (the Core's Mix). The header
+ * stays above the scroll. It is the root of the tab «Теми», with no way back
+ * (ADR 0201), and a screen of Settings, with `back`.
  */
 export function MyMixScreen({
   back,
 }: {
   back?: { label: string; onPress: () => void } | undefined;
 }) {
-  const { colors } = useTokens();
-  const inEffect = useEditionInEffect();
-  const { range, setRange } = useRarityRange();
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { voice } = useEdition();
+  const count = useMixCount();
 
   return (
     <SafeAreaView
@@ -35,23 +32,27 @@ export function MyMixScreen({
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <View style={styles.bar}>
-        <BackHeader
-          titleRole="settingsSubTitle"
-          title={strings.title}
-          back={back === undefined ? undefined : { ...back, testID: 'mix-back' }}
-        />
+        <View style={styles.title}>
+          <BackHeader
+            titleRole="screenTitle"
+            title={strings.title}
+            back={back === undefined ? undefined : { ...back, testID: 'mix-back' }}
+          />
+        </View>
+        <Text
+          testID="mix-selected"
+          {...voice}
+          style={[typeStyle('progressCount', tokens), styles.count, { color: colors.muted }]}
+        >
+          {count}
+        </Text>
       </View>
-      <ScrollView testID="mix-scroll" contentContainerStyle={styles.content}>
-        {inEffect.isFeatureEnabled('rarityCeiling') && (
-          <View style={styles.rarity}>
-            <RarityRangePicker
-              testID="mix-rarity"
-              rarities={RARITIES}
-              range={range}
-              onChange={setRange}
-            />
-          </View>
-        )}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        testID="mix-scroll"
+        contentContainerStyle={styles.content}
+      >
         <MixChoices />
       </ScrollView>
     </SafeAreaView>
@@ -60,8 +61,16 @@ export function MyMixScreen({
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  // The back header stays above the list, so the list scrolls under it, not the header under the status bar.
-  bar: { paddingHorizontal: space[5], paddingTop: space[2] },
-  content: { paddingHorizontal: space[5], paddingBottom: space[8] },
-  rarity: { paddingBottom: space[4] },
+  // The header stays above the list, so the list scrolls under it, not the header under the status bar.
+  bar: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: space[3],
+    paddingHorizontal: space[5],
+    paddingTop: space[2],
+    paddingBottom: space[3],
+  },
+  title: { flex: 1, minWidth: 0 },
+  count: { paddingBottom: space[1] },
+  content: { paddingHorizontal: space[4], paddingBottom: space[8] },
 });

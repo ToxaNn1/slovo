@@ -65,7 +65,11 @@ function DashboardBlocks() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.header}>
           <FeedHeader
             logo="plate"

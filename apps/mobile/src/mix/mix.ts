@@ -63,36 +63,35 @@ export function useMixSummary(): string {
 }
 
 /**
- * The calls that change the Mix. A change that could not be kept is logged
- * and leaves the Mix as it was.
+ * The calls that change the Mix, each done once its change is kept and the
+ * Mix has told of it. A change that could not be kept is logged and leaves
+ * the Mix as it was; none rejects.
  */
 export function useMixChanges(): {
   /** Puts the Category of the kind's list, the Words' unless given, in the Mix (`inMix`) or takes it out. */
-  toggleCategory: (categoryId: string, inMix: boolean, of?: CategoryKind) => void;
-  turnAllOn: () => void;
-  /** Puts the kind of Entry (Corrections, Idioms, Synonym Rows, Tips) as a whole in the Mix (`inMix`) or takes it out. */
-  setKind: (kind: MixKind, inMix: boolean) => void;
+  toggleCategory: (categoryId: string, inMix: boolean, of?: CategoryKind) => Promise<unknown>;
+  /** Puts the Categories of Words in the Mix (`inMix`) or takes them out in one change, as a group's «усі» and «зняти» do. */
+  setCategories: (categoryIds: readonly string[], inMix: boolean) => Promise<unknown>;
+  turnAllOn: () => Promise<unknown>;
+  /** Puts the kind of Entry (Corrections, Idioms, Synonym Rows, Tips) as a whole in the Mix (`inMix`) or takes it out; with a `weight`, at that weight. */
+  setKind: (kind: MixKind, inMix: boolean, weight?: MixKindWeight) => Promise<unknown>;
   /** Sets the Mix kind weight of the kind: «Менше», «Звичайно» or «Більше». */
-  setKindWeight: (kind: MixKind, weight: MixKindWeight) => void;
+  setKindWeight: (kind: MixKind, weight: MixKindWeight) => Promise<unknown>;
   /** Sets how often the Feed asks a Quick Question. */
-  setQuickQuestionEvery: (every: QuickQuestionEvery) => void;
+  setQuickQuestionEvery: (every: QuickQuestionEvery) => Promise<unknown>;
 } {
   const { mix } = useComposition();
-  return {
-    toggleCategory: (categoryId, inMix, of) => {
-      void keep('the Mix', mix.setCategory(categoryId, inMix, of));
-    },
-    turnAllOn: () => {
-      void keep('the Mix', mix.turnAllOn());
-    },
-    setKind: (kind, inMix) => {
-      void keep('the Mix', mix.setKind(kind, inMix));
-    },
-    setKindWeight: (kind, weight) => {
-      void keep('the Mix', mix.setKindWeight(kind, weight));
-    },
-    setQuickQuestionEvery: (every) => {
-      void keep('the Mix', mix.setQuickQuestionEvery(every));
-    },
-  };
+  // One set of calls per Mix, so a memoised row or cover that takes one keeps it.
+  return useMemo(
+    () => ({
+      toggleCategory: (categoryId, inMix, of) =>
+        keep('the Mix', mix.setCategory(categoryId, inMix, of)),
+      setCategories: (categoryIds, inMix) => keep('the Mix', mix.setCategories(categoryIds, inMix)),
+      turnAllOn: () => keep('the Mix', mix.turnAllOn()),
+      setKind: (kind, inMix, weight) => keep('the Mix', mix.setKind(kind, inMix, weight)),
+      setKindWeight: (kind, weight) => keep('the Mix', mix.setKindWeight(kind, weight)),
+      setQuickQuestionEvery: (every) => keep('the Mix', mix.setQuickQuestionEvery(every)),
+    }),
+    [mix],
+  );
 }

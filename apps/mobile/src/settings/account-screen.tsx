@@ -110,6 +110,8 @@ function AccountContent({
         />
       </View>
       <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         testID="account-scroll"
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"

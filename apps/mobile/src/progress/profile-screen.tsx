@@ -142,7 +142,11 @@ function ProfileBlocks() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      >
         {/* The Profile tab's head, as the board: the title, and the tile that opens Settings. */}
         <View style={styles.head}>
           <ScreenTitle>{strings.title}</ScreenTitle>

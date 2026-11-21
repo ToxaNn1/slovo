@@ -69,7 +69,12 @@ export default function WidgetsScreen() {
           }}
         />
       </View>
-      <ScrollView testID="widgets-scroll" contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        testID="widgets-scroll"
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.header}>
           <Text {...voice} style={[typeStyle('sub', tokens), { color: colors.muted }]}>
             {strings.subtitle}

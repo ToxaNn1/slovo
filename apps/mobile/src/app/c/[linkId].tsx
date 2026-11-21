@@ -115,6 +115,8 @@ function Preview({ preview }: { preview: Extract<CollectionLinkPreview, { ok: tr
 
   return (
     <FlatList
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
       data={preview.firstEntries}
       keyExtractor={(row) => row.entryId}
       renderItem={({ item }) => <EntryRow row={item} />}

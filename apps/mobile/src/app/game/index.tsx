@@ -127,7 +127,11 @@ function ModeScreen({
   let place = 0;
   return (
     <View testID="game-modes" style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.modes}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.modes}
+      >
         <View style={styles.heading}>
           <GamesTitle>{strings.title}</GamesTitle>
           <TotalXp />

@@ -52,7 +52,12 @@ export function AboutScreen() {
           }}
         />
       </View>
-      <ScrollView testID="about-scroll" contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        testID="about-scroll"
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.panel}>
           <AboutPanel testID="about-panel" name={edition.displayName} glyph={strings.about.glyph} />
         </View>

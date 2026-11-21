@@ -658,6 +658,8 @@ export function PagerScrollView(props: PagerScrollViewProps) {
   const { onScrolledTo } = props;
   return pager === undefined ? (
     <ScrollView
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
       testID={props.testID}
       onLayout={(event: LayoutChangeEvent) => {
         onScrolledTo?.(event.nativeEvent.layout.height);

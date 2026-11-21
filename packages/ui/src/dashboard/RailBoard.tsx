@@ -108,6 +108,8 @@ export function RailList<Item>({
   return (
     <View testID={testID} style={[styles.screen, { backgroundColor: colors.background }]}>
       <FlatList
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         ref={scroll?.list}
         onScroll={scroll?.onScroll}
         data={items}

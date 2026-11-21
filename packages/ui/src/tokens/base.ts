@@ -492,8 +492,16 @@ export const typeRoles = {
   sectionLabel: role('word', '800', 12, 12, 1, 'uppercase'),
   /** How far a run of questions has come, such as «4 з 10» of the Rarity Test. */
   progressCount: role('ui', '600', 15, 15),
-  /** A Category's name on its tile of the Mix. */
-  mixTileName: role('ui', '600', 15, 18),
+  /** The name of a setting tile on «Мої Теми», «РІДКІСТЬ». */
+  mixSettingLabel: role('word', '800', 12, 12, 1.2),
+  /** The value of a setting tile on «Мої Теми», «1–5» or «3/4». */
+  mixSettingValue: role('word', '900', 19, 19, -0.5),
+  /** A group's heading on «Мої Теми», «Світ навколо». */
+  mixGroupName: role('word', '900', 19, 21, -0.4),
+  /** A Category's name under its cover in a two-column group. */
+  mixCoverName: role('word', '800', 15, 17.3),
+  /** A Category's name under its cover in a three-column group. */
+  mixCoverNameSmall: role('ui', '700', 12, 14.4),
   /** A Badge's date or progress under its mark on the Badges screen. */
   badgeProgress: role('ui', '500', 12, 14.2),
   /** A Badge's name under its title on the stamp of a newly earned Badge. */

@@ -52,6 +52,8 @@ export function FavoritesList({ header }: { header: ListHeader }) {
   return (
     <>
       <FlatList
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         ref={listRef}
         onScroll={onListScroll}
         testID="favorites"

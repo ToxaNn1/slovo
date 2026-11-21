@@ -15,7 +15,15 @@ import { ConfirmationDialog } from '../primitives/ConfirmationDialog';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useInterfaceSounds } from '../providers/InterfaceSoundsProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { quickQuestionCard, roundLayout, roundMascotWidth, space, typeStyle } from '../tokens';
+import {
+  entryCardFrame,
+  quickQuestionCard,
+  roundLayout,
+  roundMascotWidth,
+  space,
+  swipeStampLayout,
+  typeStyle,
+} from '../tokens';
 import { AnswerBanner } from './AnswerBanner';
 import { AnswerSheet, cardLine } from './AnswerSheet';
 import { ChipsRound } from './ChipsRound';
@@ -145,6 +153,8 @@ export function GameRound({
         }}
       />
       <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         contentContainerStyle={[styles.round, round.form !== 'pick' && styles.roundWithoutOptions]}
       >
         {round.form !== 'vowel' && <RoundKicker kicker={look.kicker} />}
@@ -396,7 +406,9 @@ const styles = StyleSheet.create({
   // The Round fills the screen, so its options sit at the bottom.
   round: { flexGrow: 1, gap: space[5], padding: space[6] },
   // The Feed's page frames the Quick Question's card as it does a Word card (owner 16.11).
-  quickQuestion: { flex: 1 },
+  // Ends where a framed Word card's face ends: over the room it leaves for the swipe stamp
+  // and its offset shadow, so both cards in the Feed are the same height (owner 21.11).
+  quickQuestion: { flex: 1, paddingBottom: swipeStampLayout.room + entryCardFrame.shadow },
   quickQuestionCard: {
     flex: 1,
     borderRadius: quickQuestionCard.radius,

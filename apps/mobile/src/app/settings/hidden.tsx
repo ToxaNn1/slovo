@@ -50,6 +50,8 @@ function HiddenList() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <FlatList<HiddenRowModel>
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         ref={listRef}
         onScroll={onListScroll}
         contentContainerStyle={styles.content}

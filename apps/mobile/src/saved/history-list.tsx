@@ -26,6 +26,8 @@ export function HistoryList({ header }: { header: ListHeader }) {
   return (
     <>
       <FlatList<HistoryRow>
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         ref={listRef}
         onScroll={onListScroll}
         testID="history"

@@ -126,7 +126,13 @@ function ShareSheetContent({
     <>
       {/* Above the scroll, which clips: the turned title rises past its own box. */}
       <SheetTitle>{strings.share.title}</SheetTitle>
-      <ScrollView bounces={false} style={styles.scroll} contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        bounces={false}
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+      >
         <View
           testID="share-preview"
           style={[

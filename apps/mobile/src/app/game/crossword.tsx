@@ -146,6 +146,8 @@ function CrossingCrosswordScreen({ opened }: { opened: CrossingCrossword }) {
       }
     >
       <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         contentContainerStyle={[styles.crossing, scrolls ? styles.fill : styles.fit]}
         scrollEnabled={scrolls}
       >

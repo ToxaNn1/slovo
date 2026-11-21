@@ -121,6 +121,8 @@ function Board({ collectionId, created }: { collectionId: string; created: boole
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <FlatList
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         ref={listRef}
         onScroll={onScroll}
         data={shown}

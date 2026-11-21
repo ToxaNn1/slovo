@@ -35,9 +35,10 @@ export function CorrectionTypesRail({
         onPress={grid?.onOpenAll}
       />
       <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         testID="dashboard-correction-types"
         horizontal
-        showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.rail}
       >
         {tiles.map(({ type }, index) => (

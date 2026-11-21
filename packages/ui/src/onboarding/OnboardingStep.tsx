@@ -272,13 +272,14 @@ export function OnboardingStep({
         </View>
       ) : (
         <ScrollView
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
           testID="onboarding-content"
           onContentSizeChange={(_, contentHeight) => {
             setContent(contentHeight);
           }}
           style={styles.scroll}
           contentContainerStyle={styles.content}
-          showsVerticalScrollIndicator={false}
         >
           {body}
         </ScrollView>

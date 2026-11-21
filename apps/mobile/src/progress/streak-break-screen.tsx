@@ -68,7 +68,12 @@ export function StreakBreakScreen() {
           }}
         />
       </View>
-      <ScrollView testID="streak-break-scroll" contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        testID="streak-break-scroll"
+        contentContainerStyle={styles.content}
+      >
         {state.kind !== 'running' && (
           <View style={styles.section}>
             <Text {...voice} style={textStyle}>

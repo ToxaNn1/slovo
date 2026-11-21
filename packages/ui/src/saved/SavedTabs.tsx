@@ -37,9 +37,10 @@ export function SavedTabs<Id extends string>({
   return (
     <View style={styles.frame}>
       <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         testID={`${testID}-row`}
         horizontal
-        showsHorizontalScrollIndicator={false}
         style={styles.scroll}
         contentContainerStyle={styles.row}
       >

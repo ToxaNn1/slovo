@@ -102,7 +102,12 @@ export function PrivacyScreen() {
           }}
         />
       </View>
-      <ScrollView testID="privacy-scroll" contentContainerStyle={styles.content}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        testID="privacy-scroll"
+        contentContainerStyle={styles.content}
+      >
         <View style={styles.section}>
           <SettingsGroup>
             {shareCounters && (

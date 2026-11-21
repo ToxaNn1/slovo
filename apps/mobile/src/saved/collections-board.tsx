@@ -140,6 +140,8 @@ export function CollectionsBoard({ header }: { header: ListHeader }) {
   return (
     <>
       <FlatList
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
         ref={listRef}
         onScroll={onScroll}
         testID="collections"

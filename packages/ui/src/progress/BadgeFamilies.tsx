@@ -33,9 +33,10 @@ export function BadgeFamilies({
   });
   return (
     <ScrollView
+      showsVerticalScrollIndicator={false}
+      showsHorizontalScrollIndicator={false}
       testID="badge-families"
       horizontal
-      showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.row}
     >
       {cards.map(({ family, size, symbol }) => {
