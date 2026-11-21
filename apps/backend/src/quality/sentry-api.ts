@@ -193,7 +193,9 @@ export function createSentryApi({
     let count = 0;
     for (let pages = 1; answer.ok; pages += 1) {
       count += answer.body.length;
-      if (answer.next === null || pages === NEW_ISSUES_MAX_PAGES) return { ok: true, value: count };
+      if (answer.next === null) return { ok: true, value: count };
+      // More pages wait: Sentry has at least this many.
+      if (pages === NEW_ISSUES_MAX_PAGES) return { ok: true, atLeast: count };
       answer = await page(answer.next);
     }
     return answer;

@@ -7,12 +7,23 @@ export const SENTRY_RETENTION_DAYS = 30;
 /** How long a Sentry number stays fresh before Якість reads it again. */
 const FRESH_MS = 5 * 60 * 1000;
 
-/** One Sentry number of Якість: the period's, the same a day earlier, and when it was read. */
+/** A Sentry number as Якість keeps it: the value, and whether it is only a floor. */
+interface SentryNumber {
+  readonly value: number | null;
+  readonly atLeast: boolean;
+}
+
+/**
+ * One Sentry number of Якість: the period's, the same a day earlier, whether
+ * the period's is only a floor (Sentry has more than the backend counts),
+ * and when it was read.
+ */
 export type QualityKpi =
   | {
       readonly state: 'ok';
       readonly value: number | null;
       readonly yesterday: number | null;
+      readonly atLeast: boolean;
       readonly fetchedAt: Date;
     }
   | { readonly state: 'unavailable' };
@@ -57,7 +68,7 @@ export function createQuality({
   readonly ciRuns: CiRunStore;
   readonly clock: Clock;
 }): Quality {
-  const reads = new Map<string, () => Promise<FreshRead<number | null>>>();
+  const reads = new Map<string, () => Promise<FreshRead<SentryNumber>>>();
   let limitedUntil = 0;
 
   /** One Sentry number over the `days` before now, shifted back by `shiftMs`, cached by its key. */
@@ -65,13 +76,19 @@ export function createQuality({
     const key = `${read}|${editionId ?? '*'}|${String(days)}|${String(shiftMs)}`;
     let cached = reads.get(key);
     if (cached === undefined) {
-      cached = cachedRead(clock, FRESH_MS, async (): Promise<SourceRead<number | null>> => {
+      cached = cachedRead(clock, FRESH_MS, async (): Promise<SourceRead<SentryNumber>> => {
         const now = clock.now().getTime();
         if (now < limitedUntil) return { ok: false, reason: 'unavailable' };
         const to = new Date(now - shiftMs);
         const from = new Date(to.getTime() - days * DAY_MS);
         const answer = await sentry.read(read, { editionId, from, to });
-        if (answer.ok) return answer;
+        if (answer.ok) {
+          const value =
+            'atLeast' in answer
+              ? { value: answer.atLeast, atLeast: true }
+              : { value: answer.value, atLeast: false };
+          return { ok: true, value };
+        }
         if (answer.reason === 'rate-limited') limitedUntil = answer.retryAt.getTime();
         return { ok: false, reason: 'unavailable' };
       });
@@ -86,8 +103,9 @@ export function createQuality({
     if (!value.ok) return { state: 'unavailable' } as const;
     return {
       state: 'ok',
-      value: value.value,
-      yesterday: yesterday.ok ? yesterday.value : null,
+      value: value.value.value,
+      yesterday: yesterday.ok ? yesterday.value.value : null,
+      atLeast: value.value.atLeast,
       fetchedAt: value.fetchedAt,
     } as const;
   }

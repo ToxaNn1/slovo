@@ -116,9 +116,15 @@ export interface SignedIn {
 export interface Authenticator {
   /**
    * Makes a new Sign-in code for the email, in place of any code made for it
-   * before, and gives it back to be sent. It keeps only the code's hash.
+   * before, and gives it back to be sent. It keeps only the code's hash and
+   * the Edition it was requested in.
    */
-  createCode(email: string): Promise<string>;
+  createCode(email: string, editionId: string): Promise<string>;
+  /**
+   * The Edition the code waiting for the email was requested in; none when
+   * no code waits, or the code was sent before its Edition was kept.
+   */
+  codeEdition(email: string): Promise<string | undefined>;
   /**
    * Checks the code against the one last made for the email. The first right
    * code for an email creates its Account; a right code starts a Session.
@@ -537,11 +543,13 @@ export interface SentryWindow {
 
 /**
  * Sentry's answer to one read: the number, or `null` while Sentry keeps no
- * data for it; or why there is none: Sentry is unreachable or not set up, or
- * it limits the reads until `retryAt`.
+ * data for it; a count that stopped at the most pages the backend reads, so
+ * Sentry has at least that many; or why there is none: Sentry is unreachable
+ * or not set up, or it limits the reads until `retryAt`.
  */
 export type SentryAnswer =
   | { readonly ok: true; readonly value: number | null }
+  | { readonly ok: true; readonly atLeast: number }
   | { readonly ok: false; readonly reason: 'unavailable' }
   | { readonly ok: false; readonly reason: 'rate-limited'; readonly retryAt: Date };
 

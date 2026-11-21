@@ -14710,6 +14710,12 @@
                           "name"
                         ]
                       }
+                    },
+                    "stressVowels": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
                     }
                   },
                   "required": [
@@ -14722,7 +14728,8 @@
                     "questionnaire",
                     "onboardingNotificationTimes",
                     "badges",
-                    "narratorVoices"
+                    "narratorVoices",
+                    "stressVowels"
                   ]
                 }
               }
@@ -19428,6 +19435,24 @@
                     "appearedAt": {
                       "type": "string",
                       "format": "date-time"
+                    },
+                    "sourceRefused": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "at": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "at"
+                      ]
                     }
                   },
                   "required": [
@@ -32361,6 +32386,9 @@
                                     }
                                   ]
                                 },
+                                "atLeast": {
+                                  "type": "boolean"
+                                },
                                 "fetchedAt": {
                                   "type": "string",
                                   "format": "date-time"
@@ -32370,6 +32398,7 @@
                                 "state",
                                 "value",
                                 "yesterday",
+                                "atLeast",
                                 "fetchedAt"
                               ]
                             },
@@ -32414,6 +32443,9 @@
                                     }
                                   ]
                                 },
+                                "atLeast": {
+                                  "type": "boolean"
+                                },
                                 "fetchedAt": {
                                   "type": "string",
                                   "format": "date-time"
@@ -32423,6 +32455,7 @@
                                 "state",
                                 "value",
                                 "yesterday",
+                                "atLeast",
                                 "fetchedAt"
                               ]
                             },
@@ -32467,6 +32500,9 @@
                                     }
                                   ]
                                 },
+                                "atLeast": {
+                                  "type": "boolean"
+                                },
                                 "fetchedAt": {
                                   "type": "string",
                                   "format": "date-time"
@@ -32476,6 +32512,7 @@
                                 "state",
                                 "value",
                                 "yesterday",
+                                "atLeast",
                                 "fetchedAt"
                               ]
                             },
@@ -32520,6 +32557,9 @@
                                     }
                                   ]
                                 },
+                                "atLeast": {
+                                  "type": "boolean"
+                                },
                                 "fetchedAt": {
                                   "type": "string",
                                   "format": "date-time"
@@ -32529,6 +32569,7 @@
                                 "state",
                                 "value",
                                 "yesterday",
+                                "atLeast",
                                 "fetchedAt"
                               ]
                             },
@@ -32573,6 +32614,9 @@
                                     }
                                   ]
                                 },
+                                "atLeast": {
+                                  "type": "boolean"
+                                },
                                 "fetchedAt": {
                                   "type": "string",
                                   "format": "date-time"
@@ -32582,6 +32626,7 @@
                                 "state",
                                 "value",
                                 "yesterday",
+                                "atLeast",
                                 "fetchedAt"
                               ]
                             },
@@ -32626,6 +32671,9 @@
                                     }
                                   ]
                                 },
+                                "atLeast": {
+                                  "type": "boolean"
+                                },
                                 "fetchedAt": {
                                   "type": "string",
                                   "format": "date-time"
@@ -32635,6 +32683,7 @@
                                 "state",
                                 "value",
                                 "yesterday",
+                                "atLeast",
                                 "fetchedAt"
                               ]
                             },

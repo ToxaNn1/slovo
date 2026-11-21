@@ -137,11 +137,14 @@ const ServerVariablesSchema = z.object({
   RAILWAY_ENVIRONMENT_ID: unsetWhenEmpty(z.string().min(1)),
   // How many proxies in front of the backend append to X-Forwarded-For, whose
   // addresses it trusts (ADR 0030): 0 when nothing is in front, as in local
-  // Docker; 1 behind Railway's proxy. Production refuses 0.
+  // Docker; 1 behind Railway's proxy; 2 with Cloudflare in front of it, where
+  // the address before the last counts only when the last is Cloudflare's.
+  // Production refuses 0.
   TRUSTED_PROXY_HOPS: z.coerce
     .number()
     .int('must be a whole number')
     .min(0, 'must be 0 or more')
+    .max(2, 'must be 2 or less')
     .default(0),
   // 0 takes any free port.
   PORT: z.coerce.number().int().min(0).max(65535).default(8787),

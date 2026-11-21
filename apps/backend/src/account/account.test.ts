@@ -303,6 +303,24 @@ describe('an Edition', () => {
     ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
     expect(mailer.sent).toEqual([]);
   });
+
+  it('with the Account turned off after a code was sent signs no one in with it, and nothing is created', async () => {
+    const { client, mailer, kill, clearRules, database } = testApp();
+    const email = newEmail();
+    await client.account.requestCode({ email, editionId: 'uk' });
+    await kill('uk', 'account');
+
+    await expect(
+      client.account.verifyCode({ email, code: mailer.codeSentTo(email) }),
+    ).rejects.toMatchObject({ code: 'CODE_EXPIRED', status: 400 });
+    const created = await database.db.select().from(accounts).where(eq(accounts.email, email));
+    expect(created).toEqual([]);
+
+    await clearRules('uk', 'account');
+    await expect(
+      client.account.verifyCode({ email, code: mailer.codeSentTo(email) }),
+    ).resolves.toMatchObject({ email });
+  });
 });
 
 /** The backend, and a way to sign readers in on it, a new device each time. */

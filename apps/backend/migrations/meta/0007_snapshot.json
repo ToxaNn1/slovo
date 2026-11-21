@@ -59,9 +59,7 @@
         "accounts_email_unique": {
           "name": "accounts_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -111,10 +109,7 @@
       "compositePrimaryKeys": {
         "community_counters_edition_id_entry_id_pk": {
           "name": "community_counters_edition_id_entry_id_pk",
-          "columns": [
-            "edition_id",
-            "entry_id"
-          ]
+          "columns": ["edition_id", "entry_id"]
         }
       },
       "uniqueConstraints": {},
@@ -189,10 +184,7 @@
         "content_packs_edition_id_content_version_unique": {
           "name": "content_packs_edition_id_content_version_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "edition_id",
-            "content_version"
-          ]
+          "columns": ["edition_id", "content_version"]
         }
       },
       "policies": {},
@@ -364,10 +356,7 @@
       "compositePrimaryKeys": {
         "remote_switches_edition_id_feature_pk": {
           "name": "remote_switches_edition_id_feature_pk",
-          "columns": [
-            "edition_id",
-            "feature"
-          ]
+          "columns": ["edition_id", "feature"]
         }
       },
       "uniqueConstraints": {},
@@ -451,12 +440,8 @@
           "name": "sessions_account_id_accounts_id_fk",
           "tableFrom": "sessions",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -466,9 +451,7 @@
         "sessions_token_unique": {
           "name": "sessions_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -647,12 +630,8 @@
           "name": "sign_in_methods_account_id_accounts_id_fk",
           "tableFrom": "sign_in_methods",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -738,12 +717,8 @@
           "name": "user_records_account_id_accounts_id_fk",
           "tableFrom": "user_records",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -751,11 +726,7 @@
       "compositePrimaryKeys": {
         "user_records_account_id_edition_id_key_pk": {
           "name": "user_records_account_id_edition_id_key_pk",
-          "columns": [
-            "account_id",
-            "edition_id",
-            "key"
-          ]
+          "columns": ["account_id", "edition_id", "key"]
         }
       },
       "uniqueConstraints": {},

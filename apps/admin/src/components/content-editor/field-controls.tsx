@@ -11,7 +11,7 @@ import {
   isList,
   isObject,
   RARITY_LINES,
-  VOWEL,
+  isVowel,
   withFieldValue,
 } from './kinds';
 
@@ -39,6 +39,8 @@ interface ControlProps {
   /** The values of the fields beside this one, which a Stress control reads its text from. */
   readonly siblings: FormObject;
   readonly categories: CategoryOptions;
+  /** The Edition's lowercase vowels: the letters a Stress control offers. */
+  readonly vowels: readonly string[];
   /** The Edition whose records an Entry picker lists. */
   readonly editionId: string;
   readonly onChange: (value: FormValue) => void;
@@ -180,7 +182,7 @@ function Leaf({
 
 /** A Stress, chips, rarity, list or object control. */
 function Composite(props: ControlProps) {
-  const { id, label, control, value, siblings, categories, editionId, onChange } = props;
+  const { id, label, control, value, siblings, categories, vowels, editionId, onChange } = props;
   switch (control.type) {
     case 'entries':
       return (
@@ -202,7 +204,7 @@ function Composite(props: ControlProps) {
       return (
         <div className="flex flex-wrap gap-0.5 text-lg">
           {letters.map((letter, position) => {
-            if (!VOWEL.test(letter)) {
+            if (!isVowel(vowels, letter)) {
               return (
                 <span key={position} className="px-1 py-0.5">
                   {letter}
@@ -285,6 +287,7 @@ function Composite(props: ControlProps) {
           fields={control.fields}
           value={isObject(value) ? value : {}}
           categories={categories}
+          vowels={vowels}
           onChange={onChange}
         />
       );
@@ -309,6 +312,7 @@ function Composite(props: ControlProps) {
                     value={each}
                     siblings={{}}
                     categories={categories}
+                    vowels={vowels}
                     editionId={editionId}
                     onChange={(next) => {
                       onChange(replaced(index, next));
@@ -327,6 +331,7 @@ function Composite(props: ControlProps) {
                         fields={item.fields}
                         value={isObject(each) ? each : {}}
                         categories={categories}
+                        vowels={vowels}
                         onChange={(next) => {
                           onChange(replaced(index, next));
                         }}
@@ -382,6 +387,7 @@ function SubFields({
   fields,
   value,
   categories,
+  vowels,
   onChange,
 }: {
   readonly id: string;
@@ -389,6 +395,7 @@ function SubFields({
   readonly fields: readonly EditorField[];
   readonly value: FormObject;
   readonly categories: CategoryOptions;
+  readonly vowels: readonly string[];
   readonly onChange: (value: FormValue) => void;
 }) {
   return (
@@ -402,9 +409,10 @@ function SubFields({
           value={value[field.name]}
           siblings={value}
           categories={categories}
+          vowels={vowels}
           editionId={editionId}
           onChange={(next) => {
-            onChange(withFieldValue(fields, value, field.name, next));
+            onChange(withFieldValue(fields, value, field.name, next, vowels));
           }}
         />
       ))}

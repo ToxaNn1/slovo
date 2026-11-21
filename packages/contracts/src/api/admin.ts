@@ -55,6 +55,8 @@ const QualityKpiSchema = z.discriminatedUnion('state', [
     value: z.number().nullable(),
     /** The same number a day earlier. */
     yesterday: z.number().nullable(),
+    /** `value` is only a floor: Sentry has more than the backend counted (shown as «N+»). */
+    atLeast: z.boolean(),
     /** When the backend read it of Sentry: its freshness. */
     fetchedAt: z.iso.datetime(),
   }),
@@ -414,6 +416,8 @@ const EditionCardSchema = z.object({
   badges: z.array(z.object({ id: z.string(), name: z.string() })),
   /** The Narrator Voices the Edition offers, which name an Account's chosen voice. */
   narratorVoices: z.array(z.object({ id: z.string(), name: z.string() })),
+  /** The lowercase vowels a Stress may fall on; none for a language that marks no Stress. */
+  stressVowels: z.array(z.string()),
 });
 
 /** What a write answers: the record's new version and the Edition's content version it published. */
@@ -617,6 +621,12 @@ const contentWriteContract = {
          * Once it has passed, a change of its publish date is refused.
          */
         appearedAt: z.iso.datetime().optional(),
+        /**
+         * Entries only: the first source refused the quote check's fetch (a
+         * 403, 429 or 5xx), when; the check asks it again a day later and the
+         * record stays unchecked until it answers.
+         */
+        sourceRefused: z.object({ status: z.number().int(), at: z.iso.datetime() }).optional(),
       }),
     ),
   records: contentProcedure

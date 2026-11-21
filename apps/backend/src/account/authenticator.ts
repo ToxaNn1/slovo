@@ -243,10 +243,25 @@ export function createAuthenticator(
   }
 
   return {
-    async createCode(email) {
+    async createCode(email, editionId) {
       const { internalAdapter } = await auth.$context;
       await internalAdapter.deleteVerificationByIdentifier(codeIdentifier(email));
-      return auth.api.createVerificationOTP({ body: { email, type: SIGN_IN } });
+      const code = await auth.api.createVerificationOTP({ body: { email, type: SIGN_IN } });
+      await database.db
+        .update(signInCodes)
+        .set({ editionId })
+        .where(eq(signInCodes.identifier, codeIdentifier(email)));
+      return code;
+    },
+
+    async codeEdition(email) {
+      const [row] = await database.db
+        .select({ editionId: signInCodes.editionId })
+        .from(signInCodes)
+        .where(eq(signInCodes.identifier, codeIdentifier(email)))
+        .orderBy(desc(signInCodes.createdAt))
+        .limit(1);
+      return row?.editionId ?? undefined;
     },
 
     async checkCode(email, code) {

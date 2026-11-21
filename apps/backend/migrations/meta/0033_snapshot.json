@@ -59,9 +59,7 @@
         "accounts_email_unique": {
           "name": "accounts_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -192,12 +190,8 @@
           "name": "admin_sessions_admin_user_id_admin_users_id_fk",
           "tableFrom": "admin_sessions",
           "tableTo": "admin_users",
-          "columnsFrom": [
-            "admin_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["admin_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -300,9 +294,7 @@
         "admin_users_email_unique": {
           "name": "admin_users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -345,9 +337,7 @@
         "agent_tokens_token_hash_unique": {
           "name": "agent_tokens_token_hash_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token_hash"
-          ]
+          "columns": ["token_hash"]
         }
       },
       "policies": {},
@@ -462,9 +452,7 @@
         "alerts_key_unique": {
           "name": "alerts_key_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "key"
-          ]
+          "columns": ["key"]
         }
       },
       "policies": {},
@@ -628,10 +616,7 @@
       "compositePrimaryKeys": {
         "community_counters_edition_id_entry_id_pk": {
           "name": "community_counters_edition_id_entry_id_pk",
-          "columns": [
-            "edition_id",
-            "entry_id"
-          ]
+          "columns": ["edition_id", "entry_id"]
         }
       },
       "uniqueConstraints": {},
@@ -776,12 +761,8 @@
           "name": "content_corrections_batch_id_content_batches_id_fk",
           "tableFrom": "content_corrections",
           "tableTo": "content_batches",
-          "columnsFrom": [
-            "batch_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["batch_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -789,10 +770,7 @@
       "compositePrimaryKeys": {
         "content_corrections_edition_id_id_pk": {
           "name": "content_corrections_edition_id_id_pk",
-          "columns": [
-            "edition_id",
-            "id"
-          ]
+          "columns": ["edition_id", "id"]
         }
       },
       "uniqueConstraints": {},
@@ -893,12 +871,8 @@
           "name": "content_crossword_days_batch_id_content_batches_id_fk",
           "tableFrom": "content_crossword_days",
           "tableTo": "content_batches",
-          "columnsFrom": [
-            "batch_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["batch_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -906,10 +880,7 @@
       "compositePrimaryKeys": {
         "content_crossword_days_edition_id_id_pk": {
           "name": "content_crossword_days_edition_id_id_pk",
-          "columns": [
-            "edition_id",
-            "id"
-          ]
+          "columns": ["edition_id", "id"]
         }
       },
       "uniqueConstraints": {},
@@ -1016,12 +987,8 @@
           "name": "content_curated_collections_batch_id_content_batches_id_fk",
           "tableFrom": "content_curated_collections",
           "tableTo": "content_batches",
-          "columnsFrom": [
-            "batch_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["batch_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1029,10 +996,7 @@
       "compositePrimaryKeys": {
         "content_curated_collections_edition_id_id_pk": {
           "name": "content_curated_collections_edition_id_id_pk",
-          "columns": [
-            "edition_id",
-            "id"
-          ]
+          "columns": ["edition_id", "id"]
         }
       },
       "uniqueConstraints": {},
@@ -1133,12 +1097,8 @@
           "name": "content_idioms_batch_id_content_batches_id_fk",
           "tableFrom": "content_idioms",
           "tableTo": "content_batches",
-          "columnsFrom": [
-            "batch_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["batch_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1146,10 +1106,7 @@
       "compositePrimaryKeys": {
         "content_idioms_edition_id_id_pk": {
           "name": "content_idioms_edition_id_id_pk",
-          "columns": [
-            "edition_id",
-            "id"
-          ]
+          "columns": ["edition_id", "id"]
         }
       },
       "uniqueConstraints": {},
@@ -1185,10 +1142,7 @@
       "compositePrimaryKeys": {
         "content_ids_edition_id_id_pk": {
           "name": "content_ids_edition_id_id_pk",
-          "columns": [
-            "edition_id",
-            "id"
-          ]
+          "columns": ["edition_id", "id"]
         }
       },
       "uniqueConstraints": {},
@@ -1289,12 +1243,8 @@
           "name": "content_synonym_rows_batch_id_content_batches_id_fk",
           "tableFrom": "content_synonym_rows",
           "tableTo": "content_batches",
-          "columnsFrom": [
-            "batch_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["batch_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1302,10 +1252,7 @@
       "compositePrimaryKeys": {
         "content_synonym_rows_edition_id_id_pk": {
           "name": "content_synonym_rows_edition_id_id_pk",
-          "columns": [
-            "edition_id",
-            "id"
-          ]
+          "columns": ["edition_id", "id"]
         }
       },
       "uniqueConstraints": {},
@@ -1406,12 +1353,8 @@
           "name": "content_tips_batch_id_content_batches_id_fk",
           "tableFrom": "content_tips",
           "tableTo": "content_batches",
-          "columnsFrom": [
-            "batch_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["batch_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1419,10 +1362,7 @@
       "compositePrimaryKeys": {
         "content_tips_edition_id_id_pk": {
           "name": "content_tips_edition_id_id_pk",
-          "columns": [
-            "edition_id",
-            "id"
-          ]
+          "columns": ["edition_id", "id"]
         }
       },
       "uniqueConstraints": {},
@@ -1572,12 +1512,8 @@
           "name": "content_words_batch_id_content_batches_id_fk",
           "tableFrom": "content_words",
           "tableTo": "content_batches",
-          "columnsFrom": [
-            "batch_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["batch_id"],
+          "columnsTo": ["id"],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -1585,10 +1521,7 @@
       "compositePrimaryKeys": {
         "content_words_edition_id_id_pk": {
           "name": "content_words_edition_id_id_pk",
-          "columns": [
-            "edition_id",
-            "id"
-          ]
+          "columns": ["edition_id", "id"]
         }
       },
       "uniqueConstraints": {},
@@ -1630,11 +1563,7 @@
       "compositePrimaryKeys": {
         "favorites_adds_edition_id_week_entry_id_pk": {
           "name": "favorites_adds_edition_id_week_entry_id_pk",
-          "columns": [
-            "edition_id",
-            "week",
-            "entry_id"
-          ]
+          "columns": ["edition_id", "week", "entry_id"]
         }
       },
       "uniqueConstraints": {},
@@ -1682,10 +1611,7 @@
       "compositePrimaryKeys": {
         "force_update_minimums_edition_id_platform_pk": {
           "name": "force_update_minimums_edition_id_platform_pk",
-          "columns": [
-            "edition_id",
-            "platform"
-          ]
+          "columns": ["edition_id", "platform"]
         }
       },
       "uniqueConstraints": {},
@@ -1795,11 +1721,7 @@
       "compositePrimaryKeys": {
         "media_illustrations_edition_id_word_id_hash_pk": {
           "name": "media_illustrations_edition_id_word_id_hash_pk",
-          "columns": [
-            "edition_id",
-            "word_id",
-            "hash"
-          ]
+          "columns": ["edition_id", "word_id", "hash"]
         }
       },
       "uniqueConstraints": {},
@@ -1939,13 +1861,7 @@
       "compositePrimaryKeys": {
         "media_recordings_edition_id_word_id_narrator_voice_recording_kind_hash_pk": {
           "name": "media_recordings_edition_id_word_id_narrator_voice_recording_kind_hash_pk",
-          "columns": [
-            "edition_id",
-            "word_id",
-            "narrator_voice",
-            "recording_kind",
-            "hash"
-          ]
+          "columns": ["edition_id", "word_id", "narrator_voice", "recording_kind", "hash"]
         }
       },
       "uniqueConstraints": {},
@@ -2071,12 +1987,8 @@
           "name": "mistake_reports_account_id_accounts_id_fk",
           "tableFrom": "mistake_reports",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2197,11 +2109,7 @@
       "compositePrimaryKeys": {
         "questionnaire_counters_edition_id_question_answer_pk": {
           "name": "questionnaire_counters_edition_id_question_answer_pk",
-          "columns": [
-            "edition_id",
-            "question",
-            "answer"
-          ]
+          "columns": ["edition_id", "question", "answer"]
         }
       },
       "uniqueConstraints": {},
@@ -2261,11 +2169,7 @@
       "compositePrimaryKeys": {
         "quote_checks_edition_id_kind_id_pk": {
           "name": "quote_checks_edition_id_kind_id_pk",
-          "columns": [
-            "edition_id",
-            "kind",
-            "id"
-          ]
+          "columns": ["edition_id", "kind", "id"]
         }
       },
       "uniqueConstraints": {},
@@ -2417,12 +2321,8 @@
           "name": "recovery_codes_admin_user_id_admin_users_id_fk",
           "tableFrom": "recovery_codes",
           "tableTo": "admin_users",
-          "columnsFrom": [
-            "admin_user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["admin_user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2503,12 +2403,8 @@
           "name": "service_entries_service_id_services_id_fk",
           "tableFrom": "service_entries",
           "tableTo": "services",
-          "columnsFrom": [
-            "service_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["service_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2603,9 +2499,7 @@
         "services_name_unique": {
           "name": "services_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "policies": {},
@@ -2701,12 +2595,8 @@
           "name": "sessions_account_id_accounts_id_fk",
           "tableFrom": "sessions",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2716,9 +2606,7 @@
         "sessions_token_unique": {
           "name": "sessions_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -2918,12 +2806,8 @@
           "name": "sign_in_methods_account_id_accounts_id_fk",
           "tableFrom": "sign_in_methods",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -2999,10 +2883,7 @@
       "compositePrimaryKeys": {
         "statistics_off_counters_edition_id_day_pk": {
           "name": "statistics_off_counters_edition_id_day_pk",
-          "columns": [
-            "edition_id",
-            "day"
-          ]
+          "columns": ["edition_id", "day"]
         }
       },
       "uniqueConstraints": {},
@@ -3062,11 +2943,7 @@
       "compositePrimaryKeys": {
         "switch_rules_edition_id_feature_order_pk": {
           "name": "switch_rules_edition_id_feature_order_pk",
-          "columns": [
-            "edition_id",
-            "feature",
-            "order"
-          ]
+          "columns": ["edition_id", "feature", "order"]
         }
       },
       "uniqueConstraints": {},
@@ -3149,12 +3026,8 @@
           "name": "user_records_account_id_accounts_id_fk",
           "tableFrom": "user_records",
           "tableTo": "accounts",
-          "columnsFrom": [
-            "account_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["account_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -3162,11 +3035,7 @@
       "compositePrimaryKeys": {
         "user_records_account_id_edition_id_key_pk": {
           "name": "user_records_account_id_edition_id_key_pk",
-          "columns": [
-            "account_id",
-            "edition_id",
-            "key"
-          ]
+          "columns": ["account_id", "edition_id", "key"]
         }
       },
       "uniqueConstraints": {},
