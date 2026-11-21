@@ -28,11 +28,15 @@ function constInitializer(sourceCode, identifier) {
 }
 
 /**
- * Whether `node` is a switch answer: a switch question, its negation, or a `const`
- * whose initializer is one. A value merely built from an answer is none.
+ * Whether `node` is a switch answer: a switch question (optional chaining too), its
+ * negation, or a `const` whose initializer is one. A value merely built from an answer is none.
  */
 function isSwitchAnswer(sourceCode, node, followed) {
   if (isSwitchQuestion(node)) return true;
+  // `edition?.isFeatureEnabled('a')`, `edition.isFeatureEnabled?.('a')`.
+  if (node.type === 'ChainExpression') {
+    return isSwitchAnswer(sourceCode, node.expression, followed);
+  }
   if (node.type === 'UnaryExpression' && node.operator === '!') {
     return isSwitchAnswer(sourceCode, node.argument, followed);
   }
@@ -64,8 +68,9 @@ function asksSwitch(sourceCode, node) {
 /**
  * One condition asks about one Feature Switch: a dependency between two lives in the
  * one table of the contracts (`DEPENDS_ON`), which the Edition applies (ADR 0089).
- * Both sides of a logical expression are checked, and a `const` they name is followed
- * to its initializer, so an answer first held in a variable still counts.
+ * Both sides of a logical expression are checked, and so is a conditional whose test
+ * and one of whose branches both ask. A `const` they name is followed to its
+ * initializer, so an answer first held in a variable still counts.
  * A helper function that asks for the caller is not followed.
  */
 export const oneSwitchPerCondition = {
@@ -83,6 +88,14 @@ export const oneSwitchPerCondition = {
     return {
       LogicalExpression(node) {
         if (asksSwitch(sourceCode, node.left) && asksSwitch(sourceCode, node.right)) {
+          context.report({ node, messageId: 'twoSwitches' });
+        }
+      },
+      ConditionalExpression(node) {
+        if (
+          asksSwitch(sourceCode, node.test) &&
+          (asksSwitch(sourceCode, node.consequent) || asksSwitch(sourceCode, node.alternate))
+        ) {
           context.report({ node, messageId: 'twoSwitches' });
         }
       },

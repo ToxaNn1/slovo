@@ -19,6 +19,8 @@ ruleTester.run('one-switch-per-condition', oneSwitchPerCondition, {
     "const a = edition.isFeatureEnabled('a'); if (other.a && edition.isFeatureEnabled('b')) show();",
     // A value built from a switch answer is no answer itself.
     "const steps = edition.isFeatureEnabled('a') ? ['a'] : []; if (steps.length > 0 && edition.isFeatureEnabled('b')) show();",
+    // Choosing which one switch to ask is no dependency between two.
+    "const on = wide ? edition.isFeatureEnabled('a') : edition.isFeatureEnabled('b');",
   ],
   invalid: [
     {
@@ -39,6 +41,22 @@ ruleTester.run('one-switch-per-condition', oneSwitchPerCondition, {
     },
     {
       code: "const a = edition.isFeatureEnabled('a'); const both = a; const b = edition.isFeatureEnabled('b'); const ok = both || b;",
+      errors: [error],
+    },
+    {
+      code: "const ok = edition.isFeatureEnabled('a') ? edition.isFeatureEnabled('b') : false;",
+      errors: [error],
+    },
+    {
+      code: "const ok = !edition.isFeatureEnabled('a') ? true : !edition.isFeatureEnabled('b');",
+      errors: [error],
+    },
+    {
+      code: "const on = edition.isFeatureEnabled?.('a'); if (on && edition.isFeatureEnabled('b')) show();",
+      errors: [error],
+    },
+    {
+      code: "const on = edition?.isFeatureEnabled('a'); if (edition.isFeatureEnabled('b') || on) show();",
       errors: [error],
     },
   ],
