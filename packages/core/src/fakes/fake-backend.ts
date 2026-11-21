@@ -115,8 +115,7 @@ export interface FakeBackend {
    * backend's rules (ADR 0041): a change replaces the record kept under its
    * key only when it is later, a change time later than the clock's counts
    * as the clock's, and every kept change takes the next sequence number,
-   * which a pull pages by. The deletion of a record of the XP log deletes it
-   * and keeps no tombstone (ADR 0205). Every token is the Account's.
+   * which a pull pages by. Every token is the Account's.
    */
   readonly sync: {
     /** The records kept, by key. */
@@ -384,11 +383,6 @@ export function createFakeBackend({
         }
         const now = clock.now().getTime();
         for (const { key, value, changedAt } of latest.values()) {
-          // The deletion of a record of the XP log leaves no tombstone (ADR 0205).
-          if (value === null && key.startsWith('xp.')) {
-            records.delete(key);
-            continue;
-          }
           const kept = records.get(key);
           const cut = Math.min(changedAt, now);
           if (kept === undefined || cut > kept.changedAt) {

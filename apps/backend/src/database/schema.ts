@@ -206,7 +206,8 @@ export const forceUpdateMinimums = pgTable(
  * The records of every Account's user state, per Edition, that Sync keeps
  * (ADR 0041): one row per Account, Edition and key, kept as the device sent
  * it and never read. A deleted record stays as a tombstone, its `value` null,
- * so the deletion reaches every device; the Account's rows go with it.
+ * so the deletion reaches every device, the latest 20 000 tombstones of an
+ * Account in an Edition (ADR 0205); the Account's rows go with it.
  */
 export const userRecords = pgTable(
   'user_records',

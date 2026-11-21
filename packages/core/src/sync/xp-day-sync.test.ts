@@ -60,9 +60,12 @@ function account(start = '2026-09-02T09:00:00.000Z') {
     };
   }
 
-  /** The keys of the records the Account keeps, tombstones included, under the prefix. */
+  /** The keys of the records the Account keeps under the prefix, a tombstone not one: only they count toward its limit. */
   const kept = (prefix: string) =>
-    [...server.sync.records.keys()].filter((key) => key.startsWith(prefix)).sort();
+    [...server.sync.records]
+      .filter(([key, { value }]) => key.startsWith(prefix) && value !== null)
+      .map(([key]) => key)
+      .sort();
 
   return { time, server, device, kept };
 }
@@ -71,7 +74,7 @@ const keysOf = (records: Map<string, string>, prefix: string) =>
   [...records.keys()].filter((key) => key.startsWith(prefix)).sort();
 
 describe('the XP days of two devices of one Account', () => {
-  it('leave the Account one XP day and no record or tombstone of the folded day', async () => {
+  it('leave the Account one XP day and only tombstones of the records of the folded day', async () => {
     const { time, device, kept } = account();
     const phone = await device(rounds());
     await phone.sync();
@@ -167,24 +170,25 @@ describe('the XP days of two devices of one Account', () => {
     expect(await fresh.launch()).toBe(3);
   });
 
-  it('take a record a stale device sends again off the Account once more', async () => {
+  it('keep off the Account the records a device that never folded sends again at its first sync', async () => {
     const { time, device, kept } = account();
     const phone = await device(rounds());
     await phone.sync();
     time.set('2026-10-14T09:00:00.000Z');
     await phone.launch();
     await phone.sync();
-    // A device that kept the records and never folded, signing in anew.
+    // A device that kept the records and never folded, signing in anew: the tombstones are later.
     const stale = await device(rounds());
     await stale.sync();
-    expect(kept('xp.')).toHaveLength(3);
-
-    await phone.sync();
-    expect(await phone.launch()).toBe(3);
-    await phone.sync();
-
     expect(kept('xp.')).toEqual([]);
-    expect(await phone.launch()).toBe(3);
+
+    expect(await stale.launch()).toBe(3);
+    await stale.sync();
+
+    expect(keysOf(stale.records, 'xp.')).toEqual([]);
+    expect(kept('xp.')).toEqual([]);
+    expect(kept('xpDay.')).toHaveLength(1);
+    expect(await stale.launch()).toBe(3);
   });
 });
 

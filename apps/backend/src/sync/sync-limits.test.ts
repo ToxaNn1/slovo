@@ -145,19 +145,29 @@ describe('the largest push', () => {
 // Each test keeps 20 000 records, 40 pushes and 40 pulls, which takes a
 // while beside the other files.
 describe('the records of an Account in an Edition', { timeout: 60_000 }, () => {
-  /** Pushes the records `history.0` to `history.<count - 1>`, 500 a push, the first 500 tombstones. */
-  async function keep(device: ApiClient, count: number, changedAt: number) {
+  /** Pushes `count` changes of the keys `<prefix>.0` to `<prefix>.<count - 1>`, 500 a push. */
+  async function push(
+    device: ApiClient,
+    prefix: string,
+    count: number,
+    value: RecordValue,
+    changedAt: number,
+  ) {
     for (let start = 0; start < count; start += 500) {
       const changes = Array.from({ length: Math.min(500, count - start) }, (_, index) => ({
-        key: `history.${String(start + index)}`,
-        value: start === 0 ? null : true,
+        key: `${prefix}.${String(start + index)}`,
+        value,
         changedAt,
       }));
       await device.sync.push({ editionId: 'uk', changes });
     }
   }
 
-  it('are at most 20 000, tombstones included: a push over is TOO_MANY_RECORDS, and nothing of it is kept', async () => {
+  /** Keeps the records `history.0` to `history.<count - 1>`. */
+  const keep = (device: ApiClient, count: number, changedAt: number) =>
+    push(device, 'history', count, true, changedAt);
+
+  it('are at most 20 000: a push over is TOO_MANY_RECORDS, and nothing of it is kept', async () => {
     const { signIn } = syncing();
     const email = newEmail();
     // Each Session counts its own requests, so the tablet reads what the phone keeps.
@@ -172,7 +182,7 @@ describe('the records of an Account in an Edition', { timeout: 60_000 }, () => {
     const overTheLimit = phone.sync.push({
       editionId: 'uk',
       changes: [
-        { key: 'history.0', value: true, changedAt: now },
+        { key: 'history.0', value: false, changedAt: now },
         { key: 'favorites.aa', value: true, changedAt: now },
         { key: 'favorites.bb', value: true, changedAt: now },
       ],
@@ -231,25 +241,22 @@ describe('the records of an Account in an Edition', { timeout: 60_000 }, () => {
     const { device: phone } = await signIn(email);
     const { device: tablet } = await signIn(email);
     const now = Date.now();
-    await keep(phone, 20_000, now - 1);
+    await keep(phone, 20_000, now - 2);
+    const tooMany = { code: 'TOO_MANY_RECORDS' };
     await expect(
       phone.sync.push({
         editionId: 'uk',
         changes: [{ key: 'favorites.aa', value: true, changedAt: now }],
       }),
-    ).rejects.toMatchObject({ code: 'TOO_MANY_RECORDS' });
+    ).rejects.toMatchObject(tooMany);
     const kept = await pullAll(tablet);
-    expect(kept.records).toHaveLength(20_000);
 
-    // A value in place of a tombstone, a tombstone in place of a value, and a change that loses.
-    const replaced = [
-      { key: 'history.0', value: 'again', changedAt: now },
-      { key: 'history.500', value: null, changedAt: now },
-    ];
+    // A value in place of a value, and a change that loses.
+    const replaced = [{ key: 'history.0', value: 'again', changedAt: now }];
     await expect(
       phone.sync.push({
         editionId: 'uk',
-        changes: [...replaced, { key: 'history.501', value: false, changedAt: now - 2 }],
+        changes: [...replaced, { key: 'history.501', value: false, changedAt: now - 3 }],
       }),
     ).resolves.toEqual({});
 
@@ -257,6 +264,77 @@ describe('the records of an Account in an Edition', { timeout: 60_000 }, () => {
       records: replaced,
       more: false,
     });
+  });
+
+  it('do not count a tombstone: a deletion frees the room of its record, also for the push it comes in (ADR 0205)', async () => {
+    const { signIn } = syncing();
+    const email = newEmail();
+    const { device: phone } = await signIn(email);
+    const { device: tablet } = await signIn(email);
+    const now = Date.now();
+    await keep(phone, 20_000, now - 3);
+    const tooMany = { code: 'TOO_MANY_RECORDS' };
+    const added = (key: string) => ({ key, value: true, changedAt: now - 1 });
+    const deleted = (key: string, changedAt = now - 1) => ({ key, value: null, changedAt });
+
+    // A deletion that loses, one of a key never kept and one of a tombstone free no room.
+    await expect(
+      phone.sync.push({
+        editionId: 'uk',
+        changes: [deleted('history.0', now - 4), deleted('favorites.none'), added('favorites.aa')],
+      }),
+    ).rejects.toMatchObject(tooMany);
+    // The deletions of two records make room for two more in the same push, and no third.
+    const fits = [deleted('history.1'), deleted('history.2'), added('xpDay.a'), added('xpDay.b')];
+    await expect(
+      phone.sync.push({ editionId: 'uk', changes: [...fits, added('xpDay.c')] }),
+    ).rejects.toMatchObject(tooMany);
+    await expect(phone.sync.push({ editionId: 'uk', changes: fits })).resolves.toEqual({});
+    await expect(
+      phone.sync.push({ editionId: 'uk', changes: [deleted('history.1'), added('xpDay.c')] }),
+    ).rejects.toMatchObject(tooMany);
+    // A value in place of a tombstone adds a record.
+    await expect(
+      phone.sync.push({
+        editionId: 'uk',
+        changes: [{ ...added('history.1'), changedAt: now }],
+      }),
+    ).rejects.toMatchObject(tooMany);
+
+    // The tombstones stay for the other devices, beside the 20 000 records.
+    const { records } = await pullAll(tablet);
+    expect(records).toHaveLength(20_002);
+    expect(records.filter(({ value }) => value === null).map(({ key }) => key)).toEqual([
+      'history.1',
+      'history.2',
+    ]);
+  });
+
+  it('keep the 20 000 latest tombstones: one more takes the oldest off the Account', async () => {
+    const { signIn } = syncing();
+    const email = newEmail();
+    const { device: phone } = await signIn(email);
+    const { device: tablet } = await signIn(email);
+    const now = Date.now();
+    const record = { key: 'favorites.aa', value: true, changedAt: now };
+    await phone.sync.push({ editionId: 'uk', changes: [record] });
+    await push(phone, 'xp', 20_000, null, now - 1);
+    expect((await pullAll(tablet)).records).toHaveLength(20_001);
+
+    await phone.sync.push({
+      editionId: 'uk',
+      changes: [
+        { key: 'xp.late', value: null, changedAt: now - 1 },
+        // A tombstone kept and changed again is among the latest.
+        { key: 'xp.0', value: null, changedAt: now },
+      ],
+    });
+
+    const { records } = await pullAll(tablet);
+    expect(records).toHaveLength(20_001);
+    expect(records[0]).toEqual(record);
+    expect(records.slice(1, 3).map(({ key }) => key)).toEqual(['xp.2', 'xp.3']);
+    expect(records.slice(-2).map(({ key }) => key)).toEqual(['xp.late', 'xp.0']);
   });
 });
 

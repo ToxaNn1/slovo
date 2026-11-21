@@ -292,6 +292,10 @@ _Avoid_: Points, score, coins, experience
 The append-only record of the reader's progress, kept per Edition: XP records, the Daily Goal set (`word-goal`) and met (`goal-met`) for a day, a freeze consumed, a Break started, a Badge earned, a Badge opened (`badge-opened`, which ends its «НОВА» mark on every device) and a wrong answer in a Game (`wrong-answer`, which earns no XP and feeds the `rightRun` Badge) and a reset marker (a Progress reset). Every record has a unique id, a local date and a time. Sync merges XP logs as a set union by id, so two devices never double the XP. Total XP, Level, today's XP, Active Days, Streak, Best Streak, freezes held and Break eligibility are derived from the records after the latest reset marker and never stored.
 _Avoid_: XP history, score table, ledger
 
+**XP day**:
+The records of the XP log of one local date more than 30 days past, folded into one record that keeps each of them by its id, so the log takes one record of Sync per day and not one per action. Never changed once written; a record counts once by its id however many XP days and devices hold it (ADR 0205).
+_Avoid_: daily total, XP sum, archive
+
 **Level**:
 A step derived from total XP: 50 XP reach level 1, each level up to 10 costs 10% more than the one before, then every level costs 120 XP, with no top. The Edition supplies a name for every five levels. A Level locks nothing.
 _Avoid_: Rank, tier, grade

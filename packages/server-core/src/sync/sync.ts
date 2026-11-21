@@ -14,8 +14,14 @@ const SYNC_LIMITS = {
   keyLength: 200,
   /** The most bytes of a record's value as compact JSON in UTF-8: 8 KB. */
   valueBytes: 8 * 1024,
-  /** The most records an Account keeps in an Edition, tombstones included. */
+  /** The most records an Account keeps in an Edition, a tombstone not one (ADR 0205). */
   recordsPerEdition: 20_000,
+  /**
+   * The most tombstones an Account keeps in an Edition: the latest, so a
+   * deletion reaches a device that syncs before this many more follow it, and
+   * the deletions of years don't fill the database (ADR 0205).
+   */
+  tombstonesPerEdition: 20_000,
   /** Sync requests of one Session, pushes and pulls together. */
   requestsPerSession: { requests: 120, windowSeconds: 10 * 60 },
 } as const;
@@ -66,8 +72,12 @@ export interface Sync {
    * the first on a tie. A change that is not later is ignored.
    *
    * A push with a key or a value over its limit, or one that would take the
-   * Account's records in the Edition over theirs, is refused whole. A change
-   * of a key kept never adds a record, so it is kept even at the limit.
+   * Account's records in the Edition over theirs, is refused whole. A
+   * tombstone is no record of the limit: a deletion frees the room of its
+   * record, also for the other changes of its push, and a change that
+   * replaces a record kept adds none, so it is kept even at the limit. The
+   * tombstones stay for the other devices, the latest
+   * `tombstonesPerEdition` of them (ADR 0205).
    */
   push(
     session: Session,
@@ -156,8 +166,12 @@ export function createSync({
         value,
         changedAt: new Date(Math.min(changedAt, now)),
       }));
-      const refused = await records.push(session.account.id, editionId, kept, (count) =>
-        count > SYNC_LIMITS.recordsPerEdition ? tooManyRecords : undefined,
+      const refused = await records.push(
+        session.account.id,
+        editionId,
+        kept,
+        (count) => (count > SYNC_LIMITS.recordsPerEdition ? tooManyRecords : undefined),
+        SYNC_LIMITS.tombstonesPerEdition,
       );
       return refused ?? { ok: true };
     },
