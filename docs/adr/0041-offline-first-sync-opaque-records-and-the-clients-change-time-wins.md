@@ -1,5 +1,5 @@
 ---
-summary: Offline-first: the backend keeps opaque records, devices exchange changes, the client's change time, cut to the server's, wins.
+summary: Offline-first: the backend keeps opaque records, devices exchange changes, the client's change time, cut to the server's, wins. Amended by 0205.
 ---
 
 # Offline-first sync: opaque records, and the client's change time wins
@@ -13,6 +13,8 @@ The app always reads and writes a local database. When it is online and the user
 **The server's sequence number is the cursor.** Every kept change takes the next value of one sequence. A device pulls the records kept after its cursor in sequence order and keeps the last number. A push locks the Account's row until it commits, so pushes of one Account run one at a time and a pull can't pass a number still being kept.
 
 **Tombstones are kept for good**, so an earlier change from another device can't bring a record back. Deleting the Account removes its records in every Edition.
+
+**Amended by ADR 0205.** A tombstone does not count toward the 20 000 records, the backend keeps the latest 20 000 tombstones of an Account in an Edition instead of all, and the push sends deletions first.
 
 ## The protocol (ADR 0031: additive in `/v1`)
 

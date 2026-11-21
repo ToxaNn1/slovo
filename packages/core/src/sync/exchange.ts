@@ -65,7 +65,7 @@ export interface SyncExchange {
    * cursor where it was.
    * History over `HISTORY_CAP` loses its oldest entries by Seen time in the
    * write of the last page, and those deletions sync. The push then sends the pending
-   * changes in batches of `SYNC_BATCH_SIZE` and deletes each batch the
+   * changes, the deletions first, in batches of `SYNC_BATCH_SIZE` and deletes each batch the
    * Account accepted. A failed call stops the sync where it is; nothing done
    * is lost, and the next sync resumes. A batch the Account refuses for good
    * (`refusalOf`) stays pending and is sent no more by this exchange,
@@ -324,7 +324,12 @@ export function createSyncExchange({
         more = page.more && page.cursor !== after;
       }
       const all = [...(await userState.pendingChanges())];
-      const pending = all.filter((change) => !isRefused(change));
+      // Deletions first: they free room in the Account before a batch adds records (ADR 0205).
+      const waiting = all.filter((change) => !isRefused(change));
+      const pending = [
+        ...waiting.filter(([, { value }]) => value === undefined),
+        ...waiting.filter(([, { value }]) => value !== undefined),
+      ];
       for (let start = 0; start < pending.length; start += SYNC_BATCH_SIZE) {
         const batch = new Map(pending.slice(start, start + SYNC_BATCH_SIZE));
         const answer = await api.push(

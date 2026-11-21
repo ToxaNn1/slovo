@@ -328,6 +328,12 @@ const storedIn1_0: readonly (readonly [
     'xp.x-2',
     '{"kind":"break","date":"2026-10-31","at":"2026-10-30T08:15:00.000Z","days":3}',
   ],
+  [
+    'xpDays',
+    '2026-09-01-1-1x2y3z',
+    'xpDay.2026-09-01-1-1x2y3z',
+    '{"date":"2026-09-01","rows":{"x-0":{"t":29700000,"source":"game-round","amount":5,"mode":"guess-word","rarity":3}}}',
+  ],
   ['streakBrokenReported', undefined, 'progress.streakBrokenReported', '"2026-10-20"'],
   ['notificationTimes', undefined, 'notifications.times', '["09:00","20:30"]'],
   ['notificationSound', undefined, 'notifications.sound', 'false'],

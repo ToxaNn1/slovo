@@ -1,5 +1,5 @@
 ---
-summary: An append-only XP log derives XP, Level, Active Day (≥5 XP), Streak, freezes and Break, merged by id; the Daily Goal replaces the Daily Limit.
+summary: An append-only XP log derives XP, Level, Active Day (≥5 XP), Streak, freezes and Break, merged by id; the Daily Goal replaces the Daily Limit. Amended by 0205.
 ---
 
 # The XP log derives the Streak, the Active Day, the Level, freezes and the Break; the Daily Goal replaces the Daily Limit
@@ -25,6 +25,8 @@ Until 1.0 an Active Day was a day on which the app was opened, so scrolling alon
 **Confirmed Entries and Badges.** Badges and the Profile count confirmed Entries: Known on a Review of 7 days or later, or answered right in a Game or a Quick Question. The Core holds a catalogue of Badge conditions evaluated against the XP log, Knowledge Marks, Best results and the Daily Crossword record. The Edition chooses its Badges, names them, gives each a short symbol its mark shows, and adds its own from the catalogue's parameterised kinds. Earning one appends a record; a Badge is never removed and gives no XP. The Game's XP records carry what the conditions read: a Round's record its Game Mode and, on a right answer about a Word, that Word's rarity; a finished Game's record its Game Mode, and it is a win when at least half of its Rounds were right. A Badge's condition is evaluated after each change of the XP log, the confirmed Entries and the Streak, and the badges screen shows each unearned Badge's progress. The Badges have their own Feature Switch `badges` and need the XP log.
 
 **Sync.** XP log records merge as a set union by id, like Knowledge Marks (ADR 0041), across devices and on first sign-in, so totals never double. The backend stores them per Account per Edition (ADR 0030). The contract and the server Core gain the record shape; there is no new sync mechanism. Offline, everything is computed on the device.
+
+**Amended by ADR 0205.** The records of a local date more than 30 days past are kept inside XP days, one record per day that holds each of them by its id, and merge by id as before.
 
 **Switches.** Each part has its own Feature Switch, required of every Edition and turned on or off remotely by Rules (ADR 0006, 0089). «Без лічильників» (it replaced «Приховати Серію») hides XP, Level, Streak, celebrations and in-Game XP feedback while counting goes on.
 

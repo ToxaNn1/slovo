@@ -4,10 +4,13 @@ import {
   asc,
   count,
   countDistinct,
+  desc,
   eq,
   gt,
   inArray,
   isNotNull,
+  isNull,
+  lte,
   sql,
   type Column,
 } from 'drizzle-orm';
@@ -21,8 +24,12 @@ const excluded = (column: Column) => sql`excluded.${sql.identifier(column.name)}
 /** The records Sync keeps, in the `user_records` table. */
 export function createUserRecords({ db }: Database): UserRecords {
   return {
-    async push(accountId, editionId, changes, refuse) {
+    async push(accountId, editionId, changes, refuse, tombstonesKept) {
       if (changes.length === 0) return undefined;
+      const ofAccount = and(
+        eq(userRecords.accountId, accountId),
+        eq(userRecords.editionId, editionId),
+      );
       return db.transaction(async (tx) => {
         // The Account's row holds back its other pushes until this one
         // commits, so its kept changes take their sequence numbers in the
@@ -34,19 +41,39 @@ export function createUserRecords({ db }: Database): UserRecords {
           .where(eq(accounts.id, accountId))
           .for('no key update');
         if (account === undefined) return undefined;
-        // A change of a key kept replaces its record; any other adds one.
-        const replacing = inArray(
-          userRecords.key,
-          changes.map(({ key }) => key),
-        );
         const [kept] = await tx
-          .select({
-            records: count(),
-            replaced: sql<number>`count(*) filter (where ${replacing})`.mapWith(Number),
-          })
+          .select({ records: count() })
           .from(userRecords)
-          .where(and(eq(userRecords.accountId, accountId), eq(userRecords.editionId, editionId)));
-        const refusal = refuse((kept?.records ?? 0) + changes.length - (kept?.replaced ?? 0));
+          .where(and(ofAccount, isNotNull(userRecords.value)));
+        const before = new Map(
+          (
+            await tx
+              .select({
+                key: userRecords.key,
+                tombstone: isNull(userRecords.value).mapWith(Boolean),
+                changedAt: userRecords.changedAt,
+              })
+              .from(userRecords)
+              .where(
+                and(
+                  ofAccount,
+                  inArray(
+                    userRecords.key,
+                    changes.map(({ key }) => key),
+                  ),
+                ),
+              )
+          ).map((record) => [record.key, record]),
+        );
+        // Only a later change is kept: it adds a record in place of none or
+        // of a tombstone, and a tombstone in place of a record takes one off.
+        let records = kept?.records ?? 0;
+        for (const { key, value, changedAt } of changes) {
+          const was = before.get(key);
+          if (was !== undefined && was.changedAt.getTime() >= changedAt.getTime()) continue;
+          records += (value === null ? 0 : 1) - (was === undefined || was.tombstone ? 0 : 1);
+        }
+        const refusal = refuse(records);
         if (refusal !== undefined) return refusal;
         await tx
           .insert(userRecords)
@@ -69,6 +96,25 @@ export function createUserRecords({ db }: Database): UserRecords {
             // Only a later change replaces the record kept; a tie keeps it.
             setWhere: sql`${userRecords.changedAt} < ${excluded(userRecords.changedAt)}`,
           });
+        if (changes.some(({ value }) => value === null)) {
+          // The latest tombstones stay; the first one past them and all before it go.
+          const pastTheKept = tx
+            .select({ sequence: userRecords.sequence })
+            .from(userRecords)
+            .where(and(ofAccount, isNull(userRecords.value)))
+            .orderBy(desc(userRecords.sequence))
+            .limit(1)
+            .offset(tombstonesKept);
+          await tx
+            .delete(userRecords)
+            .where(
+              and(
+                ofAccount,
+                isNull(userRecords.value),
+                lte(userRecords.sequence, sql`(${pastTheKept})`),
+              ),
+            );
+        }
         return undefined;
       });
     },
