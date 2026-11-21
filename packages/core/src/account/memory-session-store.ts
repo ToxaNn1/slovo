@@ -7,6 +7,7 @@ import type { KeptSession, SessionStore } from '../ports';
  */
 export function createMemorySessionStore(kept?: KeptSession): SessionStore {
   let session = kept;
+  let untold: readonly string[] = [];
   return {
     keep(next) {
       session = next;
@@ -15,6 +16,11 @@ export function createMemorySessionStore(kept?: KeptSession): SessionStore {
     read: () => Promise.resolve(session),
     forget() {
       session = undefined;
+      return Promise.resolve();
+    },
+    untold: () => Promise.resolve(untold),
+    keepUntold(tokens) {
+      untold = [...tokens];
       return Promise.resolve();
     },
   };

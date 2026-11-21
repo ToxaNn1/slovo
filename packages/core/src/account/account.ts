@@ -233,14 +233,27 @@ export async function openAccount({
   let checkedAt: number | undefined;
   /** How many Sessions this device has ended: an answer that comes after one ended is outdated. */
   let endedSessions = 0;
-  /** The tokens of the Sessions signed out on this device that the server has not heard of yet. */
-  const untold: string[] = [];
+  /**
+   * The tokens of the Sessions signed out on this device that the server has
+   * not heard of yet, kept in the Session store too, so a launch after the
+   * app was killed still tells them.
+   */
+  const untold: string[] = [...(await sessions.untold().catch(() => []))];
   let telling: Promise<void> | undefined;
   /** The check of the Session with the server in flight, if any. */
   let checking: Promise<void> | undefined;
 
   const retried = <A extends Answer>(call: () => Promise<A>) =>
     withRetries(call, { schedule, random });
+
+  /** Keeps the sign-outs still to tell on the device; one that fails to be kept is told by this run alone. */
+  const keepUntold = () => sessions.keepUntold(untold).catch(() => undefined);
+
+  /** Notes a Session ended on this device for the server to be told of, once. */
+  async function toTell(ended: string): Promise<void> {
+    if (!untold.includes(ended)) untold.push(ended);
+    await keepUntold();
+  }
 
   function change(next: AccountState): void {
     state = next;
@@ -275,7 +288,7 @@ export async function openAccount({
     try {
       await sessions.keep(session);
     } catch (error) {
-      untold.push(session.token);
+      await toTell(session.token);
       await tellSignOuts().catch(() => undefined);
       throw error;
     }
@@ -362,6 +375,7 @@ export async function openAccount({
         if (!answer.ok && answer.reason !== 'unauthorized' && answer.reason !== 'unexpected')
           return;
         untold.shift();
+        await keepUntold();
         next = untold[0];
       }
     })().finally(() => {
@@ -430,7 +444,7 @@ export async function openAccount({
 
   if ((await userState.read(userStateRecords.installed)) === undefined) {
     if (token !== undefined) {
-      untold.push(token);
+      await toTell(token);
       state = await endSession();
       void tellSignOuts().catch(() => undefined);
     }
@@ -483,7 +497,7 @@ export async function openAccount({
       signInThrough('signInWithApple', appleSheet, (idToken) => api.signInWithApple(idToken)),
     async signOut() {
       if (token === undefined) return;
-      untold.push(token);
+      await toTell(token);
       change(await endSession());
       await tellSignOuts();
     },

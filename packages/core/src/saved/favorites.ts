@@ -67,7 +67,7 @@ export async function openFavorites({
     rows,
     userState,
     clock,
-    changesWith: communityCounters.countSaved,
+    writeWith: communityCounters.countSaved,
   });
   const inTurn = createInTurn();
 

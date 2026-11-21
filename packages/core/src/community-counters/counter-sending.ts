@@ -14,7 +14,7 @@ import type {
 import { withRetries } from '../retry';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
-import { forgetUnsentCounters, unsentAfterSending } from './counter-deltas';
+import { countersTurnOf, forgetUnsentCounters, unsentAfterSending } from './counter-deltas';
 
 /** How long the app waits, while it is in the foreground, between two sends of the unsent changes, in milliseconds. */
 const SEND_EVERY = 5 * 60_000;
@@ -42,7 +42,8 @@ export interface CounterSending {
 
 /**
  * Opens the sending of the Community Counters over the user state the
- * Knowledge Marks and Favorites write their unsent changes to, for the shell
+ * Knowledge Marks and Favorites write their unsent changes to, the one the
+ * Core composition was opened over, so both keep the counters' turn, for the shell
  * to open beside the Core composition, like the counters' reads.
  */
 export function openCounterSending({
@@ -64,6 +65,7 @@ export function openCounterSending({
   random: Random;
 }): CounterSending {
   const { countersRead, countersUnsent, shareCounters } = userStateRecords;
+  const inTurn = countersTurnOf(userState);
 
   /**
    * Sends the changes of 1 to 100 Entries, each once, with no Session and no
@@ -120,18 +122,27 @@ export function openCounterSending({
       .map(([entryId, delta]) => ({ entryId, ...delta }));
     if (events.length === 0) return false;
     const answer = await withRetries(() => send(events), { schedule, random });
+    if (answer.ok) heldUntil = undefined;
+    else {
+      if (answer.reason === 'too-many-requests' && answer.retryAfter !== undefined) {
+        heldUntil = clock.now().getTime() + answer.retryAfter * 1000;
+      }
+      if (answer.reason !== 'unexpected') return false;
+    }
+    // In the counters' turn, so a change counted meanwhile is read before the batch leaves.
+    await inTurn(() => leave(events, answer.ok));
+    return true;
+  }
+
+  /** Takes a batch the backend counted, or refused as wrong, off the unsent changes. */
+  async function leave(events: readonly CounterEvent[], counted: boolean): Promise<void> {
     let changes: UserStateChanges;
-    if (answer.ok) {
-      heldUntil = undefined;
+    if (counted) {
       changes = new Map([
         ...(await readAfterCounting(events)),
         ...(await unsentAfterSending(userState, events)),
       ]);
     } else {
-      if (answer.reason === 'too-many-requests' && answer.retryAfter !== undefined) {
-        heldUntil = clock.now().getTime() + answer.retryAfter * 1000;
-      }
-      if (answer.reason !== 'unexpected') return false;
       // The backend refused the batch as wrong, so it counted nothing of it: the
       // batch is dropped, and what this device counted of its Entries goes back
       // to what the backend has, as turning sharing off does, so nothing the
@@ -146,7 +157,6 @@ export function openCounterSending({
     if ((await userState.read(shareCounters)) === false) {
       await userState.write(await forgetUnsentCounters(userState));
     }
-    return true;
   }
 
   /** Whether a call during the drain asked for one more. */

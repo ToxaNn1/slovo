@@ -267,9 +267,10 @@ export interface KeptSession {
 }
 
 /**
- * Keeps this device's Session: in the Keychain in the mobile shell, in memory
- * in tests and on a development client without the Keychain module. Never in
- * the user state or in a file.
+ * Keeps this device's Session, and the tokens of the Sessions signed out on
+ * it that the server has not heard of yet: in the Keychain in the mobile
+ * shell, in memory in tests and on a development client without the Keychain
+ * module. Never in the user state or in a file.
  */
 export interface SessionStore {
   /** Keeps the Session, in place of any kept before. */
@@ -278,6 +279,10 @@ export interface SessionStore {
   read(): Promise<KeptSession | undefined>;
   /** Forgets the Session kept, if any. */
   forget(): Promise<void>;
+  /** The tokens of the sign-outs kept to tell the server, the oldest first. */
+  untold(): Promise<readonly string[]>;
+  /** Keeps the tokens of the sign-outs still to tell the server, in place of any kept before. */
+  keepUntold(tokens: readonly string[]): Promise<void>;
 }
 
 export const systemClock: Clock = {

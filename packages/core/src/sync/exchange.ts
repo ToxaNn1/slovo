@@ -33,15 +33,13 @@ export type SyncResult = ({ readonly ok: true } | SyncApiFailure) & { readonly c
  * at their limit, the backend serves no Sync for the Edition, or it gave an
  * answer the app does not know.
  */
-const REFUSED_FOR_GOOD: ReadonlySet<SyncApiFailure['reason']> = new Set([
-  'too-many-records',
-  'not-found',
-  'unexpected',
-]);
+export type SyncRefusal = 'too-many-records' | 'not-found' | 'unexpected';
 
-/** Whether the failure of a sync is one the Account refuses the device's changes for good with. */
-export const isRefusedForGood = (reason: SyncApiFailure['reason']): boolean =>
-  REFUSED_FOR_GOOD.has(reason);
+/** The refusal for good a failure of a sync is, if it is one. */
+export const refusalOf = (reason: SyncApiFailure['reason']): SyncRefusal | undefined =>
+  reason === 'too-many-records' || reason === 'not-found' || reason === 'unexpected'
+    ? reason
+    : undefined;
 
 /**
  * One sync (spec #378): the exchange of the reader's words and progress
@@ -70,7 +68,7 @@ export interface SyncExchange {
    * changes in batches of `SYNC_BATCH_SIZE` and deletes each batch the
    * Account accepted. A failed call stops the sync where it is; nothing done
    * is lost, and the next sync resumes. A batch the Account refuses for good
-   * (`isRefusedForGood`) stays pending and is sent no more by this exchange,
+   * (`refusalOf`) stays pending and is sent no more by this exchange,
    * so until the next launch: a later sync pulls, pushes the other changes
    * and answers that refusal while a refused change waits. A record changed
    * again is a new change. Call it once at a time.
@@ -334,7 +332,7 @@ export function createSyncExchange({
           [...batch].map(([key, change]) => changeOf(key, change)),
         );
         if (!answer.ok) {
-          if (isRefusedForGood(answer.reason)) {
+          if (refusalOf(answer.reason) !== undefined) {
             for (const [key, { changedAt }] of batch) refused.set(key, changedAt.getTime());
             refusal = answer;
           }

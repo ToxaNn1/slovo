@@ -84,6 +84,37 @@ describe('the Session store of the shell', () => {
     await expect(sessions.read()).resolves.toBeUndefined();
   });
 
+  it('keeps the sign-outs the server has not heard of in the Keychain, apart from the Session', async () => {
+    const { keychain, items, accessible } = fakeKeychain();
+    const sessions = sessionStoreOn(installed, keychain);
+    await expect(sessions.untold()).resolves.toEqual([]);
+    await sessions.keep(session);
+
+    await sessions.keepUntold(['old-token', 'older-token']);
+    await sessions.forget();
+
+    expect(accessible).toEqual(new Set([7]));
+    // The app's next run reads them from the Keychain.
+    await expect(sessionStoreOn(installed, keychain).untold()).resolves.toEqual([
+      'old-token',
+      'older-token',
+    ]);
+
+    await sessions.keepUntold([]);
+    expect(items.size).toBe(0);
+    await expect(sessions.untold()).resolves.toEqual([]);
+  });
+
+  it('reads no sign-outs from a Keychain item it can’t make sense of', async () => {
+    const { keychain, items } = fakeKeychain();
+    const sessions = sessionStoreOn(installed, keychain);
+    await sessions.keepUntold(['old-token']);
+    const [key] = items.keys();
+    items.set(key ?? '', '{"token":42}');
+
+    await expect(sessions.untold()).resolves.toEqual([]);
+  });
+
   it('keeps the Session in memory until the app restarts on a dev client without the Keychain module', async () => {
     const { keychain, items } = fakeKeychain();
     const sessions = sessionStoreOn({ ...installed, keychain: () => false }, keychain);
