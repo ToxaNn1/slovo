@@ -157,20 +157,20 @@ describe('the Category screen', () => {
 
     await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'ДОДАТИ' })));
     expect(hiddenIds()).toEqual([]);
-    expect(screen.getByRole('togglebutton', { name: 'У МІКСІ' })).toBeTruthy();
-    expect(screen.getByText('«Емоції» тепер у твоєму Міксі.')).toBeTruthy();
+    expect(screen.getByRole('togglebutton', { name: 'У ТЕМАХ' })).toBeTruthy();
+    expect(screen.getByText('«Емоції» тепер у твоїх темах.')).toBeTruthy();
 
-    await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'У МІКСІ' })));
+    await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'У ТЕМАХ' })));
     expect(hiddenIds()).toEqual(['emotions-character']);
     expect(screen.getByRole('togglebutton', { name: 'ДОДАТИ' })).toBeTruthy();
-    expect(screen.getByText('«Емоції» прибрано з Міксу.')).toBeTruthy();
+    expect(screen.getByText('«Емоції» прибрано з твоїх тем.')).toBeTruthy();
   });
 
   it('opens with «У МІКСІ» for a Category already in the Mix', async () => {
     await open();
     await renderCategory('emotions-character');
 
-    expect(screen.getByRole('togglebutton', { name: 'У МІКСІ' })).toBeTruthy();
+    expect(screen.getByRole('togglebutton', { name: 'У ТЕМАХ' })).toBeTruthy();
     expect(screen.queryByRole('togglebutton', { name: 'ДОДАТИ' })).toBeNull();
   });
 
@@ -181,9 +181,9 @@ describe('the Category screen', () => {
     await composition.mix.setCategory('war', false);
     await renderCategory('emotions-character');
 
-    await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'У МІКСІ' })));
+    await settle(() => fireEvent.press(screen.getByRole('togglebutton', { name: 'У ТЕМАХ' })));
     expect(hiddenIds()).toEqual(['empty', 'nature', 'war']);
-    expect(screen.getByRole('togglebutton', { name: 'У МІКСІ' })).toBeTruthy();
+    expect(screen.getByRole('togglebutton', { name: 'У ТЕМАХ' })).toBeTruthy();
     expect(screen.getByText(editionStrings.mix.lastCategoryHint)).toBeTruthy();
   });
 

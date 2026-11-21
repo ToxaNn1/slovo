@@ -1,58 +1,62 @@
-# The Rarity Range (ADR 0156): Settings' «Рідкість» is five slanted bars, the
-# range named over them, «від 1 до 5»; a narrower range is kept and the Feed
-# still shows a card. A subflow of `smoke-1.yaml`; run it from there. It starts
-# by putting the range back to «від 1 до 5», whatever an earlier run left, and
-# leaves it there.
+# The Rarity Range (ADR 0156): at the top of Мої теми, «Рідкість» is five
+# slanted bars, the range named over them, «від 1 до 5»; a narrower range is
+# kept and the Feed still shows a card. A subflow of `smoke-1.yaml`; run it from
+# there. It starts by putting the range back to «від 1 до 5», whatever an
+# earlier run left, and leaves it there.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
-- runFlow:
-    file: ../open-settings-row.yaml
-    env:
-      ROW: settings-rarity-bar-1
+- tapOn:
+    id: tab-mix
+- scrollUntilVisible:
+    element:
+      id: mix-rarity-bar-1
+    direction: UP
+    centerElement: true
 # A tap outside the range pulls its nearer end out: bars 1 and 5 make it whole.
 - tapOn:
-    id: settings-rarity-bar-1
+    id: mix-rarity-bar-1
 - tapOn:
-    id: settings-rarity-bar-5
+    id: mix-rarity-bar-5
 - assertVisible:
-    id: settings-rarity-value
+    id: mix-rarity-value
     text: 'від 1 до 5'
 # A tap on an end leaves that one rarity; a tap beyond it widens the range again.
 - tapOn:
-    id: settings-rarity-bar-1
+    id: mix-rarity-bar-1
 - assertVisible:
-    id: settings-rarity-value
+    id: mix-rarity-value
     text: 'лише 1'
 - tapOn:
-    id: settings-rarity-bar-2
+    id: mix-rarity-bar-2
 - assertVisible:
-    id: settings-rarity-value
+    id: mix-rarity-value
     text: 'від 1 до 2'
 - assertVisible:
-    id: settings-rarity-bar-2
+    id: mix-rarity-bar-2
     selected: true
 - assertVisible:
-    id: settings-rarity-bar-5
+    id: mix-rarity-bar-5
     selected: false
 - takeScreenshot: rarity-range-1-2
 # The Feed still has a card in the range: only the commonest Words, and the
 # Entries of other kinds, which have no rarity.
-- runFlow: ../leave-settings.yaml
 - tapOn:
     id: tab-home
 - assertVisible:
     id: feed-card-.*
-# Settings keeps it: the bars open as they were left. Then back to «від 1 до 5».
-- runFlow:
-    file: ../open-settings-row.yaml
-    env:
-      ROW: settings-rarity-bar-1
+# The Mix keeps it: the bars open as they were left. Then back to «від 1 до 5».
+- tapOn:
+    id: tab-mix
+- scrollUntilVisible:
+    element:
+      id: mix-rarity-bar-1
+    direction: UP
+    centerElement: true
 - assertVisible:
-    id: settings-rarity-value
+    id: mix-rarity-value
     text: 'від 1 до 2'
 - tapOn:
-    id: settings-rarity-bar-5
+    id: mix-rarity-bar-5
 - assertVisible:
-    id: settings-rarity-value
+    id: mix-rarity-value
     text: 'від 1 до 5'
-- runFlow: ../leave-settings.yaml

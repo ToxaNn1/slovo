@@ -130,8 +130,9 @@ async function open(row: string) {
   await settle();
 }
 
+// «Рідкість» is in Settings only while the tab «Мікс» is off (ADR 0201).
 beforeEach(async () => {
-  await openWith(editionWithout());
+  await openWith(editionWithout('mixTab'));
 });
 
 describe('Settings › «Рідкість»', () => {
@@ -156,7 +157,7 @@ describe('Settings › «Рідкість»', () => {
   });
 
   it('is not in Settings while the rarityCeiling switch is off', async () => {
-    await openWith(editionWithout('rarityCeiling'));
+    await openWith(editionWithout('mixTab', 'rarityCeiling'));
     await renderSettings();
 
     expect(screen.queryByTestId('settings-rarity')).toBeNull();
@@ -184,7 +185,7 @@ describe('Settings › «Пройти тест ще раз»', () => {
       }),
     ).toBeOnTheScreen();
     expect(
-      screen.getByText('5 з 10 слів знайомі. Змінити рідкість можна в Налаштуваннях.'),
+      screen.getByText('5 з 10 слів знайомі. Змінити рідкість можна на вкладці «Теми».'),
     ).toBeOnTheScreen();
     await fireEvent.press(screen.getByRole('button', { name: rarityTest.done }));
     await settle();

@@ -2,7 +2,7 @@
 # the bottom of the list at the largest font size. While the Profile is shown,
 # the fourth tab is the Profile and Settings opens from its tile; otherwise the
 # tab is Settings itself. The caller passes the row's id as `ROW`, e.g.
-# `ROW: settings-row-my-mix`, and leaves Settings by `settings-back` before
+# `ROW: settings-row-hidden`, and leaves Settings by `settings-back` before
 # tapping another tab: the tab bar shows on tab roots only.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---

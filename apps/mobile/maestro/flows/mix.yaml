@@ -1,17 +1,14 @@
-# Мій Мікс: the Settings row says «Усі»; taking a Category out changes the row
-# at once; Corrections go off with their switch; the last Category's chip can't
-# be turned off; «Усі» brings every Category back. A subflow of `smoke.yaml`;
-# run it from there. It starts by putting every Category and Corrections back
-# into the Mix, and leaves it so, for the flows after it.
+# Мої теми, the centre tab: «Усі» is on; taking a Category out applies at
+# once; Corrections go off with their switch; the Mix is kept across tabs; the
+# last Category's chip can't be turned off; «Усі» brings every Category back. A
+# subflow of `smoke.yaml`; run it from there. It starts by putting every
+# Category and Corrections back into the Mix, and leaves it so, for the flows
+# after it.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
-- runFlow:
-    file: ../open-settings-row.yaml
-    env:
-      ROW: settings-row-my-mix
 # Start from the full Mix, whatever an earlier run left.
 - tapOn:
-    id: settings-row-my-mix
+    id: tab-mix
 - assertVisible:
     id: mix
 - runFlow:
@@ -31,12 +28,9 @@ appId: ${APP_ID || 'app.slovo.uk'}
       - tapOn:
           id: mix-corrections
 - tapOn:
-    id: mix-back
-- assertVisible:
-    id: settings-row-my-mix
-    text: Мій Мікс, Усі
+    id: tab-home
 - tapOn:
-    id: settings-row-my-mix
+    id: tab-mix
 - assertVisible:
     id: mix
 - assertVisible:
@@ -62,15 +56,11 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: mix-corrections
     checked: false
 - takeScreenshot: mix-category-out-corrections-off
-# Back in Settings the row counts the Categories left in the Mix (10 − 1).
+# The Mix is kept: after another tab, the screen opens as it was left.
 - tapOn:
-    id: mix-back
-- assertVisible:
-    id: settings-row-my-mix
-    text: Мій Мікс, 9 категорій
+    id: tab-home
 - tapOn:
-    id: settings-row-my-mix
-# The Mix is kept: the screen opens as it was left.
+    id: tab-mix
 - assertVisible:
     id: mix-chip-technology
     selected: false
@@ -122,8 +112,3 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: mix-corrections
     checked: true
-- tapOn:
-    id: mix-back
-- assertVisible:
-    id: settings-row-my-mix
-    text: Мій Мікс, Усі

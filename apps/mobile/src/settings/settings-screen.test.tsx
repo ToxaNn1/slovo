@@ -176,6 +176,8 @@ describe('Settings, as the board', () => {
       sounds: true,
       rarityCeiling: true,
       selfCheck: true,
+      // «Рідкість» and «Мій Мікс» are in Settings only while the tab «Мікс» is off (ADR 0201).
+      mixTab: false,
     });
 
     const groups: Record<string, string[]> = {
@@ -255,6 +257,8 @@ describe('Settings, as the board', () => {
       sounds: true,
       rarityCeiling: true,
       selfCheck: true,
+      // «Рідкість» and «Мій Мікс» are in Settings only while the tab «Мікс» is off (ADR 0201).
+      mixTab: false,
     });
 
     const rows = [
@@ -639,9 +643,17 @@ describe('Settings › «Скинути прогрес»', () => {
 });
 
 describe('Settings › «Рідкість» (ADR 0156)', () => {
+  it('leaves «Рідкість» and «Мій Мікс» to the tab «Мікс» while it is shown (ADR 0201)', async () => {
+    await renderSettings({ rarityCeiling: true, mixTab: true });
+
+    expect(screen.getByTestId('settings-row-daily-goal')).toBeOnTheScreen();
+    expect(screen.queryByTestId('settings-rarity')).toBeNull();
+    expect(screen.queryByTestId('settings-row-my-mix')).toBeNull();
+  });
+
   it('offers both ends of the Rarity Range on its bars and keeps the range chosen', async () => {
     const composition = await testShell().composition.opened();
-    await renderSettings({ rarityCeiling: true }, undefined, composition);
+    await renderSettings({ rarityCeiling: true, mixTab: false }, undefined, composition);
     expect(screen.getByTestId('settings-rarity-value')).toHaveTextContent('від 1 до 5');
 
     await fireEvent.press(screen.getByRole('button', { name: 'Рідкість 2' }));
