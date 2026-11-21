@@ -10,6 +10,7 @@ export {
   type FakeFailure,
   type FakeFailureReason,
   type ProcedureName,
+  signInByCode,
 } from './fakes/fake-backend';
 export {
   createFakeAppleSignInSheet,

@@ -16,6 +16,7 @@ import {
   createFakeBackend,
   createMemoryContentPort,
   seedUserState,
+  signInByCode,
 } from '@slovo/core/testing';
 import type { AppStateStatus } from 'react-native';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -81,7 +82,7 @@ async function app() {
     edition: ukrainian,
     googleSheet: createFakeGoogleSignInSheet(),
     appleSheet: createFakeAppleSignInSheet(),
-    sessions: createMemorySessionStore({ token: 'a-session', email: 'anna@mail.com' }),
+    sessions: createMemorySessionStore(await signInByCode(server)),
     userState,
     clock: time.clock,
     schedule,
@@ -207,7 +208,7 @@ describe('the shell syncs in the background', () => {
 
     // The composition is open and has heard the launch while Sync is not yet open.
     expect(heard).toHaveLength(1);
-    expect(server.calls).toEqual([]);
+    expect(server.calls.filter((call) => call.startsWith('sync.'))).toEqual([]);
 
     openSyncModule();
     await settled();
@@ -239,7 +240,8 @@ describe('the shell syncs in the background', () => {
     expect(first.mix.state.kinds.correction).toBe(true);
     const plansBefore = plans.length;
     const changedAt = time.clock.now().getTime() + 1_000;
-    const elsewhere = { context: { token: 'another-session' } };
+    // Another device of the same Account, with a Session of its own.
+    const elsewhere = { context: { token: (await signInByCode(server)).token } };
     await server.backend.sync.push(
       { editionId: ukrainian.id, changes: [{ key: 'mix.corrections', value: false, changedAt }] },
       elsewhere,
@@ -270,9 +272,10 @@ describe('the shell syncs in the background', () => {
     await first.game.start(offer.modeId);
     expect(first.game.state.current).toBeDefined();
     const changedAt = time.clock.now().getTime() + 1_000;
+    const elsewhere = { context: { token: (await signInByCode(server)).token } };
     await server.backend.sync.push(
       { editionId: ukrainian.id, changes: [{ key: 'mix.corrections', value: false, changedAt }] },
-      { context: { token: 'another-session' } },
+      elsewhere,
     );
 
     openSyncModule();
