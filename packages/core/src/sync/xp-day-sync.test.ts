@@ -7,6 +7,7 @@ import { fakeClock, randomOf, testEdition, word } from '../test-support';
 import { trackChanges } from '../user-state/tracked-user-state';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { createSyncExchange } from './exchange';
+import { signInByCode } from '../fakes/fake-backend';
 
 // ADR 0205: XP days across the devices of one Account, and on the backend.
 
@@ -42,10 +43,11 @@ function account(start = '2026-09-02T09:00:00.000Z') {
       clock: time.clock,
     });
     const exchange = createSyncExchange({ userState, backend, editionId: 'uk' });
+    const { token } = await signInByCode(server);
     return {
       records,
       userState,
-      sync: () => exchange.sync('a-session'),
+      sync: () => exchange.sync(token),
       /** Opens the composition as a launch does, which folds the days past 30, and answers its XP. */
       async launch() {
         const { xpLog } = await openComposition({
@@ -62,7 +64,7 @@ function account(start = '2026-09-02T09:00:00.000Z') {
 
   /** The keys of the records the Account keeps under the prefix, a tombstone not one: only they count toward its limit. */
   const kept = (prefix: string) =>
-    [...server.sync.records]
+    [...server.sync.recordsOf('anna@mail.com')]
       .filter(([key, { value }]) => key.startsWith(prefix) && value !== null)
       .map(([key]) => key)
       .sort();

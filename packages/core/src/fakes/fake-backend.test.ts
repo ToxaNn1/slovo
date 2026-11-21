@@ -1,13 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { createFakeBackend, type FakeBackend } from './fake-backend';
+import { createFakeBackend, signInByCode, type FakeBackend } from './fake-backend';
 
 /** Signs the email in by a Sign-in code, as the app does; the Session token. */
 async function signIn(fake: FakeBackend, email: string): Promise<string> {
-  await fake.backend.account.requestCode({ email, editionId: 'uk' });
-  const code = fake.account.sentCodes.at(-1)?.code ?? '';
-  const { token } = await fake.backend.account.verifyCode({ email, code });
-  return token;
+  return (await signInByCode(fake, email)).token;
 }
 
 function push(fake: FakeBackend, token: string, key: string) {
@@ -23,6 +20,34 @@ async function pulledKeys(fake: FakeBackend, token: string): Promise<string[]> {
 }
 
 describe('the fake backend’s Sync', () => {
+  it('answers 401 to a push or pull with no Session, or one ended elsewhere', async () => {
+    const fake = createFakeBackend();
+    const token = await signIn(fake, 'anna@mail.com');
+    await push(fake, token, 'favorites.w_one');
+
+    fake.account.endSessions();
+
+    await expect(push(fake, token, 'favorites.w_two')).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    });
+    await expect(fake.backend.sync.pull({ editionId: 'uk' })).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+    });
+    expect([...fake.sync.recordsOf('anna@mail.com').keys()]).toEqual(['favorites.w_one']);
+  });
+
+  it('keeps each Account its own records, on one sequence', async () => {
+    const fake = createFakeBackend();
+    const anna = await signIn(fake, 'anna@mail.com');
+    const olha = await signIn(fake, 'olha@mail.com');
+    await push(fake, anna, 'favorites.w_one');
+    await push(fake, olha, 'favorites.w_two');
+
+    expect(await pulledKeys(fake, anna)).toEqual(['favorites.w_one']);
+    expect(await pulledKeys(fake, olha)).toEqual(['favorites.w_two']);
+    expect(fake.sync.recordsOf('olha@mail.com').get('favorites.w_two')?.sequence).toBe(2);
+  });
+
   it('drops the records of a deleted Account, so its email signs in again to none', async () => {
     const fake = createFakeBackend();
     const before = await signIn(fake, 'anna@mail.com');
@@ -32,7 +57,7 @@ describe('the fake backend’s Sync', () => {
     const after = await signIn(fake, 'anna@mail.com');
 
     expect(await pulledKeys(fake, after)).toEqual([]);
-    expect([...fake.sync.records.keys()]).toEqual([]);
+    expect([...fake.sync.recordsOf('anna@mail.com').keys()]).toEqual([]);
   });
 });
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createSettings, openComposition, type Backend } from '../index';
 import { type UserStateChanges } from '../ports';
 import { createFakeBackend, createMemoryContentPort } from '../testing';
+import { signInByCode } from '../fakes/fake-backend';
 import { createSyncExchange } from './exchange';
 import { fakeClock, randomOf, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
@@ -48,10 +49,11 @@ function account(start = '2026-10-18T09:00:00.000Z') {
       clock: time.clock,
     });
     const sync = createSyncExchange({ userState, backend, editionId: 'uk' });
+    const { token } = await signInByCode(server);
     return {
       records,
       userState,
-      sync: () => sync.sync('a-session'),
+      sync: () => sync.sync(token),
       forgetRefused: () => {
         sync.forgetRefused();
       },
@@ -73,6 +75,7 @@ function account(start = '2026-10-18T09:00:00.000Z') {
 
   /** Pushes the changes as another device of the Account would, with the clock's time. */
   async function pushFromElsewhere(...changes: { key: string; value: unknown }[]) {
+    const { token } = await signInByCode(server);
     await server.backend.sync.push(
       {
         editionId: 'uk',
@@ -82,7 +85,7 @@ function account(start = '2026-10-18T09:00:00.000Z') {
           changedAt: time.clock.now().getTime(),
         })),
       },
-      { context: { token: 'another-session' } },
+      { context: { token } },
     );
   }
 
@@ -133,7 +136,7 @@ describe('two devices of one Account', () => {
     await phone.sync();
 
     expect((await phone.open()).favorites.has('w_one')).toBe(false);
-    expect(server.sync.records.get('favorites.w_one')?.value).toBeNull();
+    expect(server.sync.recordsOf('anna@mail.com').get('favorites.w_one')?.value).toBeNull();
   });
 
   it('let an older offline change lose to a newer one', async () => {
@@ -154,7 +157,7 @@ describe('two devices of one Account', () => {
 
     expect((await phone.settings.read()).theme).toBe('light');
     expect((await tablet.settings.read()).theme).toBe('light');
-    expect(server.sync.records.get('settings.theme')?.value).toBe('light');
+    expect(server.sync.recordsOf('anna@mail.com').get('settings.theme')?.value).toBe('light');
   });
 
   it('let the Account’s change win over one made at the same time', async () => {
@@ -185,7 +188,7 @@ describe('two devices of one Account', () => {
 
     expect((await phone.settings.read()).noCounters).toBe(false);
     expect((await tablet.settings.read()).noCounters).toBe(false);
-    expect(server.sync.records.get('settings.hideStreak')?.value).toBe(false);
+    expect(server.sync.recordsOf('anna@mail.com').get('settings.hideStreak')?.value).toBe(false);
   });
 
   it('let the newer Rarity Range win, on either device', async () => {
@@ -203,7 +206,10 @@ describe('two devices of one Account', () => {
 
     expect((await phone.open()).rarityRange.state).toEqual({ from: 1, to: 2 });
     expect((await tablet.open()).rarityRange.state).toEqual({ from: 1, to: 2 });
-    expect(server.sync.records.get('settings.rarityRange')?.value).toEqual({ from: 1, to: 2 });
+    expect(server.sync.recordsOf('anna@mail.com').get('settings.rarityRange')?.value).toEqual({
+      from: 1,
+      to: 2,
+    });
   });
 
   it('let the newer choice of Idioms in the Mix win, on either device', async () => {
@@ -223,7 +229,7 @@ describe('two devices of one Account', () => {
 
     expect((await phone.open()).mix.state.kinds.idiom).toBe(true);
     expect((await tablet.open()).mix.state.kinds.idiom).toBe(true);
-    expect(server.sync.records.get('mix.idioms')?.value).toBe(true);
+    expect(server.sync.recordsOf('anna@mail.com').get('mix.idioms')?.value).toBe(true);
   });
 
   it.each([
@@ -248,7 +254,7 @@ describe('two devices of one Account', () => {
 
       expect((await phone.open()).mix.state.kinds[kind]).toBe(true);
       expect((await tablet.open()).mix.state.kinds[kind]).toBe(true);
-      expect(server.sync.records.get(record)?.value).toBe(true);
+      expect(server.sync.recordsOf('anna@mail.com').get(record)?.value).toBe(true);
     },
   );
 
@@ -279,7 +285,7 @@ describe('two devices of one Account', () => {
 
     expect((await phone.settings.read()).selfCheck).toBe(true);
     expect((await tablet.settings.read()).selfCheck).toBe(true);
-    expect(server.sync.records.get('settings.selfCheck')?.value).toBe(true);
+    expect(server.sync.recordsOf('anna@mail.com').get('settings.selfCheck')?.value).toBe(true);
   });
 
   it('let the newer reader name win, on either device, and carry a forgotten one', async () => {
@@ -297,7 +303,7 @@ describe('two devices of one Account', () => {
 
     expect((await phone.open()).readerName.state).toBe('Оля');
     expect((await tablet.open()).readerName.state).toBe('Оля');
-    expect(server.sync.records.get('settings.readerName')?.value).toBe('Оля');
+    expect(server.sync.recordsOf('anna@mail.com').get('settings.readerName')?.value).toBe('Оля');
 
     time.advance(HOUR);
     await (await phone.open()).readerName.change('');
@@ -333,7 +339,7 @@ describe('two devices of one Account', () => {
 
     expect((await phone.settings.read()).seasonalDecor).toBe(false);
     expect((await tablet.settings.read()).seasonalDecor).toBe(false);
-    expect(server.sync.records.get('settings.seasonalDecor')?.value).toBe(false);
+    expect(server.sync.recordsOf('anna@mail.com').get('settings.seasonalDecor')?.value).toBe(false);
   });
 
   it('let the newer choice of Narrator Voice win, on either device', async () => {
@@ -351,7 +357,9 @@ describe('two devices of one Account', () => {
 
     expect((await phone.settings.read()).narratorVoice).toBe('olga');
     expect((await tablet.settings.read()).narratorVoice).toBe('olga');
-    expect(server.sync.records.get('settings.narratorVoice')?.value).toBe('olga');
+    expect(server.sync.recordsOf('anna@mail.com').get('settings.narratorVoice')?.value).toBe(
+      'olga',
+    );
   });
 
   it('let the newer Word of the Day of a date win in the archive, on either device', async () => {
@@ -370,7 +378,9 @@ describe('two devices of one Account', () => {
 
     expect(await phone.userState.read(day)).toBe('w_two');
     expect(await tablet.userState.read(day)).toBe('w_two');
-    expect(server.sync.records.get('wordOfTheDayArchive.2026-10-18')?.value).toBe('w_two');
+    expect(
+      server.sync.recordsOf('anna@mail.com').get('wordOfTheDayArchive.2026-10-18')?.value,
+    ).toBe('w_two');
   });
 
   it('carry a day of the Word of the Day archive to the other device', async () => {
@@ -404,7 +414,7 @@ describe('two devices of one Account', () => {
       expect(open.knowledge.state.shown.get('w_one')).toBe('known');
       expect(open.knowledge.state).toMatchObject({ learning: [], known: { word: 1 } });
     }
-    expect(server.sync.records.get('knowledge.w_one')?.value).toEqual({
+    expect(server.sync.recordsOf('anna@mail.com').get('knowledge.w_one')?.value).toEqual({
       mark: 'known',
       step: null,
       reviewDay: null,
@@ -430,7 +440,7 @@ describe('two devices of one Account', () => {
     const opened = await phone.open();
     expect(opened.knowledge.state.shown.get('w_one')).toBeUndefined();
     expect(opened.knowledge.state.learning).toEqual([]);
-    expect(server.sync.records.get('knowledge.w_one')?.value).toBeNull();
+    expect(server.sync.recordsOf('anna@mail.com').get('knowledge.w_one')?.value).toBeNull();
   });
 
   it('keep a pending change newer than the Account’s through a pull, and it wins after the push', async () => {
@@ -447,7 +457,7 @@ describe('two devices of one Account', () => {
 
     expect((await phone.settings.read()).theme).toBe('dark');
     expect((await tablet.settings.read()).theme).toBe('dark');
-    expect(server.sync.records.get('settings.theme')).toMatchObject({
+    expect(server.sync.recordsOf('anna@mail.com').get('settings.theme')).toMatchObject({
       value: 'dark',
       changedAt: new Date('2026-10-18T10:00:00.000Z').getTime(),
     });
@@ -493,7 +503,7 @@ describe('two devices of one Account', () => {
     expect(await phone.userState.read(guessWordBest)).toBe(9);
     expect(await tablet.userState.read(guessWordBest)).toBe(9);
     // The phone wrote its result again, so it won on the server with a new change time.
-    expect(server.sync.records.get('game.bestRight.guess-word')).toMatchObject({
+    expect(server.sync.recordsOf('anna@mail.com').get('game.bestRight.guess-word')).toMatchObject({
       value: 9,
       changedAt: new Date('2026-10-18T11:00:00.000Z').getTime(),
     });
@@ -569,7 +579,7 @@ describe('two devices of one Account', () => {
 
     await tablet.sync();
 
-    expect(server.sync.records.has('notifications.sound')).toBe(false);
+    expect(server.sync.recordsOf('anna@mail.com').has('notifications.sound')).toBe(false);
     expect((await tablet.settings.read()).vibration).toBe(true);
     expect(tablet.records.get('schema.version')).toBe('9');
     expect(await tablet.userState.pendingChanges()).toEqual(new Map());
@@ -589,7 +599,7 @@ describe('two devices of one Account', () => {
       at: [1, 2],
     });
     expect(await tablet.userState.pendingChanges()).toEqual(new Map());
-    expect(server.sync.records.get('badges.firstWeek')?.sequence).toBe(1);
+    expect(server.sync.recordsOf('anna@mail.com').get('badges.firstWeek')?.sequence).toBe(1);
   });
 
   it('report a change only when a pull wrote something', async () => {
@@ -655,8 +665,10 @@ describe('the first sign-in', () => {
       expect(await each.settings.read()).toMatchObject({ theme: 'dark', textSize: 'larger' });
       expect([...(await each.userState.list(favorites)).keys()].sort()).toEqual(['w_one', 'w_two']);
     }
-    expect(server.sync.records.get('favorites.w_two')).toMatchObject({ changedAt: 0 });
-    expect(server.sync.records.get('settings.theme')?.value).toBe('dark');
+    expect(server.sync.recordsOf('anna@mail.com').get('favorites.w_two')).toMatchObject({
+      changedAt: 0,
+    });
+    expect(server.sync.recordsOf('anna@mail.com').get('settings.theme')?.value).toBe('dark');
   });
 
   it('keeps the time of the changes made while signed out', async () => {
@@ -676,7 +688,7 @@ describe('the first sign-in', () => {
     for (const each of [phone, tablet]) {
       expect(await each.settings.read()).toMatchObject({ theme: 'light', textSize: 'larger' });
     }
-    expect(server.sync.records.get('settings.theme')?.changedAt).toBe(
+    expect(server.sync.recordsOf('anna@mail.com').get('settings.theme')?.changedAt).toBe(
       new Date('2026-10-18T10:00:00.000Z').getTime(),
     );
   });
@@ -701,12 +713,12 @@ describe('the first sign-in', () => {
     await phone.sync();
     // Signed out and in again: the cursor is forgotten, the words kept.
     records.delete('sync.cursor');
-    const kept = server.sync.records.get('settings.theme');
+    const kept = server.sync.recordsOf('anna@mail.com').get('settings.theme');
 
     await phone.sync();
 
     expect(await phone.userState.pendingChanges()).toEqual(new Map());
-    expect(server.sync.records.get('settings.theme')).toEqual(kept);
+    expect(server.sync.recordsOf('anna@mail.com').get('settings.theme')).toEqual(kept);
   });
 });
 
@@ -782,7 +794,7 @@ describe('History and paging', () => {
     const kept = await phone.userState.list(history);
     expect(kept.size).toBe(500);
     expect(kept.get('w_0')?.seenAt).toBe(seenAt(900));
-    expect(server.sync.records.get('history.w_0')?.value).not.toBeNull();
+    expect(server.sync.recordsOf('anna@mail.com').get('history.w_0')?.value).not.toBeNull();
     expect(kept.has('w_100')).toBe(false);
     expect(kept.has('w_101')).toBe(true);
   });
@@ -799,12 +811,17 @@ describe('History and paging', () => {
       ),
     );
 
+    const start = server.calls.length;
     await phone.sync();
-    const phoneCalls = [...server.calls];
+    const phoneCalls = server.calls.slice(start);
     await tablet.sync();
 
     expect(phoneCalls).toEqual(['sync.pull', 'sync.push', 'sync.push', 'sync.push']);
-    expect(server.calls.slice(phoneCalls.length)).toEqual(['sync.pull', 'sync.pull', 'sync.pull']);
+    expect(server.calls.slice(start + phoneCalls.length)).toEqual([
+      'sync.pull',
+      'sync.pull',
+      'sync.pull',
+    ]);
     expect((await tablet.userState.list(favorites)).size).toBe(1_200);
     expect(await phone.userState.pendingChanges()).toEqual(new Map());
   });
@@ -827,14 +844,14 @@ describe('an interrupted sync', () => {
     // The pull wrote the phone's Favorite before the push failed.
     expect(await tablet.sync()).toEqual({ ok: false, reason: 'offline', changed: true });
     expect([...(await tablet.userState.list(favorites)).keys()].sort()).toEqual(['w_one', 'w_two']);
-    const kept = server.sync.records.size;
+    const kept = server.sync.recordsOf('anna@mail.com').size;
 
     expect(await tablet.sync()).toEqual({ ok: true, changed: false });
     await phone.sync();
 
     expect([...(await phone.userState.list(favorites)).keys()].sort()).toEqual(['w_one', 'w_two']);
     // Only the tablet's record joined the Account, once.
-    expect(server.sync.records.size).toBe(kept + 1);
+    expect(server.sync.recordsOf('anna@mail.com').size).toBe(kept + 1);
     expect(await tablet.userState.pendingChanges()).toEqual(new Map());
   });
 
@@ -876,14 +893,14 @@ describe('an interrupted sync', () => {
       await tablet.write(favorites.record('w_one').change('2026-10-18T09:00:00.000Z'));
       expect(await tablet.sync()).toEqual({ ok: false, reason, changed: false });
       expect(pushes()).toBe(before + 1);
-      expect(server.sync.records.has('favorites.w_one')).toBe(true);
-      expect(server.sync.records.has('settings.theme')).toBe(false);
+      expect(server.sync.recordsOf('anna@mail.com').has('favorites.w_one')).toBe(true);
+      expect(server.sync.recordsOf('anna@mail.com').has('settings.theme')).toBe(false);
 
       // The refused record changed again is a new change, sent with the next sync.
       time.advance(1000);
       await tablet.settings.update({ theme: 'light' });
       expect(await tablet.sync()).toEqual({ ok: true, changed: false });
-      expect(server.sync.records.get('settings.theme')?.value).toBe('light');
+      expect(server.sync.recordsOf('anna@mail.com').get('settings.theme')?.value).toBe('light');
     },
   );
 
@@ -898,7 +915,7 @@ describe('an interrupted sync', () => {
     // The next launch: a new exchange over the same user state.
     const relaunched = await device(tablet.records);
     expect(await relaunched.sync()).toEqual({ ok: true, changed: false });
-    expect(server.sync.records.get('settings.theme')?.value).toBe('dark');
+    expect(server.sync.recordsOf('anna@mail.com').get('settings.theme')?.value).toBe('dark');
 
     time.advance(1000);
     await relaunched.settings.update({ theme: 'light' });
@@ -906,7 +923,7 @@ describe('an interrupted sync', () => {
     await relaunched.sync();
     relaunched.forgetRefused();
     expect(await relaunched.sync()).toEqual({ ok: true, changed: false });
-    expect(server.sync.records.get('settings.theme')?.value).toBe('light');
+    expect(server.sync.recordsOf('anna@mail.com').get('settings.theme')?.value).toBe('light');
   });
 
   it('stops pulling when the backend says more follow but the cursor did not move, and still pushes', async () => {
@@ -928,7 +945,7 @@ describe('an interrupted sync', () => {
 
     // The first pull moved the cursor to 7; the second did not move it.
     expect(pulls).toBe(2);
-    expect(server.sync.records.get('settings.theme')?.value).toBe('dark');
+    expect(server.sync.recordsOf('anna@mail.com').get('settings.theme')?.value).toBe('dark');
   });
 
   it('writes nothing of a pull that fails, and pushes nothing', async () => {
@@ -940,7 +957,10 @@ describe('an interrupted sync', () => {
 
     expect(await tablet.sync()).toEqual({ ok: false, reason: 'server-error', changed: false });
 
-    expect(server.calls).toEqual(['sync.push', 'sync.pull']);
+    expect(server.calls.filter((call) => call.startsWith('sync.'))).toEqual([
+      'sync.push',
+      'sync.pull',
+    ]);
     expect(await tablet.userState.read(favorites.record('w_one'))).toBeUndefined();
     expect(await tablet.userState.cursor()).toBeUndefined();
     expect([...(await tablet.userState.pendingChanges()).keys()]).toEqual(['settings.theme']);
@@ -992,7 +1012,9 @@ describe('an interrupted sync', () => {
     expect(await tablet.sync()).toEqual({ ok: true, changed: true });
     await phone.sync();
 
-    expect(server.sync.records.get(`collectionEntries.${id}.w_one`)?.value).not.toBeNull();
+    expect(
+      server.sync.recordsOf('anna@mail.com').get(`collectionEntries.${id}.w_one`)?.value,
+    ).not.toBeNull();
     expect((await tablet.open()).collections.has(id, 'w_one')).toBe(true);
     expect((await phone.open()).collections.has(id, 'w_one')).toBe(true);
   });
@@ -1019,6 +1041,6 @@ describe('the device’s own rewrites', () => {
     await phone.sync();
 
     expect(await phone.userState.read(history.record('w_old'))).toBeUndefined();
-    expect(server.sync.records.get('history.w_old')?.value).toBeNull();
+    expect(server.sync.recordsOf('anna@mail.com').get('history.w_old')?.value).toBeNull();
   });
 });

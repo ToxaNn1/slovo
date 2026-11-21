@@ -11,6 +11,7 @@ import {
 import { SYNC_AFTER_WRITE } from './sync';
 import { switchedOn } from '../edition/edition';
 import { fakeClock, randomOf, testSchedule } from '../test-support';
+import { signInByCode } from '../fakes/fake-backend';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { trackChanges } from '../user-state/tracked-user-state';
 import { userStateRecords } from '../user-state-schema';
@@ -65,9 +66,7 @@ async function device({
     googleSheet,
     appleSheet,
     userState,
-    sessions: createMemorySessionStore(
-      signedIn ? { token: 'a-session', email: 'anna@mail.com' } : undefined,
-    ),
+    sessions: createMemorySessionStore(signedIn ? await signInByCode(server) : undefined),
     clock: time.clock,
     schedule: timers.schedule,
     random: randomOf(0.5),
@@ -116,11 +115,10 @@ async function device({
     /** How many syncs reached the backend: each starts with a pull. */
     syncs: () => server.calls.filter((call) => call === 'sync.pull').length,
     /** Pushes the changes as another device of the Account would. */
-    pushFromElsewhere: (changes: RecordChange[]) =>
-      server.backend.sync.push(
-        { editionId: 'uk', changes },
-        { context: { token: 'another-session' } },
-      ),
+    pushFromElsewhere: async (changes: RecordChange[]) => {
+      const { token } = await signInByCode(server);
+      return server.backend.sync.push({ editionId: 'uk', changes }, { context: { token } });
+    },
     /** Writes a Favorite, as the reader adding one does. */
     addFavorite: (id: string) =>
       userState.write(favorites.record(id).change(time.clock.now().toISOString())),
@@ -136,8 +134,11 @@ describe('Sync syncs', () => {
     sync.foreground();
     await advance(0);
 
-    expect(server.calls).toEqual(['sync.pull', 'sync.push']);
-    expect(server.sync.records.has('favorites.w_one')).toBe(true);
+    expect(server.calls.filter((call) => call.startsWith('sync.'))).toEqual([
+      'sync.pull',
+      'sync.push',
+    ]);
+    expect(server.sync.recordsOf('anna@mail.com').has('favorites.w_one')).toBe(true);
   });
 
   it('on each return to the foreground', async () => {
@@ -153,7 +154,7 @@ describe('Sync syncs', () => {
     await advance(0);
 
     expect(syncs()).toBe(2);
-    expect(server.sync.records.has('favorites.w_one')).toBe(true);
+    expect(server.sync.recordsOf('anna@mail.com').has('favorites.w_one')).toBe(true);
   });
 
   it('5 s after the last write while in the foreground, once for a burst of writes', async () => {
@@ -169,7 +170,10 @@ describe('Sync syncs', () => {
     await advance(1);
 
     expect(syncs()).toBe(2);
-    expect([...server.sync.records.keys()]).toEqual(['favorites.w_one', 'favorites.w_two']);
+    expect([...server.sync.recordsOf('anna@mail.com').keys()]).toEqual([
+      'favorites.w_one',
+      'favorites.w_two',
+    ]);
     await advance(HOUR);
     expect(syncs()).toBe(2);
   });
@@ -200,7 +204,7 @@ describe('Sync syncs', () => {
     await advance(0);
 
     expect(syncs()).toBe(1);
-    expect(server.sync.records.has('favorites.w_one')).toBe(true);
+    expect(server.sync.recordsOf('anna@mail.com').has('favorites.w_one')).toBe(true);
   });
 
   it('not before the first return to the foreground', async () => {
@@ -225,7 +229,7 @@ describe('Sync syncs', () => {
     await advance(0);
 
     expect(syncs()).toBe(1);
-    expect(server.sync.records.has('favorites.w_one')).toBe(true);
+    expect(server.sync.recordsOf('anna@mail.com').has('favorites.w_one')).toBe(true);
   });
 
   it('when a Session starts with Google in the foreground, so the first Google sign-in merges the device’s user state', async () => {
@@ -240,7 +244,7 @@ describe('Sync syncs', () => {
     await advance(0);
 
     expect(syncs()).toBe(1);
-    expect(server.sync.records.has('favorites.w_one')).toBe(true);
+    expect(server.sync.recordsOf('anna@mail.com').has('favorites.w_one')).toBe(true);
   });
 
   it('when a Session starts with Apple in the foreground, so the first Apple sign-in merges the device’s user state', async () => {
@@ -255,7 +259,7 @@ describe('Sync syncs', () => {
     await advance(0);
 
     expect(syncs()).toBe(1);
-    expect(server.sync.records.has('favorites.w_one')).toBe(true);
+    expect(server.sync.recordsOf('anna@mail.com').has('favorites.w_one')).toBe(true);
   });
 
   it('not when Apple refuses the token: the device stays signed out and nothing is merged', async () => {
@@ -271,7 +275,7 @@ describe('Sync syncs', () => {
 
     expect(account.state).toMatchObject({ status: 'signed-out', problem: 'refused' });
     expect(syncs()).toBe(0);
-    expect(server.sync.records.size).toBe(0);
+    expect(server.sync.recordsOf('anna@mail.com').size).toBe(0);
   });
 });
 
@@ -329,7 +333,7 @@ describe('Sync runs one sync at a time', () => {
     await advance(HOUR);
 
     expect(syncs()).toBe(2);
-    expect(server.sync.records.has('favorites.w_one')).toBe(true);
+    expect(server.sync.recordsOf('anna@mail.com').has('favorites.w_one')).toBe(true);
     expect(sync.state.running).toBe(false);
   });
 });
@@ -344,15 +348,23 @@ describe('Sync tries a sync again', () => {
       server.failNext({ procedure: 'sync.push', reason });
       sync.foreground();
       await advance(0);
-      expect(server.calls).toEqual(['sync.pull', 'sync.push']);
+      expect(server.calls.filter((call) => call.startsWith('sync.'))).toEqual([
+        'sync.pull',
+        'sync.push',
+      ]);
 
       // The first wait is between half and all of 1 s: 750 ms with a draw of 0.5.
       await advance(749);
       expect(syncs()).toBe(1);
       await advance(1);
 
-      expect(server.calls).toEqual(['sync.pull', 'sync.push', 'sync.pull', 'sync.push']);
-      expect(server.sync.records.has('favorites.w_one')).toBe(true);
+      expect(server.calls.filter((call) => call.startsWith('sync.'))).toEqual([
+        'sync.pull',
+        'sync.push',
+        'sync.pull',
+        'sync.push',
+      ]);
+      expect(server.sync.recordsOf('anna@mail.com').has('favorites.w_one')).toBe(true);
       expect(sync.state).toMatchObject({ running: false, offline: false, refused: undefined });
     },
   );
@@ -388,7 +400,10 @@ describe('Sync tries a sync again', () => {
       sync.foreground();
       await advance(HOUR);
 
-      expect(server.calls).toEqual(['sync.pull', 'sync.push']);
+      expect(server.calls.filter((call) => call.startsWith('sync.'))).toEqual([
+        'sync.pull',
+        'sync.push',
+      ]);
       expect(sync.state).toEqual({
         syncedAt: undefined,
         running: false,
@@ -458,7 +473,7 @@ describe('Sync, when too many requests', () => {
     await advance(1);
 
     expect(syncs()).toBe(2);
-    expect(server.sync.records.has('favorites.w_one')).toBe(true);
+    expect(server.sync.recordsOf('anna@mail.com').has('favorites.w_one')).toBe(true);
   });
 
   it('does not sync when the Retry-After ends in the background', async () => {

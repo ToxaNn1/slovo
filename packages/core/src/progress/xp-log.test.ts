@@ -35,6 +35,7 @@ import {
   analyticsInto,
 } from '../test-support';
 import { createMemoryUserStatePort, openUserState, type UserState } from '../user-state/user-state';
+import { signInByCode } from '../fakes/fake-backend';
 import { trackChanges } from '../user-state/tracked-user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -321,11 +322,7 @@ async function device(
     googleSheet: createFakeGoogleSignInSheet(),
     appleSheet: createFakeAppleSignInSheet(),
     userState,
-    sessions: createMemorySessionStore(
-      signedIn
-        ? { token: `session-of-${time.clock.now().toISOString()}`, email: EMAIL }
-        : undefined,
-    ),
+    sessions: createMemorySessionStore(signedIn ? await signInByCode(server, EMAIL) : undefined),
     clock: time.clock,
     schedule: timers.schedule,
     random: randomOf(0.5),
@@ -367,7 +364,7 @@ async function device(
 }
 
 const xpKept = (server: ReturnType<typeof createFakeBackend>) =>
-  [...server.sync.records.keys()].filter((key) => key.startsWith('xp.'));
+  [...server.sync.recordsOf(EMAIL).keys()].filter((key) => key.startsWith('xp.'));
 
 describe('the XP log and Sync', () => {
   it('sums the XP of two devices on one Account, with no record doubled', async () => {
@@ -398,12 +395,12 @@ describe('the XP log and Sync', () => {
     await phone.syncNow();
     await tablet.syncNow();
     await phone.syncNow();
-    const kept = [...server.sync.records.entries()];
+    const kept = [...server.sync.recordsOf(EMAIL).entries()];
 
     await tablet.syncNow();
     await phone.syncNow();
 
-    expect([...server.sync.records.entries()]).toEqual(kept);
+    expect([...server.sync.recordsOf(EMAIL).entries()]).toEqual(kept);
     expect((await phone.reopened()).xpLog.state.total).toBe(3);
     expect((await tablet.reopened()).xpLog.state.total).toBe(3);
   });
@@ -423,7 +420,7 @@ describe('the XP log and Sync', () => {
     expect(xpKept(server)).toHaveLength(2);
 
     await tablet.account.requestCode(EMAIL);
-    await tablet.account.verifyCode('100001');
+    await tablet.account.verifyCode(server.account.sentCodes.at(-1)?.code ?? '');
     await tablet.syncNow();
 
     expect(xpKept(server)).toHaveLength(3);
