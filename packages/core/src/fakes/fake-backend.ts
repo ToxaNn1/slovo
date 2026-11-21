@@ -1,6 +1,7 @@
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
 import {
+  AccountEmailSchema,
   SYNC_BATCH_SIZE,
   type CollectionLink,
   type ForceUpdateMinimums,
@@ -115,7 +116,8 @@ export interface FakeBackend {
    * backend's rules (ADR 0041): a change replaces the record kept under its
    * key only when it is later, a change time later than the clock's counts
    * as the clock's, and every kept change takes the next sequence number,
-   * which a pull pages by. Every token is the Account's.
+   * which a pull pages by. Every token is the Account's, and deleting the
+   * Account drops its records.
    */
   readonly sync: {
     /** The records kept, by key. */
@@ -308,6 +310,13 @@ export function createFakeBackend({
     return { token, email };
   }
 
+  /** The email as the backend keeps it, trimmed and lower-cased, or the contract's 400. */
+  function emailOf(email: string, context: ServedContext): string {
+    const parsed = AccountEmailSchema.safeParse(email);
+    if (!parsed.success) throw refusal('BAD_REQUEST', context);
+    return parsed.data;
+  }
+
   function endSessionsOf(email: string): void {
     for (const [token, owner] of sessions) if (owner === email) sessions.delete(token);
   }
@@ -316,22 +325,27 @@ export function createFakeBackend({
     account: {
       async requestCode({ input, context }) {
         await arrive('account.requestCode', context);
+        const email = emailOf(input.email, context);
         const code = String(100_001 + sentCodes.length);
-        codes.set(input.email, { code, triesLeft: CODE_TRIES });
-        sentCodes.push({ email: input.email, code });
+        codes.set(email, { code, triesLeft: CODE_TRIES });
+        sentCodes.push({ email, code });
         return {};
       },
       async verifyCode({ input, context, errors }) {
         await arrive('account.verifyCode', context);
-        const live = codes.get(input.email);
+        const email = emailOf(input.email, context);
+        const live = codes.get(email);
         if (live === undefined) throw errors.CODE_EXPIRED();
+        // A spent code stays spent, even for the right code, until a new one is sent;
+        // it passes with no time, so the answer has no Retry-After.
+        if (live.triesLeft === 0) throw errors.TOO_MANY_REQUESTS();
         if (live.code !== input.code) {
           live.triesLeft -= 1;
-          if (live.triesLeft === 0) codes.delete(input.email);
+          if (live.triesLeft === 0) throw errors.TOO_MANY_REQUESTS();
           throw errors.WRONG_CODE({ data: { triesLeft: live.triesLeft } });
         }
-        codes.delete(input.email);
-        return startSession(input.email);
+        codes.delete(email);
+        return startSession(email);
       },
       async signInWithGoogle({ input, context, errors }) {
         await arrive('account.signInWithGoogle', context);
@@ -367,6 +381,9 @@ export function createFakeBackend({
         const email = sessionOf(context);
         endSessionsOf(email);
         accounts.delete(email);
+        // The Account's records go with it, as `user_records` cascades; the
+        // sequence goes on, as the backend's one for every Account does.
+        records.clear();
         return {};
       },
     },
