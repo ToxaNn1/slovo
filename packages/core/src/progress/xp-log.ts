@@ -15,6 +15,7 @@ import type { XpRecord } from './records';
 import { userStateRecords } from '../user-state-schema';
 import { levelOf, type LevelState } from './levels';
 import { ACTIVE_DAY_XP } from './streak';
+import { readXpLog } from './xp-days';
 import { xpEntryOf } from './xp-entry';
 
 const { xpLog: xpRecords } = userStateRecords;
@@ -331,7 +332,11 @@ export async function openXpLog({
   const levelsOn = edition.isFeatureEnabled('levels');
   const goalOn = edition.isFeatureEnabled('dailyGoal');
   const seenWordOn = edition.isFeatureEnabled('seenWordXp');
-  const records = new Map<string, XpRecord>(on ? await userState.list(xpRecords) : []);
+  const kept = on ? await readXpLog(userState) : undefined;
+  const records = new Map<string, XpRecord>(kept?.records);
+  // The days past 30 fold into XP days (ADR 0205); a fold that fails is the next launch's.
+  const toFold = kept?.foldChanges(todayKey(clock)) ?? new Map<string, string | undefined>();
+  if (toFold.size > 0) await userState.write(toFold).catch(() => undefined);
   /** The latest reset marker by instant, then by id, so every device picks the same one. */
   function latestMarker(): ResetMarker | undefined {
     let latest: ResetMarker | undefined;

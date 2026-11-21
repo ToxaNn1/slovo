@@ -115,7 +115,7 @@ const StoredXpRecordSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('reset'), date: LocalDateKeySchema, at: InstantSchema }),
 ]);
 
-const XpRecordSchema = StoredXpRecordSchema.transform((record): XpRecord =>
+export const XpRecordSchema = StoredXpRecordSchema.transform((record): XpRecord =>
   record.kind === 'xp' ? xpEntryOf(record) : record,
 );
 
@@ -123,7 +123,21 @@ type StoredXpRecord = z.infer<typeof StoredXpRecordSchema>;
 /** One record of the XP log in memory: an XP entry holds only the fields of its own source. */
 export type XpRecord = XpEntry | Exclude<StoredXpRecord, { kind: 'xp' }>;
 
-/** The records of the progress: Active Days, the XP log and the reported Streak break. */
+/**
+ * An XP day (ADR 0205): the records of the XP log of one local date, folded
+ * into one record once the date is more than 30 days past, by the id each
+ * record had. A row is its record without the date, without the kind of an XP
+ * entry, and with its instant as `t`, the milliseconds from the date's first
+ * instant read as UTC, or as `at` where it was written another way.
+ */
+const XpDaySchema = z.object({
+  date: LocalDateKeySchema,
+  rows: z.record(z.string(), z.record(z.string(), z.json())),
+});
+
+export type XpDay = z.infer<typeof XpDaySchema>;
+
+/** The records of the progress: Active Days, the XP log, its XP days and the reported Streak break. */
 export const progressRecords = {
   /**
    * The Active Days, one record per day, by local date `YYYY-MM-DD`: that the
@@ -137,6 +151,15 @@ export const progressRecords = {
    * same on every device and never doubles (ADR 0066).
    */
   xpLog: declareRecords('xp.', XpRecordSchema, { sync: 'union' }),
+  /**
+   * The XP days, one record per folded day, or several for a day too large for
+   * one record of Sync or folded on two devices from different records, by the
+   * date, the number of its records and a hash of their ids, so two devices
+   * that fold the same records make the same XP day. An XP day is never
+   * changed, and they sync as a union: a record counts once by its id however
+   * many XP days hold it (ADR 0205).
+   */
+  xpDays: declareRecords('xpDay.', XpDaySchema, { sync: 'union' }),
   /**
    * The last day of the Streak a missed day broke, once the Analytics event of
    * that break is emitted, so a later app run emits it no more. Without it, no

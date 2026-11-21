@@ -5,6 +5,7 @@ import { withoutStress } from '../entries/stress';
 import type { Edition } from '../edition/edition';
 import type { Clock } from '../ports';
 import type { XpRecord } from '../progress/records';
+import { readXpLog } from '../progress/xp-days';
 import { settingsRecords } from '../settings/records';
 import type { UserState } from '../user-state/user-state';
 import { declareRecords } from '../user-state/user-state-record';
@@ -106,7 +107,7 @@ export async function buildDataExport({
     ]);
   const [activeDays, xpLog, gameBest, readerName] = await Promise.all([
     userState.list(r.activeDays),
-    userState.list(r.xpLog),
+    readXpLog(userState).then(({ records }) => records),
     userState.list(r.gameBest),
     userState.read(r.readerName),
   ]);
