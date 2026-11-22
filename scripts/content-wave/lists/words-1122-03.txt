@@ -1,0 +1,51 @@
+# <lemma> <category> <rarity>  # part of speech, Zipf in wordfreq (uk)
+адажіо arts-culture 3 # noun, Zipf 1.82
+гнітити emotions-character 3 # verb, Zipf 1.01 lowered: known from literature
+білоцвіт folk-names 3 # noun, Zipf 1.66
+святець history-antiquity 3 # noun, Zipf 1.72
+фетр household-crafts 3 # noun, Zipf 1.31 lowered: known from felt hats
+крайняк language-speech 3 # noun, Zipf 1.49
+комбатант military 3 # noun, Zipf 1.78
+абутилон nature-weather 3 # noun, Zipf 1.51
+пуп'янок nature-weather 3 # noun, Zipf 1.34 lowered: many speakers know it
+папірня old-crafts 3 # noun, Zipf 1.83
+пасіонарність science 3 # noun, Zipf 1.55
+ежектор technology 3 # noun, Zipf 1.65
+повітрозабірник technology 3 # noun, Zipf 1.89
+товстолоб witty-insults 3 # noun, Zipf 1.66
+ангажемент arts-culture 4 # noun, Zipf 1.41
+навприсядки arts-culture 4 # adv, Zipf 1.40
+орар arts-culture 4 # noun, Zipf 1.39
+залагідно emotions-character 4 # adv, Zipf 0.00 lowered: transparent from лагідно
+бадяга folk-names 4 # noun, Zipf 0.00 lowered: known as a folk bruise remedy
+вульгата history-antiquity 4 # noun, Zipf 1.27
+кабаліст history-antiquity 4 # noun, Zipf 0.00 lowered: Kabbalah is widely heard of
+іджма history-antiquity 4 # noun, Zipf 1.33
+гусятниця household-crafts 4 # noun, Zipf 1.01
+заборошнити household-crafts 4 # verb, Zipf 0.00 lowered: transparent from борошно
+покошлатити human-body 4 # verb, Zipf 0.00 lowered: transparent from кошлатий
+напереміну language-speech 4 # adv, Zipf 0.00 lowered: transparent meaning
+щобудня language-speech 4 # adv, Zipf 1.31
+рясота nature-weather 4 # noun, Zipf 0.00 lowered: transparent from рясний
+завітрюватися nature-weather 4 # verb, Zipf 0.00 lowered: transparent from вітер
+афінаж old-crafts 4 # noun, Zipf 1.42
+окуття old-crafts 4 # noun, Zipf 1.20
+хіна science 4 # noun, Zipf 1.39
+дуплексний technology 4 # adj, Zipf 1.33
+плакування technology 4 # noun, Zipf 1.27
+штрек technology 4 # noun, Zipf 1.20
+локаль technology 4 # noun, Zipf 1.39
+неслухнянець witty-insults 4 # noun, Zipf 0.00 lowered: transparent meaning
+вольтиж arts-culture 5 # noun, Zipf 0.00
+бутний emotions-character 5 # adj, Zipf 0.00
+мишоїд folk-names 5 # noun, Zipf 0.00
+рідношкільник history-antiquity 5 # noun, Zipf 0.00
+тютюнниця household-crafts 5 # noun, Zipf 0.00
+ад'єктивуватися language-speech 5 # verb, Zipf 0.00
+фразерствувати language-speech 5 # verb, Zipf 0.00
+бомбоскидач military 5 # noun, Zipf 0.00
+льонобралка old-crafts 5 # noun, Zipf 0.00
+тебенівка old-crafts 5 # noun, Zipf 0.00
+оплодень science 5 # noun, Zipf 0.00
+сінопідіймач technology 5 # noun, Zipf 0.00
+амікошонський witty-insults 5 # adj, Zipf 0.00

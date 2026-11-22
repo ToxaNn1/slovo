@@ -1,0 +1,51 @@
+# <lemma> <category> <rarity>  # part of speech, Zipf in wordfreq (uk)
+спіритичний arts-culture 3 # adj, Zipf 1.11 lowered: spiritism widely known
+безумець emotions-character 3 # noun, Zipf 1.77
+льонок folk-names 3 # noun, Zipf 1.90
+рунічний history-antiquity 3 # adj, Zipf 1.33 lowered: runes widely known
+покрій household-crafts 3 # noun, Zipf 1.57
+дорадник language-speech 3 # noun, Zipf 1.60
+різноголосиця language-speech 3 # noun, Zipf 0.00 lowered: widely known word
+чатовий military 3 # adj, Zipf 1.54
+лускокрилі nature-weather 3 # noun, Zipf 1.65
+миловаріння old-crafts 3 # noun, Zipf 1.49
+одночлен science 3 # noun, Zipf 1.16 lowered: school maths term
+гальванізація technology 3 # noun, Zipf 1.51
+підпрограма technology 3 # noun, Zipf 1.84
+ферохром technology 3 # noun, Zipf 1.55
+шизонутися witty-insults 3 # verb, Zipf 0.00 lowered: known slang
+лезгінка arts-culture 4 # noun, Zipf 1.01
+вохристий arts-culture 4 # adj, Zipf 1.20
+снити emotions-character 4 # verb, Zipf 1.11
+шкодливий emotions-character 4 # adj, Zipf 0.00 lowered: transparent from шкода
+вінценосний history-antiquity 4 # adj, Zipf 1.16
+інкунабула history-antiquity 4 # noun, Zipf 1.11
+відробіток history-antiquity 4 # noun, Zipf 1.42
+гофре household-crafts 4 # noun, Zipf 1.01
+щепити household-crafts 4 # verb, Zipf 1.28
+настовбурчити human-body 4 # verb, Zipf 0.00 lowered: recognisable from настовбурчити вуха
+менсплейнінг language-speech 4 # noun, Zipf 0.00 lowered: known from media
+улад language-speech 4 # adv, Zipf 1.46
+нетрища nature-weather 4 # noun, Zipf 1.06
+деревостан nature-weather 4 # noun, Zipf 1.36
+тамарин nature-weather 4 # noun, Zipf 0.00 lowered: known animal name
+молотьба old-crafts 4 # noun, Zipf 1.30
+наважка science 4 # noun, Zipf 1.28
+демодулятор technology 4 # noun, Zipf 1.11
+мікротрон technology 4 # noun, Zipf 1.06
+хардтоп technology 4 # noun, Zipf 1.23
+креозот technology 4 # noun, Zipf 1.20
+дармограй witty-insults 4 # noun, Zipf 1.43
+куцан witty-insults 4 # noun, Zipf 1.45
+караваджизм arts-culture 5 # noun, Zipf 0.00
+твердошиїй emotions-character 5 # adj, Zipf 0.00
+конюшний history-antiquity 5 # noun, Zipf 0.00
+сірничниця household-crafts 5 # noun, Zipf 0.00
+віїстий human-body 5 # adj, Zipf 0.00
+ортофемізм language-speech 5 # noun, Zipf 0.00
+хильцем language-speech 5 # adv, Zipf 0.00
+задувальник old-crafts 5 # noun, Zipf 0.00
+риштунник old-crafts 5 # noun, Zipf 0.00
+шовкомотання old-crafts 5 # noun, Zipf 0.00
+кесоновий technology 5 # adj, Zipf 0.00
+фотопомножувач technology 5 # noun, Zipf 0.00

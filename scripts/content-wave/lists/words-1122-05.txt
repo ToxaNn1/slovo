@@ -1,0 +1,51 @@
+# <lemma> <category> <rarity>  # part of speech, Zipf in wordfreq (uk)
+егрегор arts-culture 3 # noun, Zipf 1.68
+ридма emotions-character 3 # adv, Zipf 1.71
+орлюк folk-names 3 # noun, Zipf 1.71
+протопресвітер history-antiquity 3 # noun, Zipf 1.81
+прудконогий human-body 3 # adj, Zipf 1.17 lowered: transparent compound, widely understood
+позаочі language-speech 3 # adv, Zipf 1.62
+стрільбище military 3 # noun, Zipf 1.87
+мірабель nature-weather 3 # noun, Zipf 1.80
+восьмерик old-crafts 3 # noun, Zipf 1.85
+цицеро old-crafts 3 # noun, Zipf 1.63
+теломер science 3 # noun, Zipf 1.67
+копіпастити technology 3 # verb, Zipf 0.00 lowered: common internet slang
+сервопривід technology 3 # noun, Zipf 1.59
+пожирач witty-insults 3 # noun, Zipf 1.46 lowered: transparent, widely understood
+імпост arts-culture 4 # noun, Zipf 1.01
+хепенінг arts-culture 4 # noun, Zipf 1.07
+рустикальний arts-culture 4 # adj, Zipf 1.12
+розледащіти emotions-character 4 # verb, Zipf 0.00 lowered: transparent from ледащо
+коручка folk-names 4 # noun, Zipf 1.46
+гностик history-antiquity 4 # noun, Zipf 0.00 lowered: known to educated speakers
+первородство history-antiquity 4 # noun, Zipf 1.41
+псарня history-antiquity 4 # noun, Zipf 0.00 lowered: known from literature
+печворк household-crafts 4 # noun, Zipf 1.21
+русявка human-body 4 # noun, Zipf 0.00 lowered: transparent from русявий
+галагаз language-speech 4 # noun, Zipf 1.11
+спомогти language-speech 4 # verb, Zipf 0.00 lowered: bookish, recognisable from спомогтися
+ракетоносець military 4 # noun, Zipf 1.06
+султанка nature-weather 4 # noun, Zipf 1.27
+катаракт nature-weather 4 # noun, Zipf 1.45
+дамаський old-crafts 4 # adj, Zipf 1.43
+типограф old-crafts 4 # noun, Zipf 1.11
+барботування technology 4 # noun, Zipf 1.01
+кулачковий technology 4 # adj, Zipf 1.39
+ресорний technology 4 # adj, Zipf 1.06
+гіпервізор technology 4 # noun, Zipf 1.46
+трицикл technology 4 # noun, Zipf 1.43
+хрипун witty-insults 4 # noun, Zipf 1.17
+діонісійний arts-culture 5 # adj, Zipf 0.00
+наполошитися emotions-character 5 # verb, Zipf 0.00
+дияконеса history-antiquity 5 # noun, Zipf 0.00
+маздакізм history-antiquity 5 # noun, Zipf 0.00
+заушниця human-body 5 # noun, Zipf 0.00
+гебраїка language-speech 5 # noun, Zipf 0.00
+притьма language-speech 5 # adv, Zipf 0.00
+порошниця military 5 # noun, Zipf 0.00
+обечайка old-crafts 5 # noun, Zipf 0.00
+хромотипія old-crafts 5 # noun, Zipf 0.00
+відгалужувач technology 5 # noun, Zipf 0.00
+ґратознімач technology 5 # noun, Zipf 0.00
+скопититися witty-insults 5 # verb, Zipf 0.00

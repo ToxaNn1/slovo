@@ -1,0 +1,51 @@
+# <lemma> <category> <rarity>  # part of speech, Zipf in wordfreq (uk)
+величання arts-culture 3 # noun, Zipf 1.77
+протегувати emotions-character 3 # verb, Zipf 1.42 lowered: bookish but known to many
+вівсюг folk-names 3 # noun, Zipf 1.49
+сюзеренітет history-antiquity 3 # noun, Zipf 1.48
+буза household-crafts 3 # noun, Zipf 1.50
+мисль language-speech 3 # noun, Zipf 1.67
+офензива military 3 # noun, Zipf 1.84
+галаго nature-weather 3 # noun, Zipf 1.49
+скаламутити nature-weather 3 # verb, Zipf 0.00 lowered: known idiom скаламутити воду
+розпрягти old-crafts 3 # verb, Zipf 0.00 lowered: known from village life and literature
+танін science 3 # noun, Zipf 1.90
+екстрактор technology 3 # noun, Zipf 1.69
+радіотелескоп technology 3 # noun, Zipf 1.70
+шептун witty-insults 3 # noun, Zipf 1.49
+заспівувач arts-culture 4 # noun, Zipf 1.06
+теософія arts-culture 4 # noun, Zipf 1.41
+реквізитор arts-culture 4 # noun, Zipf 0.00 lowered: known theatre profession
+обговтувати emotions-character 4 # verb, Zipf 0.00 lowered: обговтатися is known colloquially
+брандушка folk-names 4 # noun, Zipf 1.11
+гінець history-antiquity 4 # noun, Zipf 1.28
+народоправство history-antiquity 4 # noun, Zipf 1.07
+облатка history-antiquity 4 # noun, Zipf 1.27
+карафа household-crafts 4 # noun, Zipf 1.16
+сінниця household-crafts 4 # noun, Zipf 0.00 lowered: transparent from сіно
+сльозитися human-body 4 # verb, Zipf 0.00 lowered: transparent from сльоза
+офірувати language-speech 4 # verb, Zipf 1.11
+узус language-speech 4 # noun, Zipf 1.36
+сайка nature-weather 4 # noun, Zipf 1.30
+зарябити nature-weather 4 # verb, Zipf 0.00 lowered: transparent from рябий
+ватер old-crafts 4 # noun, Zipf 1.36
+різальник old-crafts 4 # noun, Zipf 1.21
+аеронавігація technology 4 # noun, Zipf 1.16
+електролізер technology 4 # noun, Zipf 1.16
+припрацювання technology 4 # noun, Zipf 1.06
+гептил technology 4 # noun, Zipf 1.16
+мультиплексування technology 4 # noun, Zipf 1.46
+страхопуд witty-insults 4 # noun, Zipf 1.11
+гризетка arts-culture 5 # noun, Zipf 0.00
+комизливість emotions-character 5 # noun, Zipf 0.00
+австромантія history-antiquity 5 # noun, Zipf 0.00
+співсвятитель history-antiquity 5 # noun, Zipf 0.00
+вклякати human-body 5 # verb, Zipf 0.00
+виметикувати language-speech 5 # verb, Zipf 0.00
+хрупіт language-speech 5 # noun, Zipf 0.00
+ганджар military 5 # noun, Zipf 0.00
+льонопрядіння old-crafts 5 # noun, Zipf 0.00
+фурма old-crafts 5 # noun, Zipf 0.00
+віброскоп technology 5 # noun, Zipf 0.00
+суховоз technology 5 # noun, Zipf 0.00
+мізерня witty-insults 5 # noun, Zipf 0.00

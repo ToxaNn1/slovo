@@ -1,0 +1,25 @@
+# <lemma> <category> <rarity>  # part of speech, Zipf in wordfreq (uk)
+спасівка arts-culture 3 # noun, Zipf 1.76
+біловус folk-names 3 # noun, Zipf 1.62
+демонологія history-antiquity 3 # noun, Zipf 1.57
+лацкан household-crafts 3 # noun, Zipf 1.12 lowered: tailoring word many know
+сосочок human-body 3 # noun, Zipf 1.52
+позірно language-speech 3 # adv, Zipf 1.55
+шерег military 3 # noun, Zipf 1.50
+сизокрилий nature-weather 3 # adj, Zipf 1.25 lowered: transparent folk epithet
+гужовий old-crafts 3 # adj, Zipf 1.65
+саджавка old-crafts 3 # noun, Zipf 1.67
+кіаніт science 3 # noun, Zipf 1.62
+люфт technology 3 # noun, Zipf 1.83
+хвостосховище technology 3 # noun, Zipf 1.70
+розмазня witty-insults 3 # noun, Zipf 1.07 lowered: known colloquial insult
+контемп arts-culture 4 # noun, Zipf 1.12
+цугцванг arts-culture 4 # noun, Zipf 1.23
+лінивство emotions-character 4 # noun, Zipf 1.42
+розчепурити emotions-character 4 # verb, Zipf 0.00 lowered: transparent from чепурити
+проскурняк folk-names 4 # noun, Zipf 1.37
+дублон history-antiquity 4 # noun, Zipf 1.20
+чорносотенний history-antiquity 4 # adj, Zipf 1.01
+ханша history-antiquity 4 # noun, Zipf 1.06
+розжеврювати household-crafts 4 # verb, Zipf 0.00 lowered: transparent from жевріти
+ковтюх human-body 4 # noun, Zipf 1.06
