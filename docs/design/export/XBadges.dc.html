@@ -68,7 +68,7 @@
         <span style="position:relative;width:120px;height:120px;flex:none;filter:{{ b.flt }}">
           <span style="position:absolute;inset:0;clip-path:{{ b.clip }};background:{{ b.ring }}"></span>
           <span style="position:absolute;inset:7%;clip-path:{{ b.clip }};background:{{ b.bg }};overflow:hidden"><span style="position:absolute;left:0;right:0;bottom:0;height:{{ b.pct }};background:{{ b.fill }}"></span></span>
-          <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:{{ b.fg }};font:900 40px/1 Unbounded,sans-serif;letter-spacing:-1.5px">{{ b.gl }}</span>
+          <span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:{{ b.fg }};font:900 {{ b.fsBig }}/1 Unbounded,sans-serif;letter-spacing:-1px">{{ b.gl }}</span>
           <sc-if value="{{ b.isNew }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;right:-18px;top:-6px;padding:6px 9px;background:var(--ink);color:var(--bg);font:900 11px/1 Unbounded,sans-serif;letter-spacing:1px;transform:rotate(8deg)">НОВА</span></sc-if>
         </span>
         <span style="font:700 10px/1 Unbounded,sans-serif;letter-spacing:1.5px;color:#FF3B2F">{{ b.st }}</span>
@@ -170,7 +170,7 @@ const FAMS=[
  {id:'cw',n:'Кросворд',form:'Кахля',sh:'tile',tone:'cream',d:'Кросворд дня, розв’язаний кілька днів поспіль.',items:[['7×','Сім кросвордів поспіль','Кросворд дня 7 днів поспіль',.43]]},
  {id:'lvl',n:'Рівні',form:'Клин',sh:'wedge',tone:'ink',d:'Рівні, які вже позаду.',items:[['5','Рівень 5','Досягни рівня 5',.8],['10','Рівень 10','Досягни рівня 10',0],['20','Рівень 20','Досягни рівня 20',0]]},
  {id:'mastery',n:'Майстерність',form:'Ромб',sh:'diamond',tone:'red',d:'Особливі влучання, не пов’язані з кількістю.',items:[['Ґ','Перше рідкісне слово','Слово з рідкістю 5/5',1],['✓','Чиста мова','Гра з виправлень без помилок',0],['´','Влучний наголос','10 наголосів поспіль без помилок',0]]}];
-const fsFor=g=>g.length>=3?'26px':g.length===2?'30px':'40px';
+const fsFor=gl=>gl.length>=3?'15px':gl.length===2?'19px':'24px';const fsBig=gl=>gl.length>=3?'26px':gl.length===2?'32px':'40px';
 const earned=(f,gl)=>({clip:SH[f.sh],...TONE[f.tone],gl,pct:'0%',fill:'transparent'});
 const locked=(f,p)=>({clip:SH[f.sh],ring:'var(--sil)',bg:'var(--sil2)',fg:'transparent',flt:'none',gl:'',pct:Math.round(p*100)+'%',fill:'rgba(255,59,47,.38)'});
 class Component extends DCLogic {
@@ -182,7 +182,7 @@ class Component extends DCLogic {
     v.groups=FAMS.map(f=>{const got=f.items.filter(x=>x[3]===1).length;return {n:f.n,cnt:mode==='earned'?f.items.length+' · '+f.form.toLowerCase():got+' з '+f.items.length,
       items:f.items.map(([gl,n,cond,pr])=>{const on=mode==='earned'||pr===1;const pct=Math.round(pr*100);
         const b=on?earned(f,gl):locked(f,pr);
-        return {...b,n,fs:fsFor(gl),sub:mode==='earned'?cond:(on?'Отримано':(pr>0?'Ще ні · '+pct+'%':'Ще ні · '+cond))};})};});
+        return {...b,n,fs:fsFor(gl),fsBig:fsBig(gl),sub:mode==='earned'?cond:(on?'Отримано':(pr>0?'Ще ні · '+pct+'%':'Ще ні · '+cond))};})};});
     const sf=FAMS[0];
     v.states=[
       {...locked(sf,0),st:'ЗАКРИТО',n:'Сто днів поспіль',sub:'Темний силует. Умову видно після натискання.',bar:'0%'},
@@ -199,6 +199,7 @@ class Component extends DCLogic {
       ['5','Тепер твоя','З’являється стрічка, далі кнопка «Готово».','1','scale(1) rotate(-8deg)',0,1,true]
     ].map(([k,n,d,op,tf,ink,inkS,rib])=>({k,n,d,op,tf,ink:String(ink),inkS:String(inkS),rib}));
     const LV=['Початківець','Читач','Знавець','Книжник','Словолюб','Мовознавець','Словолов','Словотвор'],XP=['0 XP','50 XP','120 XP','200 XP','300 XP','420 XP','560 XP','1000 XP'];
+    v.states=v.states.map(s=>({...s,fsBig:fsBig(String(s.gl||''))}));
     v.levels=LV.map((name,i)=>{const done=i<6,cur=i===6;return {n:String(i+1),name,xp:XP[i],st:done?'ПРОЙДЕНО':cur?'ЗАРАЗ':'ПОПЕРЕДУ',
       bg:cur?R:'var(--tile)',fg:cur?K:'var(--ink)',bd:cur?'0':'1px solid var(--line)',sh:cur?'0 5px 0 '+RE:'0 4px 0 var(--edge)',
       ring:cur?K:done?R:'var(--sil)',wbg:cur?C:done?'var(--ink)':'var(--sil2)',wfg:cur?K:done?R:'var(--mute)',flt:done||cur?'drop-shadow(0 3px 0 '+K+')':'none'};});

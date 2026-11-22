@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+[data-mx][data-th="light"]{--bg:#FFF4E6;--ink:#140C0A;--sf:#FFFBF5;--sf2:#F5E4CF;--line:rgba(20,12,10,.13);--mute:#6B5D55;--tile:#FFFBF5;--edge:#DCC2A6;--sil:rgba(20,12,10,.12);--hl:#F2D3AE}
+[data-mx][data-th="dark"]{--bg:#140C0A;--ink:#FFF4E6;--sf:#221714;--sf2:#4A332A;--line:rgba(255,244,230,.13);--mute:#BDAE9F;--tile:#33241F;--edge:#050302;--sil:rgba(255,244,230,.1);--hl:#5A3B2E}
+[data-mx] *{box-sizing:border-box}
+[data-mx] button{font:inherit;border:0;cursor:pointer;color:inherit;background:none;padding:0;text-align:inherit;outline:none;-webkit-tap-highlight-color:transparent}
+@keyframes mxCasc{from{opacity:0;transform:translateY(10px)}}
+@keyframes mxSheet{from{transform:translateY(100%)}}
+@keyframes mxFade{from{opacity:0}}
+@keyframes mxPop{0%{transform:scale(.85)}60%{transform:scale(1.06)}100%{transform:none}}
+</style>
+</helmet>
+<div data-mx="1" data-th="{{ th }}" style="width:406px;height:860px;padding:8px;background:#0B0706;border-radius:62px;box-shadow:0 0 0 1.5px #3A2C27,0 30px 70px rgba(20,12,10,.35);font-family:Onest,sans-serif;flex:none">
+<div style="position:relative;width:390px;height:844px;border-radius:54px;overflow:hidden;background:var(--bg);color:var(--ink)">
+  <div style="height:100%;overflow-y:auto;scrollbar-width:none">
+    <div style="display:flex;flex-direction:column;gap:12px;padding:62px 16px 112px">
+      <div style="order:-10;display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:0 4px 6px">
+        <span style="font:900 30px/1 Unbounded,sans-serif;letter-spacing:-.8px">Мої Теми</span>
+        <span style="font:600 13px/1 Onest;color:var(--mute);padding-bottom:4px">{{ headT }}</span>
+      </div>
+
+      <sc-if value="{{ showRarCard }}" hint-placeholder-val="{{ false }}">
+        <div style="order:-8;padding:16px;border-radius:20px;background:var(--sf);border:1px solid var(--line);display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px">РІДКІСТЬ</span><span style="font:700 14px/1 Onest">{{ rarT }}</span></div>
+          <div style="display:flex;align-items:flex-end;gap:6px;height:60px">
+            <sc-for list="{{ rarBars }}" as="b" hint-placeholder-count="5"><button onClick="{{ b.onClick }}" style="flex:1;height:{{ b.hs }};border-radius:8px;background:{{ b.bg }};color:{{ b.fg }};box-shadow:{{ b.sh }};transform:skewX(-8deg);font:900 16px/1 Unbounded,sans-serif;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;transition:background .2s,height .2s">{{ b.n }}</button></sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isA }}" hint-placeholder-val="{{ false }}">
+        <div style="order:-6;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:4px;border-radius:16px;background:var(--sf2)">
+          <sc-for list="{{ aTabs }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.onClick }}" style="height:52px;border-radius:12px;background:{{ t.bg }};color:{{ t.fg }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:background .2s"><span style="font:800 11px/1 Unbounded,sans-serif;letter-spacing:.8px">{{ t.n }}</span><span style="font:600 12px/1 Onest;opacity:.75">{{ t.c }}</span></button></sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isB }}" hint-placeholder-val="{{ false }}">
+        <div style="order:-6;padding:16px 14px;border-radius:20px;background:var(--sf);border:1px solid var(--line);display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px">ЧАСТОТА У СТРІЧЦІ</span><span style="font:600 12px/1 Onest;color:var(--mute)">тягніть вгору</span></div>
+          <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px">
+            <sc-for list="{{ faders }}" as="f" hint-placeholder-count="5">
+              <div style="display:flex;flex-direction:column;align-items:stretch;gap:5px">
+                <sc-for list="{{ f.blocks }}" as="k" hint-placeholder-count="3"><button onClick="{{ k.onClick }}" style="height:38px;border-radius:8px;background:{{ k.bg }};box-shadow:{{ k.sh }};transform:skewY(-6deg);transition:background .2s"></button></sc-for>
+                <button onClick="{{ f.onOff }}" style="height:28px;border-radius:8px;background:{{ f.offBg }};color:{{ f.offFg }};font:700 11px/1 Onest;display:flex;align-items:center;justify-content:center;transition:background .2s">{{ f.offT }}</button>
+                <span style="margin-top:4px;min-height:14px;font:700 11px/1.2 Onest;text-align:center;white-space:nowrap">{{ f.n }}</span>
+                <span style="font:600 11px/1 Onest;color:var(--mute);text-align:center">{{ f.lvT }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="order:-4;border-radius:20px;background:var(--sf);border:1px solid var(--line);overflow:hidden">
+          <sc-for list="{{ bRows }}" as="r" hint-placeholder-count="2"><button onClick="{{ r.onClick }}" style="display:flex;align-items:center;gap:12px;width:100%;padding:16px;border-top:{{ r.bt }}" style-active="background:var(--sf2)"><span style="flex:1;font:800 15px/1.1 Unbounded,sans-serif">{{ r.n }}</span><span style="height:28px;padding:0 10px;border-radius:8px;background:var(--sf2);display:flex;align-items:center;font:700 13px/1 Onest">{{ r.v }}</span><svg width="8" height="12" viewBox="0 0 8 12"><polygon points="0,0 8,6 0,12" fill="currentColor"></polygon></svg></button></sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isC }}" hint-placeholder-val="{{ false }}">
+        <div style="order:-6;padding:18px;border-radius:22px;background:var(--sf);border:1px solid var(--line);display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px">ВАША СТРІЧКА</span><span style="font:600 12px/1 Onest;color:var(--mute)">з 20 карток</span></div>
+          <div style="display:flex;gap:3px;height:34px">
+            <sc-for list="{{ mixSegs }}" as="m" hint-placeholder-count="6"><span style="flex:{{ m.f }};min-width:{{ m.mw }};border-radius:6px;background:{{ m.c }};transform:skewX(-10deg);transition:flex .45s cubic-bezier(.2,.9,.3,1)"></span></sc-for>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px 14px">
+            <sc-for list="{{ mixSegs }}" as="m" hint-placeholder-count="6"><span style="display:flex;align-items:center;gap:6px;font:600 13px/1 Onest;opacity:{{ m.op }}"><span style="width:10px;height:10px;border-radius:3px;background:{{ m.c }}"></span>{{ m.n }} <b style="font-weight:800">{{ m.k }}</b></span></sc-for>
+          </div>
+        </div>
+        <div style="order:-4;border-radius:20px;background:var(--sf);border:1px solid var(--line);overflow:hidden">
+          <sc-for list="{{ cRows }}" as="r" hint-placeholder-count="4"><button onClick="{{ r.onClick }}" style="display:flex;align-items:center;gap:12px;width:100%;padding:16px;border-top:{{ r.bt }};text-align:left" style-active="background:var(--sf2)"><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px"><span style="font:800 15px/1.1 Unbounded,sans-serif">{{ r.n }}</span><span style="font:500 13px/1.25 Onest;color:var(--mute)">{{ r.d }}</span></span><span style="flex:none;height:28px;padding:0 10px;border-radius:8px;background:var(--sf2);display:flex;align-items:center;font:700 13px/1 Onest">{{ r.v }}</span><svg width="8" height="12" viewBox="0 0 8 12" style="flex:none"><polygon points="0,0 8,6 0,12" fill="currentColor"></polygon></svg></button></sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isD }}" hint-placeholder-val="{{ false }}">
+        <div style="order:-6;display:flex;flex-direction:column;gap:10px">
+          <span style="padding:0 4px;font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px">ШВИДКИЙ СТАРТ</span>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+            <sc-for list="{{ presets }}" as="p" hint-placeholder-count="4"><button onClick="{{ p.onClick }}" style="height:82px;border-radius:18px;background:{{ p.bg }};color:{{ p.fg }};box-shadow:{{ p.sh }};border:{{ p.bd }};padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;text-align:left;animation:{{ p.anim }};transition:background .2s,transform .1s" style-active="transform:translateY(3px)"><span style="font:800 14px/1.1 Unbounded,sans-serif">{{ p.n }}</span><span style="font:500 12px/1.25 Onest;opacity:.85">{{ p.d }}</span></button></sc-for>
+          </div>
+          <span style="margin-top:6px;padding:0 4px;font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px">НАЛАШТУВАТИ ВРУЧНУ</span>
+        </div>
+        <sc-for list="{{ dRows }}" as="r" hint-placeholder-count="4"><button onClick="{{ r.onClick }}" style="order:{{ r.ord }};display:flex;align-items:center;gap:12px;width:100%;padding:16px;border-radius:16px;background:{{ r.bg }};color:{{ r.fg }};border:1px solid var(--line);text-align:left;transition:background .2s"><span style="flex:1;font:800 15px/1.1 Unbounded,sans-serif">{{ r.n }}</span><span style="height:28px;padding:0 10px;border-radius:8px;background:{{ r.chBg }};display:flex;align-items:center;font:700 13px/1 Onest">{{ r.v }}</span><svg width="12" height="8" viewBox="0 0 12 8" style="transform:rotate({{ r.rot }});transition:transform .25s"><polygon points="0,0 12,0 6,8" fill="currentColor"></polygon></svg></button></sc-for>
+      </sc-if>
+
+      <sc-if value="{{ isE }}" hint-placeholder-val="{{ false }}">
+        <sc-if value="{{ tTiles }}" hint-placeholder-val="{{ false }}">
+        <div style="order:-6;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+          <sc-for list="{{ eTiles }}" as="t" hint-placeholder-count="3"><button onClick="{{ t.onClick }}" style="min-width:0;height:118px;border-radius:18px;border:2.5px solid var(--ink);box-shadow:0 5px 0 var(--ink);background:{{ t.bg }};color:{{ t.fg }};padding:12px;display:flex;flex-direction:column;justify-content:space-between;text-align:left;transition:transform .1s,box-shadow .1s" style-active="transform:translateY(4px);box-shadow:0 1px 0 var(--ink)">
+            <span style="font:800 10px/1 Unbounded,sans-serif;letter-spacing:1.2px">{{ t.n }}</span>
+            <span style="display:flex;align-items:flex-end;gap:3px;height:22px"><sc-for list="{{ t.viz }}" as="z" hint-placeholder-count="5"><span style="flex:1;height:{{ z.h }};border-radius:3px;background:{{ z.c }};transform:skewX(-10deg)"></span></sc-for></span>
+            <span style="font:900 20px/1 Unbounded,sans-serif;letter-spacing:-.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.v }}</span>
+          </button></sc-for>
+        </div>
+        </sc-if>
+        <sc-if value="{{ tInline }}" hint-placeholder-val="{{ false }}">
+        <div style="order:-6;padding:16px;border-radius:20px;border:2.5px solid var(--ink);box-shadow:0 5px 0 var(--ink);background:var(--tile);display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px">РІДКІСТЬ</span><span style="font:700 13px/1 Onest">{{ rarT }}</span></div>
+            <div style="display:flex;align-items:flex-end;gap:6px;height:52px"><sc-for list="{{ rarBars }}" as="b" hint-placeholder-count="5"><button onClick="{{ b.onClick }}" style="flex:1;height:{{ b.hs }};border-radius:8px;background:{{ b.bg }};color:{{ b.fg }};box-shadow:{{ b.sh }};transform:skewX(-8deg);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;transition:background .2s">{{ b.n }}</button></sc-for></div>
+          </div>
+          <div style="height:1px;background:var(--line)"></div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px">ТИПИ КАРТОК</span><button onClick="{{ openTypeSheet }}" style="font:700 13px/1 Onest;color:var(--mute)">частота →</button></div>
+            <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ tPills }}" as="t" hint-placeholder-count="4"><button onClick="{{ t.onClick }}" style="height:40px;padding:0 12px;border-radius:12px;background:{{ t.bg }};color:{{ t.fg }};border:{{ t.bd }};display:flex;align-items:center;gap:8px;font:600 14px/1 Onest;transition:background .2s"><span style="display:flex;gap:2px"><sc-for list="{{ t.dots }}" as="d" hint-placeholder-count="3"><span style="width:5px;height:12px;border-radius:2px;background:{{ d.c }}"></span></sc-for></span>{{ t.n }}</button></sc-for></div>
+          </div>
+          <div style="height:1px;background:var(--line)"></div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px">ШВИДКЕ ПИТАННЯ</span>
+            <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;padding:3px;border-radius:13px;background:var(--sf2)"><sc-for list="{{ qSeg }}" as="g" hint-placeholder-count="4"><button onClick="{{ g.onClick }}" style="height:40px;border-radius:10px;background:{{ g.bg }};color:{{ g.fg }};font:700 13px/1 Onest;display:flex;align-items:center;justify-content:center;transition:background .2s">{{ g.t }}</button></sc-for></div>
+          </div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ tSentence }}" hint-placeholder-val="{{ false }}">
+        <div style="order:-6;position:relative;padding:20px 18px 22px;border-radius:22px;background:#FF3B2F;color:#140C0A;overflow:hidden">
+          <span style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.2) 1.1px,transparent 1.6px);background-size:6px 6px"></span>
+          <div style="position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:8px 7px;font:900 21px/1.25 Unbounded,sans-serif;letter-spacing:-.5px">
+            <sc-for list="{{ sent }}" as="w" hint-placeholder-count="6">
+              <sc-if value="{{ w.txt }}" hint-placeholder-val="{{ true }}"><span>{{ w.t }}</span></sc-if>
+              <sc-if value="{{ w.btn }}" hint-placeholder-val="{{ false }}"><button onClick="{{ w.onClick }}" style="height:40px;padding:0 12px;border-radius:12px;background:#140C0A;color:#FFF4E6;box-shadow:0 4px 0 rgba(20,12,10,.45);display:flex;align-items:center;gap:8px;font:900 18px/1 Unbounded,sans-serif;transition:transform .08s" style-active="transform:translateY(3px)">{{ w.t }}<svg width="10" height="7" viewBox="0 0 12 8"><polygon points="0,0 12,0 6,8" fill="#FF3B2F"></polygon></svg></button></sc-if>
+            </sc-for>
+          </div>
+        </div>
+        </sc-if>
+        <sc-if value="{{ tSticky }}" hint-placeholder-val="{{ false }}">
+        <div style="order:-6;position:sticky;top:52px;z-index:20;margin:0 -16px;padding:8px 16px 12px;background:var(--bg);box-shadow:0 10px 12px -10px rgba(20,12,10,.25)">
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+            <sc-for list="{{ stChips }}" as="c" hint-placeholder-count="3"><button onClick="{{ c.onClick }}" style="min-width:0;height:52px;padding:0 10px;border-radius:14px;border:2.5px solid var(--ink);background:{{ c.bg }};color:{{ c.fg }};display:flex;align-items:center;gap:6px;transition:background .2s" style-active="transform:translateY(2px)"><span style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:4px"><span style="font:600 11px/1 Onest;opacity:.75">{{ c.n }}</span><span style="max-width:100%;font:800 13px/1 Unbounded,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.v }}</span></span><svg width="10" height="7" viewBox="0 0 12 8"><polygon points="0,0 12,0 6,8" fill="currentColor"></polygon></svg></button></sc-for>
+          </div>
+        </div>
+        </sc-if>
+        <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+          <div style="order:-2;display:flex;flex-direction:column;gap:12px;margin-top:10px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:0 4px"><span style="font:900 20px/1.1 Unbounded,sans-serif;letter-spacing:-.4px">{{ g.n }}</span><button onClick="{{ g.toggle }}" style="flex:none;font:700 13px/1 Onest;color:var(--mute)">{{ g.c }} · {{ g.tT }}</button></div>
+            <div style="display:grid;grid-template-columns:repeat({{ g.cols }},minmax(0,1fr));gap:{{ g.gap }}">
+              <sc-for list="{{ g.items }}" as="c" hint-placeholder-count="2">
+              <button onClick="{{ c.onClick }}" style="min-width:0;border-radius:20px;border:2.5px solid var(--ink);box-shadow:0 5px 0 var(--ink);background:var(--tile);overflow:hidden;display:flex;flex-direction:column;text-align:left;transition:transform .1s,box-shadow .1s" style-active="transform:translateY(4px);box-shadow:0 1px 0 var(--ink)">
+                <span style="position:relative;display:block;height:{{ c.h }};background:{{ c.cvBg }};overflow:hidden;filter:{{ c.flt }};opacity:{{ c.op }};transition:filter .25s,opacity .25s">
+                  <span style="position:absolute;left:16%;right:16%;bottom:9%;height:24%;border-radius:50%;background-image:radial-gradient({{ c.dot }} 1.3px,transparent 1.9px);background-size:5px 5px;transform:skewX(-24deg)"></span>
+                  <span style="position:absolute;left:50%;top:46%;width:{{ c.gs }};height:{{ c.gs }};background:{{ c.sh }};clip-path:{{ c.clip }};transform:translate(-50%,-50%) translate(7px,7px) rotate({{ c.rot }})"></span>
+                  <span style="position:absolute;left:50%;top:46%;width:{{ c.gs }};height:{{ c.gs }};background:{{ c.gl }};clip-path:{{ c.clip }};transform:translate(-50%,-50%) rotate({{ c.rot }})"></span>
+                  <span style="position:absolute;left:{{ c.ax }};top:{{ c.ay }};width:{{ c.as }};height:{{ c.as }};background:{{ c.gl }};clip-path:{{ c.clip2 }};transform:rotate({{ c.rot2 }});box-shadow:none"></span>
+                  <span style="position:absolute;right:8px;top:8px;width:24px;height:24px;border-radius:7px;background:{{ c.ckBg }};border:{{ c.ckBd }};display:flex;align-items:center;justify-content:center"><sc-if value="{{ c.on }}" hint-placeholder-val="{{ true }}"><svg width="12" height="10" viewBox="0 0 26 22"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="#140C0A"></polygon></svg></sc-if></span>
+                </span>
+                <span style="padding:{{ c.lp }};font:{{ c.lf }};letter-spacing:-.2px;text-wrap:balance;border-top:2.5px solid var(--ink)">{{ c.n }}</span>
+              </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </sc-if>
+
+      <sc-if value="{{ isF }}" hint-placeholder-val="{{ false }}">
+        <div style="order:-6;position:relative;border-radius:22px;background:#FF3B2F;color:#140C0A;padding:18px;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+          <span style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></span>
+          <span style="position:relative;font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px">ВАША СТРІЧКА</span>
+          <div style="position:relative;display:flex;flex-wrap:wrap;gap:8px">
+            <sc-for list="{{ fChips }}" as="r" hint-placeholder-count="3"><button onClick="{{ r.onClick }}" style="height:44px;padding:0 14px;border-radius:12px;background:#140C0A;color:#FFF4E6;box-shadow:0 4px 0 rgba(20,12,10,.4);display:flex;align-items:center;gap:8px;transition:transform .08s" style-active="transform:translateY(3px)"><span style="font:600 12px/1 Onest;opacity:.7">{{ r.n }}</span><span style="font:800 13px/1 Unbounded,sans-serif">{{ r.v }}</span></button></sc-for>
+          </div>
+        </div>
+        <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+          <div style="order:-2;display:flex;flex-direction:column;gap:12px;margin-top:8px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:0 4px"><span style="font:900 20px/1.1 Unbounded,sans-serif;letter-spacing:-.4px">{{ g.n }}</span><button onClick="{{ g.toggle }}" style="flex:none;font:700 13px/1 Onest;color:var(--mute)">{{ g.c }} · {{ g.tT }}</button></div>
+            <div style="display:flex;gap:12px;overflow-x:auto;margin:0 -16px;padding:2px 16px 10px;scroll-snap-type:x mandatory;scroll-padding:16px;scrollbar-width:none">
+              <sc-for list="{{ g.items }}" as="c" hint-placeholder-count="3">
+              <button onClick="{{ c.onClick }}" style="flex:none;width:150px;scroll-snap-align:start;min-width:0;border-radius:20px;border:2.5px solid var(--ink);box-shadow:0 5px 0 var(--ink);background:var(--tile);overflow:hidden;display:flex;flex-direction:column;text-align:left;transition:transform .1s,box-shadow .1s" style-active="transform:translateY(4px);box-shadow:0 1px 0 var(--ink)">
+                <span style="position:relative;display:block;height:{{ c.h }};background:{{ c.cvBg }};overflow:hidden;filter:{{ c.flt }};opacity:{{ c.op }};transition:filter .25s,opacity .25s">
+                  <span style="position:absolute;left:16%;right:16%;bottom:9%;height:24%;border-radius:50%;background-image:radial-gradient({{ c.dot }} 1.3px,transparent 1.9px);background-size:5px 5px;transform:skewX(-24deg)"></span>
+                  <span style="position:absolute;left:50%;top:46%;width:{{ c.gs }};height:{{ c.gs }};background:{{ c.sh }};clip-path:{{ c.clip }};transform:translate(-50%,-50%) translate(7px,7px) rotate({{ c.rot }})"></span>
+                  <span style="position:absolute;left:50%;top:46%;width:{{ c.gs }};height:{{ c.gs }};background:{{ c.gl }};clip-path:{{ c.clip }};transform:translate(-50%,-50%) rotate({{ c.rot }})"></span>
+                  <span style="position:absolute;left:{{ c.ax }};top:{{ c.ay }};width:{{ c.as }};height:{{ c.as }};background:{{ c.gl }};clip-path:{{ c.clip2 }};transform:rotate({{ c.rot2 }});box-shadow:none"></span>
+                  <span style="position:absolute;right:8px;top:8px;width:24px;height:24px;border-radius:7px;background:{{ c.ckBg }};border:{{ c.ckBd }};display:flex;align-items:center;justify-content:center"><sc-if value="{{ c.on }}" hint-placeholder-val="{{ true }}"><svg width="12" height="10" viewBox="0 0 26 22"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="#140C0A"></polygon></svg></sc-if></span>
+                </span>
+                <span style="padding:{{ c.lp }};font:{{ c.lf }};letter-spacing:-.2px;text-wrap:balance;border-top:2.5px solid var(--ink)">{{ c.n }}</span>
+              </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </sc-if>
+
+      <sc-if value="{{ hostOn }}" hint-placeholder-val="{{ false }}">
+        <div style="order:{{ hOrd }};position:{{ hPos }};left:0;right:0;bottom:0;z-index:{{ hZ }};padding:{{ hPad }};background:var(--sf);border-radius:{{ hR }};border:{{ hBd }};clip-path:{{ hClip }};animation:{{ hAnim }};display:flex;flex-direction:column;gap:12px;max-height:{{ hMax }};overflow-y:{{ hOv }}">
+          <sc-if value="{{ hSheet }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;left:18px;top:28px;padding:10px 16px;background:#140C0A;color:#FFF4E6;font:900 17px/1 Unbounded,sans-serif;transform:rotate(-4.4deg);transform-origin:left">{{ hTitle }}</span></sc-if>
+
+          <sc-if value="{{ edRar }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px">РІДКІСТЬ</span><span style="font:700 14px/1 Onest">{{ rarT }}</span></div>
+            <div style="display:flex;align-items:flex-end;gap:6px;height:100px">
+              <sc-for list="{{ rarBars }}" as="b" hint-placeholder-count="5"><button onClick="{{ b.onClick }}" style="flex:1;height:{{ b.h }};border-radius:8px;background:{{ b.bg }};color:{{ b.fg }};box-shadow:{{ b.sh }};transform:skewX(-8deg);font:900 20px/1 Unbounded,sans-serif;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px;transition:background .2s">{{ b.n }}</button></sc-for>
+            </div>
+            <span style="font:500 13px/1.4 Onest;color:var(--mute);text-wrap:pretty">1 — знайоме всім, 5 — чують одиниці. Торкніться стовпчика, щоб увімкнути чи вимкнути.</span>
+          </sc-if>
+
+          <sc-if value="{{ edCat }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px">{{ catT }} ОБРАНО</span><button onClick="{{ catAll }}" style="height:32px;padding:0 12px;border-radius:10px;background:var(--sf2);font:700 13px/1 Onest">{{ catAllT }}</button></div>
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+              <sc-for list="{{ cats }}" as="c" hint-placeholder-count="16"><button onClick="{{ c.onClick }}" style="min-width:0;height:54px;border-radius:14px;background:{{ c.bg }};color:{{ c.fg }};box-shadow:{{ c.sh }};border:{{ c.bd }};padding:0 10px;display:flex;align-items:center;gap:10px;text-align:left;transition:background .2s,color .2s;animation:{{ c.anim }}"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:{{ c.icBg }};display:flex;align-items:center;justify-content:center;transition:background .2s"><span style="width:16px;height:16px;background:{{ c.icFg }};clip-path:{{ c.clip }}"></span></span><span style="min-width:0;font:600 13px/1.2 Onest;text-wrap:balance">{{ c.n }}</span></button></sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ edType }}" hint-placeholder-val="{{ false }}">
+            <sc-for list="{{ types }}" as="t" hint-placeholder-count="4">
+              <div style="display:flex;flex-direction:column;gap:10px;padding-top:{{ t.pt }};border-top:{{ t.bt }}">
+                <span style="display:flex;flex-direction:column;gap:4px"><span style="font:800 15px/1.1 Unbounded,sans-serif;opacity:{{ t.op }}">{{ t.n }}</span><span style="font:500 13px/1.3 Onest;color:var(--mute)">{{ t.d }}</span></span>
+                <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;padding:3px;border-radius:13px;background:var(--sf2)">
+                  <sc-for list="{{ t.segs }}" as="g" hint-placeholder-count="4"><button onClick="{{ g.onClick }}" style="height:40px;border-radius:10px;background:{{ g.bg }};color:{{ g.fg }};font:700 13px/1 Onest;display:flex;align-items:center;justify-content:center;transition:background .2s">{{ g.t }}</button></sc-for>
+                </div>
+                <sc-if value="{{ t.hasSub }}" hint-placeholder-val="{{ false }}"><button onClick="{{ openFix }}" style="display:flex;align-items:center;gap:10px;height:44px;padding:0 12px;border-radius:12px;border:1.5px dashed var(--line);font:600 14px/1 Onest"><span style="flex:1">Теми виправлень</span><span style="font-weight:800">{{ fixTT }}</span><svg width="7" height="11" viewBox="0 0 8 12"><polygon points="0,0 8,6 0,12" fill="currentColor"></polygon></svg></button></sc-if>
+              </div>
+            </sc-for>
+          </sc-if>
+
+          <sc-if value="{{ edFix }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px">ТЕМИ · {{ fixTT }}</span><sc-if value="{{ fixBack }}" hint-placeholder-val="{{ false }}"><button onClick="{{ backType }}" style="height:32px;padding:0 12px;border-radius:10px;background:var(--sf2);font:700 13px/1 Onest">← Типи</button></sc-if></div>
+            <span style="font:500 13px/1.4 Onest;color:var(--mute)">Де трапляються помилки, які ви хочете виправляти.</span>
+            <div style="display:flex;flex-wrap:wrap;gap:8px">
+              <sc-for list="{{ fixChips }}" as="c" hint-placeholder-count="7"><button onClick="{{ c.onClick }}" style="height:44px;padding:0 14px;border-radius:12px;background:{{ c.bg }};color:{{ c.fg }};border:{{ c.bd }};font:600 14px/1 Onest;display:flex;align-items:center;gap:8px;transition:background .2s"><sc-if value="{{ c.on }}" hint-placeholder-val="{{ true }}"><svg width="12" height="10" viewBox="0 0 26 22"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="#FF3B2F"></polygon></svg></sc-if>{{ c.t }}</button></sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ edQ }}" hint-placeholder-val="{{ false }}">
+            <span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px">ШВИДКЕ ПИТАННЯ</span>
+            <span style="font:500 13px/1.4 Onest;color:var(--mute)">Як часто у Стрічці трапляється питання з Ігор.</span>
+            <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+              <sc-for list="{{ qOpts }}" as="o" hint-placeholder-count="4"><button onClick="{{ o.onClick }}" style="height:56px;border-radius:14px;background:{{ o.bg }};color:{{ o.fg }};box-shadow:{{ o.sh }};border:{{ o.bd }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;transition:background .2s"><span style="font:800 14px/1 Unbounded,sans-serif">{{ o.t }}</span><span style="font:500 11px/1 Onest;opacity:.75">{{ o.d }}</span></button></sc-for>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ hSheet }}" hint-placeholder-val="{{ false }}"><button onClick="{{ closeSheet }}" style="margin-top:4px;flex:none;height:60px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center" style-active="transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.35)">ГОТОВО</button></sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <sc-if value="{{ hSheet }}" hint-placeholder-val="{{ false }}"><div onClick="{{ closeSheet }}" style="position:absolute;inset:0;z-index:40;background:rgba(20,12,10,.5);animation:mxFade .25s both"></div></sc-if>
+
+  <div style="position:absolute;top:0;left:0;right:0;height:52px;z-index:30;display:flex;align-items:center;justify-content:space-between;padding:6px 30px 0 44px;background:var(--bg);font:600 16px/1 Onest;pointer-events:none"><span>13:51</span><span style="width:26px;height:12px;border-radius:4px;border:1.5px solid var(--ink)"></span></div>
+  <span style="position:absolute;top:11px;left:50%;margin-left:-62px;width:124px;height:36px;border-radius:20px;background:#000;z-index:31"></span>
+
+  <div style="position:absolute;left:0;right:0;bottom:0;height:88px;z-index:30;background:var(--bg);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-top:10px">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="5"><span style="position:relative;display:flex;flex-direction:column;align-items:center;gap:6px;color:{{ t.c }}"><sc-if value="{{ t.on }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:-11px;width:30px;height:5px;background:#FF3B2F;transform:skewX(-20deg)"></span></sc-if><span style="width:24px;height:22px;background:currentColor;clip-path:{{ t.clip }}"></span><span style="font:600 11px/1 Onest">{{ t.n }}</span></span></sc-for>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:406,&quot;height&quot;:860},&quot;variant&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;A&quot;,&quot;B&quot;,&quot;C&quot;,&quot;D&quot;,&quot;E&quot;,&quot;F&quot;],&quot;default&quot;:&quot;A&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;top&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;tiles&quot;,&quot;inline&quot;,&quot;sentence&quot;,&quot;sticky&quot;],&quot;default&quot;:&quot;tiles&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const R='#FF3B2F',RE='#C4271D',K='#140C0A',C='#FFF4E6';
+const P=pts=>'polygon('+pts.map(([x,y])=>x.toFixed(1)+'% '+y.toFixed(1)+'%').join(',')+')';
+const rad=d=>d*Math.PI/180;
+const GEAR=(()=>{const p=[];for(let k=0;k<8;k++){const a=k*45;[[a-9,50],[a+9,50],[a+16,37],[a+36,37]].forEach(([d,r])=>p.push([50+r*Math.cos(rad(d)),50+r*Math.sin(rad(d))]));}return P(p);})();
+const PERSON=(()=>{const p=[];for(let d=90;d>=-270;d-=20)p.push([50+13*Math.cos(rad(d)),14+13*Math.sin(rad(d))]);return P([...p,[50,27],[46,27],[46,33],[22,36],[10,60],[18,63],[28,46],[30,100],[46,100],[50,70],[54,100],[70,100],[72,46],[82,63],[90,60],[78,36],[54,33],[54,27],[50,27]]);})();
+const PIN=(()=>{const p=[];for(let d=140;d<=400;d+=15)p.push([50+36*Math.cos(rad(d)),38+36*Math.sin(rad(d))]);p.push([50,100]);return P(p);})();
+const LEAF=(()=>{const p=[[48,0],[52,0],[52,100],[48,100]];const g=[];for(let k=0;k<5;k++){const y=10+k*16;g.push([52,y+10],[82,y],[84,y+8],[52,y+18]);}const h=[];for(let k=4;k>=0;k--){const y=10+k*16;h.push([48,y+18],[16,y+8],[18,y],[48,y+10]);}return P([[46,2],[50,0],[54,2],[54,10],...g.flatMap(x=>[x]),[54,96],[52,100],[48,100],[46,96],...h,[46,10]]);})();
+const SPIRAL=(()=>{const o=[],n=[];for(let i=0;i<=40;i++){const a=i/40*Math.PI*2.6,r=48-a*5.2;o.push([50+r*Math.cos(a),50+r*Math.sin(a)]);n.unshift([50+(r-13)*Math.cos(a),50+(r-13)*Math.sin(a)]);}return P([...o,...n]);})();
+const SUNMT='polygon(0 100%,32% 38%,50% 62%,70% 28%,100% 100%)';
+const SHIELD='polygon(6% 0,94% 0,94% 52%,50% 100%,6% 52%,6% 0,20% 30%,20% 44%,50% 66%,80% 44%,80% 30%,50% 52%,20% 30%,6% 0)';
+const CL=[PERSON,'polygon(50% 100%,0 35%,25% 5%,50% 25%,75% 5%,100% 35%)',SUNMT,'polygon(50% 0,100% 45%,100% 100%,0 100%,0 45%)',GEAR,SHIELD,'polygon(85% 0,100% 15%,55% 62%,40% 80%,8% 100%,20% 60%,38% 45%)','polygon(0 30%,50% 0,100% 30%,100% 40%,88% 40%,88% 100%,70% 100%,70% 40%,59% 40%,59% 100%,41% 100%,41% 40%,30% 40%,30% 100%,12% 100%,12% 40%,0 40%)','polygon(38% 0,62% 0,62% 8%,58% 8%,58% 38%,100% 92%,94% 100%,6% 100%,0 92%,42% 38%,42% 8%,38% 8%)','polygon(0 0,100% 0,100% 75%,35% 75%,15% 100%,15% 75%,0 75%)',PIN,'polygon(58% 0,14% 56%,46% 56%,36% 100%,86% 42%,54% 42%,66% 0)',LEAF,'polygon(8% 4%,92% 4%,92% 30%,58% 30%,58% 100%,42% 100%,42% 30%,8% 30%)','polygon(50% 0,62% 18%,56% 30%,64% 30%,64% 100%,36% 100%,36% 30%,44% 30%,38% 18%)',SPIRAL];
+const CATS=['Людина і тіло','Емоції та характер','Природа і погода','Хата і побут','Техніка','Військова справа','Мистецтво і культура','Історія та старовина','Наука','Мова і мовлення','Діалекти','Дотепна лайка','Народні назви','Старі ремесла','Розстріляна лексика','Слова-хамелеони'];
+const TYPES=[['fix','Виправлення','Росіянізми, кальки, суржик, наголос'],['phr','Фразеологізми','Сталі вирази й прислів’я з походженням'],['syn','Синонімічні ряди','Різні слова для одного значення'],['tip','Поради','Як говорити й писати по-українському']];
+const LV=['Вимк','Менше','Помірно','Більше'],QL=['Ніколи','Рідко','Помірно','Часто'],QD=['без питань','1 на 20 карток','1 на 10','1 на 5'];
+const FIXT=['У розмові','Вдома','На роботі','У магазині','У дорозі','У школі','Дозвілля і медіа'];
+const PRESETS=[{n:'Збалансовано',d:'Усього потроху',v:{rar:[0,0,1,1,1],lv:{fix:2,phr:2,syn:2,tip:2},q:1}},{n:'Найрідкісніше',d:'Лише слова 5 рівня',v:{rar:[0,0,0,0,1],lv:{fix:1,phr:1,syn:1,tip:0},q:0}},{n:'Грамотність',d:'Більше виправлень і порад',v:{rar:[1,1,1,1,1],lv:{fix:3,phr:1,syn:1,tip:3},q:1}},{n:'Ігровий',d:'Частіше питання з Ігор',v:{rar:[0,1,1,1,1],lv:{fix:2,phr:2,syn:2,tip:1},q:3}}];
+const TABS=[['Стрічка','polygon(0 15%,100% 0,100% 45%,0 55%,0 65%,100% 60%,100% 100%,0 100%)'],['Ігри','polygon(50% 0,100% 50%,50% 100%,0 50%,50% 0,50% 22%,22% 50%,50% 78%,78% 50%,50% 22%)'],['Теми','polygon(0 0,100% 0,95% 25%,0 25%,0 38%,85% 38%,80% 62%,0 62%,0 75%,100% 75%,95% 100%,0 100%)'],['Збережене','polygon(10% 0,90% 0,90% 100%,50% 75%,10% 100%)'],['Профіль','polygon(30% 0,70% 0,75% 45%,100% 70%,100% 100%,0 100%,0 70%,25% 45%)']];
+const pl=n=>{const a=n%10,b=n%100;return a===1&&b!==11?'':a>=2&&a<=4&&(b<12||b>14)?'и':'ок';};
+class Component extends DCLogic {
+  state={rar:[0,0,0,0,1],cats:CATS.map(()=>true),lv:{fix:2,phr:2,syn:2,tip:2},fixT:FIXT.map(()=>true),q:1,aTab:'cat',sheet:null,open:null};
+  renderVals(){
+    const s=this.state,p=this.props,V=p.variant||'A',isA=V==='A',isB=V==='B',isC=V==='C',isD=V==='D',isE=V==='E',isF=V==='F',SH=isB||isC||isE||isF;
+    const v={th:p.theme||'light',isA,isB,isC,isD,isE,isF};
+    const on=s.rar.map((x,i)=>x?i+1:0).filter(Boolean);
+    v.rarT=on.length===5?'усі':on.length===1?'лише '+on[0]:on.every((x,i)=>!i||x===on[i-1]+1)?on[0]+'–'+on[on.length-1]:on.join(', ');
+    v.rarBars=s.rar.map((x,i)=>({n:i+1,h:(44+i*14)+'px',hs:(22+i*9)+'px',bg:x?R:'var(--sil)',fg:x?K:'var(--mute)',sh:x?'0 4px 0 '+RE:'none',onClick:()=>{const r=[...s.rar];r[i]=r[i]?0:1;if(!r.some(Boolean))return;this.setState({rar:r});}}));
+    const nc=s.cats.filter(Boolean).length;v.catT=nc+' з 16';v.catAllT=nc===16?'Жодної':'Усі';
+    v.catAll=()=>this.setState({cats:CATS.map(()=>nc!==16)});
+    v.cats=CATS.map((n,i)=>{const o=s.cats[i];return {n,clip:CL[i],bg:o?'var(--ink)':'var(--tile)',fg:o?'var(--bg)':'var(--mute)',sh:o?'0 4px 0 rgba(0,0,0,.3)':'none',bd:o?'0':'1px solid var(--line)',icBg:o?R:'var(--sil)',icFg:o?K:'var(--mute)',anim:'none',onClick:()=>{const c=[...s.cats];c[i]=!c[i];this.setState({cats:c});}};});
+    const nt=TYPES.filter(t=>s.lv[t[0]]>0).length;v.typesT=nt+' з 4';
+    const nf=s.fixT.filter(Boolean).length;v.fixTT=nf+' з 7';v.qT=QL[s.q];
+    const setLv=(k,l)=>this.setState(x=>({lv:{...x.lv,[k]:l}}));
+    v.types=TYPES.map(([k,n,d],i)=>{const l=s.lv[k];return {n,d,pt:i?'14px':'0',bt:i?'1px solid var(--line)':'0',op:l?1:.5,hasSub:k==='fix'&&l>0,
+      segs:LV.map((t,j)=>({t,bg:j===l?(j?'var(--ink)':'var(--tile)'):'transparent',fg:j===l?(j?'var(--bg)':'var(--ink)'):'var(--mute)',onClick:()=>setLv(k,j)}))};});
+    v.fixChips=FIXT.map((t,i)=>{const o=s.fixT[i];return {t,on:o,bg:o?'var(--ink)':'transparent',fg:o?'var(--bg)':'var(--mute)',bd:o?'0':'1.5px solid var(--line)',onClick:()=>{const f=[...s.fixT];f[i]=!f[i];if(!f.some(Boolean))return;this.setState({fixT:f});}};});
+    v.qOpts=QL.map((t,i)=>{const o=i===s.q;return {t,d:QD[i],bg:o?R:'var(--tile)',fg:o?K:'var(--ink)',sh:o?'0 4px 0 '+RE:'0 4px 0 var(--edge)',bd:o?'0':'1px solid var(--line)',onClick:()=>this.setState({q:i})};});
+    // host
+    const kind=isA?s.aTab:SH?s.sheet:s.open,hSheet=SH&&!!s.sheet;
+    v.hostOn=isA||hSheet||(isD&&!!s.open);v.hSheet=hSheet;
+    v.edRar=kind==='rar';v.edCat=kind==='cat';v.edType=kind==='type';v.edFix=kind==='fixT';v.edQ=kind==='q';
+    v.hTitle={rar:'РІДКІСТЬ',cat:'КАТЕГОРІЇ',type:'ТИПИ КАРТОК',fixT:'ТЕМИ ВИПРАВЛЕНЬ',q:'ШВИДКЕ ПИТАННЯ'}[kind]||'';
+    Object.assign(v,hSheet?{hPos:'absolute',hZ:50,hPad:'72px 16px 30px',hR:'0',hBd:'0',hClip:'polygon(0 28px,100% 0,100% 100%,0 100%)',hAnim:'mxSheet .45s cubic-bezier(.2,.9,.3,1) both',hMax:'90%',hOv:'auto'}
+      :{hPos:'relative',hZ:'auto',hPad:'16px',hR:'20px',hBd:'1px solid var(--line)',hClip:'none',hAnim:'mxCasc .3s both',hMax:'none',hOv:'visible'});
+    const DK=['rar','cat','type','q'],di=DK.indexOf(kind==='fixT'?'type':kind);v.hOrd=isD?11+2*di:0;
+    v.closeSheet=()=>this.setState({sheet:null});
+    v.openFix=()=>this.setState(isA?{aTab:'fixT'}:isD?{open:'fixT'}:{sheet:'fixT'});
+    v.fixBack=true;v.backType=()=>this.setState(isA?{aTab:'type'}:isD?{open:'type'}:{sheet:'type'});
+    v.showRarCard=isA||isB;
+    v.headT=isA||isB?'':'';
+    v.aTabs=[['cat','КАТЕГОРІЇ',v.catT],['type','ТИПИ',v.typesT],['q','ПИТАННЯ',v.qT]].map(([k,n,c])=>{const o=s.aTab===k||(k==='type'&&s.aTab==='fixT');return {n,c,bg:o?'var(--ink)':'transparent',fg:o?'var(--bg)':'var(--ink)',onClick:()=>this.setState({aTab:k})};});
+    v.faders=[...TYPES.map(([k,n])=>({k,n,l:s.lv[k],q:false})),{k:'q',n:'Питання',l:s.q,q:true}].map(f=>{const set=l=>f.q?this.setState({q:l}):setLv(f.k,l);
+      return {n:({'Виправлення':'Виправл.','Фразеологізми':'Фразеол.','Синонімічні ряди':'Синоніми'})[f.n]||f.n,lvT:f.q?QL[f.l]:LV[f.l],blocks:[3,2,1].map(j=>({bg:j<=f.l?R:'var(--sil)',sh:j<=f.l?'0 3px 0 '+RE:'none',onClick:()=>set(j)})),offT:f.q?'ніколи':'вимк',offBg:f.l===0?'var(--ink)':'var(--sf2)',offFg:f.l===0?'var(--bg)':'var(--mute)',onOff:()=>set(0)};});
+    v.bRows=[['cat','Категорії',v.catT],['fixT','Теми виправлень',v.fixTT]].map(([k,n,val],i)=>({n,v:val,bt:i?'1px solid var(--line)':'0',onClick:()=>this.setState({sheet:k})}));
+    const W=[['Слова',nc?8:0,'var(--ink)'],['Виправлення',s.lv.fix*1.2,R],['Фразеологізми',s.lv.phr,RE],['Синоніми',s.lv.syn,'var(--mute)'],['Поради',s.lv.tip*.8,'#DCC2A6'],['Питання',s.q*1.1,'#F2D3AE']],sum=W.reduce((a,w)=>a+w[1],0)||1;
+    let cnt=W.map(w=>Math.round(w[1]/sum*20));const diff=20-cnt.reduce((a,b)=>a+b,0);cnt[0]+=diff;
+    v.mixSegs=W.map((w,i)=>({n:w[0],k:cnt[i],c:w[2],f:Math.max(0,w[1]).toFixed(2),mw:w[1]>0?'6px':'0',op:cnt[i]?1:.4}));
+    const ROWS=[['rar','Рідкість',v.rarT,'Від знайомого до рідкісного'],['cat','Категорії',v.catT,'Про що будуть слова'],['type','Типи карток',v.typesT,'Виправлення, фразеологізми, поради'],['q','Швидке питання',v.qT,'Питання з Ігор у Стрічці']];
+    v.cRows=ROWS.map(([k,n,val,d],i)=>({n,v:val,d,bt:i?'1px solid var(--line)':'0',onClick:()=>this.setState({sheet:k})}));
+    const openK=s.open==='fixT'?'type':s.open;
+    v.dRows=ROWS.map(([k,n,val],i)=>{const o=openK===k;return {n,v:val,ord:10+2*i,rot:o?'180deg':'0deg',bg:o?'var(--ink)':'var(--sf)',fg:o?'var(--bg)':'var(--ink)',chBg:o?'rgba(255,255,255,.14)':'var(--sf2)',onClick:()=>this.setState({open:o?null:k})};});
+    const same=pv=>JSON.stringify(pv.rar)===JSON.stringify(s.rar)&&TYPES.every(([k])=>pv.lv[k]===s.lv[k])&&pv.q===s.q;
+    v.presets=PRESETS.map(pr=>{const o=same(pr.v);return {n:pr.n,d:pr.d,bg:o?R:'var(--tile)',fg:o?K:'var(--ink)',sh:o?'0 5px 0 '+RE:'0 4px 0 var(--edge)',bd:o?'0':'1px solid var(--line)',anim:o?'mxPop .35s both':'none',onClick:()=>this.setState({rar:[...pr.v.rar],lv:{...pr.v.lv},q:pr.v.q})};});
+    {const PAL=[{bg:'var(--sf2)',gl:R,sh:K,dot:'rgba(255,59,47,.6)'},{bg:R,gl:C,sh:K,dot:'rgba(20,12,10,.35)'},{bg:K,gl:R,sh:C,dot:'rgba(255,59,47,.65)'}];
+     const GR=[['Про людину',[0,1],2],['Світ навколо',[2,3,4,8],2],['Мова',[9,10,11,12,15],3],['Історія й культура',[6,7,5,13,14],3]];
+     const big=c=>isF?{h:'124px',gs:'70px',lp:'10px 12px 12px',lf:'700 14px/1.2 Onest'}:c===2?{h:'132px',gs:'78px',lp:'12px 14px 14px',lf:'800 15px/1.15 Unbounded,sans-serif'}:{h:'92px',gs:'50px',lp:'9px 10px 11px',lf:'700 12px/1.2 Onest'};
+     v.groups=GR.map(([n,ids,cols])=>{const non=ids.filter(i=>s.cats[i]).length,all=non===ids.length;
+       return {n,c:non+' з '+ids.length,tT:all?'зняти':'усі',cols,gap:cols===2?'12px':'8px',toggle:()=>{const c=[...s.cats];ids.forEach(i=>c[i]=!all);this.setState({cats:c});},
+         items:ids.map((i,j)=>{const o=s.cats[i],mourn=i===14,P=mourn?{bg:K,gl:C,sh:'#4A332A',dot:'transparent'}:PAL[(i*2+j)%3],z=big(cols);
+           return {...z,n:CATS[i],clip:CL[i],clip2:i===2||j%2?'circle(50%)':'polygon(50% 0,100% 50%,50% 100%,0 50%)',cvBg:P.bg,gl:P.gl,sh:P.sh,dot:P.dot,rot:'0deg',rot2:(i*37%60-30)+'deg',
+             ax:i===2?'68%':(i%2?'14%':'70%'),ay:i===2?'10%':(i%3?'14%':'58%'),as:mourn?'0px':i===2?(cols===3&&!isF?'20px':'30px'):(cols===3&&!isF?'14px':'20px'),on:o,flt:o?'none':'grayscale(1)',op:o?1:.45,
+             ckBg:o?R:'rgba(255,255,255,.6)',ckBd:o?'0':'2px solid #140C0A',onClick:()=>{const c=[...s.cats];c[i]=!c[i];this.setState({cats:c});}};})};});
+     const op=k=>()=>this.setState({sheet:k});
+     v.eRows=[['rar','Рідкість',v.rarT],['type','Типи карток',v.typesT],['q','Швидке питання',v.qT]].map(([k,n,val],i)=>({n,v:val,bt:i?'1px solid var(--line)':'0',onClick:op(k)}));
+     v.fChips=[['rar','Рідкість',v.rarT],['type','Типи',v.typesT],['q','Питання',v.qT]].map(([k,n,val])=>({n,v:val,onClick:op(k)}));
+     if(isE||isF)v.headT=v.catT;
+     const top=p.top||'tiles';v.tTiles=isE&&top==='tiles';v.tInline=isE&&top==='inline';v.tSentence=isE&&top==='sentence';v.tSticky=isE&&top==='sticky';
+     v.openTypeSheet=op('type');
+     const lvAll=TYPES.map(([k])=>s.lv[k]);
+     v.eTiles=[{k:'rar',n:'РІДКІСТЬ',v:on.length===5?'усі':on.length===1?String(on[0]):v.rarT,viz:s.rar.map((x,i)=>({h:(6+i*4)+'px',c:x?R:'var(--sil)'})),bg:'var(--tile)',fg:'var(--ink)'},
+       {k:'type',n:'ТИПИ',v:nt+'/4',viz:lvAll.map(l=>({h:(6+l*5)+'px',c:l?'var(--ink)':'var(--sil)'})),bg:'var(--tile)',fg:'var(--ink)'},
+       {k:'q',n:'ПИТАННЯ',v:QL[s.q],viz:[1,2,3].map(j=>({h:(6+j*5)+'px',c:j<=s.q?R:'var(--sil)'})),bg:'var(--tile)',fg:'var(--ink)'}].map(t=>({...t,onClick:op(t.k)}));
+     v.tPills=TYPES.map(([k,n])=>{const l=s.lv[k];return {n:n==='Синонімічні ряди'?'Синоніми':n,bg:l?'var(--ink)':'transparent',fg:l?'var(--bg)':'var(--mute)',bd:l?'0':'1.5px solid var(--line)',dots:[1,2,3].map(j=>({c:j<=l?R:(l?'rgba(255,255,255,.2)':'var(--sil)')})),onClick:()=>setLv(k,l?0:2)};});
+     v.qSeg=QL.map((t,i)=>({t,bg:i===s.q?'var(--ink)':'transparent',fg:i===s.q?'var(--bg)':'var(--mute)',onClick:()=>this.setState({q:i})}));
+     const tw=t=>({t,txt:true,btn:false}),tb=(t,k)=>({t,txt:false,btn:true,onClick:op(k)});
+     v.sent=[tw('Слова'),tb(on.length===5?'усіх рівнів':on.length===1?'рівня '+on[0]:'рівнів '+v.rarT,'rar'),tw('рідкості,'),tb(nt+' з 4','type'),tw('типів карток і'),tb(QL[s.q].toLowerCase(),'q'),tw('— питання з Ігор.')];
+     v.stChips=[['rar','Рідкість',v.rarT],['type','Типи',v.typesT],['q','Питання',v.qT]].map(([k,n,val])=>{const o=s.sheet===k;return {n,v:val,bg:o?'var(--ink)':'var(--tile)',fg:o?'var(--bg)':'var(--ink)',onClick:op(k)};});}
+    if(isD){const anyP=PRESETS.some(pr=>same(pr.v));v.headT=anyP?'':'свої теми';}
+    v.tabs=TABS.map(([n,clip])=>({n,clip,on:n==='Теми',c:n==='Теми'?'var(--ink)':'var(--mute)'}));
+    return v;
+  }
+}
+</script>
+</body>
+</html>

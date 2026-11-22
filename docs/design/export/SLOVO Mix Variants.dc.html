@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#EFE3D3}a{color:#C4271D}a:hover{color:#FF3B2F}</style>
+</helmet>
+<section style="padding:64px;display:flex;flex-direction:column;gap:32px;background:#EFE3D3;color:#140C0A;font-family:Onest,sans-serif;min-width:max-content">
+  <header style="display:flex;flex-direction:column;gap:12px;max-width:1000px">
+    <span style="align-self:flex-start;padding:8px 12px;background:#140C0A;color:#FFF4E6;font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px">ЗАТВЕРДЖЕНО · ЩЕ НЕ ГЛОБАЛЬНО</span>
+    <span style="font:900 48px/1 Unbounded,sans-serif;letter-spacing:-1.5px">Мої Теми</span>
+    <span style="font:400 17px/1.5 Onest;color:#4A3E38;max-width:860px;text-wrap:pretty">Три плитки (Рідкість, Типи, Питання) і категорії-обкладинки, згруповані в розділи. Тап по плитці — шторка з налаштуванням. Усе клікабельне.</span>
+  </header>
+  <div id="3a" style="display:flex;flex-direction:column;gap:16px;width:836px">
+    <div style="display:flex;align-items:center;gap:12px"><span style="padding:6px 10px;background:#FF3B2F;color:#140C0A;font:800 13px/1 Unbounded,sans-serif">3a</span><span style="font:900 26px/1 Unbounded,sans-serif">Три плитки</span></div>
+    <div style="display:flex;gap:24px"><dc-import name="XMix" variant="E" top="tiles" theme="light" hint-size="406px,860px"></dc-import><dc-import name="XMix" variant="E" top="tiles" theme="dark" hint-size="406px,860px"></dc-import></div>
+  </div>
+</section>
+</x-dc>
+</body>
+</html>

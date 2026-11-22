@@ -284,7 +284,7 @@
   </sc-if>
   <sc-if value="{{ d9b.on }}" hint-placeholder-val="{{ true }}">
   <div style="border-radius:22px;background:var(--sf);border:1px solid var(--line);padding:18px 20px;display:flex;align-items:center;gap:14px;animation:{{ d9b.anim }};transform-origin:top center">
-    <div style="flex:1;display:flex;flex-direction:column;gap:6px"><span style="font:900 17px/1.15 Unbounded,sans-serif">Переглянь свій Мікс</span><span style="font:400 14px/1.35 Onest;color:var(--mute)">Налаштуй, що показувати у Стрічці: категорії слів, Виправлення, Фразеологізми, Синонімічні ряди, Поради.</span></div>
+    <div style="flex:1;display:flex;flex-direction:column;gap:6px"><span style="font:900 17px/1.15 Unbounded,sans-serif">Переглянь свої Теми</span><span style="font:400 14px/1.35 Onest;color:var(--mute)">Налаштуй, що показувати у Стрічці: категорії слів, Виправлення, Фразеологізми, Синонімічні ряди, Поради.</span></div>
     <button onClick="{{ d9b.close }}" style="flex:none;height:46px;padding:0 16px;border-radius:13px;background:var(--ink);color:var(--bg);font:900 12px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;text-align:center" style-active="transform:scale(.94)">ЗАРАЗ</button>
   </div>
   </sc-if>
@@ -497,7 +497,7 @@ class Component extends DCLogic {
      v.why=['Писати без помилок','Знати рідкісні слова','Грати зі словами'].map((t,i)=>({t,bg:wy[i]?'#FF3B2F':'var(--sf2)',fg:wy[i]?'#140C0A':'var(--ink)',anim:wy[i]?'slPop .3s both':'none',onClick:()=>this.setState(x=>{const w={...(x.why||{1:1})};if(w[i])delete w[i];else w[i]=1;return {why:w};})}));
      v.vocab=['Поки небагато','Знаю чимало'].map((t,i)=>({t,bt:i?'1px solid var(--line)':'0',bg:i===vc?'var(--sf2)':'transparent',ring:i===vc?'7px solid #FF3B2F':'2.5px solid var(--mute)',onClick:()=>this.setState({voc:i})}));
      v.d9a=dz('d9a','slCasc .4s .1s both','Відкриваю Тест рідкості: 10 слів.');
-     v.d9b=dz('d9b','slCasc .4s .2s both','Відкриваю Мій Мікс.');
+     v.d9b=dz('d9b','slCasc .4s .2s both','Відкриваю Мої Теми.');
      v.d9c=dz('d9c','slCasc .4s .3s both','Нагадаємо пізніше.');
      const sv=st.sv||'ask';v.svAsk=sv!=='done';v.svDone=sv==='done';v.svSheet=sv==='sheet';v.svWho=st.svWho||'';
      v.svOpen=()=>this.setState({sv:'sheet'});v.svClose=()=>this.setState({sv:'ask'});

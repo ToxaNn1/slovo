@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#EFE3D3}a{color:#C4271D}a:hover{color:#FF3B2F}</style>
+</helmet>
+<div style="padding:64px;display:flex;flex-direction:column;gap:64px;background:#EFE3D3;color:#140C0A;font-family:Onest,sans-serif;min-width:max-content">
+  <header style="display:flex;flex-direction:column;gap:14px;max-width:1000px">
+    <span style="align-self:flex-start;padding:8px 12px;background:#140C0A;color:#FFF4E6;font:800 12px/1 Unbounded,sans-serif;letter-spacing:1.5px">ТЕСТ · ЩЕ НЕ ГЛОБАЛЬНО</span>
+    <span style="font:900 48px/1 Unbounded,sans-serif;letter-spacing:-1.5px">Онбординг · крок 3 · Голос</span>
+    <span style="font:400 17px/1.5 Onest;color:#4A3E38;max-width:860px;text-wrap:pretty">СЛОВО → ТРИМАЙ! → <b>ГОЛОС</b> → ГРАЙ! → РІВЕНЬ → НАВІЩО → ЦІЛЬ → ДЗИНЬ!  Торкання рядка обирає голос і одразу читає «заплава». Під час звучання Рупор кричить, склади підсвічуються, значок стає еквалайзером.</span>
+  </header>
+  <section style="display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;align-items:baseline;gap:14px;padding-bottom:12px;border-bottom:3px solid #140C0A"><span style="font:900 18px/1 Unbounded,sans-serif;color:#FF3B2F">1</span><span style="font:900 28px/1 Unbounded,sans-serif">Щойно відкрився · Оксана</span><span style="font:500 15px/1 Onest;color:#4A3E38">клікабельно</span></div>
+    <div style="display:flex;gap:40px"><dc-import name="XObVoice" theme="light" demo="default" hint-size="406px,860px"></dc-import><dc-import name="XObVoice" theme="dark" demo="default" hint-size="406px,860px"></dc-import></div>
+  </section>
+  <section style="display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;align-items:baseline;gap:14px;padding-bottom:12px;border-bottom:3px solid #140C0A"><span style="font:900 18px/1 Unbounded,sans-serif;color:#FF3B2F">2</span><span style="font:900 28px/1 Unbounded,sans-serif">Обрано Тараса · звучить</span></div>
+    <div style="display:flex;gap:40px"><dc-import name="XObVoice" theme="light" demo="playing" hint-size="406px,860px"></dc-import><dc-import name="XObVoice" theme="dark" demo="playing" hint-size="406px,860px"></dc-import></div>
+  </section>
+  <section style="display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;align-items:baseline;gap:14px;padding-bottom:12px;border-bottom:3px solid #140C0A"><span style="font:900 18px/1 Unbounded,sans-serif;color:#FF3B2F">3</span><span style="font:900 28px/1 Unbounded,sans-serif">Без звуку · немає мережі</span><span style="font:500 15px/1 Onest;color:#4A3E38">рядок обирається, значок сірий</span></div>
+    <div style="display:flex;gap:40px"><dc-import name="XObVoice" theme="light" demo="offline" hint-size="406px,860px"></dc-import><dc-import name="XObVoice" theme="dark" demo="offline" hint-size="406px,860px"></dc-import></div>
+  </section>
+  <section style="display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;align-items:baseline;gap:14px;padding-bottom:12px;border-bottom:3px solid #140C0A"><span style="font:900 18px/1 Unbounded,sans-serif;color:#FF3B2F">SE</span><span style="font:900 28px/1 Unbounded,sans-serif">iPhone SE · 375×667</span><span style="font:500 15px/1 Onest;color:#4A3E38">4 рядки без прокрутки; якщо не влізе — гортається лише картка</span></div>
+    <div style="display:flex;gap:40px;align-items:flex-start"><dc-import name="XObVoice" theme="light" demo="default" small="{{ true }}" hint-size="391px,683px"></dc-import><dc-import name="XObVoice" theme="dark" demo="playing" small="{{ true }}" hint-size="391px,683px"></dc-import><dc-import name="XObVoice" theme="light" demo="offline" small="{{ true }}" hint-size="391px,683px"></dc-import></div>
+  </section>
+</div>
+</x-dc>
+</body>
+</html>
