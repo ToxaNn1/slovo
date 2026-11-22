@@ -9,6 +9,10 @@ import { definitionOfEntry, distractorOrder } from './guess-word';
 /** The stable id analytics name the Word Meaning question by, where a Game Mode has its own. */
 export const WORD_MEANING_ID = 'word-meaning';
 
+/** Whether one Word lists the other's Lemma among its synonyms. */
+const listsAsSynonym = (comparison: TextComparison, one: Word, other: Word) =>
+  one.synonyms.some((synonym) => comparison.same(synonym, other.lemma, 'typedAnswer'));
+
 const optionOf = (text: string): RoundOption => ({ text, stressedVowels: [] });
 
 /**
@@ -25,7 +29,7 @@ export const asksWordMeaning = (word: Word, comparison: TextComparison): boolean
  * whole, its primary Definition among them. The three Distractors are the
  * primary Definitions of other Eligible Words, of the same part of speech
  * first and of any other when those are too few, never one of this Word's
- * own Definitions nor a homonym's, no two options with one Comparison Key. Nothing when four
+ * own Definitions nor a homonym's nor a synonym's, whichever of the two lists the other, no two options with one Comparison Key. Nothing when four
  * distinct Definitions cannot be found. Its sheet shows the primary
  * Definition and the Word's first Example, if it has one.
  */
@@ -45,9 +49,13 @@ export function wordMeaningRound({
   const taken = new Set(
     [right, ...answer.extraDefinitions].map((text) => comparison.key(text, 'definition')),
   );
-  // A homonym shares the Lemma, so its Definition would be a second right answer.
+  // A homonym shares the Lemma and a synonym the meaning, so either's Definition would be right too.
   const others = eligible.filter(
-    (word) => word.id !== answer.id && !comparison.same(word.lemma, answer.lemma, 'typedAnswer'),
+    (word) =>
+      word.id !== answer.id &&
+      !comparison.same(word.lemma, answer.lemma, 'typedAnswer') &&
+      !listsAsSynonym(comparison, answer, word) &&
+      !listsAsSynonym(comparison, word, answer),
   );
   const distractors: string[] = [];
   for (const other of distractorOrder(answer, others, random)) {

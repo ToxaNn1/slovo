@@ -42,9 +42,10 @@ export function MyMixScreen({
         <Text
           testID="mix-selected"
           {...voice}
+          accessibilityLabel={count.label}
           style={[typeStyle('progressCount', tokens), styles.count, { color: colors.muted }]}
         >
-          {count}
+          {count.text}
         </Text>
       </View>
       <ScrollView

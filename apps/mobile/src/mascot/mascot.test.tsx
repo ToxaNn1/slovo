@@ -3,13 +3,14 @@ import type { Word } from '@slovo/contracts';
 import { openComposition, type Composition, type Edition, type UserStateFact } from '@slovo/core';
 import { createMemoryContentPort, seedUserState, SEEN_DWELL_MS } from '@slovo/core/testing';
 import { act, fireEvent, screen } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
 import { editionStrings } from '../edition/edition';
 import { editionAtLaunch as shipped } from '../edition/edition-at-launch';
 import { fill } from '@slovo/contracts';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { renderApp } from '../shell/test-app';
+import { useSettings } from '../settings/settings';
 import { CELEBRATION_MS, MascotCelebrations } from './mascot';
 
 /** The UA Edition as it ships, with the Daily Crossword on, so its Badges show. */
@@ -76,8 +77,36 @@ async function renderCelebrations({
     settings: await settingsAt({ noCounters }),
   });
   mockPathname = route;
-  await renderApp(<MascotCelebrations />, { shell });
+  await renderApp(
+    <>
+      <MascotCelebrations />
+      <SettingsReach />
+    </>,
+    { shell },
+  );
   return composition;
+}
+
+/** A button that shows the counters again, as the settings screen's «Без лічильників» does. */
+function SettingsReach() {
+  const { update } = useSettings();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      testID="show-counters"
+      onPress={() => {
+        update({ noCounters: false });
+      }}
+    />
+  );
+}
+
+/** Shows the counters again. */
+async function showCounters() {
+  await fireEvent.press(screen.getByTestId('show-counters'));
+  await act(async () => {
+    await jest.advanceTimersByTimeAsync(0);
+  });
 }
 
 /** The day `days` before today in Kyiv, as `YYYY-MM-DD`. */
@@ -132,6 +161,17 @@ async function winGame(composition: Composition) {
   await act(async () => {
     composition.xpLog
       .award({ source: 'game-finished', mode: 'guess-word', right: 10, played: 10 })
+      .commit();
+    // Settles the writes without running the celebration's timer out.
+    await jest.advanceTimersByTimeAsync(0);
+  });
+}
+
+/** Wins a Correction Game with every Round right, which earns two Badges at once. */
+async function winCorrectionsFlawlessly(composition: Composition) {
+  await act(async () => {
+    composition.xpLog
+      .award({ source: 'game-finished', mode: 'correction', right: 10, played: 10 })
       .commit();
     // Settles the writes without running the celebration's timer out.
     await jest.advanceTimersByTimeAsync(0);
@@ -212,6 +252,34 @@ describe('the Mascot’s celebrations', () => {
     expect(shownMascot()).toBeNull();
   });
 
+  it('celebrates a Streak milestone met under the new Level screen once the screen closes, for a while', async () => {
+    const composition = await renderCelebrations();
+
+    // The 5th XP makes the first Streak day, the 50th reaches Level 1, in one go.
+    await playRounds(composition, 50);
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(CELEBRATION_MS);
+    });
+    await fireEvent.press(
+      screen.getByRole('button', { name: editionStrings.settings.profile.newLevel.done }),
+    );
+
+    expect(celebration('streakMilestone')).toHaveTextContent(mascot.streakMilestone);
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(CELEBRATION_MS);
+    });
+    expect(shownMascot()).toBeNull();
+  });
+
+  it('celebrates nothing met while the counters were hidden once they show again', async () => {
+    const composition = await renderCelebrations({ noCounters: true });
+    await playRounds(composition, 5);
+
+    await showCounters();
+
+    expect(shownMascot()).toBeNull();
+  });
+
   it('celebrates nothing with its Feature Switch off, as in 0.9', async () => {
     const composition = await renderCelebrations({ on: false });
 
@@ -250,6 +318,59 @@ describe('a Badge earned', () => {
     expect(screen.queryByTestId('badge-toast', hidden)).toBeNull();
     await fireEvent.press(screen.getByRole('button', { name: stamp.done }));
     expect(screen.queryByText(stamp.kicker)).toBeNull();
+  });
+});
+
+describe('two Badges earned at once', () => {
+  const stamp = editionStrings.settings.profile.badgeStamp;
+  const hidden = { includeHiddenElements: true };
+  const names = ['Перша перемога у виправленнях', 'Чиста мова'];
+
+  it('are stamped in turn outside a Game, each opened by its «ГОТОВО»', async () => {
+    const composition = await renderCelebrations();
+
+    await winCorrectionsFlawlessly(composition);
+
+    const first = names.find((name) => screen.queryByText(name) !== null);
+    expect(first).toBeDefined();
+    await fireEvent.press(screen.getByRole('button', { name: stamp.done }));
+    const second = names.find((name) => name !== first);
+    expect(screen.getByText(second ?? '')).toBeOnTheScreen();
+    expect(screen.queryByText(first ?? '')).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: stamp.done }));
+    expect(screen.queryByText(stamp.kicker)).toBeNull();
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(0);
+    });
+    expect(composition.badges.state.filter((badge) => badge.earned && badge.isNew)).toEqual([]);
+  });
+
+  it('are toasted in turn in a Game', async () => {
+    const composition = await renderCelebrations({ route: '/game/correction' });
+
+    await winCorrectionsFlawlessly(composition);
+
+    const first = names.find((name) => screen.queryByText(name, hidden) !== null);
+    expect(first).toBeDefined();
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(CELEBRATION_MS);
+    });
+    const second = names.find((name) => name !== first);
+    expect(screen.getByText(second ?? '', hidden)).toBeOnTheScreen();
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(CELEBRATION_MS);
+    });
+    expect(screen.queryByTestId('badge-toast', hidden)).toBeNull();
+  });
+
+  it('show nothing when earned while the counters are hidden, nor once they show again (ADR 0066)', async () => {
+    const composition = await renderCelebrations({ noCounters: true });
+    await winCorrectionsFlawlessly(composition);
+
+    await showCounters();
+
+    expect(screen.queryByText(stamp.kicker)).toBeNull();
+    for (const name of names) expect(screen.queryByText(name, hidden)).toBeNull();
   });
 });
 
@@ -322,6 +443,10 @@ describe('the new Level screen', () => {
   it('shows at a new Level with its number and name and the Mascot, and «ГОТОВО» closes it', async () => {
     const composition = await renderCelebrations();
     await playRounds(composition, 49);
+    // The first Streak day, met at the 5th XP, has its while first.
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(CELEBRATION_MS);
+    });
     expect(screen.queryByText(title)).toBeNull();
 
     // The 50th XP reaches Level 1.

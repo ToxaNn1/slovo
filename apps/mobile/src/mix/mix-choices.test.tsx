@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it } from '@jest/globals';
 import { openComposition, systemRandom, type Composition, type Edition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import { fill, type Category } from '@slovo/contracts';
+import { minTouchTarget } from '@slovo/ui/tokens';
+import { StyleSheet } from 'react-native';
 import { Stack } from 'expo-router';
 import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
@@ -140,6 +142,22 @@ describe('the Category covers on the Мій Мікс screen', () => {
     );
     await press('mix-group-0');
     expect(screen.getByTestId('mix-selected')).toHaveTextContent(selected(2));
+  });
+
+  it('has VoiceOver read «N з M» as the Categories in the Mix', async () => {
+    await renderChoices();
+    await press('mix-chip-emotions-character');
+
+    expect(screen.getByTestId('mix-selected')).toHaveAccessibleName('У Міксі 1 з 2 тем');
+  });
+
+  it('gives a group’s «усі» / «зняти» a tap area of the full touch target', async () => {
+    await renderChoices();
+
+    expect(StyleSheet.flatten(screen.getByTestId('mix-group-0').props['style'])).toHaveProperty(
+      'minHeight',
+      minTouchTarget,
+    );
   });
 });
 

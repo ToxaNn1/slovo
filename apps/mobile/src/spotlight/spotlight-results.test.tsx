@@ -12,6 +12,7 @@ import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { createOutsideLinks } from '../entries/entry-link';
+import { createSpotlightIndex, type SpotlightItem } from './spotlight-index';
 import { screenSettled } from '../use-open-screen';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 
@@ -138,6 +139,29 @@ describe('a tap on a Spotlight result', () => {
     const app = await renderApp();
 
     await app.tap(result?.route ?? '');
+
+    expect(app.pathname()).toBe('/entry/w_sumyrnyi');
+    expect(screen.getByText('Значення слова сумирний.')).toBeTruthy();
+    expect(composition.history.list).toEqual([]);
+  });
+
+  it('on an Entry, by the route the index gives it with the active Edition, opens its Entry screen as a plain link', async () => {
+    await composition.favorites.add('w_sumyrnyi');
+    const indexed: SpotlightItem[] = [];
+    await createSpotlightIndex(
+      {
+        replaceIndex: (items) => {
+          indexed.push(...items);
+          return Promise.resolve();
+        },
+      },
+      edition.id,
+    ).replace(await snapshot());
+    const [item] = indexed;
+    expect(item?.route).toBe('entry/w_sumyrnyi?edition=uk');
+    const app = await renderApp();
+
+    await app.tap(item?.route ?? '');
 
     expect(app.pathname()).toBe('/entry/w_sumyrnyi');
     expect(screen.getByText('Значення слова сумирний.')).toBeTruthy();

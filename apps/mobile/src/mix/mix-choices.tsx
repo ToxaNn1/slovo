@@ -1,4 +1,10 @@
-import { fill, RARITIES, type MixKindWeight, type QuickQuestionEvery } from '@slovo/contracts';
+import {
+  fill,
+  pluralCount,
+  RARITIES,
+  type MixKindWeight,
+  type QuickQuestionEvery,
+} from '@slovo/contracts';
 import type { MixKind, MixKindName } from '@slovo/core';
 import {
   BottomSheet,
@@ -128,12 +134,13 @@ function useCategoriesAtOnce(): {
 }
 
 /** How many Categories of Words are in the Mix, «12 з 16», for beside the title. */
-export function useMixCount(): string {
+export function useMixCount(): { readonly text: string; readonly label: string } {
   const { chips } = useMixScreenModel();
-  return fill(strings.count, {
-    selected: String(chips.filter(({ on }) => on).length),
-    total: String(chips.length),
-  });
+  const selected = String(chips.filter(({ on }) => on).length);
+  return {
+    text: fill(strings.count, { selected, total: String(chips.length) }),
+    label: fill(pluralCount(edition.locale)(strings.countLabel, chips.length), { selected }),
+  };
 }
 
 /** The Quick Question frequencies on offer, from never to every 6th card, by their names. */
@@ -351,10 +358,11 @@ function KindRow({
               ? setKind(kind, false)
               : chosen === 'on'
                 ? setKind(kind, true)
-                : on
-                  ? setKindWeight(kind, chosen)
-                  : // A kind out of the Mix comes in at the weight chosen, in one change.
-                    setKind(kind, true, chosen),
+                : // From the choice shown, which runs ahead of the Mix while a change lands:
+                  // a kind shown out of the Mix comes in at the weight chosen, in one change.
+                  selected === 'off'
+                  ? setKind(kind, true, chosen)
+                  : setKindWeight(kind, chosen),
           );
         }}
       />
@@ -558,6 +566,7 @@ function CategoryGroups({ model }: { model: MixScreenModel }) {
                 <Pressable
                   testID={`mix-group-${String(group)}`}
                   accessibilityRole="button"
+                  style={styles.groupToggle}
                   onPress={() => {
                     choose(ids, !all, setCategories(ids, !all));
                   }}
@@ -685,6 +694,7 @@ const styles = StyleSheet.create({
   sheetScroll: { flexGrow: 0, flexShrink: 1 },
   sheetBody: { gap: space[3], marginTop: space[2], marginBottom: space[3] },
   kind: { gap: space[3], paddingTop: space[3] },
+  groupToggle: { minHeight: minTouchTarget, justifyContent: 'center' },
   kindText: { gap: space[1] },
   subRow: {
     flexDirection: 'row',

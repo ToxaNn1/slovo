@@ -372,6 +372,23 @@ describe('the Word Meaning question', () => {
     }
   });
 
+  it("never offers a synonym's Definition, which would be right too, whichever Word lists the other", async () => {
+    // Seven pairs, the even Word of each listing the odd one, in other letter case, as its synonym.
+    const pairs = Array.from({ length: 14 }, (_, index) =>
+      meant(index, index % 2 === 0 ? { synonyms: [`LEMMA${numbered(index + 1)}`] } : {}),
+    );
+    const partnerOf = (index: number) => (index % 2 === 0 ? index + 1 : index - 1);
+    const { app } = await run({ on: WORD_MEANING_ONLY, of: pairs });
+
+    const questions = await questionsOf(app, 48);
+
+    expect(questions).toHaveLength(8);
+    for (const card of questions) {
+      const asked = pairs.findIndex(({ id }) => id === card.entry.id);
+      expect(textsOf(card)).not.toContain(pairs[partnerOf(asked)]?.primaryDefinition);
+    }
+  });
+
   it('never asks a Word whose Definition holds its Lemma', async () => {
     const plain = [meant(0), meant(1), meant(2)];
     const named = Array.from({ length: 11 }, (_, index) => selfNamed(index + 3));
