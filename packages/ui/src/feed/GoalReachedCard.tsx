@@ -18,7 +18,6 @@ import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { goalReachedCard as card, motion, tightLineDrop, typeStyle } from '../tokens';
 import { HalftoneGround } from '../primitives/HalftoneGround';
-import { Mascot } from '../primitives/Mascot';
 import { REDUCED_FADE, bezierFn } from '../primitives/timing';
 import { useIsInPager, useIsPageOnScreen, useTurnToNextPage } from '../primitives/VerticalPager';
 
@@ -113,8 +112,9 @@ function useRise(clock: SharedValue<number>, wait: number) {
 
 /**
  * «Ціль дня виконано!»: the red card of the day's Daily Goal met,
- * its plate with the goal, the first Words Seen today, the celebrating
- * Mascot and the Streak, or no Streak while the reader doesn't see it or it is 0. The
+ * its plate with the goal, the first Words Seen today (no «СЬОГОДНІ ЗІБРАНО»
+ * while none is left, as after History is cleared), the celebrating Mascot
+ * `mascot` draws at the width it is given, and the Streak, or no Streak while the reader doesn't see it or it is 0. The
  * button turns to the next card as a swipe would, and so closes the card.
  * It keeps the design's colours in both schemes, as the design draws it.
  */
@@ -122,6 +122,7 @@ export function GoalReachedCard({
   goal,
   words,
   streak,
+  mascot,
 }: {
   /** The Words Seen the day's Daily Goal asked for. */
   goal: number;
@@ -129,6 +130,8 @@ export function GoalReachedCard({
   words: readonly string[];
   /** The Streak, or undefined while the reader doesn't see it; a Streak of 0 shows nothing. */
   streak: number | undefined;
+  /** The celebrating Mascot at `width`, or nothing while its Feature Switch is off. */
+  mascot: (width: number) => ReactNode;
 }) {
   const { strings, count, voice } = useEdition();
   const tokens = useTokens();
@@ -216,12 +219,14 @@ export function GoalReachedCard({
   const streakStyle = useRise(clock, enter.cascade.streak);
   const buttonStyle = useRise(clock, enter.cascade.button);
   const plates =
-    goal <= PLATES
-      ? words.slice(0, goal).map((word) => ({ text: word, word: true }))
-      : [
-          ...words.slice(0, PLATES - 1).map((word) => ({ text: word, word: true })),
-          { text: count(more, goal - (PLATES - 1)), word: false },
-        ];
+    words.length === 0
+      ? []
+      : goal <= PLATES
+        ? words.slice(0, goal).map((word) => ({ text: word, word: true }))
+        : [
+            ...words.slice(0, PLATES - 1).map((word) => ({ text: word, word: true })),
+            { text: count(more, goal - (PLATES - 1)), word: false },
+          ];
   return (
     <View
       testID="goal-reached"
@@ -301,7 +306,7 @@ export function GoalReachedCard({
             >
               <View style={styles.foot}>
                 <Animated.View testID="goal-reached-mascot" style={mascotStyle}>
-                  <Mascot state="celebrates" onRed width={card.mascot} />
+                  {mascot(card.mascot)}
                 </Animated.View>
                 {streak !== undefined && streak > 0 && (
                   <Animated.View testID="goal-reached-streak" style={[styles.streak, streakStyle]}>

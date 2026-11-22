@@ -50,6 +50,7 @@ import { useNotificationsChanges } from '@/notifications/notifications';
 import { LaterQuestionNotice } from '@/feed/later-question-notice';
 import { useEditionInEffect } from '@/edition/remote-switches';
 import { mixPlaceOf } from '@/shown';
+import { MascotAs } from '@/mascot/mascot';
 
 const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
@@ -363,7 +364,14 @@ function NoticeCard({
     return <LevelMilestoneCard level={card.level} name={card.name} />;
   if (card.notice === 'enoughForToday') return <EnoughForTodayCard />;
   if (card.notice === 'goalReached')
-    return <GoalReachedCard goal={card.goal} words={card.words} streak={streak} />;
+    return (
+      <GoalReachedCard
+        goal={card.goal}
+        words={card.words}
+        streak={streak}
+        mascot={(width) => <MascotAs state="celebrates" onRed width={width} />}
+      />
+    );
   if (card.notice === 'saveProgress')
     return (
       <SaveProgressCard

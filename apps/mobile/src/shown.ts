@@ -57,6 +57,8 @@ export interface Shown {
   readonly streakFreezeCard: boolean;
   /** How many Badges are earned («1 з 21», a family's «0 з 4»), while the reader has not hidden the counters. */
   readonly badgeCounts: boolean;
+  /** The Profile's «Сьогодні зарахується…» with the Words Seen of the Daily Goal, while the reader has not hidden the counters. */
+  readonly todayPending: boolean;
   /**
    * The offers to share a Level reached, a Badge earned or a Streak
    * milestone today, while Share Cards and the XP log are on and the reader
@@ -122,6 +124,7 @@ export function shownOf({
     breakCard: on('breakCard') && !noCounters,
     streakFreezeCard: on('streakFreezeCard') && on('streakFreezes') && !noCounters,
     badgeCounts: !noCounters,
+    todayPending: !noCounters,
     progressShareCards: on('progressShareCards') && !noCounters,
     questionnaire:
       on('questionnaire') || on('rarityTest') || on('interestsQuestion')

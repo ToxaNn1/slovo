@@ -3,11 +3,14 @@ import {
   EditionProvider,
   GoalReachedCard,
   HapticsProvider,
+  Mascot,
   ReduceMotionProvider,
   VerticalPager,
 } from '@slovo/ui';
+import { goalReachedCard } from '@slovo/ui/tokens';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
+import type { ReactNode } from 'react';
 import { AccessibilityInfo, StyleSheet, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 
@@ -40,7 +43,15 @@ const haptics: Haptics = {
 };
 
 async function renderFeed(
-  props: { goal: number; words: readonly string[]; streak: number | undefined },
+  {
+    mascot = (width) => <Mascot state="celebrates" onRed width={width} />,
+    ...props
+  }: {
+    goal: number;
+    words: readonly string[];
+    streak: number | undefined;
+    mascot?: (width: number) => ReactNode;
+  },
   onIndexChange: (index: number) => void = jest.fn(),
   reduceMotion = false,
 ) {
@@ -53,7 +64,7 @@ async function renderFeed(
             items={PAGES}
             onIndexChange={onIndexChange}
             renderPage={(page) =>
-              page === 'notice' ? <GoalReachedCard {...props} /> : <Text>Next</Text>
+              page === 'notice' ? <GoalReachedCard {...props} mascot={mascot} /> : <Text>Next</Text>
             }
           />
         </HapticsProvider>
@@ -164,6 +175,29 @@ describe('the goal-reached card', () => {
     expect(screen.getByText('+ 48 more words')).toBeTruthy();
   });
 
+  it('shows no «today you got» line while no Word Seen today is left, as after History is cleared', async () => {
+    await renderFeed({ goal: 25, words: [], streak: 5 });
+    expect(screen.getByText('25 / 25 WORDS')).toBeTruthy();
+    expect(screen.queryByText('TODAY YOU GOT')).toBeNull();
+    expect(screen.queryByText(/more words/)).toBeNull();
+
+    await renderFeed({ goal: 3, words: [], streak: 5 });
+    expect(screen.queryByText('TODAY YOU GOT')).toBeNull();
+  });
+
+  it('draws the Mascot it is given, at the card’s width for it, and none when it is given none', async () => {
+    const mascot = jest.fn((width: number) => (
+      <Mascot state="celebrates" onRed width={width} testID="given-mascot" />
+    ));
+    await renderFeed({ goal: 1, words: ['dawn'], streak: 1, mascot });
+    expect(screen.getByTestId('given-mascot')).toBeTruthy();
+    expect(mascot).toHaveBeenCalledWith(goalReachedCard.mascot);
+
+    await renderFeed({ goal: 1, words: ['dawn'], streak: 1, mascot: () => null });
+    expect(screen.queryByTestId('mascot-celebrates')).toBeNull();
+    expect(screen.getByTestId('goal-reached-streak')).toBeTruthy();
+  });
+
   it('names no Streak while the reader doesn’t see it', async () => {
     await renderFeed({ goal: 3, words: ['dawn'], streak: undefined });
     expect(screen.getByText('dawn')).toBeTruthy();
@@ -190,7 +224,12 @@ describe('the goal-reached card', () => {
     await render(
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <HapticsProvider haptics={haptics}>
-          <GoalReachedCard goal={3} words={['a', 'b', 'c']} streak={undefined} />
+          <GoalReachedCard
+            goal={3}
+            words={['a', 'b', 'c']}
+            streak={undefined}
+            mascot={() => null}
+          />
         </HapticsProvider>
       </EditionProvider>,
     );
