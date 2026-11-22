@@ -1,0 +1,51 @@
+# <lemma> <category> <rarity>  # part of speech, Zipf in wordfreq (uk)
+закарлюка language-speech 3 # noun, Zipf 1.84
+замазура witty-insults 4 # noun, Zipf 1.11
+замчище history-antiquity 3 # noun, Zipf 1.91
+запроданець witty-insults 3 # noun, Zipf 1.78
+еспарцет nature-weather 3 # noun, Zipf 1.86
+запряг old-crafts 3 # noun, Zipf 1.69
+зарадливий emotions-character 4 # adj, Zipf 0.00, rarity 5 -> 4 (editor)
+зарізяка witty-insults 4 # noun, Zipf 0.00, rarity 5 -> 4 (editor)
+затвірниця history-antiquity 5 # noun, Zipf 0.00
+етуаль arts-culture 3 # noun, Zipf 1.50
+затируха household-crafts 4 # noun, Zipf 0.00, rarity 5 -> 4 (editor)
+затула household-crafts 4 # noun, Zipf 1.20
+зачин arts-culture 3 # noun, Zipf 1.74
+заїда human-body 4 # noun, Zipf 1.43
+жакард household-crafts 4 # noun, Zipf 0.00, rarity 5 -> 4 (editor)
+зброярня military 4 # noun, Zipf 1.20
+зверхник history-antiquity 4 # noun, Zipf 1.45
+здохляк witty-insults 4 # noun, Zipf 0.00, rarity 5 -> 4 (editor)
+зельц household-crafts 4 # noun, Zipf 1.46
+жерміналь history-antiquity 4 # noun, Zipf 1.39
+землемір old-crafts 3 # noun, Zipf 1.66
+зерцало history-antiquity 3 # noun, Zipf 1.83
+зилот history-antiquity 4 # noun, Zipf 1.20
+зимовник history-antiquity 4 # noun, Zipf 1.07
+житняк nature-weather 3 # noun, Zipf 1.67
+зимородок nature-weather 4 # noun, Zipf 1.11
+златник history-antiquity 4 # noun, Zipf 1.23
+злигодні emotions-character 3 # noun, Zipf 1.67
+злидар witty-insults 3 # noun, Zipf 1.51
+жупанія history-antiquity 5 # noun, Zipf 0.00
+злука history-antiquity 3 # noun, Zipf 1.58
+змовини arts-culture 4 # noun, Zipf 1.06
+золотар old-crafts 3 # noun, Zipf 1.63
+золотарник nature-weather 4 # noun, Zipf 1.01
+заговини arts-culture 4 # noun, Zipf 1.37
+зорина nature-weather 4 # noun, Zipf 1.41
+зубрій witty-insults 4 # noun, Zipf 1.07
+зяб old-crafts 4 # noun, Zipf 1.42
+зінгшпіль arts-culture 4 # noun, Zipf 1.06
+евритмія arts-culture 4 # noun, Zipf 1.11
+ирод witty-insults 4 # noun, Zipf 1.01
+йовбак witty-insults 3 # noun, Zipf 1.64
+кабарга nature-weather 4 # noun, Zipf 1.23
+каботаж technology 4 # noun, Zipf 1.30
+екзорцист history-antiquity 3 # noun, Zipf 1.69
+кабошон old-crafts 4 # noun, Zipf 1.07
+кавалергард military 4 # noun, Zipf 0.00, rarity 5 -> 4 (editor)
+кадук witty-insults 4 # noun, Zipf 1.27
+казання language-speech 3 # noun, Zipf 1.79
+ентелехія history-antiquity 4 # noun, Zipf 1.06

@@ -1,0 +1,6 @@
+wave content/1122-wave-c 120
+content/1122c-words-01    words    scripts/content-wave/lists/words-1122c-01.txt    38
+content/1122c-words-02    words    scripts/content-wave/lists/words-1122c-02.txt    38
+content/1122c-words-03    words    scripts/content-wave/lists/words-1122c-03.txt    38
+content/1122c-words-04    words    scripts/content-wave/lists/words-1122c-04.txt    38
+content/1122c-words-05    words    scripts/content-wave/lists/words-1122c-05.txt    38

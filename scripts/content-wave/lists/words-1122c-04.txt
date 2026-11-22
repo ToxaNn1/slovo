@@ -1,0 +1,51 @@
+# <lemma> <category> <rarity>  # part of speech, Zipf in wordfreq (uk)
+кофр household-crafts 4 # noun, Zipf 1.28
+квоктуха nature-weather 4 # noun, Zipf 0.00, rarity 5 -> 4 (editor)
+кошеніль old-crafts 3 # noun, Zipf 1.67
+епіфіт nature-weather 4 # noun, Zipf 1.20
+кошівка household-crafts 4 # noun, Zipf 0.00, rarity 5 -> 4 (editor)
+крага household-crafts 4 # noun, Zipf 0.00, rarity 5 -> 4 (editor)
+креатура language-speech 3 # noun, Zipf 1.82
+зайда witty-insults 3 # noun, Zipf 1.59
+крейцер history-antiquity 4 # noun, Zipf 1.20
+зигзиця nature-weather 5 # noun, Zipf 0.00
+кремез witty-insults 4 # noun, Zipf 1.11
+креп household-crafts 3 # noun, Zipf 1.74
+кресляр old-crafts 4 # noun, Zipf 1.39
+екер old-crafts 4 # noun, Zipf 1.30
+крещендо arts-culture 3 # adv, Zipf 1.50
+карбівка old-crafts 4 # noun, Zipf 1.16
+крильчатка technology 4 # noun, Zipf 1.12
+крислатий nature-weather 4 # adj, Zipf 1.17
+кружало old-crafts 4 # noun, Zipf 1.21
+зачепа witty-insults 4 # noun, Zipf 1.39
+крутійство emotions-character 4 # noun, Zipf 1.01
+жига arts-culture 4 # noun, Zipf 1.43
+кряква nature-weather 4 # noun, Zipf 1.37
+ксерофіт science 4 # noun, Zipf 1.36
+злигатися emotions-character 5 # verb, Zipf 0.00
+кумедник arts-culture 5 # noun, Zipf 0.00
+курбет arts-culture 4 # noun, Zipf 1.28
+жох witty-insults 4 # noun, Zipf 1.33
+курильниця history-antiquity 4 # noun, Zipf 0.00, rarity 5 -> 4 (editor)
+конкубіна history-antiquity 4 # noun, Zipf 1.40
+курсистка history-antiquity 4 # noun, Zipf 1.12
+куховарня household-crafts 4 # noun, Zipf 0.00, rarity 5 -> 4 (editor)
+кілт household-crafts 4 # noun, Zipf 1.23
+жижки human-body 3 # noun, Zipf 1.50
+косатка nature-weather 4 # noun, Zipf 1.11
+кіч arts-culture 3 # noun, Zipf 1.67
+євгеніка science 3 # noun, Zipf 1.48
+жебри old-crafts 4 # noun, Zipf 1.27
+єфимок history-antiquity 5 # noun, Zipf 0.00
+ідефікс emotions-character 4 # noun, Zipf 0.00, rarity 5 -> 4 (editor)
+казуар nature-weather 4 # noun, Zipf 1.27
+заболонь old-crafts 3 # noun, Zipf 1.62
+ікос arts-culture 4 # noun, Zipf 1.40
+інок history-antiquity 3 # noun, Zipf 1.82
+інтермеццо arts-culture 3 # noun, Zipf 1.71
+зурочити arts-culture 3 # verb, Zipf 1.52
+іпомея nature-weather 4 # noun, Zipf 1.37
+кревний language-speech 3 # adj, Zipf 1.65
+іредента history-antiquity 5 # noun, Zipf 0.00
+котельник old-crafts 3 # noun, Zipf 1.75

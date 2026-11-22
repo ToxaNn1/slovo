@@ -1,0 +1,51 @@
+# <lemma> <category> <rarity>  # part of speech, Zipf in wordfreq (uk)
+кетяг nature-weather 4 # noun, Zipf 1.41
+кибалка household-crafts 4 # noun, Zipf 1.11
+кила human-body 3 # noun, Zipf 1.69
+кисет household-crafts 4 # noun, Zipf 1.40
+естетизм arts-culture 3 # noun, Zipf 1.78
+клафуті household-crafts 4 # noun, Zipf 1.07
+клезмер arts-culture 4 # noun, Zipf 1.23
+клепач old-crafts 3 # noun, Zipf 1.65
+кликун history-antiquity 4 # noun, Zipf 1.43
+ефедра nature-weather 4 # noun, Zipf 1.23
+клишоногий human-body 3 # adj, Zipf 1.51
+клуб'я nature-weather 4 # noun, Zipf 0.00, rarity 5 -> 4 (editor)
+кльоцки household-crafts 4 # noun, Zipf 1.20
+клюз technology 4 # noun, Zipf 1.33
+жалібниця old-crafts 4 # noun, Zipf 1.46
+ключниця old-crafts 3 # noun, Zipf 1.67
+кляштор history-antiquity 3 # noun, Zipf 1.92
+кніксен arts-culture 5 # noun, Zipf 0.00
+кодола old-crafts 3 # noun, Zipf 1.82
+живолуп witty-insults 4 # noun, Zipf 1.20
+кокіль technology 4 # noun, Zipf 1.06
+коленкор household-crafts 4 # noun, Zipf 1.01
+коломазь old-crafts 4 # noun, Zipf 0.00, rarity 5 -> 4 (editor)
+колоша household-crafts 4 # noun, Zipf 1.25
+жниця old-crafts 4 # noun, Zipf 1.33
+колчедан science 3 # noun, Zipf 1.52
+комендор military 4 # noun, Zipf 1.20
+комівояжер old-crafts 3 # noun, Zipf 1.76
+конклав history-antiquity 3 # noun, Zipf 1.91
+еміненція history-antiquity 5 # noun, Zipf 0.00
+йодль arts-culture 3 # noun, Zipf 1.66
+коновка household-crafts 4 # noun, Zipf 1.20
+консонанс arts-culture 4 # noun, Zipf 1.33
+контральто arts-culture 3 # noun, Zipf 1.66
+конунг history-antiquity 3 # noun, Zipf 1.65
+кадуб household-crafts 4 # noun, Zipf 1.06
+копанка nature-weather 3 # noun, Zipf 1.55
+жорно old-crafts 3 # noun, Zipf 1.81
+копра household-crafts 3 # noun, Zipf 1.60
+кордильєра nature-weather 4 # noun, Zipf 1.16
+кортеси history-antiquity 3 # noun, Zipf 1.50
+кизильник nature-weather 3 # noun, Zipf 1.72
+кортячка emotions-character 4 # noun, Zipf 0.00, rarity 5 -> 4 (editor)
+корчмар old-crafts 3 # noun, Zipf 1.70
+зажинки old-crafts 3 # noun, Zipf 1.78
+косинець technology 3 # noun, Zipf 1.67
+косовиця old-crafts 3 # noun, Zipf 1.62
+еллінізм history-antiquity 3 # noun, Zipf 1.60
+кострець nature-weather 4 # noun, Zipf 1.11
+коструб arts-culture 4 # noun, Zipf 1.47

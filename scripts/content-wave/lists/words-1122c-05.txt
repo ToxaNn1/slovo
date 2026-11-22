@@ -1,0 +1,51 @@
+# <lemma> <category> <rarity>  # part of speech, Zipf in wordfreq (uk)
+ісихазм history-antiquity 4 # noun, Zipf 1.33
+еквілібрист arts-culture 3 # noun, Zipf 1.81
+капустянка nature-weather 3 # noun, Zipf 1.77
+камео arts-culture 3 # noun, Zipf 1.71
+здоровило witty-insults 4 # noun, Zipf 1.45
+заранок nature-weather 5 # noun, Zipf 0.00
+займанщина history-antiquity 4 # noun, Zipf 1.11
+кречет nature-weather 3 # noun, Zipf 1.74
+кочет nature-weather 4 # noun, Zipf 1.11
+заморока emotions-character 4 # noun, Zipf 1.30
+калкан nature-weather 3 # noun, Zipf 1.76
+інсинуація language-speech 4 # noun, Zipf 1.06
+забережжя nature-weather 4 # noun, Zipf 1.06
+круговерть nature-weather 3 # noun, Zipf 1.77
+коловерть nature-weather 4 # noun, Zipf 0.00, rarity 5 -> 4 (editor)
+ірмологіон arts-culture 4 # noun, Zipf 1.16
+заброда witty-insults 4 # noun, Zipf 1.45
+комонний military 5 # adj, Zipf 0.00
+жерех nature-weather 3 # noun, Zipf 1.79
+катрен arts-culture 3 # noun, Zipf 1.48
+епіка arts-culture 3 # noun, Zipf 1.82
+жавель household-crafts 4 # noun, Zipf 1.12
+крепдешин household-crafts 4 # noun, Zipf 1.21
+конторка household-crafts 4 # noun, Zipf 1.16
+копець old-crafts 3 # noun, Zipf 1.67
+кантор arts-culture 3 # noun, Zipf 1.90
+курний household-crafts 4 # adj, Zipf 1.34
+єктенія arts-culture 3 # noun, Zipf 1.71
+клейстер household-crafts 3 # noun, Zipf 1.57
+єгермейстер history-antiquity 4 # noun, Zipf 1.40
+клус old-crafts 4 # noun, Zipf 1.16
+іконник old-crafts 4 # noun, Zipf 1.11
+кудлач witty-insults 3 # noun, Zipf 1.58
+кістянка nature-weather 3 # noun, Zipf 1.74
+крупорушка old-crafts 3 # noun, Zipf 1.48
+емер nature-weather 4 # noun, Zipf 1.27
+квадрига history-antiquity 4 # noun, Zipf 1.20
+ефемероїд nature-weather 4 # noun, Zipf 1.06
+етос arts-culture 3 # noun, Zipf 1.85
+корюшка nature-weather 3 # noun, Zipf 1.80
+кулеша household-crafts 3 # noun, Zipf 1.92
+інтролігатор old-crafts 4 # noun, Zipf 1.23
+красавка nature-weather 4 # noun, Zipf 1.25
+екзегеза language-speech 4 # noun, Zipf 1.42
+естуарій nature-weather 3 # noun, Zipf 1.50
+кермек nature-weather 4 # noun, Zipf 1.30
+книдлі household-crafts 4 # noun, Zipf 1.16
+кусман language-speech 4 # noun, Zipf 0.00, rarity 5 -> 4 (editor)
+коптильник household-crafts 4 # noun, Zipf 0.00, rarity 5 -> 4 (editor)
+знехіть emotions-character 5 # noun, Zipf 0.00
