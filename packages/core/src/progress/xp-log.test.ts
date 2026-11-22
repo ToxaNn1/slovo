@@ -35,6 +35,7 @@ import {
   analyticsInto,
 } from '../test-support';
 import { createMemoryUserStatePort, openUserState, type UserState } from '../user-state/user-state';
+import { signInByCode } from '../fakes/fake-backend';
 import { trackChanges } from '../user-state/tracked-user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -321,11 +322,7 @@ async function device(
     googleSheet: createFakeGoogleSignInSheet(),
     appleSheet: createFakeAppleSignInSheet(),
     userState,
-    sessions: createMemorySessionStore(
-      signedIn
-        ? { token: `session-of-${time.clock.now().toISOString()}`, email: EMAIL }
-        : undefined,
-    ),
+    sessions: createMemorySessionStore(signedIn ? await signInByCode(server, EMAIL) : undefined),
     clock: time.clock,
     schedule: timers.schedule,
     random: randomOf(0.5),
@@ -367,7 +364,7 @@ async function device(
 }
 
 const xpKept = (server: ReturnType<typeof createFakeBackend>) =>
-  [...server.sync.records.keys()].filter((key) => key.startsWith('xp.'));
+  [...server.sync.recordsOf(EMAIL).keys()].filter((key) => key.startsWith('xp.'));
 
 describe('the XP log and Sync', () => {
   it('sums the XP of two devices on one Account, with no record doubled', async () => {
@@ -398,12 +395,12 @@ describe('the XP log and Sync', () => {
     await phone.syncNow();
     await tablet.syncNow();
     await phone.syncNow();
-    const kept = [...server.sync.records.entries()];
+    const kept = [...server.sync.recordsOf(EMAIL).entries()];
 
     await tablet.syncNow();
     await phone.syncNow();
 
-    expect([...server.sync.records.entries()]).toEqual(kept);
+    expect([...server.sync.recordsOf(EMAIL).entries()]).toEqual(kept);
     expect((await phone.reopened()).xpLog.state.total).toBe(3);
     expect((await tablet.reopened()).xpLog.state.total).toBe(3);
   });
@@ -423,7 +420,7 @@ describe('the XP log and Sync', () => {
     expect(xpKept(server)).toHaveLength(2);
 
     await tablet.account.requestCode(EMAIL);
-    await tablet.account.verifyCode('100001');
+    await tablet.account.verifyCode(server.account.sentCodes.at(-1)?.code ?? '');
     await tablet.syncNow();
 
     expect(xpKept(server)).toHaveLength(3);
@@ -1336,6 +1333,31 @@ describe('the Progress reset', () => {
     expect(answer()).toBe(first);
     expect(answer()).toBe(0);
     expect(app.xpLog.state.total).toBe(first);
+  });
+
+  // Audit 1121 a1.16: an award reads the clock once, so its id and its record name one local date.
+  it('gives a Review answer earned as the day turns one local date, in its id and in its record', async () => {
+    const time = fakeClock('2026-10-14T23:59:59.999+03:00');
+    let ticking = false;
+    /** A clock that moves a millisecond on with every reading, once ticking. */
+    const clock = {
+      now() {
+        const now = time.clock.now();
+        if (ticking) time.advance(1);
+        return now;
+      },
+      timeZone: () => time.clock.timeZone(),
+    };
+    const { app } = await run({ time: { ...time, clock } });
+    ticking = true;
+
+    const award = app.xpLog.award({ source: 'review-answer', entryId: 'word-1' });
+    ticking = false;
+
+    const [[key, text] = []] = [...award.changes];
+    const date = /review-answer-(\d{4}-\d{2}-\d{2})-word-1$/.exec(key ?? '')?.[1];
+    expect(date).toBeDefined();
+    expect(JSON.parse(text ?? '{}')).toMatchObject({ kind: 'xp', date });
   });
 
   it('counts only the Entries confirmed after a reset toward a Badge, and keeps the confirmed Entries', async () => {

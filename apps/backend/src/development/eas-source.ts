@@ -16,40 +16,35 @@ const BUILDS_QUERY = `query Builds($appId: String!, $limit: Int!) {
   } }
 }`;
 
+/**
+ * One build as Expo answers it. Its status is any string, since Expo adds
+ * statuses: one it does not know reads as still going.
+ */
+const BuildSchema = z.object({
+  id: z.string(),
+  platform: z.enum(['IOS', 'ANDROID']),
+  status: z.string(),
+  buildProfile: z.string().nullable(),
+  appVersion: z.string().nullable(),
+  appBuildVersion: z.string().nullable(),
+  createdAt: z.iso.datetime({ offset: true }),
+});
+
+/** The answer, each build read on its own, so one build it cannot read leaves out only that build. */
 const BuildsSchema = z.object({
   data: z.object({
     app: z.object({
       byId: z.object({
         slug: z.string(),
         ownerAccount: z.object({ name: z.string() }),
-        builds: z.array(
-          z.object({
-            id: z.string(),
-            platform: z.enum(['IOS', 'ANDROID']),
-            status: z.enum([
-              'NEW',
-              'IN_QUEUE',
-              'IN_PROGRESS',
-              'PENDING_CANCEL',
-              'ERRORED',
-              'FINISHED',
-              'CANCELED',
-            ]),
-            buildProfile: z.string().nullable(),
-            appVersion: z.string().nullable(),
-            appBuildVersion: z.string().nullable(),
-            createdAt: z.iso.datetime({ offset: true }),
-          }),
-        ),
+        builds: z.array(z.unknown()),
       }),
     }),
   }),
 });
 
-type Status = z.infer<typeof BuildsSchema>['data']['app']['byId']['builds'][number]['status'];
-
 /** What an EAS build status means on Розробка: done, failed, cancelled or still going. */
-function statusOf(status: Status): EasBuild['status'] {
+function statusOf(status: string): EasBuild['status'] {
   if (status === 'FINISHED') return 'finished';
   if (status === 'ERRORED') return 'errored';
   if (status === 'CANCELED') return 'canceled';
@@ -88,9 +83,19 @@ export function createEasSource({
       );
       if (!answer.ok) return answer;
       const app = answer.value.data.app.byId;
+      const builds = app.builds.flatMap((row) => {
+        const build = BuildSchema.safeParse(row);
+        return build.success ? [build.data] : [];
+      });
+      if (builds.length < app.builds.length) {
+        logger.warn(
+          { left: app.builds.length - builds.length },
+          'EAS answered builds of an unknown shape',
+        );
+      }
       return {
         ok: true,
-        value: app.builds.map((build) => ({
+        value: builds.map((build) => ({
           id: build.id,
           platform: build.platform === 'IOS' ? 'ios' : 'android',
           profile: build.buildProfile ?? '',

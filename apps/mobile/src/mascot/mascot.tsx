@@ -18,6 +18,12 @@ const stampStrings = editionStrings.settings.profile.badgeStamp;
  * stamped elsewhere, and stamped bare on the Daily Crossword with the
  * `crosswordBadgeStamp` switch on (board 08.2).
  */
+/** A Daily Goal or Streak milestone told, `told` telling one apart from the one before. */
+interface Moment {
+  readonly state: MascotMoment;
+  readonly told: number;
+}
+
 type Earned =
   | { readonly kind: 'toast'; readonly badge: BadgeState }
   | { readonly kind: 'stamp'; readonly badge: BadgeState }
@@ -103,19 +109,23 @@ export function MascotAs({
  * card holds the Mascot already. It takes no touch and
  * VoiceOver skips it, so it never interrupts the Feed. A new Level shows the
  * new Level screen, until the reader closes it. Nothing while the reader hides
- * the counters («Без лічильників», ADR 0066). A Badge earned shows its ink
- * toast during a Game and its stamp anywhere else (board 10.7); the stamp's
- * «ГОТОВО» opens the Badge, which ends its «НОВА» mark.
+ * the counters («Без лічильників», ADR 0066), nor later for what was met then.
+ * A Badge earned shows its ink toast during a Game and its stamp anywhere else
+ * (board 10.7); the stamp's «ГОТОВО» opens the Badge, which ends its «НОВА»
+ * mark. Badges earned at once show in turn; a celebration met under a screen,
+ * a stamp or a toast waits for it to close and then has its while.
  */
 export function MascotCelebrations() {
   const { xpLog, badges, progress } = useComposition();
   const { celebrations } = useShown();
   const edition = useEditionInEffect();
-  const [shown, setShown] = useState<MascotMoment | undefined>(undefined);
+  const [shown, setShown] = useState<Moment | undefined>(undefined);
   const [reached, setReached] = useState<{ level: number; name: string } | undefined>(undefined);
-  const [earnedBadge, setEarnedBadge] = useState<Earned | undefined>(undefined);
+  // One action can earn several Badges at once: each shows in turn.
+  const [earned, setEarned] = useState<readonly Earned[]>([]);
   const route = useRouteOnScreen();
-  const screensNewLevel = useEffectEvent(() => celebrations);
+  // What is met while the counters are hidden is never shown later (ADR 0066).
+  const celebrates = useEffectEvent(() => celebrations);
   /**
    * How a Badge just earned shows: toasted or stamped; a Badge of Daily
    * Crosswords in a row earned on the crossword's screen gets board 08's stamp.
@@ -130,31 +140,32 @@ export function MascotCelebrations() {
     return inGame(route) ? 'toast' : 'stamp';
   });
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
+    let told = 0;
     const celebrate = (state: MascotMoment) => {
-      clearTimeout(timer);
-      setShown(state);
-      timer = setTimeout(() => {
-        setShown(undefined);
-      }, CELEBRATION_MS);
-    };
-    const showBadge = (badge: BadgeState) => {
-      setEarnedBadge({ kind: badgeShownAs(badge), badge });
+      told += 1;
+      if (celebrates()) setShown({ state, told });
     };
     const stops = [
       xpLog.onLevelReached(({ level, name }) => {
-        if (screensNewLevel()) setReached({ level, name });
+        if (celebrates()) setReached({ level, name });
       }),
       progress.onStreakMilestone(() => {
         celebrate('streakMilestone');
       }),
-      badges.onEarned(showBadge),
+      badges.onEarned((badge) => {
+        if (!celebrates()) return;
+        const shownAs: Earned = { kind: badgeShownAs(badge), badge };
+        setEarned((queue) => [...queue, shownAs]);
+      }),
     ];
     return () => {
-      clearTimeout(timer);
       for (const stop of stops) stop();
     };
   }, [xpLog, badges, progress]);
+  const earnedBadge = earned[0];
+  const next = () => {
+    setEarned((queue) => queue.slice(1));
+  };
   if (!celebrations) return null;
   if (reached !== undefined)
     return (
@@ -184,7 +195,7 @@ export function MascotCelebrations() {
         mascot={<MascotAs state="celebrates" onRed />}
         isNew
         onClose={() => {
-          setEarnedBadge(undefined);
+          next();
           void badges.open(badge.id).catch(() => undefined);
         }}
       />
@@ -202,23 +213,39 @@ export function MascotCelebrations() {
         doneLabel={stampStrings.done}
         isNew
         onClose={() => {
-          setEarnedBadge(undefined);
+          next();
           void badges.open(badge.id).catch(() => undefined);
         }}
       />
     );
   }
   if (earnedBadge?.kind === 'toast')
-    return (
-      <GameBadgeToast
-        key={earnedBadge.badge.id}
-        badge={earnedBadge.badge}
-        onGone={() => {
-          setEarnedBadge(undefined);
-        }}
-      />
-    );
+    return <GameBadgeToast key={earnedBadge.badge.id} badge={earnedBadge.badge} onGone={next} />;
   if (shown === undefined) return null;
+  return (
+    <CelebrationMoment
+      key={shown.told}
+      state={shown.state}
+      onGone={() => {
+        setShown(undefined);
+      }}
+    />
+  );
+}
+
+/**
+ * A Daily Goal or Streak milestone celebration: it shows for a while from
+ * when it comes on screen, after the screen or stamp that covered it closes,
+ * then calls `onGone`.
+ */
+function CelebrationMoment({ state, onGone }: { state: MascotMoment; onGone: () => void }) {
+  const gone = useEffectEvent(onGone);
+  useEffect(() => {
+    const timer = setTimeout(gone, CELEBRATION_MS);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, []);
   return (
     <View
       pointerEvents="none"
@@ -227,7 +254,7 @@ export function MascotCelebrations() {
       style={styles.celebration}
     >
       {/* The line floats over any screen, so it stands on a plate (owner bug 07.11). */}
-      <MascotIn state={shown} plate />
+      <MascotIn state={state} plate />
     </View>
   );
 }

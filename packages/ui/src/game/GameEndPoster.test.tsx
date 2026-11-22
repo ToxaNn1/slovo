@@ -1,9 +1,10 @@
 import type { CurrentGame, GameEnd, Haptics } from '@slovo/core';
 import { EditionProvider, GameEndPoster, HapticsProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import type { ComponentProps } from 'react';
-import { Text } from 'react-native';
+import { AccessibilityInfo, Text } from 'react-native';
+import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({
@@ -80,6 +81,27 @@ async function renderPoster({
 }
 
 describe('GameEndPoster', () => {
+  it('stands «FINISH» turned in place for a reader with the system Reduce Motion, which the system tells only after the poster arrives', async () => {
+    jest.useFakeTimers();
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+    await renderPoster();
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(0);
+    });
+
+    expect(getAnimatedStyle(screen.getByTestId('game-end-finish'))).toEqual({
+      transform: [{ translateX: 0 }, { rotate: '-6deg' }],
+    });
+    jest.restoreAllMocks();
+    jest.useRealTimers();
+  });
+
+  it('reads the «NEW BEST!» stamp in the Edition’s language', async () => {
+    await renderPoster({ ended: { ...end, newBest: true } });
+
+    expect(screen.getByText('NEW BEST!')).toHaveProp('accessibilityLanguage', 'en');
+  });
+
   it('heads a Game that lost its last Life like one short of its target, as the board does: «FINISH», «ONE MORE ROUND!», the count and the XP tile', async () => {
     await renderPoster();
 

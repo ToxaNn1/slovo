@@ -724,6 +724,67 @@ describe('the idioms «Вгадай слово» asks about', () => {
     }
   });
 
+  it("never offers an idiom whose extra Definition is the answer's primary Definition", async () => {
+    const pack = [
+      ...numbered('i_idiom', 16).map((id) => idiomOf(id)),
+      idiomOf('i_narrow', { primaryDefinition: 'A narrow sense.' }),
+      idiomOf('i_wide', { extraDefinitions: ['A narrow sense.'] }),
+    ];
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const app = await runWith({ idioms: pack }, undefined, seed);
+      await app.knowledge.tap('i_narrow', 'unknown');
+      await app.game.start('guess-word');
+      const right = (round: Round) =>
+        optionsOf(round).findIndex(
+          ({ text }) =>
+            pack.find(({ expression }) => expression === text)?.primaryDefinition === round.prompt,
+        );
+      while (current(app).round.prompt !== 'A narrow sense.') await play(app, true, right);
+
+      const options = optionsOf(current(app).round).map(({ text }) => text);
+
+      expect(options).toContain('to narrow');
+      expect(options).not.toContain('to wide');
+    }
+  });
+
+  it('never offers a Word that fits the prompt too: a synonym of the answer, or a Word whose extra Definition is the prompt', async () => {
+    const noun = (lemma: string, overrides: Partial<Word> = {}): Word => ({
+      ...word(`w_${lemma}`, 'nature', { lemma, stress: [] }),
+      ...overrides,
+    });
+    const pack = [
+      ...numbered('n', 16).map((lemma) => noun(lemma)),
+      noun('brisk', { synonyms: ['showy'] }),
+      noun('showy'),
+      noun('narrow', { primaryDefinition: 'A narrow meaning.' }),
+      noun('wide', { extraDefinitions: ['A narrow meaning.'] }),
+    ];
+    /** The Lemmas that must not be offered in the Round that asks the Lemma. */
+    const fitsToo = new Map([
+      ['brisk', 'showy'],
+      ['showy', 'brisk'],
+      ['narrow', 'wide'],
+    ]);
+    const asked = new Set<string>();
+    for (const seed of [1, 2, 3, 4, 5, 6, 7, 8]) {
+      const app = await runWith({ words: pack }, ['knowledge'], seed);
+      for (const lemma of fitsToo.keys()) await app.knowledge.tap(`w_${lemma}`, 'unknown');
+      await app.game.start('guess-word');
+      while (current(app).status === 'playing' && current(app).round.form === 'pick') {
+        const { round } = current(app);
+        const answer = pack.find(({ primaryDefinition }) => primaryDefinition === round.prompt);
+        if (answer === undefined) throw new Error(`No Word has the Definition «${round.prompt}»`);
+        const options = optionsOf(round).map(({ text }) => text);
+        asked.add(answer.lemma);
+        expect(options).toContain(answer.lemma);
+        expect(options).not.toContain(fitsToo.get(answer.lemma));
+        await play(app, true, () => options.indexOf(answer.lemma));
+      }
+    }
+    expect([...fitsToo.keys()].filter((lemma) => !asked.has(lemma))).toEqual([]);
+  });
+
   it('never asks about or offers a place name, a proverb or a Retired idiom, even one marked «Не знаю»', async () => {
     const app = await runWith({ idioms });
     for (const id of [...placeNames, ...proverbs]) await app.knowledge.tap(id, 'unknown');
@@ -2824,6 +2885,36 @@ describe('«Вгадай слово» harder as it goes (L10)', () => {
       expect(highlight).toBeDefined();
       expect(prompt.startsWith('There ')).toBe(true);
       expect(prompt).toMatch(/ grew \d+ times\.$/);
+    }
+  });
+
+  it('skips an Example that has the Lemma twice, where one gap would leave the answer shown', async () => {
+    const played = await playRight(
+      [...trees, ...herbs].map((lemma, times) =>
+        nounIn(
+          lemma,
+          `{Lemma} grew here, and the ${lemma} grew there.`,
+          `There {Lemma} grew ${String(times)} times.`,
+        ),
+      ),
+    );
+
+    for (const { prompt, highlight } of played.slice(5, 10)) {
+      expect(highlight).toBeDefined();
+      expect(prompt.startsWith('There ')).toBe(true);
+    }
+  });
+
+  it('asks a Definition in Rounds 6–10 when every Example with the Lemma has it twice', async () => {
+    const played = await playRight(
+      [...trees, ...herbs].map((lemma) =>
+        nounIn(lemma, `{Lemma} grew here, and the ${lemma} grew there.`),
+      ),
+    );
+
+    for (const round of played.slice(5, 10)) {
+      expect(round.prompt).toBe(definitionOf(round.entry));
+      expect(round.highlight).toBeUndefined();
     }
   });
 

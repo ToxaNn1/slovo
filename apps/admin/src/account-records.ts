@@ -74,6 +74,66 @@ const XpRecord = z.discriminatedUnion('kind', [
 ]);
 type XpRecord = z.infer<typeof XpRecord>;
 
+/**
+ * An XP day, which the Core folds the old records of the XP log into (its
+ * `XpDaySchema`, ADR 0205): each row a record by its id, without its date,
+ * which is the day's, without the kind of an XP entry, and with its instant
+ * as `t`, the milliseconds from the day's base, or as `at`.
+ */
+const XpDay = z.object({
+  date: z.string(),
+  rows: z.record(z.string(), z.record(z.string(), z.unknown())),
+});
+type XpDay = z.infer<typeof XpDay>;
+
+/** The record a row of an XP day reads as, as the Core reads it; nothing for a row that is no record of the log. */
+function recordOfRow(date: string, { t, ...row }: XpDay['rows'][string]): XpRecord | undefined {
+  const instant = typeof t === 'number' ? new Date(Date.parse(`${date}T00:00:00.000Z`) + t) : null;
+  if (instant !== null && Number.isNaN(instant.getTime())) return undefined;
+  const at = instant === null ? {} : { at: instant.toISOString() };
+  return XpRecord.safeParse({ kind: 'xp', ...row, ...at, date }).data;
+}
+
+const byInstant = (
+  one: { id: string; record: XpRecord },
+  other: { id: string; record: XpRecord },
+) =>
+  one.record.at === other.record.at
+    ? one.id < other.id
+      ? -1
+      : 1
+    : one.record.at < other.record.at
+      ? -1
+      : 1;
+
+/**
+ * The XP log as the Core reads it: the records folded into XP days, by day
+ * and instant, then the records kept. A record under one id in several
+ * places counts once: the one with the latest instant, the record kept on a
+ * tie.
+ */
+function xpLogOf(
+  days: readonly { id: string; day: XpDay }[],
+  kept: readonly { id: string; record: XpRecord }[],
+): { id: string; record: XpRecord }[] {
+  const log = new Map<string, XpRecord>();
+  for (const { day } of days.toSorted((one, other) => (one.id < other.id ? -1 : 1))) {
+    const ofDay = Object.entries(day.rows).flatMap(([id, row]) => {
+      const record = recordOfRow(day.date, row);
+      return record === undefined ? [] : [{ id, record }];
+    });
+    for (const { id, record } of ofDay.sort(byInstant)) {
+      const before = log.get(id);
+      if (before === undefined || record.at > before.at) log.set(id, record);
+    }
+  }
+  for (const { id, record } of kept) {
+    const before = log.get(id);
+    if (before === undefined || record.at >= before.at) log.set(id, record);
+  }
+  return [...log].map(([id, record]) => ({ id, record }));
+}
+
 /** What the XP log comes to on the Account page. */
 interface Progress {
   readonly xp: number;
@@ -242,13 +302,14 @@ function idAfter(key: string, prefix: string): string | undefined {
  * An Edition's records as the Account page reads them: Favorites,
  * Collections, hidden Entries and «Знаю» and «Не знаю» marks by the title of
  * their Entry, the progress the XP log keeps (XP after the latest reset
- * marker, the Daily Goal in force, freezes used, Breaks and Badges by name),
+ * marker, the Daily Goal in force, freezes used, Breaks and Badges by name,
+ * the records folded into XP days among them),
  * settings in words, the counts of History, the Active Days kept from before
  * 1.0, confirmed Entries, Corrections worked through and Curated Collections
  * opened, and the Best result of each Game Mode after the latest reset
  * marker. A record of no known kind, or one that does not read as its kind,
  * is counted under «Інші записи» by the first part of its key, so nothing of
- * the Account is left unseen.
+ * the Account is left unseen. A tombstone, a record deleted, is none.
  */
 export function recordsBlocks(
   records: readonly SyncedRecord[],
@@ -268,7 +329,8 @@ export function recordsBlocks(
   const unknown: string[] = [];
   const settings: string[] = [];
   const others = new Map<string, number>();
-  const xpLog: { id: string; record: XpRecord }[] = [];
+  const xpKept: { id: string; record: XpRecord }[] = [];
+  const xpDays: { id: string; day: XpDay }[] = [];
   const history: string[] = [];
   const activeDays: string[] = [];
   const confirmed: string[] = [];
@@ -322,7 +384,16 @@ export function recordsBlocks(
       (id, value) => {
         const record = XpRecord.safeParse(value).data;
         if (record === undefined) return false;
-        xpLog.push({ id, record });
+        xpKept.push({ id, record });
+        return true;
+      },
+    ],
+    [
+      'xpDay.',
+      (id, value) => {
+        const day = XpDay.safeParse(value).data;
+        if (day === undefined) return false;
+        xpDays.push({ id, day });
         return true;
       },
     ],
@@ -349,6 +420,8 @@ export function recordsBlocks(
   ];
 
   for (const { key, value } of records) {
+    // A tombstone is a record deleted, no record of the Account: a folded XP record leaves one.
+    if (value === null) continue;
     const kind = kinds.find(([prefix]) => idAfter(key, prefix) !== undefined);
     const id = kind === undefined ? undefined : idAfter(key, kind[0]);
     if (kind === undefined || id === undefined || !kind[1](id, value)) other(key);
@@ -359,7 +432,10 @@ export function recordsBlocks(
     else collection.entries.push(entryId);
   }
 
-  const { xp, goal, freezes, breaks, badges, markerId } = progressOf(xpLog, nameIn(card?.badges));
+  const { xp, goal, freezes, breaks, badges, markerId } = progressOf(
+    xpLogOf(xpDays, xpKept),
+    nameIn(card?.badges),
+  );
   const progress = [
     `XP: ${String(xp)}`,
     ...(goal === undefined ? [] : [`Денна ціль: ${goal === null ? 'Без цілі' : words(goal)}`]),

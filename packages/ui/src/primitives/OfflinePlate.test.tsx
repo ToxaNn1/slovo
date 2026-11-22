@@ -140,4 +140,16 @@ describe('the offline plate', () => {
     expect(screen.getAllByTestId('offline-plate')).toHaveLength(1);
     expect(clock.delays()).toEqual([3200]);
   });
+
+  it('reads its message out for VoiceOver once, on iOS too, where a view that appears is not read', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockReturnValue();
+    announce.mockClear();
+    await renderPlate(handSchedule().schedule);
+
+    await fireEvent.press(screen.getByTestId('open'));
+    await passTime(0);
+
+    expect(announce.mock.calls).toEqual([['No connection. Try later.']]);
+    announce.mockRestore();
+  });
 });

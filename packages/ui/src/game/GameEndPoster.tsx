@@ -78,7 +78,7 @@ export function GameEndPoster({
       mascot={mascot}
       banner={
         <View style={styles.banner}>
-          <FlyIn>
+          <FlyIn testID="game-end-finish">
             <Text
               {...voice}
               maxFontSizeMultiplier={fontScaleCap.number}
@@ -92,6 +92,7 @@ export function GameEndPoster({
           {end.newBest ? (
             <View testID="game-end-new-best" style={[styles.stamp, { borderColor: keyInk }]}>
               <Text
+                {...voice}
                 maxFontSizeMultiplier={fontScaleCap.text}
                 style={[typeStyle('eyebrow', tokens), { color: keyInk }]}
               >

@@ -9,7 +9,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { useReduceMotion } from '../providers/useReduceMotion';
+import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { ease } from './round-motion';
 
 /** How far, in points from the right, the huge «ФІНІШ» flies in from, and in how long. */
@@ -23,17 +23,16 @@ const TURN = -6;
  * as the poster arrives. With Reduce Motion it stands turned in place.
  */
 function useFlyIn() {
-  const reduceMotion = useReduceMotion();
+  // Unknown until the system answers: a fly-in started before then could not be taken back.
+  const reduceMotion = useReduceMotionKnown();
   /** 0 off the panel, 1 in place. */
-  const flown = useSharedValue(reduceMotion ? 1 : 0);
+  const flown = useSharedValue(reduceMotion === true ? 1 : 0);
 
   useEffect(() => {
-    if (reduceMotion) return;
-    flown.value = withTiming(1, {
-      duration: FLY.duration,
-      easing: ease,
-      reduceMotion: ReduceMotion.Never,
-    });
+    if (reduceMotion === undefined) return;
+    flown.value = reduceMotion
+      ? 1
+      : withTiming(1, { duration: FLY.duration, easing: ease, reduceMotion: ReduceMotion.Never });
     // The shared value is stable, so only the poster's arrival flies it in.
   }, [flown, reduceMotion]);
 
@@ -43,6 +42,10 @@ function useFlyIn() {
 }
 
 /** Its children turned, flying in from the right as they arrive (board 06). */
-export function FlyIn({ children }: { children: ReactNode }) {
-  return <Animated.View style={useFlyIn()}>{children}</Animated.View>;
+export function FlyIn({ children, testID }: { children: ReactNode; testID?: string }) {
+  return (
+    <Animated.View testID={testID} style={useFlyIn()}>
+      {children}
+    </Animated.View>
+  );
 }

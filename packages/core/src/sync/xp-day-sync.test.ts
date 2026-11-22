@@ -7,6 +7,7 @@ import { fakeClock, randomOf, testEdition, word } from '../test-support';
 import { trackChanges } from '../user-state/tracked-user-state';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { createSyncExchange } from './exchange';
+import { signInByCode } from '../fakes/fake-backend';
 
 // ADR 0205: XP days across the devices of one Account, and on the backend.
 
@@ -42,10 +43,11 @@ function account(start = '2026-09-02T09:00:00.000Z') {
       clock: time.clock,
     });
     const exchange = createSyncExchange({ userState, backend, editionId: 'uk' });
+    const { token } = await signInByCode(server);
     return {
       records,
       userState,
-      sync: () => exchange.sync('a-session'),
+      sync: () => exchange.sync(token),
       /** Opens the composition as a launch does, which folds the days past 30, and answers its XP. */
       async launch() {
         const { xpLog } = await openComposition({
@@ -62,7 +64,7 @@ function account(start = '2026-09-02T09:00:00.000Z') {
 
   /** The keys of the records the Account keeps under the prefix, a tombstone not one: only they count toward its limit. */
   const kept = (prefix: string) =>
-    [...server.sync.records]
+    [...server.sync.recordsOf('anna@mail.com')]
       .filter(([key, { value }]) => key.startsWith(prefix) && value !== null)
       .map(([key]) => key)
       .sort();
@@ -193,6 +195,42 @@ describe('the XP days of two devices of one Account', () => {
 });
 
 describe('a push of Sync', () => {
+  it('never deletes a folded record from the Account before the XP day that holds it is there', async () => {
+    const { time, server, device } = account();
+    // 600 Rounds over 20 days: more than one push of deletions once they fold.
+    const old = new Map(
+      Array.from({ length: 600 }, (_, index): [string, string] => [
+        `xp.round-${String(index).padStart(3, '0')}`,
+        round(`2026-08-${String((index % 20) + 1).padStart(2, '0')}`, index % 24),
+      ]),
+    );
+    let pushes = 0;
+    let failing = false;
+    const phone = await device(old, {
+      sync: {
+        pull: (input, options) => server.backend.sync.pull(input, options),
+        push: (input, options) => {
+          pushes += 1;
+          return failing && pushes > 1
+            ? Promise.reject(new TypeError('Network request failed'))
+            : server.backend.sync.push(input, options);
+        },
+      },
+    });
+    await phone.sync();
+    time.set('2026-10-14T09:00:00.000Z');
+    expect(await phone.launch()).toBe(600);
+    pushes = 0;
+    failing = true;
+
+    // The first push of the fold reaches the Account, the next fails.
+    expect(await phone.sync()).toMatchObject({ ok: false, reason: 'offline' });
+
+    const fresh = await device();
+    await fresh.sync();
+    expect(await fresh.launch()).toBe(600);
+  });
+
   it('sends the deletions first, so they free room in the Account before a record is added', async () => {
     const { time, server, device } = account();
     const pushes: { key: string; value: unknown }[][] = [];

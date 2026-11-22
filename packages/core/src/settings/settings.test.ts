@@ -15,6 +15,7 @@ import {
   createFakeBackend,
   createFakeGoogleSignInSheet,
 } from '../testing';
+import { signInByCode } from '../fakes/fake-backend';
 import { trackChanges } from '../user-state/tracked-user-state';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
@@ -615,10 +616,7 @@ describe('settings: the text size and Sync', () => {
       googleSheet: createFakeGoogleSignInSheet(),
       appleSheet: createFakeAppleSignInSheet(),
       userState,
-      sessions: createMemorySessionStore({
-        token: `session-of-${time.clock.now().toISOString()}`,
-        email: EMAIL,
-      }),
+      sessions: createMemorySessionStore(await signInByCode(server, EMAIL)),
       clock: time.clock,
       schedule: timers.schedule,
       random: randomOf(0.5),

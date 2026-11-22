@@ -161,6 +161,11 @@ function Cell({
   const reduceMotion = useReduceMotion();
   const scale = useSharedValue(1);
   const shownSolved = useRef(cell.solved);
+  // A cell smaller than a touch target catches the finger in the gaps around it too, up to
+  // half of each gap, so two cells never share a touch.
+  const reach = Math.min(crossingCrosswordLayout.cellGap / 2, (minTouchTarget - side) / 2);
+  const slop =
+    reach > 0 ? { hitSlop: { left: reach, right: reach, top: reach, bottom: reach } } : {};
   useEffect(() => {
     if (!cell.solved) {
       shownSolved.current = false;
@@ -182,6 +187,7 @@ function Cell({
       <PressedTile
         testID={testID}
         tone={cell.solved ? 'accent' : 'tile'}
+        {...slop}
         accessibilityLabel={cell.label}
         accessibilityState={{ selected: cell.current }}
         onPress={onPress}

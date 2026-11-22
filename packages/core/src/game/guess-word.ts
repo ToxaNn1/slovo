@@ -37,25 +37,63 @@ export const distractorOrder = (answer: Word, others: readonly Word[], random: R
 ];
 
 /**
- * The Comparison Keys of primary Definitions, by the comparison and the Entry
- * they were given for: every Round compares the answer with all eligible Entries.
+ * A Comparison Key of an Entry, worked out once for the comparison and the
+ * Entry it was given for: every Round compares the answer with all eligible Entries.
  */
-const definitions = new WeakMap<TextComparison, WeakMap<Word | Idiom, string>>();
+function keptPerEntry<E extends object, K extends object | string>(
+  keyOf: (comparison: TextComparison, entry: E) => K,
+) {
+  const kept = new WeakMap<TextComparison, WeakMap<E, K>>();
+  return (comparison: TextComparison, entry: E): K => {
+    let keys = kept.get(comparison);
+    if (keys === undefined) {
+      keys = new WeakMap();
+      kept.set(comparison, keys);
+    }
+    const found = keys.get(entry);
+    if (found !== undefined) return found;
+    const key = keyOf(comparison, entry);
+    keys.set(entry, key);
+    return key;
+  };
+}
 
 /** A primary Definition as the reader tells it apart: its Comparison Key as a Definition. */
-export function definitionOfEntry(comparison: TextComparison, entry: Word | Idiom): string {
-  let keys = definitions.get(comparison);
-  if (keys === undefined) {
-    keys = new WeakMap();
-    definitions.set(comparison, keys);
-  }
-  let definition = keys.get(entry);
-  if (definition === undefined) {
-    definition = comparison.key(entry.primaryDefinition, 'definition');
-    keys.set(entry, definition);
-  }
-  return definition;
-}
+export const definitionOfEntry = keptPerEntry((comparison, entry: Word | Idiom) =>
+  comparison.key(entry.primaryDefinition, 'definition'),
+);
+
+/** The Comparison Keys of an Entry's extra Definitions. */
+const extraDefinitionsOf = keptPerEntry((comparison, entry: Word | Idiom) =>
+  entry.extraDefinitions.map((text) => comparison.key(text, 'definition')),
+);
+
+/** Whether a Definition of the Entry, primary or extra, has the Comparison Key. */
+const hasDefinition = (comparison: TextComparison, entry: Word | Idiom, definition: string) =>
+  definitionOfEntry(comparison, entry) === definition ||
+  extraDefinitionsOf(comparison, entry).includes(definition);
+
+/** The Comparison Keys of a Word's Lemma and of its synonyms, as typed answers. */
+const synonymKeysOf = keptPerEntry((comparison, word: Word) => ({
+  lemma: comparison.key(word.lemma, 'typedAnswer'),
+  synonyms: new Set(word.synonyms.map((synonym) => comparison.key(synonym, 'typedAnswer'))),
+}));
+
+/** Whether the two Words are synonyms, whichever of them lists the other. */
+export const areSynonyms = (comparison: TextComparison, one: Word, other: Word) => {
+  const oneKeys = synonymKeysOf(comparison, one);
+  const otherKeys = synonymKeysOf(comparison, other);
+  return oneKeys.synonyms.has(otherKeys.lemma) || otherKeys.synonyms.has(oneKeys.lemma);
+};
+
+/**
+ * Whether the other Word fits the primary Definition of the Word too, so a
+ * reader could rightly pick it: one of its Definitions is that one, or the
+ * two are synonyms, whichever of them lists the other.
+ */
+export const fitsDefinitionOf = (comparison: TextComparison, word: Word, other: Word) =>
+  hasDefinition(comparison, other, definitionOfEntry(comparison, word)) ||
+  areSynonyms(comparison, word, other);
 
 /** A Word's option, its Lemma with Stress; homonyms share a Lemma, so they never meet in a Round. */
 const wordOptions = {
@@ -101,8 +139,8 @@ const typedRound = (word: Word): RoundContent => ({
 const GAP = '…';
 
 /**
- * The first Example of the Word with its Lemma as written, which a gap takes
- * the place of, for a Round from `GAP_ROUNDS.first` to `GAP_ROUNDS.last`;
+ * The first Example of the Word with its Lemma as written once, which a gap
+ * takes the place of, for a Round from `GAP_ROUNDS.first` to `GAP_ROUNDS.last`;
  * nothing in another Round or without such an Example.
  */
 function gapIn(
@@ -112,9 +150,11 @@ function gapIn(
 ): { prompt: string; highlight: TextRange; example: Example } | undefined {
   if (round < GAP_ROUNDS.first || round > GAP_ROUNDS.last) return undefined;
   for (const example of word.examples) {
-    const found = comparison.find(example.text, word.lemma, { wholeWord: true });
-    if (found === undefined) continue;
     const { text } = example;
+    const found = comparison.find(text, word.lemma, { wholeWord: true });
+    if (found === undefined) continue;
+    // The Lemma once more after the gap would show the answer.
+    if (comparison.find(text.slice(found.end), word.lemma, { wholeWord: true })) continue;
     return {
       prompt: `${text.slice(0, found.start)}${GAP}${text.slice(found.end)}`,
       highlight: { start: found.start, end: found.start + GAP.length },
@@ -237,9 +277,10 @@ function tipRound({ gameQuestion, example }: Tip, random: Random): RoundContent 
 /**
  * «Вгадай слово», the Core's Definition → Word mode, which asks about idioms
  * too. A Round shows the answer's primary Definition and four
- * options, none with the answer's primary Definition, so the prompt fits one
+ * options, none with the answer's primary Definition among its Definitions,
+ * primary or extra, and no Word a synonym of the answer, so the prompt fits one
  * option only. In Rounds 6–10 a Word's Round shows instead its first Example
- * with the Lemma as written, a gap in its place, which the Round marks; a
+ * with the Lemma as written once, a gap in its place, which the Round marks; a
  * Word with no such Example is asked by its Definition. From Round
  * 11 a Word's Round asks its Definition for the Word typed, compared by its
  * Comparison Key as a typed answer, and its sheet shows the Lemma with its Stress; a
@@ -268,7 +309,7 @@ export const guessWord: GameMode = {
     if (answer.kind === 'word') {
       const definition = definitionOf(answer);
       const words = eligible.filter((entry): entry is Word => entry.kind === 'word');
-      const others = words.filter((entry) => definitionOf(entry) !== definition);
+      const others = words.filter((entry) => !fitsDefinitionOf(comparison, answer, entry));
       const sharesDefinition = words.some(
         (entry) => entry.id !== answer.id && definitionOf(entry) === definition,
       );
@@ -281,7 +322,8 @@ export const guessWord: GameMode = {
     if (!isIdiomProper(answer)) return undefined;
     const definition = definitionOf(answer);
     const others = eligible.filter(
-      (entry): entry is Idiom => isIdiomProper(entry) && definitionOf(entry) !== definition,
+      (entry): entry is Idiom =>
+        isIdiomProper(entry) && !hasDefinition(comparison, entry, definition),
     );
     return roundOf(answer, shuffled(others, random), idiomOptions, random);
   },

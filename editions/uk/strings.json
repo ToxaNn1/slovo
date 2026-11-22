@@ -1032,6 +1032,12 @@
       "none": "зняти"
     },
     "count": "{selected} з {total}",
+    "countLabel": {
+      "one": "Вибрано {selected} з {count} теми",
+      "few": "Вибрано {selected} з {count} тем",
+      "many": "Вибрано {selected} з {count} тем",
+      "other": "Вибрано {selected} з {count} теми"
+    },
     "lastCategoryHint": "Хоча б одна категорія лишається завжди, щоб було слово дня."
   },
   "hidden": {

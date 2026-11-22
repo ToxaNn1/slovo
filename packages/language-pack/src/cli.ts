@@ -34,7 +34,7 @@ import {
 } from './edition-folder';
 import { formatContentReport } from './report';
 import { readSnapshotFile, SnapshotUnreachableError } from './snapshot-source';
-import { downloadStarterMedia, STARTER_MEDIA_DIR } from './starter-media';
+import { downloadStarterMedia, fetchMedia, STARTER_MEDIA_DIR } from './starter-media';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 
@@ -101,11 +101,7 @@ async function main(): Promise<number> {
 
   const { metadata, report, starterMedia } = result;
   const starterDir = join(editionDir, STARTER_MEDIA_DIR);
-  await downloadStarterMedia(starterMedia, starterDir, async (url) => {
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`${url} answered ${String(response.status)}`);
-    return new Uint8Array(await response.arrayBuffer());
-  });
+  await downloadStarterMedia(starterMedia, starterDir, fetchMedia());
   console.log(`Built the Language Pack for "${metadata.editionId}"`);
   console.log(`  file:            ${displayPath(outFile)}`);
   console.log(`  content version: ${String(metadata.contentVersion)}`);
