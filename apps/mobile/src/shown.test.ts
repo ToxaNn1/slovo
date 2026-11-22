@@ -24,6 +24,7 @@ const everything: Shown = {
   breakCard: true,
   streakFreezeCard: true,
   badgeCounts: true,
+  todayPending: true,
   progressShareCards: true,
   questionnaire: { levelWhy: true, selfRating: true, interests: true },
 };
@@ -132,6 +133,7 @@ describe('what the reader is shown', () => {
           streakFreezeCard: false,
           breakCard: false,
           badgeCounts: false,
+          todayPending: false,
           progressShareCards: false,
         },
       },

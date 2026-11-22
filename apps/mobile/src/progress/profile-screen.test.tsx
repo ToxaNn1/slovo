@@ -354,6 +354,12 @@ describe('the Profile', () => {
       );
     });
 
+    it('says nothing while the reader hides the counters («Без лічильників», ADR 0066)', async () => {
+      await renderScreen({ goal: 10, rounds: 5, noCounters: true });
+
+      expect(screen.queryByTestId('profile-today-pending')).toBeNull();
+    });
+
     it('says nothing without a Daily Goal', async () => {
       await renderScreen({ rounds: 5 });
 

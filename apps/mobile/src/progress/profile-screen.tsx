@@ -185,7 +185,8 @@ function ProfileBlocks() {
             todayWord={todayWord}
           />
         </View>
-        {xp.dailyGoal !== null &&
+        {shown.todayPending &&
+          xp.dailyGoal !== null &&
           !xp.dailyGoal.met &&
           today?.state === 'today' &&
           !today.active && (
