@@ -80,6 +80,10 @@ function hasDefinition(comparison: TextComparison, entry: Word | Idiom, definiti
 const listsAsSynonym = (comparison: TextComparison, one: Word, other: Word) =>
   one.synonyms.some((synonym) => comparison.same(synonym, other.lemma, 'typedAnswer'));
 
+/** Whether the two Words are synonyms, whichever of them lists the other. */
+export const areSynonyms = (comparison: TextComparison, one: Word, other: Word) =>
+  listsAsSynonym(comparison, one, other) || listsAsSynonym(comparison, other, one);
+
 /**
  * Whether the other Word fits the primary Definition of the Word too, so a
  * reader could rightly pick it: one of its Definitions is that one, or the
@@ -87,8 +91,7 @@ const listsAsSynonym = (comparison: TextComparison, one: Word, other: Word) =>
  */
 export const fitsDefinitionOf = (comparison: TextComparison, word: Word, other: Word) =>
   hasDefinition(comparison, other, definitionOfEntry(comparison, word)) ||
-  listsAsSynonym(comparison, word, other) ||
-  listsAsSynonym(comparison, other, word);
+  areSynonyms(comparison, word, other);
 
 /** A Word's option, its Lemma with Stress; homonyms share a Lemma, so they never meet in a Round. */
 const wordOptions = {

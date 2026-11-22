@@ -4,14 +4,10 @@ import type { Random } from '../ports';
 import { shuffled } from '../shuffled';
 import type { TextComparison } from '../text/text-comparison';
 import { ROUND_OPTIONS, type RoundContent, type RoundOption } from './game-mode';
-import { definitionOfEntry, distractorOrder } from './guess-word';
+import { areSynonyms, definitionOfEntry, distractorOrder } from './guess-word';
 
 /** The stable id analytics name the Word Meaning question by, where a Game Mode has its own. */
 export const WORD_MEANING_ID = 'word-meaning';
-
-/** Whether one Word lists the other's Lemma among its synonyms. */
-const listsAsSynonym = (comparison: TextComparison, one: Word, other: Word) =>
-  one.synonyms.some((synonym) => comparison.same(synonym, other.lemma, 'typedAnswer'));
 
 const optionOf = (text: string): RoundOption => ({ text, stressedVowels: [] });
 
@@ -54,8 +50,7 @@ export function wordMeaningRound({
     (word) =>
       word.id !== answer.id &&
       !comparison.same(word.lemma, answer.lemma, 'typedAnswer') &&
-      !listsAsSynonym(comparison, answer, word) &&
-      !listsAsSynonym(comparison, word, answer),
+      !areSynonyms(comparison, answer, word),
   );
   const distractors: string[] = [];
   for (const other of distractorOrder(answer, others, random)) {
