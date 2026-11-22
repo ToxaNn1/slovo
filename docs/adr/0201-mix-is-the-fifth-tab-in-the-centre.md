@@ -22,4 +22,4 @@ Owner decision of 2026-11-19, before 1.0.
 - The first-week card of day 4 points to the tab «Мікс», «унизу посередині».
 - The app pass opens `/mix` (ADR 0177).
 
-**Renamed (owner, 21.11).** The tab shows as «Теми» and the screen as «Мої теми»; the glossary term stays Mix.
+**Renamed (owner, 21.11).** The tab shows as «Теми» and the screen as «Мої Теми»; the glossary term stays Mix.

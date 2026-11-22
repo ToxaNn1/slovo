@@ -179,6 +179,7 @@ export {
   type MixKindName,
 } from './entries/entry-kinds';
 export {
+  categoriesTakenOut,
   categoryTarget,
   categoryPlace,
   kindsShown,

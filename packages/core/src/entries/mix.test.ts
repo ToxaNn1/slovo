@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  categoriesTakenOut,
   kindsShown,
   openComposition,
   type Clock,
@@ -278,6 +279,14 @@ describe('the Mix', () => {
 
     expect(app.mix.state.categoryIds).toEqual(['nature', 'speech', 'crafts']);
     expect(told).toBe(2);
+  });
+
+  it('tells which Categories a group taken out loses: those in the Mix, all but the last when none would be left', () => {
+    expect(
+      categoriesTakenOut(['speech', 'crafts', 'nature'], ['speech', 'crafts', 'food']),
+    ).toEqual(['speech', 'crafts']);
+    expect(categoriesTakenOut(['speech', 'crafts'], ['speech', 'crafts'])).toEqual(['speech']);
+    expect(categoriesTakenOut(['speech'], ['speech'])).toEqual([]);
   });
 
   it('keeps the group’s last Category in when taking the group out would leave none', async () => {

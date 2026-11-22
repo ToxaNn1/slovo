@@ -39,13 +39,15 @@ export type TileTone = 'tile' | 'accent' | 'ink' | 'inverse' | 'none';
  * press but keeps its look, and VoiceOver does not read it as dimmed. A
  * `key` stands on a shallower edge, as a key of an on-screen keyboard, an
  * `action` tile of the action row on one between the two, and a `card` on a deeper one. Its face carries the test ID
- * `${testID}-face`.
+ * `${testID}-face`. An `onLongPress` stays on a disabled tile, which still
+ * takes no tap.
  */
 export function PressedTile({
   tone = 'tile',
   depth = 'tile',
   radius,
   onPress,
+  onLongPress,
   disabled = false,
   inert = false,
   accessibilityLabel,
@@ -63,6 +65,8 @@ export function PressedTile({
   /** The face's corner radius; `radii.tile` when left out. */
   radius?: number;
   onPress: () => void;
+  /** What a long press does, a disabled tile's too. */
+  onLongPress?: (() => void) | undefined;
   disabled?: boolean;
   /** Whether it takes no press while it keeps its look, as an answered tile. */
   inert?: boolean;
@@ -122,10 +126,12 @@ export function PressedTile({
       accessibilityLanguage={accessibilityLanguage ?? voice.accessibilityLanguage}
       accessibilityHint={accessibilityHint}
       accessibilityState={{ ...accessibilityState, disabled: unavailable }}
-      disabled={unavailable}
+      // A tile that takes a long press leaves its touches on and VoiceOver its disabled state.
+      disabled={onLongPress === undefined ? unavailable : undefined}
       hitSlop={hitSlop}
       pointerEvents={inert ? 'none' : 'auto'}
-      onPress={onPress}
+      onPress={unavailable ? undefined : onPress}
+      onLongPress={onLongPress}
       onPressIn={() => {
         press(1);
       }}

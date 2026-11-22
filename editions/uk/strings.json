@@ -126,7 +126,7 @@
     },
     "rows": {
       "notifications": "Сповіщення",
-      "myMix": "Мої теми",
+      "myMix": "Мої Теми",
       "hidden": "Приховані записи",
       "about": "Про SLOVO",
       "streakBreak": "Перерва",
@@ -1009,6 +1009,7 @@
     "tiles": {
       "rarity": "РІДКІСТЬ",
       "kinds": "ТИПИ",
+      "kindsLabel": "Типи карток: {selected} з {total}",
       "quickQuestion": "ПИТАННЯ",
       "rarityAll": "усі"
     },
@@ -1038,6 +1039,7 @@
       "many": "Вибрано {selected} з {count} тем",
       "other": "Вибрано {selected} з {count} теми"
     },
+    "hidden": "Приховане",
     "lastCategoryHint": "Хоча б одна категорія лишається завжди, щоб було слово дня."
   },
   "hidden": {

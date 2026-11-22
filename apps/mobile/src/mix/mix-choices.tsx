@@ -5,7 +5,7 @@ import {
   type MixKindWeight,
   type QuickQuestionEvery,
 } from '@slovo/contracts';
-import type { MixKind, MixKindName } from '@slovo/core';
+import { categoriesTakenOut, type MixKind, type MixKindName } from '@slovo/core';
 import {
   BottomSheet,
   Button,
@@ -17,6 +17,8 @@ import {
   PressedTile,
   RarityRangePicker,
   SegmentedControl,
+  SettingsGroup,
+  SettingsRow,
   SheetTitle,
   space,
   typeStyle,
@@ -31,6 +33,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { edition, editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
+import { useOpenScreen } from '../use-open-screen';
+import { useHiddenSummary } from './hidden';
 import { useMixChanges, useMixScreenModel, useMixState } from './mix';
 import type { MixChipModel, MixScreenModel } from './mix-screen';
 import { useRarityRange } from './rarity-range';
@@ -44,12 +48,16 @@ type MixSheet = 'rarity' | 'kinds' | 'correctionCategories' | 'quickQuestion';
  * «Мої Теми» (board XMix, variant E) under its title: the setting tiles
  * «Рідкість», «Типи» and «Питання», each while the Edition turns its part
  * on and each opening its sheet, then the Categories of Words as covers in
- * the Edition's groups. A change applies at once (the Core's Mix).
+ * the Edition's groups. A change applies at once (the Core's Mix). At the
+ * foot, while the tab «Теми» is shown, «Приховане» opens the Hidden screen, whose Categories are the ones
+ * out of the Mix (ADR 0019).
  */
 export function MixChoices() {
   // The sheet stays drawn while it slides away, so it leaves whole, and goes once it is gone.
   const [sheet, setSheet] = useState<{ open: boolean; showing: MixSheet }>();
   const model = useMixScreenModel();
+  // Without the tab, «Мої Теми» opens from Settings, whose own row opens the Hidden screen.
+  const mixTab = useEditionInEffect().isFeatureEnabled('mixTab');
   const open = (showing: MixSheet) => {
     setSheet({ open: true, showing });
   };
@@ -60,6 +68,7 @@ export function MixChoices() {
     <>
       <SettingTiles model={model} open={open} />
       <CategoryGroups model={model} />
+      {mixTab && <HiddenRow />}
       <BottomSheet
         visible={sheet?.open === true}
         onClose={close}
@@ -82,6 +91,31 @@ export function MixChoices() {
         <Button label={strings.sheets.done} onPress={close} testID="mix-sheet-done" />
       </BottomSheet>
     </>
+  );
+}
+
+/** «Приховане» and how much is hidden, opening the Hidden screen with its way back to the tab. */
+function HiddenRow() {
+  const openScreen = useOpenScreen();
+  const summary = useHiddenSummary();
+  return (
+    <View style={styles.hidden}>
+      <SettingsGroup>
+        <SettingsRow
+          testID="mix-hidden"
+          icon="square"
+          label={strings.hidden}
+          subtitle={undefined}
+          end={{
+            kind: 'chevron',
+            value: summary,
+            onPress: () => {
+              openScreen('/settings/hidden?from=mix');
+            },
+          }}
+        />
+      </SettingsGroup>
+    </View>
   );
 }
 
@@ -171,6 +205,7 @@ function SettingTiles({ model, open }: { model: MixScreenModel; open: (sheet: Mi
     sheet: MixSheet;
     label: string;
     value: string;
+    accessibilityLabel?: string | undefined;
     bars: readonly MixSettingBar[];
   }[] = [];
   if (inEffect.isFeatureEnabled('rarityCeiling'))
@@ -188,16 +223,20 @@ function SettingTiles({ model, open }: { model: MixScreenModel; open: (sheet: Mi
         lit: rarity >= range.from && rarity <= range.to ? 'accent' : false,
       })),
     });
-  if (model.kinds.length > 0)
+  if (model.kinds.length > 0) {
+    const kindsIn = String(model.kinds.filter(({ on }) => on).length);
+    const kindsAll = String(model.kinds.length);
     tiles.push({
       sheet: 'kinds',
       label: strings.tiles.kinds,
-      value: `${String(model.kinds.filter(({ on }) => on).length)}/${String(model.kinds.length)}`,
+      value: `${kindsIn}/${kindsAll}`,
+      accessibilityLabel: fill(strings.tiles.kindsLabel, { selected: kindsIn, total: kindsAll }),
       bars: model.kinds.map(({ entryKind, on }) => {
         const level = levelOf(on, model.kindWeights?.[entryKind]);
         return { height: bar.base + level * bar.levelStep, lit: level > 0 ? 'ink' : false };
       }),
     });
+  }
   if (inEffect.isFeatureEnabled('quickQuestion')) {
     const at = QUICK_QUESTION_EVERY.findIndex(({ every }) => every === quickQuestionEvery);
     const chosen = QUICK_QUESTION_EVERY[at];
@@ -221,6 +260,7 @@ function SettingTiles({ model, open }: { model: MixScreenModel; open: (sheet: Mi
             testID={`mix-tile-${tile.sheet}`}
             label={tile.label}
             value={tile.value}
+            accessibilityLabel={tile.accessibilityLabel}
             bars={tile.bars}
             onPress={() => {
               open(tile.sheet);
@@ -253,8 +293,14 @@ function SheetContent({
   }
 }
 
+/**
+ * The Rarity Range and, while the Edition has it, the Rarity Test that sets
+ * it again; the sheet closes as the test comes on screen.
+ */
 function RaritySheet() {
   const { range, setRange } = useRarityRange();
+  const rarityTest = useEditionInEffect().isFeatureEnabled('rarityTest');
+  const openScreen = useOpenScreen();
   return (
     <>
       <SheetTitle>{strings.sheets.rarity}</SheetTitle>
@@ -265,6 +311,16 @@ function RaritySheet() {
           range={range}
           onChange={setRange}
         />
+        {rarityTest && (
+          <Button
+            variant="neutral"
+            testID="mix-rarity-test"
+            label={editionStrings.rarityTest.retake}
+            onPress={() => {
+              openScreen('/settings/rarity-test');
+            }}
+          />
+        )}
       </View>
     </>
   );
@@ -531,6 +587,13 @@ function CategoryGroups({ model }: { model: MixScreenModel }) {
     },
     [choose, toggleCategory],
   );
+  const openScreen = useOpenScreen();
+  const onOpen = useCallback(
+    (categoryId: string) => {
+      openScreen(`/category/${categoryId}`);
+    },
+    [openScreen],
+  );
   /** Whether the Category shows in the Mix: as chosen on screen, else as the Mix has it. */
   const shownOn = ({ id, on }: MixChipModel) => chosen.get(id) ?? on;
   const places = new Map(model.chips.map((chip, place) => [chip.id, { chip, place }]));
@@ -568,7 +631,13 @@ function CategoryGroups({ model }: { model: MixScreenModel }) {
                   accessibilityRole="button"
                   style={styles.groupToggle}
                   onPress={() => {
-                    choose(ids, !all, setCategories(ids, !all));
+                    // Drawn as the Core will leave it: a group that holds the Mix's last Categories keeps one lit.
+                    const inMix = model.chips.filter(shownOn).map(({ id }) => id);
+                    choose(
+                      all ? categoriesTakenOut(inMix, ids) : ids,
+                      !all,
+                      setCategories(ids, !all),
+                    );
                   }}
                 >
                   <Text
@@ -603,6 +672,7 @@ function CategoryGroups({ model }: { model: MixScreenModel }) {
                           on={shownOn(chip)}
                           disabled={chip.disabled}
                           onToggle={onToggle}
+                          onOpen={onOpen}
                         />
                       </View>
                     );
@@ -640,6 +710,7 @@ const CoverCell = memo(function CoverCell({
   on,
   disabled,
   onToggle,
+  onOpen,
 }: {
   id: string;
   name: string;
@@ -650,6 +721,8 @@ const CoverCell = memo(function CoverCell({
   on: boolean;
   disabled: boolean;
   onToggle: (categoryId: string, inMix: boolean) => void;
+  /** Opens the Category's screen, to see its Words before choosing it. */
+  onOpen: (categoryId: string) => void;
 }) {
   return (
     <MixCategoryCover
@@ -664,6 +737,9 @@ const CoverCell = memo(function CoverCell({
       accessibilityHint={strings.lastCategoryHint}
       onPress={() => {
         onToggle(id, !on);
+      }}
+      onLongPress={() => {
+        onOpen(id);
       }}
     />
   );
@@ -692,6 +768,7 @@ const styles = StyleSheet.create({
   coverRow: { flexDirection: 'row' },
   // A ScrollView grows by default; the sheet takes the content's height, up to the screen's.
   sheetScroll: { flexGrow: 0, flexShrink: 1 },
+  hidden: { marginTop: drawing.groupGap },
   sheetBody: { gap: space[3], marginTop: space[2], marginBottom: space[3] },
   kind: { gap: space[3], paddingTop: space[3] },
   groupToggle: { minHeight: minTouchTarget, justifyContent: 'center' },

@@ -1,4 +1,4 @@
-# «Виправлення», «Фразеологізми», «Синонімічні ряди» and «Поради» in Мої теми:
+# «Виправлення», «Фразеологізми», «Синонімічні ряди» and «Поради» in Мої Теми:
 # a switch for each, on by default. Off, the Feed drops their cards at once, so
 # the card on screen is a Word's; the Mix keeps them off; on again, they are
 # back in the Mix. A subflow of `smoke.yaml`; run it from there. It starts by

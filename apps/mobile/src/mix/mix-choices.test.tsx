@@ -1,17 +1,19 @@
-import { beforeEach, describe, expect, it } from '@jest/globals';
+import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { openComposition, systemRandom, type Composition, type Edition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import { fill, type Category } from '@slovo/contracts';
 import { minTouchTarget } from '@slovo/ui/tokens';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { Stack } from 'expo-router';
 import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 
 import MixTabScreen from '../app/mix';
 import MixScreen from '../app/settings/mix';
+import HiddenScreen from '../app/settings/hidden';
 import { activeEditionFiles, editionStrings } from '../edition/edition';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
+import { screenSettled } from '../use-open-screen';
 
 const { config } = activeEditionFiles;
 
@@ -86,6 +88,9 @@ async function renderChoices(url = '/settings/mix', editionInEffect: Edition = s
       _layout: () => <Stack screenOptions={{ headerShown: false }} />,
       'settings/mix': MixScreen,
       'mix/index': MixTabScreen,
+      'category/[categoryId]': () => <Text>Category</Text>,
+      'settings/rarity-test': () => <Text>Rarity Test</Text>,
+      'settings/hidden': HiddenScreen,
     },
     { shell, initialUrl: url },
   );
@@ -142,6 +147,50 @@ describe('the Category covers on the Мій Мікс screen', () => {
     );
     await press('mix-group-0');
     expect(screen.getByTestId('mix-selected')).toHaveTextContent(selected(2));
+  });
+
+  it('keeps one cover lit at once when «зняти» takes out a group that holds the last Categories', async () => {
+    await renderChoices();
+    const write = composition.mix.setCategories.bind(composition.mix);
+    let written: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => {
+      written = resolve;
+    });
+    // The write is held, so the screen shows what it chose before the Mix keeps it.
+    jest
+      .spyOn(composition.mix, 'setCategories')
+      .mockImplementation((ids, inMix, of) => held.then(() => write(ids, inMix, of)));
+
+    await press('mix-group-0');
+
+    expect(cover('emotions-character')).toBeSelected();
+    expect(cover('human-body')).not.toBeSelected();
+    written();
+    await settle();
+    expect(cover('emotions-character')).toBeSelected();
+    expect(cover('human-body')).not.toBeSelected();
+  });
+
+  it('opens a Category’s screen on a long press of its cover, and leaves it in the Mix', async () => {
+    await renderChoices('/mix');
+    screenSettled();
+
+    await fireEvent(cover('emotions-character'), 'longPress');
+    await settle();
+
+    expect(screen).toHavePathname('/category/emotions-character');
+    expect(composition.mix.state.categoryIds).toContain('emotions-character');
+  });
+
+  it('opens the last Category’s screen on a long press, though its cover takes no tap', async () => {
+    await renderChoices('/mix');
+    await press('mix-chip-emotions-character');
+    screenSettled();
+
+    await fireEvent(cover('human-body'), 'longPress');
+    await settle();
+
+    expect(screen).toHavePathname('/category/human-body');
   });
 
   it('has VoiceOver read «N з M» as the Categories in the Mix', async () => {
@@ -240,6 +289,49 @@ describe('the Мій Мікс screen', () => {
 
     expect(composition.rarityRange.state).toEqual({ from: 1, to: 3 });
     expect(screen.getByTestId('mix-rarity-bar-3')).toBeSelected();
+  });
+
+  it('reads the kinds tile as «Типи карток: 3 з 4» to VoiceOver, not «3/4»', async () => {
+    await renderChoices();
+
+    const kinds = screen.getByTestId('mix-tile-kinds');
+    const value: unknown = screen.getByTestId('mix-tile-kinds-value').props['children'];
+    const [selected, total] = String(value).split('/');
+    expect(kinds).toHaveAccessibleName(
+      fill(mixStrings.tiles.kindsLabel, { selected: selected ?? '', total: total ?? '' }),
+    );
+  });
+
+  it('opens the Hidden screen from «Приховане» at its foot, with the way back to «Теми»', async () => {
+    await renderChoices('/mix');
+    screenSettled();
+
+    await press('mix-hidden');
+
+    expect(screen).toHavePathname('/settings/hidden');
+    expect(screen.getByTestId('hidden-back')).toHaveAccessibleName(editionStrings.tabs.mix);
+  });
+
+  it('opens the Rarity Test from the «Рідкість» sheet', async () => {
+    await renderChoices('/mix');
+    await press('mix-tile-rarity');
+    screenSettled();
+
+    await press('mix-rarity-test');
+
+    expect(screen).toHavePathname('/settings/rarity-test');
+  });
+
+  it('offers no Rarity Test in the «Рідкість» sheet while the rarityTest switch is off', async () => {
+    await renderChoices('/mix', {
+      ...shippedEdition,
+      isFeatureEnabled: (feature) =>
+        feature !== 'rarityTest' && shippedEdition.isFeatureEnabled(feature),
+    });
+    await press('mix-tile-rarity');
+
+    expect(screen.getByTestId('mix-rarity-bar-3')).toBeOnTheScreen();
+    expect(screen.queryByTestId('mix-rarity-test')).toBeNull();
   });
 
   it('shows no «Рідкість» while the rarityCeiling switch is off', async () => {

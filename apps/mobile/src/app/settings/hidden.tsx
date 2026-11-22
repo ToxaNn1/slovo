@@ -18,6 +18,7 @@ import { editionStrings } from '@/edition/edition';
 import { useHiddenScreenModel, useHiddenShow } from '@/mix/hidden';
 import type { HiddenRowModel } from '@/mix/hidden-screen';
 import { ListTopButton } from '@/shell/list-top';
+import { useQueryParam } from '@/route-params';
 
 const strings = editionStrings.hidden;
 
@@ -83,6 +84,9 @@ function HiddenList() {
 
 /** Above the list: back link, title, subtitle, and the empty line. */
 function HiddenHeader({ empty, onBack }: { empty: boolean; onBack: () => void }) {
+  // Opened from «Приховане» of the tab «Теми» (`?from=mix`), it goes back there; else to Settings.
+  const backLabel =
+    useQueryParam('from') === 'mix' ? editionStrings.tabs.mix : editionStrings.settings.title;
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
@@ -91,7 +95,7 @@ function HiddenHeader({ empty, onBack }: { empty: boolean; onBack: () => void })
       <BackHeader
         titleRole="settingsSubTitle"
         title={strings.title}
-        back={{ label: editionStrings.settings.title, testID: 'hidden-back', onPress: onBack }}
+        back={{ label: backLabel, testID: 'hidden-back', onPress: onBack }}
       />
       <View style={styles.titles}>
         <Text {...voice} style={[typeStyle('sub', tokens), { color: colors.muted }]}>

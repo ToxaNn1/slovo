@@ -105,6 +105,33 @@ describe.each(pressables)('%s', (name, draw) => {
   });
 });
 
+describe('PressedTile with a long press', () => {
+  it('takes a long press while disabled, and still no tap', async () => {
+    const onPress = jest.fn();
+    const onLongPress = jest.fn();
+    await renderWith(
+      false,
+      <PressedTile accessibilityLabel="Go" disabled onPress={onPress} onLongPress={onLongPress}>
+        <Text>Go</Text>
+      </PressedTile>,
+    );
+
+    const tile = screen.getByRole('button', { name: 'Go' });
+    // Through the touch responder, as a finger: a disabled tile's tap reaches no handler.
+    const user = userEvent.setup({
+      advanceTimers: (ms) => {
+        jest.advanceTimersByTime(ms);
+      },
+    });
+    await user.press(tile);
+    await user.longPress(tile);
+
+    expect(onPress).not.toHaveBeenCalled();
+    expect(onLongPress).toHaveBeenCalledTimes(1);
+    expect(tile).toBeDisabled();
+  });
+});
+
 describe('Button', () => {
   it('shows that it is busy and takes no press until its request is answered', async () => {
     const onPress = jest.fn();

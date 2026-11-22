@@ -464,10 +464,10 @@ export const FEATURE_SWITCHES = catalogue({
     line: 'Читач сам обирає, як часто в стрічці з’являються фрази, поради й інше.',
     group: 'feed',
   },
-  /** The tab «Теми» in the centre of the tab bar, which opens «Мої теми»; off gives the four tabs of before (ADR 0201). */
+  /** The tab «Теми» in the centre of the tab bar, which opens «Мої Теми»; off gives the four tabs of before (ADR 0201). */
   mixTab: {
     name: 'Вкладка «Теми»',
-    line: 'Посередині панелі вкладок — «Теми», що відкриває «Мої теми»; вимкнено — чотири вкладки.',
+    line: 'Посередині панелі вкладок — «Теми», що відкриває «Мої Теми»; вимкнено — чотири вкладки.',
     group: 'feed',
   },
   /** The XP log: XP for Game learning actions, kept per Edition, and the XP bar on the Feed (ADR 0066). */

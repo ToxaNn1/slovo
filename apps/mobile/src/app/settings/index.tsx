@@ -256,7 +256,7 @@ function SettingsList() {
                 }}
               />
             )}
-            {/* «Рідкість» and «Мої теми» live on the tab «Теми» while it is shown (ADR 0201). */}
+            {/* «Рідкість» and «Мої Теми» live on the tab «Теми» while it is shown (ADR 0201). */}
             {!mixTab && edition.isFeatureEnabled('rarityCeiling') && (
               <RarityRangePicker
                 testID="settings-rarity"

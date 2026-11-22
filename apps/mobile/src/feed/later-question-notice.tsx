@@ -32,6 +32,8 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
   const { questionnaire } = useComposition();
   const turnToNext = useTurnToNextPage();
   const openScreen = useOpenScreen();
+  // «Мої Теми» lives on its tab while the tab is shown, never as a copy in Settings (ADR 0201).
+  const myMix = useEditionInEffect().isFeatureEnabled('mixTab') ? '/mix' : '/settings/mix';
 
   // One answer at a time: a second tap before the first is kept would write it
   // again and turn once more, past the next card once this one closes.
@@ -104,7 +106,7 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
             settle(
               () => questionnaire.open(question),
               () => {
-                openScreen(question === 'rarityTest' ? '/settings/rarity-test' : '/settings/mix');
+                openScreen(question === 'rarityTest' ? '/settings/rarity-test' : myMix);
               },
             );
           }}
