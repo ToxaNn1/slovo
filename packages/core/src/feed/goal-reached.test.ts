@@ -6,6 +6,7 @@ import { openComposition, type Composition, type FeedCard } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, randomOf, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { userStateRecords } from '../user-state-schema';
 
 const words: readonly Word[] = Array.from({ length: 40 }, (_, index) =>
   word(`w_${String(index).padStart(2, '0')}`),
@@ -108,6 +109,16 @@ describe('«Ціль дня виконано!»', () => {
     const app = await run({ at: dayOne });
     await app.xpLog.setDailyGoal(null);
     expect(await readOn(app, 0, 12)).toBeUndefined();
+  });
+
+  it('never comes while the reader hides the counters («Без лічильників», ADR 0066)', async () => {
+    const records = new Map<string, string>();
+    const hiding = await openUserState({ port: createMemoryUserStatePort(records) });
+    await hiding.write(userStateRecords.noCounters.change(true));
+    const app = await run({ records, at: dayOne });
+    await app.xpLog.setDailyGoal(3);
+    expect(await readOn(app, 0, 8)).toBeUndefined();
+    expect(app.xpLog.state.dailyGoal?.met).toBe(true);
   });
 
   it('never comes while its Feature Switch is off', async () => {

@@ -364,11 +364,13 @@ export function openFeedNotices({
   /**
    * «Ціль дня виконано!»: once today's Daily Goal is met, or is
    * met by the Word the card follows, which the reader leaves to reach it;
-   * closed, it is gone for the day, and the goal is met once a day.
+   * closed, it is gone for the day, and the goal is met once a day. None
+   * while the reader hides the counters («Без лічильників», ADR 0066).
    */
   const goalReached: NoticeRule = async (day, after) => {
     const goal = xpLog.state.dailyGoal;
     if (!on('goalReachedCard') || goal === null) return undefined;
+    if ((await userState.read(noCounters)) === true) return undefined;
     const date = dateKeyOf(day);
     const today = history.list
       .filter(({ seenAt }) => dateKeyOf(localDayOf(seenAt, clock).date) === date)
