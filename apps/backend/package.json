@@ -24,8 +24,8 @@
   },
   "dependencies": {
     "@hono/node-server": "^2.1.8",
-    "@orpc/openapi": "^1.16.2",
-    "@orpc/server": "^1.16.2",
+    "@orpc/openapi": "^1.16.4",
+    "@orpc/server": "^1.16.4",
     "@sentry/node": "^11.12.0",
     "@slovo/content-rules": "workspace:*",
     "@slovo/contracts": "workspace:*",
@@ -34,7 +34,7 @@
     "better-auth": "^1.7.25",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.18",
-    "jose": "^6.2.17",
+    "jose": "^6.2.18",
     "pg": "^8.23.1",
     "pino": "^10.4.0",
     "tsx": "^4.23.15",
@@ -44,10 +44,10 @@
     "@slovo/config": "workspace:*",
     "@types/node": "^22.20.5",
     "@types/pg": "^8.23.1",
-    "@vitest/coverage-v8": "5.1.0",
+    "@vitest/coverage-v8": "5.1.1",
     "drizzle-kit": "^0.31.11",
     "eslint": "^10.15.0",
     "typescript": "~6.0.3",
-    "vitest": "^5.1.0"
+    "vitest": "^5.1.1"
   }
 }
