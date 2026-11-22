@@ -1033,10 +1033,10 @@
     },
     "count": "{selected} з {total}",
     "countLabel": {
-      "one": "У Міксі {selected} з {count} теми",
-      "few": "У Міксі {selected} з {count} тем",
-      "many": "У Міксі {selected} з {count} тем",
-      "other": "У Міксі {selected} з {count} теми"
+      "one": "Вибрано {selected} з {count} теми",
+      "few": "Вибрано {selected} з {count} тем",
+      "many": "Вибрано {selected} з {count} тем",
+      "other": "Вибрано {selected} з {count} теми"
     },
     "lastCategoryHint": "Хоча б одна категорія лишається завжди, щоб було слово дня."
   },

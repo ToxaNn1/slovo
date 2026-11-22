@@ -104,7 +104,7 @@ export const MixStringsSchema = z.strictObject({
   }),
   /** The count beside the title: how many Categories of Words are in, «12 з 16». */
   count: templateOf('selected', 'total'),
-  /** What VoiceOver reads for that count: the Categories in (`{selected}`) of all (`{count}`), «У Міксі 12 з 16 тем». */
+  /** What VoiceOver reads for that count: the Categories in (`{selected}`) of all (`{count}`), «Вибрано 12 з 16 тем». */
   countLabel: pluralOf('selected'),
   /** The line that says why the last Category's chip can't be turned off. VoiceOver reads it as that chip's hint. */
   lastCategoryHint: TextSchema,

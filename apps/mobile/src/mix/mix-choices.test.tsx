@@ -148,7 +148,7 @@ describe('the Category covers on the Мій Мікс screen', () => {
     await renderChoices();
     await press('mix-chip-emotions-character');
 
-    expect(screen.getByTestId('mix-selected')).toHaveAccessibleName('У Міксі 1 з 2 тем');
+    expect(screen.getByTestId('mix-selected')).toHaveAccessibleName('Вибрано 1 з 2 тем');
   });
 
   it('gives a group’s «усі» / «зняти» a tap area of the full touch target', async () => {
