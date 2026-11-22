@@ -282,10 +282,9 @@ describe('the Mix', () => {
   });
 
   it('tells which Categories a group taken out loses: those in the Mix, all but the last when none would be left', () => {
-    expect(categoriesTakenOut(['speech', 'crafts', 'nature'], ['speech', 'crafts', 'food'])).toEqual([
-      'speech',
-      'crafts',
-    ]);
+    expect(
+      categoriesTakenOut(['speech', 'crafts', 'nature'], ['speech', 'crafts', 'food']),
+    ).toEqual(['speech', 'crafts']);
     expect(categoriesTakenOut(['speech', 'crafts'], ['speech', 'crafts'])).toEqual(['speech']);
     expect(categoriesTakenOut(['speech'], ['speech'])).toEqual([]);
   });

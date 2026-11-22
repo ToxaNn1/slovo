@@ -633,7 +633,11 @@ function CategoryGroups({ model }: { model: MixScreenModel }) {
                   onPress={() => {
                     // Drawn as the Core will leave it: a group that holds the Mix's last Categories keeps one lit.
                     const inMix = model.chips.filter(shownOn).map(({ id }) => id);
-                    choose(all ? categoriesTakenOut(inMix, ids) : ids, !all, setCategories(ids, !all));
+                    choose(
+                      all ? categoriesTakenOut(inMix, ids) : ids,
+                      !all,
+                      setCategories(ids, !all),
+                    );
                   }}
                 >
                   <Text
