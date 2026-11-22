@@ -98,8 +98,9 @@ export function MascotAs({
 }
 
 /**
- * The Mascot's celebrations: the Daily Goal met and a Streak milestone each
- * show it for a while over the bottom of the screen. It takes no touch and
+ * The Mascot's celebrations: a Streak milestone shows it for a while over the
+ * bottom of the screen. The Daily Goal met shows none: the Feed's goal-reached
+ * card holds the Mascot already. It takes no touch and
  * VoiceOver skips it, so it never interrupts the Feed. A new Level shows the
  * new Level screen, until the reader closes it. Nothing while the reader hides
  * the counters («Без лічильників», ADR 0066). A Badge earned shows its ink
@@ -143,9 +144,6 @@ export function MascotCelebrations() {
     const stops = [
       xpLog.onLevelReached(({ level, name }) => {
         if (screensNewLevel()) setReached({ level, name });
-      }),
-      xpLog.subscribeGoalMet(() => {
-        celebrate('dailyGoal');
       }),
       progress.onStreakMilestone(() => {
         celebrate('streakMilestone');
