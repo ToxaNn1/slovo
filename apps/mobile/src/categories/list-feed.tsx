@@ -21,6 +21,7 @@ import { editionStrings } from '../edition/edition';
 import { ShownCardFeatures } from '../entries/card-features';
 import { useEntrySlots } from '../entries/entry-actions';
 import { ReadFailed } from '../read-failed';
+import { useShown } from '../shown-in-effect';
 
 const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
@@ -63,6 +64,7 @@ export function ListFeedScreen(props: ListFeedProps) {
 
 function ListFeed({ read, failure, kicker, testID }: ListFeedProps) {
   const { colors } = useTokens();
+  const { mixPlace } = useShown();
   const { top } = useSafeAreaInsets();
   const router = useRouter();
   const closeUndoToast = useCloseUndoToast();
@@ -112,7 +114,7 @@ function ListFeed({ read, failure, kicker, testID }: ListFeedProps) {
   // A list there is none of returns home, as its screen does.
   if (reading.status === 'ready' && reading.value === undefined) return <Redirect href="/" />;
   if (reading.status === 'ready' && pages.length === 0)
-    return <Placeholder message={editionStrings.noWords} />;
+    return <Placeholder message={editionStrings.noWords[mixPlace]} />;
   return (
     <View
       testID={`${testID}-screen`}

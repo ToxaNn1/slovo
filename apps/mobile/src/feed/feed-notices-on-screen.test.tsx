@@ -308,7 +308,7 @@ describe('the Feed Notices on the Feed', () => {
     const card = screen.getByTestId('feed-notice-levelMilestone', hidden);
     expect(within(card).getByText('Рівень 5 — Читач', hidden)).toBeTruthy();
     expect(
-      within(card).getByText(editionStrings.feedNotices.levelMilestone.message, hidden),
+      within(card).getByText(editionStrings.feedNotices.levelMilestone.message.tab, hidden),
     ).toBeTruthy();
   });
 

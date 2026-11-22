@@ -1,3 +1,4 @@
+import type { MixPlace } from '@slovo/contracts';
 import { createHaptics, type Decor } from '@slovo/core';
 import {
   DecorProvider,
@@ -20,6 +21,7 @@ import { Opened } from './opened';
 import { SettingsProvider, useColorSchemeInEffect, useSettings } from './settings/settings';
 import { ShellProvider, useShell, type Shell } from './shell-value';
 import { useEditionInEffect } from './edition/remote-switches';
+import { mixPlaceOf } from './shown';
 
 // The provider tree of the app, which `app/_layout.tsx` draws the tabs under
 // and the screen tests draw a screen under (`shell/test-app.tsx`), so the two never drift.
@@ -43,22 +45,42 @@ export function AppProviders({
   return (
     <ShellProvider shell={shell}>
       <SettingsProvider>
-        <EditionProvider
-          edition={edition}
-          strings={editionStrings}
-          pronunciation={LemmaPronunciation}
-          useIllustration={useReaderIllustration}
-        >
+        <ShellEditionProvider>
           <DecorProvider decor={decor}>
             <ThemedProviders>{children}</ThemedProviders>
           </DecorProvider>
-        </EditionProvider>
+        </ShellEditionProvider>
       </SettingsProvider>
     </ShellProvider>
   );
 }
 
 /** The tokens, the navigation theme and the haptics in the colour scheme and Vibration the reader chose. */
+/**
+ * The Edition's strings and voice with the shell's Pronunciation and
+ * Illustrations. Above the screens no text names where the Mix is, so
+ * `mixPlace` is left to the screens' own provider.
+ */
+function ShellEditionProvider({
+  mixPlace,
+  children,
+}: {
+  mixPlace?: MixPlace;
+  children: ReactNode;
+}) {
+  return (
+    <EditionProvider
+      edition={edition}
+      strings={editionStrings}
+      {...(mixPlace === undefined ? {} : { mixPlace })}
+      pronunciation={LemmaPronunciation}
+      useIllustration={useReaderIllustration}
+    >
+      {children}
+    </EditionProvider>
+  );
+}
+
 function ThemedProviders({ children }: { children: ReactNode }) {
   const colorScheme = useColorSchemeInEffect();
   const { vibration } = useSettings().current;
@@ -108,12 +130,14 @@ export function ScreenProviders({ children }: { children: ReactNode }) {
         {/* The screens' background and divider follow the local date. */}
         <TextSizeInEffect>
           <ReduceMotionInEffect>
-            <RouteInEffect>
-              {/* «Немає з’єднання» over every screen, under the status bar. */}
-              <OfflinePlateProvider message={editionStrings.offlinePlate}>
-                {children}
-              </OfflinePlateProvider>
-            </RouteInEffect>
+            <EditionInEffect>
+              <RouteInEffect>
+                {/* «Немає з’єднання» over every screen, under the status bar. */}
+                <OfflinePlateProvider message={editionStrings.offlinePlate}>
+                  {children}
+                </OfflinePlateProvider>
+              </RouteInEffect>
+            </EditionInEffect>
           </ReduceMotionInEffect>
         </TextSizeInEffect>
       </Opened>
@@ -132,6 +156,15 @@ function ReduceMotionInEffect({ children }: { children: ReactNode }) {
     <ReduceMotionProvider reduceMotion={reduceMotionSetting && reduceMotion}>
       {children}
     </ReduceMotionProvider>
+  );
+}
+
+/** Gives the screens the texts that name where the Mix is in their version for the mixTab switch in effect (ADR 0201). */
+function EditionInEffect({ children }: { children: ReactNode }) {
+  return (
+    <ShellEditionProvider mixPlace={mixPlaceOf(useEditionInEffect())}>
+      {children}
+    </ShellEditionProvider>
   );
 }
 

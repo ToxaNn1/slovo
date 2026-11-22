@@ -1,4 +1,4 @@
-import type { EntryKind } from '@slovo/contracts';
+import type { EntryKind, MixPlace } from '@slovo/contracts';
 import {
   kindsShown,
   type Edition,
@@ -20,6 +20,8 @@ export type Tab = (typeof allTabs)[number];
 export interface Shown {
   /** The tabs, in order: the Game's only when the Game is on, the Mix's only when the mixTab switch is. */
   readonly tabs: readonly Tab[];
+  /** Where the texts that send the reader to their Mix send them: the tab «Теми», or Settings' «Мої Теми» without it. */
+  readonly mixPlace: MixPlace;
   /** Whether an Entry card is in Self-check. */
   readonly selfCheck: boolean;
   /** The switch «Анонімна статистика» on the privacy screen (ADR 0135). */
@@ -75,6 +77,11 @@ export interface Shown {
     | undefined;
 }
 
+/** Where the Mix is: the tab «Теми» while the mixTab switch is in effect, Settings' «Мої Теми» while it is not (ADR 0201). */
+export function mixPlaceOf(edition: Pick<Edition, 'isFeatureEnabled'>): MixPlace {
+  return edition.isFeatureEnabled('mixTab') ? 'tab' : 'settings';
+}
+
 /**
  * What the reader is shown, from the Edition in effect, the
  * reader's settings and their Mix. A feature shows only while its Feature
@@ -100,6 +107,7 @@ export function shownOf({
     tabs: allTabs.filter(
       (tab) => (tab !== 'game' || on('game')) && (tab !== 'mix' || on('mixTab')),
     ),
+    mixPlace: mixPlaceOf(edition),
     selfCheck: on('selfCheck') && settings.selfCheck,
     shareCountersSetting: on('communityCounters') || on('analytics'),
     stats: on('statistics')

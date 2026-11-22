@@ -251,13 +251,13 @@ export function NotificationAskCard({
  * (ADR 0066).
  */
 export function LevelMilestoneCard({ level, name }: { level: LevelMilestone; name: string }) {
-  const { strings } = useEdition();
+  const { strings, mixPlace } = useEdition();
   const { title, message } = strings.feedNotices.levelMilestone;
   return (
     <FeedNoticeCard
       notice="levelMilestone"
       title={fill(title, { level: String(level), name })}
-      message={message}
+      message={message[mixPlace]}
     />
   );
 }
@@ -294,7 +294,7 @@ export function FirstWeekCard({
   /** The Streak, or undefined while the reader doesn't see it. */
   streak: number | undefined;
 }) {
-  const { strings, count } = useEdition();
+  const { strings, count, mixPlace } = useEdition();
   const { close, days, lastDayTitle, lastDayText, lastDayTextNoStreak } =
     strings.feedNotices.firstWeek;
   const turnToNext = useTurnToNextPage();
@@ -304,7 +304,7 @@ export function FirstWeekCard({
     1: day1,
     2: day2,
     3: day3,
-    4: day4,
+    4: { title: day4.title, text: day4.text[mixPlace] },
     5: day5,
     6: day6,
     7: {

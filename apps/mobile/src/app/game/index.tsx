@@ -124,6 +124,7 @@ function ModeScreen({
   const openScreen = useOpenScreen();
   const showToast = useUndoToast();
   const toast = useEditionInEffect().isFeatureEnabled('gameModeToast');
+  const { mixPlace } = useShown();
   let place = 0;
   return (
     <View testID="game-modes" style={styles.screen}>
@@ -157,11 +158,14 @@ function ModeScreen({
               <GameModeCard
                 key={offer.modeId}
                 testID={`game-mode-${offer.modeId}`}
-                {...gameModeCard(offer, strings, { toast })}
+                {...gameModeCard(offer, strings, mixPlace, { toast })}
                 cascadeIndex={place++}
                 onPress={() => {
                   const warmingUp = () => {
-                    showToast({ message: gameModeToast(offer, modes, strings), brief: true });
+                    showToast({
+                      message: gameModeToast(offer, modes, strings, mixPlace),
+                      brief: true,
+                    });
                   };
                   if (toast && !offer.canStart) {
                     warmingUp();

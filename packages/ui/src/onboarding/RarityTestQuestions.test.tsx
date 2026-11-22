@@ -7,6 +7,7 @@ import {
 } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import type { MixPlace } from '@slovo/contracts';
 import type { ComponentProps } from 'react';
 import { AccessibilityInfo, View } from 'react-native';
 import { testStrings } from '../test-strings';
@@ -19,7 +20,10 @@ const strings = testStrings({
     question: 'Do you know this word?',
     resultChanged: 'Rarity is now {range}',
     resultKept: 'Rarity stays {range}',
-    known: '{known} of {total} words known.',
+    known: {
+      tab: '{known} of {total} words known.',
+      settings: '{known} of {total} words known. Change it in Settings.',
+    },
     done: 'DONE',
     again: 'Test again',
   },
@@ -42,7 +46,11 @@ function frame({ testID, footer, children }: RarityTestScreen) {
   );
 }
 
-async function renderTest(result: RarityTestResult | undefined, onAgain?: () => void) {
+async function renderTest(
+  result: RarityTestResult | undefined,
+  onAgain?: () => void,
+  mixPlace: MixPlace = 'tab',
+) {
   const handlers = {
     onApply: jest.fn<ComponentProps<typeof RarityTestQuestions>['onApply']>(() =>
       Promise.resolve(result),
@@ -50,7 +58,7 @@ async function renderTest(result: RarityTestResult | undefined, onAgain?: () => 
     onDone: jest.fn(),
   };
   await render(
-    <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+    <EditionProvider edition={{ locale: 'en' }} strings={strings} mixPlace={mixPlace}>
       <RarityTestQuestions
         testID="test"
         words={words}
@@ -135,6 +143,14 @@ describe('RarityTestQuestions', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Next' }));
 
     expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('says where the Rarity Range is changed in Settings while the Mix has no tab (ADR 0201)', async () => {
+    await renderTest({ top: 2, changed: true, known: 1, total: 2 }, undefined, 'settings');
+    await fireEvent.press(screen.getByRole('button', { name: 'Unknown' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Known' }));
+
+    expect(await screen.findByText('1 of 2 words known. Change it in Settings.')).toBeTruthy();
   });
 
   it('says the Rarity Range stays when the test set the one the reader had', async () => {

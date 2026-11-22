@@ -96,6 +96,8 @@ export { NotificationSoundFileSchema, type NotificationSoundFormat } from './not
 export {
   EditionStringsSchema,
   fill,
+  inMixPlace,
+  type MixPlace,
   pluralCount,
   pluralForm,
   PluralLabelSchema,

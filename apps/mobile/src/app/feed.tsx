@@ -49,6 +49,7 @@ import { CommunityWordNotice } from '@/feed/community-word-notice';
 import { useNotificationsChanges } from '@/notifications/notifications';
 import { LaterQuestionNotice } from '@/feed/later-question-notice';
 import { useEditionInEffect } from '@/edition/remote-switches';
+import { mixPlaceOf } from '@/shown';
 
 const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
@@ -125,7 +126,8 @@ function FeedScreen() {
     [onCardChange, closeUndoToast],
   );
 
-  if (cards.length === 0) return <Placeholder message={editionStrings.noWords} />;
+  if (cards.length === 0)
+    return <Placeholder message={editionStrings.noWords[mixPlaceOf(inEffect)]} />;
 
   return (
     <View testID="home" style={[styles.screen, { backgroundColor: colors.background }]}>

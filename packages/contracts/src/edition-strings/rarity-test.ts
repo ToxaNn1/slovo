@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { TextSchema } from '../shared';
-import { templateOf } from './shared';
+import { byMixPlaceOf, templateOf } from './shared';
 
 /**
  * The Rarity Test. Its answers read the Knowledge Mark names of `knowledge`,
@@ -34,7 +34,7 @@ export const RarityTestStringsSchema = z.strictObject({
   /** The result's heading when the test set the Rarity Range the reader had. Takes `{range}`, as `resultChanged`. */
   resultKept: templateOf('range'),
   /** The note under the result's bars: how many of the Words the reader knew, and where the Rarity Range is changed. Takes `{known}` and `{total}`. */
-  known: templateOf('known', 'total'),
+  known: byMixPlaceOf(templateOf('known', 'total')),
   /** The result's button that closes the test. */
   done: TextSchema,
   /** The result's button in Settings that starts the test again at once. */

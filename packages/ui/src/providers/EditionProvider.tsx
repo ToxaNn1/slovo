@@ -1,4 +1,11 @@
-import { fill, pluralCount, pluralForm, type EditionStrings, type Plural } from '@slovo/contracts';
+import {
+  fill,
+  pluralCount,
+  pluralForm,
+  type EditionStrings,
+  type MixPlace,
+  type Plural,
+} from '@slovo/contracts';
 import type { Edition } from '@slovo/core';
 import { createContext, useContext, useMemo, type ComponentType, type ReactNode } from 'react';
 import type { ImageSourcePropType } from 'react-native';
@@ -7,6 +14,8 @@ import type { ImageSourcePropType } from 'react-native';
 export interface EditionPresentation {
   /** The Edition's UI strings. */
   readonly strings: EditionStrings;
+  /** Where the texts that send the reader to their Mix send them, by the mixTab switch in effect (ADR 0201). */
+  readonly mixPlace: MixPlace;
   /**
    * The props that make VoiceOver read in the Edition's language (BCP 47).
    * Spread them on every element it reads.
@@ -40,12 +49,15 @@ const EditionContext = createContext<EditionPresentation | undefined>(undefined)
 export function EditionProvider({
   edition,
   strings,
+  mixPlace = 'tab',
   pronunciation,
   useIllustration = noIllustration,
   children,
 }: {
   edition: Pick<Edition, 'locale'>;
   strings: EditionStrings;
+  /** Where the Mix is; the tab «Теми» unless the shell says otherwise. */
+  mixPlace?: MixPlace;
   pronunciation?: ComponentType<{ lemma: string; entryId: string }>;
   useIllustration?: (wordId: string) => ImageSourcePropType | undefined;
   children: ReactNode;
@@ -53,13 +65,14 @@ export function EditionProvider({
   const value = useMemo(
     (): EditionPresentation => ({
       strings,
+      mixPlace,
       voice: { accessibilityLanguage: edition.locale },
       count: pluralCount(edition.locale),
       form: pluralForm(edition.locale),
       Pronunciation: pronunciation,
       useIllustration,
     }),
-    [edition.locale, strings, pronunciation, useIllustration],
+    [edition.locale, strings, mixPlace, pronunciation, useIllustration],
   );
   return <EditionContext value={value}>{children}</EditionContext>;
 }

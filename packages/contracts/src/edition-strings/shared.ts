@@ -17,6 +17,27 @@ export const templateOf = (...names: readonly string[]) =>
     `Expected the placeholders ${names.map((name) => `{${name}}`).join(', ')}`,
   );
 
+/**
+ * Where a text sends the reader to change their Mix: the tab «Теми» while
+ * the mixTab switch is in effect, Settings' «Мої Теми» while it is not (ADR 0201).
+ */
+export type MixPlace = 'tab' | 'settings';
+
+/** A text that names where the Mix is, in a version for each {@link MixPlace}. */
+export const byMixPlaceOf = <T extends z.ZodType<string>>(text: T) =>
+  z.strictObject({ tab: text, settings: text });
+
+/** A text that names no place, or one in a version for each {@link MixPlace}. */
+export const MaybeByMixPlaceSchema = TextSchema.or(byMixPlaceOf(TextSchema));
+
+/** The version of a text for the place the Mix is; a text that names no place is itself. */
+export function inMixPlace(
+  text: string | { readonly tab: string; readonly settings: string },
+  place: MixPlace,
+): string {
+  return typeof text === 'string' ? text : text[place];
+}
+
 /** `{name}` placeholders of a template filled from `values`. */
 export function fill(template: string, values: Readonly<Record<string, string>>): string {
   return template.replace(/\{(\w+)\}/g, (match, name: string) => values[name] ?? match);

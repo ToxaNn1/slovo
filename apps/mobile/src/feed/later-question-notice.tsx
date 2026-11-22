@@ -18,6 +18,7 @@ import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
 import { useOpenScreen } from '../use-open-screen';
 import { useMixState } from '../mix/mix';
+import { useShown } from '../shown-in-effect';
 
 const strings = editionStrings.feedNotices.laterQuestions;
 
@@ -204,8 +205,9 @@ function InterestsQuestion({
   onDone: (categoryIds: readonly string[]) => void;
 }) {
   const { title, text } = strings.interests;
+  const { mixPlace } = useShown();
   return (
-    <FeedNoticeCard notice="interests" title={title} message={text} fill>
+    <FeedNoticeCard notice="interests" title={title} message={text[mixPlace]} fill>
       <View style={styles.block}>
         <InterestsChoice testIDPrefix="later-question" onDone={onDone} />
         <View style={styles.foot} />
