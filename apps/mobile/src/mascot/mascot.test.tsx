@@ -55,6 +55,7 @@ async function renderCelebrations({
   crosswordStamp = false,
   crosswordDays = 0,
   route = '/feed',
+  goalCard = true,
 } = {}) {
   const composition = await openComposition({
     content: createMemoryContentPort({ words: [word] }),
@@ -70,9 +71,11 @@ async function renderCelebrations({
       isFeatureEnabled: (feature) =>
         feature === 'mascot'
           ? on
-          : feature === 'crosswordBadgeStamp'
-            ? crosswordStamp
-            : edition.isFeatureEnabled(feature),
+          : feature === 'goalReachedCard'
+            ? goalCard
+            : feature === 'crosswordBadgeStamp'
+              ? crosswordStamp
+              : edition.isFeatureEnabled(feature),
     }),
     settings: await settingsAt({ noCounters }),
   });
@@ -241,6 +244,25 @@ describe('the Mascot’s celebrations', () => {
     // The 50th XP reaches Level 1.
     await playRounds(composition, 45);
     expect(screen.getByTestId('new-level-line')).toHaveTextContent(mascot.newLevel);
+  });
+
+  it('celebrates the Daily Goal met for a while when the Feed has no goal-reached card in effect', async () => {
+    const composition = await renderCelebrations({ goalCard: false });
+
+    await act(async () => {
+      await composition.xpLog.setDailyGoal(1);
+      await composition.feed.show(0);
+      await jest.advanceTimersByTimeAsync(SEEN_DWELL_MS);
+      await composition.feed.show(undefined);
+      await jest.advanceTimersByTimeAsync(0);
+    });
+
+    expect(composition.xpLog.state.dailyGoal?.met).toBe(true);
+    expect(celebration('dailyGoal')).toHaveTextContent(mascot.dailyGoal);
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(CELEBRATION_MS);
+    });
+    expect(shownMascot()).toBeNull();
   });
 
   it('celebrates nothing while the reader hides the counters («Без лічильників», ADR 0066)', async () => {

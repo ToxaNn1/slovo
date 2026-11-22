@@ -105,8 +105,9 @@ export function MascotAs({
 
 /**
  * The Mascot's celebrations: a Streak milestone shows it for a while over the
- * bottom of the screen. The Daily Goal met shows none: the Feed's goal-reached
- * card holds the Mascot already. It takes no touch and
+ * bottom of the screen. The Daily Goal met shows it so only while the Feed's
+ * goal-reached card is off in effect: the card holds the Mascot otherwise. It
+ * takes no touch and
  * VoiceOver skips it, so it never interrupts the Feed. A new Level shows the
  * new Level screen, until the reader closes it. Nothing while the reader hides
  * the counters («Без лічильників», ADR 0066), nor later for what was met then.
@@ -126,6 +127,7 @@ export function MascotCelebrations() {
   const route = useRouteOnScreen();
   // What is met while the counters are hidden is never shown later (ADR 0066).
   const celebrates = useEffectEvent(() => celebrations);
+  const goalCardOn = useEffectEvent(() => edition.isFeatureEnabled('goalReachedCard'));
   /**
    * How a Badge just earned shows: toasted or stamped; a Badge of Daily
    * Crosswords in a row earned on the crossword's screen gets board 08's stamp.
@@ -148,6 +150,9 @@ export function MascotCelebrations() {
     const stops = [
       xpLog.onLevelReached(({ level, name }) => {
         if (celebrates()) setReached({ level, name });
+      }),
+      xpLog.subscribeGoalMet(() => {
+        if (!goalCardOn()) celebrate('dailyGoal');
       }),
       progress.onStreakMilestone(() => {
         celebrate('streakMilestone');
