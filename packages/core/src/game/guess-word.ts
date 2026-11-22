@@ -37,52 +37,54 @@ export const distractorOrder = (answer: Word, others: readonly Word[], random: R
 ];
 
 /**
- * The Comparison Keys of primary Definitions, by the comparison and the Entry
- * they were given for: every Round compares the answer with all eligible Entries.
+ * A Comparison Key of an Entry, worked out once for the comparison and the
+ * Entry it was given for: every Round compares the answer with all eligible Entries.
  */
-const definitions = new WeakMap<TextComparison, WeakMap<Word | Idiom, string>>();
+function keptPerEntry<E extends object, K extends object | string>(
+  keyOf: (comparison: TextComparison, entry: E) => K,
+) {
+  const kept = new WeakMap<TextComparison, WeakMap<E, K>>();
+  return (comparison: TextComparison, entry: E): K => {
+    let keys = kept.get(comparison);
+    if (keys === undefined) {
+      keys = new WeakMap();
+      kept.set(comparison, keys);
+    }
+    const found = keys.get(entry);
+    if (found !== undefined) return found;
+    const key = keyOf(comparison, entry);
+    keys.set(entry, key);
+    return key;
+  };
+}
 
 /** A primary Definition as the reader tells it apart: its Comparison Key as a Definition. */
-export function definitionOfEntry(comparison: TextComparison, entry: Word | Idiom): string {
-  let keys = definitions.get(comparison);
-  if (keys === undefined) {
-    keys = new WeakMap();
-    definitions.set(comparison, keys);
-  }
-  let definition = keys.get(entry);
-  if (definition === undefined) {
-    definition = comparison.key(entry.primaryDefinition, 'definition');
-    keys.set(entry, definition);
-  }
-  return definition;
-}
+export const definitionOfEntry = keptPerEntry((comparison, entry: Word | Idiom) =>
+  comparison.key(entry.primaryDefinition, 'definition'),
+);
 
-/** The Comparison Keys of extra Definitions, kept as those of the primary ones are. */
-const extraDefinitions = new WeakMap<TextComparison, WeakMap<Word | Idiom, readonly string[]>>();
+/** The Comparison Keys of an Entry's extra Definitions. */
+const extraDefinitionsOf = keptPerEntry((comparison, entry: Word | Idiom) =>
+  entry.extraDefinitions.map((text) => comparison.key(text, 'definition')),
+);
 
 /** Whether a Definition of the Entry, primary or extra, has the Comparison Key. */
-function hasDefinition(comparison: TextComparison, entry: Word | Idiom, definition: string) {
-  if (definitionOfEntry(comparison, entry) === definition) return true;
-  let keys = extraDefinitions.get(comparison);
-  if (keys === undefined) {
-    keys = new WeakMap();
-    extraDefinitions.set(comparison, keys);
-  }
-  let extra = keys.get(entry);
-  if (extra === undefined) {
-    extra = entry.extraDefinitions.map((text) => comparison.key(text, 'definition'));
-    keys.set(entry, extra);
-  }
-  return extra.includes(definition);
-}
+const hasDefinition = (comparison: TextComparison, entry: Word | Idiom, definition: string) =>
+  definitionOfEntry(comparison, entry) === definition ||
+  extraDefinitionsOf(comparison, entry).includes(definition);
 
-/** Whether one Word lists the other's Lemma among its synonyms. */
-const listsAsSynonym = (comparison: TextComparison, one: Word, other: Word) =>
-  one.synonyms.some((synonym) => comparison.same(synonym, other.lemma, 'typedAnswer'));
+/** The Comparison Keys of a Word's Lemma and of its synonyms, as typed answers. */
+const synonymKeysOf = keptPerEntry((comparison, word: Word) => ({
+  lemma: comparison.key(word.lemma, 'typedAnswer'),
+  synonyms: new Set(word.synonyms.map((synonym) => comparison.key(synonym, 'typedAnswer'))),
+}));
 
 /** Whether the two Words are synonyms, whichever of them lists the other. */
-export const areSynonyms = (comparison: TextComparison, one: Word, other: Word) =>
-  listsAsSynonym(comparison, one, other) || listsAsSynonym(comparison, other, one);
+export const areSynonyms = (comparison: TextComparison, one: Word, other: Word) => {
+  const oneKeys = synonymKeysOf(comparison, one);
+  const otherKeys = synonymKeysOf(comparison, other);
+  return oneKeys.synonyms.has(otherKeys.lemma) || otherKeys.synonyms.has(oneKeys.lemma);
+};
 
 /**
  * Whether the other Word fits the primary Definition of the Word too, so a
