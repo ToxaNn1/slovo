@@ -16,17 +16,20 @@ export interface MixSettingBar {
 /**
  * A setting tile of «Мої Теми» (board XMix, variant E): its name, a row of
  * slanted bars that draws the setting, and its value, big. A tap opens the
- * setting's sheet; VoiceOver reads «name, value».
+ * setting's sheet; VoiceOver reads «name, value», or the tile's own label
+ * where the value written short reads badly aloud («3/4»).
  */
 export function MixSettingTile({
   label,
   value,
+  accessibilityLabel = `${label}, ${value}`,
   bars,
   onPress,
   testID,
 }: {
   label: string;
   value: string;
+  accessibilityLabel?: string | undefined;
   bars: readonly MixSettingBar[];
   onPress: () => void;
   testID: string;
@@ -40,7 +43,7 @@ export function MixSettingTile({
       tone="tile"
       radius={tile.radius}
       onPress={onPress}
-      accessibilityLabel={`${label}, ${value}`}
+      accessibilityLabel={accessibilityLabel}
       faceStyle={styles.face}
     >
       <Text {...voice} style={[typeStyle('mixSettingLabel', tokens), { color: colors.ink }]}>

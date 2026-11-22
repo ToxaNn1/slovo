@@ -39,7 +39,8 @@ export function coverToneAt(place: number): Exclude<MixCoverTone, 'quiet'> {
  * (`inGroup`). While the Category is out of the Mix the picture fades to
  * grey and the box empties. A press turns it on or off; a disabled cover,
  * the last Category in the Mix, takes no press and reads its hint to
- * VoiceOver. `size` is the group's: big covers in two columns, small ones
+ * VoiceOver. A long press, a disabled cover's too, opens the Category's
+ * screen when `onLongPress` is given. `size` is the group's: big covers in two columns, small ones
  * in three.
  */
 export const MixCategoryCover = memo(function MixCategoryCover({
@@ -52,6 +53,7 @@ export const MixCategoryCover = memo(function MixCategoryCover({
   disabled = false,
   accessibilityHint,
   onPress,
+  onLongPress,
   testID,
 }: {
   name: string;
@@ -63,6 +65,7 @@ export const MixCategoryCover = memo(function MixCategoryCover({
   disabled?: boolean;
   accessibilityHint?: string;
   onPress: () => void;
+  onLongPress?: (() => void) | undefined;
   testID: string;
 }) {
   const tokens = useTokens();
@@ -111,6 +114,7 @@ export const MixCategoryCover = memo(function MixCategoryCover({
       tone="tile"
       radius={cover.radius}
       onPress={onPress}
+      onLongPress={onLongPress}
       disabled={disabled}
       accessibilityLabel={name}
       accessibilityHint={disabled ? accessibilityHint : undefined}

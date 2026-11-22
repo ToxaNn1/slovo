@@ -312,6 +312,20 @@ export function categoryPlace(
   return placeIn(list, categoryId);
 }
 
+/**
+ * The Categories of `chosen` that taking them out of the Mix takes out: those
+ * `inMix` has, all but the last of them when none would be left (the Mix keeps
+ * one Category). A screen draws a group taken out with it, so it shows what
+ * the Mix will have.
+ */
+export function categoriesTakenOut(
+  inMix: readonly string[],
+  chosen: readonly string[],
+): readonly string[] {
+  const out = chosen.filter((id) => inMix.includes(id));
+  return inMix.every((id) => out.includes(id)) ? out.slice(0, -1) : out;
+}
+
 /** Where a Category the list has stands in it. */
 function placeIn(list: CategoriesInMix, categoryId: string): Exclude<CategoryPlace, undefined> {
   if (list.lastCategoryId === categoryId) return 'last';
@@ -603,9 +617,7 @@ export async function openMix({
       await change({ [of]: new Map(known.map((id) => [id, true])) });
       return;
     }
-    const inList = categoriesInMix(state, of).categoryIds;
-    const out = known.filter((id) => inList.includes(id));
-    if (inList.every((id) => out.includes(id))) out.pop();
+    const out = categoriesTakenOut(categoriesInMix(state, of).categoryIds, known);
     if (out.length === 0) return;
     await change({ [of]: new Map(out.map((id) => [id, false])) });
   }

@@ -406,7 +406,7 @@ The set of Categories of Words, plus Corrections as a whole with their own Categ
 _Avoid_: Filter, preferences
 
 **Rarity Range**:
-«Рідкість»: the rarities of Words the reader wants, from a bottom to a top, «від 1 до 5» by default, «лише 3» when both are one. Only Words within it appear anywhere new: the Feed, notifications, widgets, every Game Mode and the Daily Crossword. Entries of other kinds have no rarity and are not affected. A setting of its own, not part of the Mix; set in Settings on five slanted bars, and its top alone by the Rarity Test, which puts the bottom back to 1 (ADR 0156); onboarding's «Рівень» sets nothing.
+«Рідкість»: the rarities of Words the reader wants, from a bottom to a top, «від 1 до 5» by default, «лише 3» when both are one. Only Words within it appear anywhere new: the Feed, notifications, widgets, every Game Mode and the Daily Crossword. Entries of other kinds have no rarity and are not affected. A setting of its own, not part of the Mix; set on five slanted bars in the «Рідкість» sheet of «Мої Теми» on the tab «Теми», in Settings while that tab is off (ADR 0201), and its top alone by the Rarity Test, which puts the bottom back to 1 (ADR 0156); onboarding's «Рівень» sets nothing.
 _Avoid_: Rarity Ceiling, Rarity Floor, ceiling, floor, difficulty, level, maximum difficulty
 
 **Mix kind weight**:

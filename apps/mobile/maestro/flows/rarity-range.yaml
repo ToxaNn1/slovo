@@ -1,4 +1,4 @@
-# The Rarity Range (ADR 0156): at the top of Мої теми, «Рідкість» is five
+# The Rarity Range (ADR 0156): at the top of Мої Теми, «Рідкість» is five
 # slanted bars, the range named over them, «від 1 до 5»; a narrower range is
 # kept and the Feed still shows a card. A subflow of `smoke-1.yaml`; run it from
 # there. It starts by putting the range back to «від 1 до 5», whatever an

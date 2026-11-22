@@ -65,11 +65,13 @@ export const MixStringsSchema = z.strictObject({
   }),
   /**
    * The setting tiles of «Мої Теми» (board XMix, variant E), each opening its
-   * sheet, and the value of the rarity tile while every rarity is in.
+   * sheet, the value of the rarity tile while every rarity is in, and what
+   * VoiceOver reads for the kinds tile, «Типи карток: 3 з 4».
    */
   tiles: z.strictObject({
     rarity: TextSchema,
     kinds: TextSchema,
+    kindsLabel: templateOf('selected', 'total'),
     quickQuestion: TextSchema,
     rarityAll: TextSchema,
   }),
@@ -106,6 +108,8 @@ export const MixStringsSchema = z.strictObject({
   count: templateOf('selected', 'total'),
   /** What VoiceOver reads for that count: the Categories in (`{selected}`) of all (`{count}`), «Вибрано 12 з 16 тем». */
   countLabel: pluralOf('selected'),
+  /** The row at the foot of «Мої Теми» that opens the Hidden screen, «Приховане». */
+  hidden: TextSchema,
   /** The line that says why the last Category's chip can't be turned off. VoiceOver reads it as that chip's hint. */
   lastCategoryHint: TextSchema,
 });

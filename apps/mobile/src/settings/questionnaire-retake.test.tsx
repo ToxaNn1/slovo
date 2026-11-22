@@ -9,6 +9,7 @@ import {
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import { Stack } from 'expo-router';
+import { Text } from 'react-native';
 import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 
@@ -94,6 +95,8 @@ async function render(notice?: Parameters<typeof LaterQuestionNotice>[0]['questi
       _layout: () => <Stack screenOptions={{ headerShown: false }} />,
       'settings/index': SettingsScreen,
       'settings/questionnaire': QuestionnaireScreen,
+      'settings/mix': () => <Text>Mix in Settings</Text>,
+      'mix/index': () => <Text>Mix tab</Text>,
       notice: () => (notice === undefined ? null : <LaterQuestionNotice question={notice} />),
     },
     { shell, initialUrl: notice === undefined ? '/settings' : '/notice' },
@@ -267,6 +270,28 @@ describe('The Feed Notice of a later question', () => {
     await press(feedNotices.laterQuestions.done);
 
     expect(composition.xpLog.state.dailyGoal?.goal).toBe(50);
+  });
+
+  it('opens the tab «Мої Теми» from «Зараз» on the Mix review while the tab is on, not a copy in Settings', async () => {
+    await openWith(shippedEdition());
+    await render('mixReview');
+    screenSettled();
+
+    await fireEvent.press(screen.getByTestId('later-question-mixReview-open'));
+    await settle();
+
+    expect(screen).toHavePathname('/mix');
+  });
+
+  it('opens «Мої Теми» in Settings from «Зараз» on the Mix review while the tab is off', async () => {
+    await openWith(editionWithout('mixTab'));
+    await render('mixReview');
+    screenSettled();
+
+    await fireEvent.press(screen.getByTestId('later-question-mixReview-open'));
+    await settle();
+
+    expect(screen).toHavePathname('/settings/mix');
   });
 
   it('settles «Пізніше» once when it is tapped twice before it is written', async () => {
