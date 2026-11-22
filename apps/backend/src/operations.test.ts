@@ -281,6 +281,47 @@ describe('the logs', () => {
     expect(lines[0]?.['err']).toMatchObject({ errorCode: 'ECONNREFUSED' });
   });
 
+  it('keep the code of an error, and of what it quotes, that names its kind', () => {
+    const { lines, logger } = logLines();
+
+    logger.warn({
+      err: Object.assign(new Error('fetch failed'), {
+        reason: { code: 'ECONNREFUSED' },
+        response: { status: 502, body: { code: 'WRONG_CODE' } },
+        issues: [{ code: 'too_small' }],
+      }),
+      upstream: { code: 503 },
+    });
+
+    expect(lines[0]).toMatchObject({
+      upstream: { code: 503 },
+      err: {
+        reason: { code: 'ECONNREFUSED' },
+        response: { body: { code: 'WRONG_CODE' } },
+        issues: [{ code: 'too_small' }],
+      },
+    });
+  });
+
+  it('hide the Sign-in code of a sign-in request body, in a line and in an error', () => {
+    const { lines, logger } = logLines();
+
+    logger.info({ input: { email: 'anna@mail.com', code: '123456' } });
+    logger.error({
+      err: Object.assign(new Error('sign-in failed'), {
+        body: { code: '654321', factor: 'email' },
+        data: { code: 987654 },
+      }),
+    });
+
+    const written = JSON.stringify(lines);
+    for (const code of ['123456', '654321', '987654']) expect(written).not.toContain(code);
+    expect(lines).toMatchObject([
+      { input: { code: '[redacted]' } },
+      { err: { body: { code: '[redacted]' }, data: { code: '[redacted]' } } },
+    ]);
+  });
+
   it('carry no email, code or token at any depth of a line', () => {
     const { lines, logger } = logLines();
 

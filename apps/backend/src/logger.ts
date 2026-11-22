@@ -5,12 +5,24 @@ import { pino, type DestinationStream, type Logger } from 'pino';
 import { framesOf, namesOf, scrubbed } from './error-text';
 
 /**
- * Whether a field is one a log line never shows, at any depth: personal data
- * and secrets (spec #333). A Sign-in code is `code`; any field that names a
- * token, an email, a password, a secret, a cookie or an authorization too.
+ * Whether a `code` names a kind, as an error's does: a name (`ECONNREFUSED`,
+ * `WRONG_CODE`, `too_small`) or an HTTP status. Anything else may be a
+ * Sign-in code, which a sign-in request body and its error carry as `code`.
  */
-function isRedacted(field: string): boolean {
-  return field === 'code' || /token|email|password|secret|cookie|authorization/i.test(field);
+function namesAKind(code: unknown): boolean {
+  if (typeof code === 'number') return Number.isInteger(code) && code >= 100 && code < 600;
+  return typeof code === 'string' && /^[A-Za-z][\w.-]*$/.test(code);
+}
+
+/**
+ * Whether a field is one a log line never shows, at any depth: personal data
+ * and secrets (spec #333). Any field that names a token, an email, a
+ * password, a secret, a cookie or an authorization, and a `code` that may be
+ * a Sign-in code.
+ */
+function isRedacted(field: string, value: unknown): boolean {
+  if (field === 'code') return !namesAKind(value);
+  return /token|email|password|secret|cookie|authorization/i.test(field);
 }
 
 /** An error's stack with the message at its top scrubbed as the error's report scrubs it. */
@@ -53,7 +65,7 @@ function cleanedFields(
   return Object.fromEntries(
     Object.entries(fields).map(([field, value]) => [
       field,
-      isRedacted(field) ? '[redacted]' : cleaned(value, shown, inError),
+      isRedacted(field, value) ? '[redacted]' : cleaned(value, shown, inError),
     ]),
   );
 }
