@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+[data-ov][data-th="light"]{--bg:#FFF4E6;--ink:#140C0A;--sf:#FFFBF5;--sf2:#F5E4CF;--line:rgba(20,12,10,.13);--mute:#6B5D55;--tile:#FFFBF5;--edge:#DCC2A6;--sil:rgba(20,12,10,.14)}
+[data-ov][data-th="dark"]{--bg:#140C0A;--ink:#FFF4E6;--sf:#221714;--sf2:#2E201B;--line:rgba(255,244,230,.13);--mute:#BDAE9F;--tile:#33241F;--edge:#050302;--sil:rgba(255,244,230,.1)}
+[data-ov] *{box-sizing:border-box}
+[data-ov] button{font:inherit;border:0;cursor:pointer;color:inherit;background:none;padding:0;text-align:inherit}
+[data-ov] ::-webkit-scrollbar{display:none}
+[data-ov][data-rm="1"] *{animation-name:ovRm!important;animation-duration:.3s!important;animation-delay:0s!important;animation-iteration-count:1!important}
+@keyframes ovRm{from{opacity:0}}
+@keyframes ovFly{from{opacity:0;transform:translate(var(--fx,0),var(--fy,40px)) scale(.15) rotate(-30deg)}}
+@keyframes ovCasc{from{opacity:0;transform:translateY(16px)}}
+@keyframes ovBars{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
+@keyframes ovSyl{0%,20%,100%{color:inherit}8%,14%{color:#FFF4E6}}
+@keyframes ovPop{0%{transform:scale(.6)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+</style>
+</helmet>
+<div data-ov="1" data-th="{{ th }}" data-rm="{{ rmAttr }}" style="width:{{ fw }};height:{{ fh }};padding:8px;background:#0B0706;border-radius:{{ fr }};box-shadow:0 0 0 1.5px #3A2C27,0 30px 70px rgba(20,12,10,.35);font-family:Onest,sans-serif;flex:none">
+<div style="position:relative;width:{{ sw }};height:{{ sh }};border-radius:{{ sr }};overflow:hidden;background:var(--bg);color:var(--ink);display:flex;flex-direction:column">
+
+  <div style="position:relative;height:{{ redH }};flex:none;background:#FF3B2F;clip-path:polygon(0 0,100% 0,100% 80%,0 100%);overflow:hidden;color:#140C0A">
+    <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
+    <span style="position:absolute;left:{{ sbL }};top:{{ sbT }};font:700 15px/1 Onest">20:30</span>
+    <sc-if value="{{ big }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;left:50%;top:10px;width:120px;height:34px;margin-left:-60px;border-radius:20px;background:#0B0706"></span></sc-if>
+    <button onClick="{{ skip }}" style="position:absolute;right:12px;top:{{ skT }};height:44px;padding:0 12px;display:flex;align-items:center;font:600 15px/1 Onest;color:#140C0A" style-active="opacity:.6">Пропустити</button>
+    <div style="position:absolute;left:10px;top:{{ bigT }};font:900 {{ bigS }}/.9 Unbounded,sans-serif;letter-spacing:-4px;white-space:nowrap;transform:rotate(-8deg);animation:ovFly .6s cubic-bezier(.2,.9,.25,1.15) both;--fx:-120px;--fy:0px">ГОЛОС</div>
+  </div>
+  <div style="position:absolute;right:{{ masR }};top:{{ masT }};z-index:2;animation:ovFly .6s .15s cubic-bezier(.2,.9,.25,1.15) both;--fx:120px;--fy:0px">
+    <dc-import name="Rupor" state="{{ mas }}" on-red="{{ true }}" size="{{ masS }}" hint-size="140px,105px"></dc-import>
+  </div>
+
+  <div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:{{ pad }};gap:{{ gap }}">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <div style="display:flex;gap:6px">
+        <sc-for list="{{ dots }}" as="d" hint-placeholder-count="8"><div style="height:8px;width:{{ d.w }};background:{{ d.bg }};transform:skewX(-20deg)"></div></sc-for>
+      </div>
+      <span style="font:600 13px/1 Onest;color:var(--mute);white-space:nowrap">Крок 3 з 8</span>
+    </div>
+    <div style="font:800 {{ tS }}/1.1 Unbounded,sans-serif;letter-spacing:-.5px;text-wrap:balance">Хто читатиме тобі слова?</div>
+    <div style="font:400 {{ xS }}/1.4 Onest,sans-serif;color:var(--mute);text-wrap:pretty">Торкнись голосу, щоб почути. Змінити можна в Налаштуваннях.</div>
+
+    <div style="flex:1;min-height:0;display:flex;flex-direction:column;justify-content:flex-start">
+      <div style="max-height:100%;overflow-y:auto;border-radius:18px;background:var(--tile);border:1px solid var(--line);box-shadow:0 4px 0 var(--edge);animation:ovCasc .4s .2s both">
+        <sc-for list="{{ rows }}" as="r" hint-placeholder-count="4">
+          <button onClick="{{ r.onClick }}" aria-pressed="{{ r.on }}" style="width:100%;min-height:{{ rowH }};padding:8px 10px 8px 16px;display:flex;align-items:center;gap:12px;background:{{ r.bg }};color:{{ r.fg }};border-top:{{ r.bt }};transition:background .15s,color .15s" style-active="opacity:.85">
+            <span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px">
+              <span style="font:800 {{ nS }}/1.1 Unbounded,sans-serif">{{ r.n }}</span>
+              <sc-if value="{{ r.idle }}" hint-placeholder-val="{{ true }}"><span style="font:500 13px/1.2 Onest;opacity:.8">{{ r.d }}</span></sc-if>
+              <sc-if value="{{ r.play }}" hint-placeholder-val="{{ false }}"><span style="font:600 13px/1.2 Onest"><sc-for list="{{ syl }}" as="y" hint-placeholder-count="3"><span style="animation:{{ y.anim }}">{{ y.t }}</span></sc-for> · ім., ж. р.</span></sc-if>
+            </span>
+            <span style="flex:none;width:{{ icS }};height:{{ icS }};border-radius:12px;background:{{ r.ib }};color:{{ r.ifg }};display:flex;align-items:center;justify-content:center;gap:3px;transition:background .15s">
+              <sc-if value="{{ r.idle }}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z" fill="currentColor"></path></svg></sc-if>
+              <sc-if value="{{ r.play }}" hint-placeholder-val="{{ false }}"><sc-for list="{{ bars }}" as="b" hint-placeholder-count="4"><span style="width:3px;height:16px;background:currentColor;transform-origin:center;animation:{{ b.anim }}"></span></sc-for></sc-if>
+            </span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <button onClick="{{ next }}" style="flex:none;height:{{ btnH }};border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 18px/1 Unbounded,sans-serif;letter-spacing:.5px;display:flex;align-items:center;justify-content:center;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(4px);box-shadow:0 1px 0 rgba(0,0,0,.35)">ОБИРАЮ</button>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:406,&quot;height&quot;:860},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;demo&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;default&quot;,&quot;playing&quot;,&quot;offline&quot;],&quot;default&quot;:&quot;default&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;small&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const R='#FF3B2F',K='#140C0A',C='#FFF4E6';
+const VOICES=[{n:'Оксана',d:'Жіночий · спокійний',p:1.15,r:.9},{n:'Тарас',d:'Чоловічий · низький',p:.7,r:.88},{n:'Марта',d:'Жіночий · жвавий',p:1.35,r:1.05},{n:'Остап',d:'Чоловічий · теплий',p:.9,r:.95}];
+class Component extends DCLogic {
+  constructor(p){super(p);const d=p.demo||'default';this.state={sel:d==='playing'?1:0,playing:d==='playing'?1:null};}
+  componentWillUnmount(){clearTimeout(this._t);try{speechSynthesis.cancel();}catch(e){}}
+  pick(i){
+    const off=this.props.demo==='offline';clearTimeout(this._t);
+    if(off){this.setState({sel:i,playing:null});return;}
+    this.setState({sel:i,playing:i});
+    try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance('заплава');u.lang='uk-UA';u.pitch=VOICES[i].p;u.rate=VOICES[i].r;speechSynthesis.speak(u);}catch(e){}
+    if(this.props.demo!=='playing'||i!==1)this._t=setTimeout(()=>this.setState({playing:null}),1800);
+  }
+  renderVals(){
+    const s=this.state,p=this.props,se=!!p.small,off=p.demo==='offline';
+    const v={th:p.theme||'light',rmAttr:p.reduceMotion?'1':'0',big:!se,
+      fw:se?'391px':'406px',fh:se?'683px':'860px',fr:se?'26px':'62px',sw:se?'375px':'390px',sh:se?'667px':'844px',sr:se?'18px':'54px',
+      sbL:se?'20px':'34px',sbT:se?'12px':'18px',skT:se?'28px':'52px',
+      redH:se?'206px':'300px',bigT:se?'76px':'120px',bigS:se?'60px':'80px',masR:se?'24px':'40px',masT:se?'118px':'186px',masS:se?96:140,
+      pad:se?'2px 20px 18px':'6px 24px 34px',gap:se?'10px':'14px',tS:se?'22px':'28px',xS:se?'14px':'16px',
+      rowH:se?'54px':'62px',nS:se?'15px':'16px',icS:se?'38px':'42px',btnH:se?'56px':'62px',
+      mas:s.playing!=null?'shout':'wait'};
+    v.dots=Array.from({length:8},(_,i)=>({w:i===2?'30px':'12px',bg:i<=2?R:'var(--sil)'}));
+    v.rows=VOICES.map((o,i)=>{const on=s.sel===i,pl=s.playing===i;
+      return {n:o.n,d:o.d,on,idle:!pl,play:pl,bg:on?R:'transparent',fg:on?K:'var(--ink)',bt:i?'1px solid var(--line)':'0',
+        ib:off?(on?'rgba(20,12,10,.16)':'var(--sil)'):on?K:'var(--ink)',ifg:off?(on?'rgba(20,12,10,.45)':'var(--mute)'):on?R:'var(--bg)',
+        onClick:()=>this.pick(i)};});
+    v.syl=['за','пла́','ва'].map((t,i)=>({t,anim:`ovSyl 1.8s ${(i*.32).toFixed(2)}s infinite`}));
+    v.bars=[0,1,2,3].map(i=>({anim:`ovBars .7s ${(i*.12).toFixed(2)}s ease-in-out infinite`}));
+    v.skip=()=>{};v.next=()=>{};
+    return v;
+  }
+}
+</script>
+</body>
+</html>
