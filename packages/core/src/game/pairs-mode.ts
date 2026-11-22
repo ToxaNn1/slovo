@@ -3,6 +3,7 @@ import type { Word } from '@slovo/contracts';
 import type { AskableEntry } from '../entries/entries';
 import { renderStress, stressedVowelsOf } from '../entries/stress';
 import { ROUND_OPTIONS, type GameMode, type GridPair } from './game-mode';
+import { fitsDefinitionOf } from './guess-word';
 import { shuffled } from '../shuffled';
 
 /**
@@ -35,8 +36,9 @@ function pairOf(word: Word): GridPair {
  * shuffled apart, whose every pair is a Round of its own, so that a Game's 15
  * Rounds are grids of 4, 4, 4 and 3 pairs. A grid holds the answer and the
  * Words the Game would ask next, those of its part of speech first; no two of
- * them share a Lemma or a primary Definition, so each Word has one right
- * Definition. A wrong pair costs a Life and marks Unknown the Word tapped,
+ * them share a Lemma, none fits the primary Definition of another by one of
+ * its own Definitions, primary or extra, and no two are synonyms, so each Word
+ * has one right Definition. A wrong pair costs a Life and marks Unknown the Word tapped,
  * whose Definition was matched wrongly. Each pair's sheet shows its Word and
  * the Word's first Example, if it has one.
  */
@@ -46,19 +48,17 @@ export const pairsMode: GameMode = {
   entryKind: 'word',
   isOn: (edition) => edition.isFeatureEnabled('gamePairs'),
   buildRound({ answer, next, upTo, random, comparison }) {
-    /** A primary Definition as the reader tells it apart: its Comparison Key as a Definition. */
-    const definitionOf = ({ primaryDefinition }: Word) =>
-      comparison.key(primaryDefinition, 'definition');
+    /** Whether either Word fits the other's Definition in the grid, so a pair would have two right matches. */
+    const fit = (one: Word, other: Word) =>
+      fitsDefinitionOf(comparison, one, other) || fitsDefinitionOf(comparison, other, one);
     if (answer.kind !== 'word') return undefined;
     const others = gridOrder(answer, next.filter(isWord));
     const grid = [answer];
     const lemmas = new Set([answer.lemma]);
-    const definitions = new Set([definitionOf(answer)]);
     for (const word of others) {
       if (grid.length >= Math.min(ROUND_OPTIONS, upTo)) break;
-      if (lemmas.has(word.lemma) || definitions.has(definitionOf(word))) continue;
+      if (lemmas.has(word.lemma) || grid.some((placed) => fit(placed, word))) continue;
       lemmas.add(word.lemma);
-      definitions.add(definitionOf(word));
       grid.push(word);
     }
     const places = grid.map((_, place) => place);

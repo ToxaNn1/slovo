@@ -99,7 +99,9 @@ describe('«Може, на сьогодні досить?»', () => {
     // Turning past it shows Entries again, and it does not come twice that day.
     expect(await readOn(app, 50, 10)).toBe(50);
     expect(app.feed.cards.filter(isEnough)).toHaveLength(1);
-    expect(app.feed.cards.slice(51, 60).every((card) => card.kind !== 'notice')).toBe(true);
+    const after = app.feed.cards.slice(51, 60);
+    expect(after).toHaveLength(9);
+    expect(after.every((card) => card.kind === 'word')).toBe(true);
 
     const later = await run({ records: new Map(records), at: '2026-10-11T20:00:00+03:00' });
     expect(await readOn(later, 0, 15)).toBeUndefined();

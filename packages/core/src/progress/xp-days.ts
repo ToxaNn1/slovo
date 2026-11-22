@@ -68,7 +68,10 @@ function rowOf(record: XpRecord): Row {
 
 /** The record a row of an XP day of the date reads as; nothing for a row that is no record of the log. */
 function recordOf(date: string, { t, ...row }: Row): XpRecord | undefined {
-  const at = typeof t === 'number' ? { at: new Date(baseOf(date) + t).toISOString() } : {};
+  const instant = typeof t === 'number' ? new Date(baseOf(date) + t) : undefined;
+  // A `t` past what a date holds is no instant: the row came from a broken device.
+  if (instant !== undefined && Number.isNaN(instant.getTime())) return undefined;
+  const at = instant === undefined ? {} : { at: instant.toISOString() };
   const parsed = XpRecordSchema.safeParse({ kind: 'xp', ...row, ...at, date });
   return parsed.success ? parsed.data : undefined;
 }

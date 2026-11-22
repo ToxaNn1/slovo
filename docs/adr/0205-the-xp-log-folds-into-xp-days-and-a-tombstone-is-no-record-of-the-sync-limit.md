@@ -21,11 +21,15 @@ Decision of 2026-11-21, the owner's call: the 20 000 records an Account keeps in
 
 The Data export reads the log through the XP days, so it lists every record as before.
 
-**The push sends deletions first**, so a batch that adds XP days comes after the one that frees the room of their records.
+**The push sends deletions first**, so a batch that adds records comes after the one that frees their room. The deletion of a record a pending XP day holds is the exception: it goes in the push of that XP day, or right after it, never before, so a push that fails midway leaves the Account every record, as a record or in its XP day.
 
 **A tombstone does not count toward the limit.** The 20 000 are records with a value. A deletion that is kept frees the room of its record, also for the other changes of the same push; a deletion that loses to a later change, or of a key that holds no record, frees nothing; a value in place of a tombstone adds a record. The count stays in the push's transaction, after the row lock.
 
-**The backend keeps the latest 20 000 tombstones** of an Account in an Edition, by sequence, and deletes the older ones for good in the push that brings a tombstone. Without a bound, uncounted tombstones would let one Account fill the database, which is what the limit is for. A deletion so reaches every device that syncs before 20 000 more deletions follow it, years of ordinary use. A device that stays away longer misses the oldest deletions: it keeps those records itself, and an earlier pending change of such a key could bring the record back. For the XP log this costs nothing: its tombstones are ignored by the `union` mark anyway, and a device deletes its own single records once it holds the XP day.
+**The backend keeps the latest 20 000 tombstones** of an Account in an Edition, by sequence, and deletes the older ones for good in the push that brings a tombstone. Without a bound, uncounted tombstones would let one Account fill the database, which is what the limit is for. A deletion so reaches every device that syncs before 20 000 more deletions follow it.
+
+_Note (audit of 2026-11-21):_ that is about a year of daily use, not years. Every folded record of the XP log leaves a tombstone, and an active reader writes 30 to 100 such records a day, so 20 000 tombstones pass in 7 to 22 months.
+
+A device that stays away longer misses the oldest deletions: it keeps those records itself, and an earlier pending change of such a key could bring the record back. For the XP log this costs nothing: its tombstones are ignored by the `union` mark anyway, and a device deletes its own single records once it holds the XP day.
 
 **What it gives.** A day of the past costs the Account one XP day and one Active Day, about 730 records a year, beside History (at most 500) and what the reader saves and marks: the limit lasts over two decades of daily use.
 

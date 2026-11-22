@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { answerOf } from '../backend';
 import { newestFirst } from '../in-turn';
 import type { Backend, Json, RecordChange, RequestFailure, UserStateChanges } from '../ports';
+import { progressRecords } from '../progress/records';
 import { HISTORY_CAP } from '../saved/history';
 import type { PendingChange, TrackedUserState } from '../user-state/tracked-user-state';
 import { declareRecords } from '../user-state/user-state-record';
@@ -66,7 +67,8 @@ export interface SyncExchange {
    * History over `HISTORY_CAP` loses its oldest entries by Seen time in the
    * write of the last page, and those deletions sync. The push then sends the pending
    * changes, the deletions first, in batches of `SYNC_BATCH_SIZE` and deletes each batch the
-   * Account accepted. A failed call stops the sync where it is; nothing done
+   * Account accepted. The deletion of a record of the XP log a pending XP day
+   * holds goes with that XP day, never before it (ADR 0205). A failed call stops the sync where it is; nothing done
    * is lost, and the next sync resumes. A batch the Account refuses for good
    * (`refusalOf`) stays pending and is sent no more by this exchange,
    * so until the next launch: a later sync pulls, pushes the other changes
@@ -82,6 +84,7 @@ export interface SyncExchange {
 const everyRecord = declareRecords('', z.json());
 
 const { history, syncCursor, syncPending } = userStateRecords;
+const { xpLog, xpDays } = progressRecords;
 
 /** The time of every first-sign-in change, older than any change. */
 const FIRST_SIGN_IN = new Date(0);
@@ -122,6 +125,68 @@ function changeOf(key: string, { changedAt, value }: PendingChange): RecordChang
     value: everyRecord.record(key).decode(value) ?? null,
     changedAt: changedAt.getTime(),
   };
+}
+
+type Pending = readonly [string, PendingChange];
+
+/**
+ * The pending changes as the pushes send them, each of at most
+ * `SYNC_BATCH_SIZE`. The deletions come first: they free room in the Account
+ * before a push adds records. A deletion of a record of the XP log that a
+ * pending XP day holds is no such deletion: it goes in the push of that XP
+ * day, after it, or in the pushes right after when the two do not fit one,
+ * and not at all while the XP day is withheld, so the Account never loses a
+ * record before the XP day that holds it is there (ADR 0205).
+ */
+function pushesOf(
+  all: readonly Pending[],
+  withheld: (change: Pending) => boolean,
+): Map<string, PendingChange>[] {
+  const byKey = new Map(all);
+  const held = new Set<string>();
+  /** The pending deletions of the records the XP day holds that no earlier XP day took. */
+  const deletionsOf = (key: string, text: string): Pending[] => {
+    const day = xpDays.record(key.slice(xpDays.prefix.length)).decode(text);
+    return Object.keys(day?.rows ?? {}).flatMap((id): Pending[] => {
+      const row = xpLog.record(id).key;
+      const change = byKey.get(row);
+      if (change === undefined || change.value !== undefined || held.has(row)) return [];
+      held.add(row);
+      return [[row, change]];
+    });
+  };
+  const dayKeys = new Set<string>();
+  const days = all.flatMap(([key, change]): Pending[][] => {
+    if (change.value === undefined || !key.startsWith(xpDays.prefix)) return [];
+    dayKeys.add(key);
+    return [[[key, change], ...deletionsOf(key, change.value)]];
+  });
+  const alone = all.filter(([key]) => !held.has(key) && !dayKeys.has(key));
+  const groups = [
+    ...alone.filter(([, { value }]) => value === undefined).map((change) => [change]),
+    // An XP day withheld keeps its deletions back with it.
+    ...days.filter(([day]) => day !== undefined && !withheld(day)),
+    ...alone.filter(([, { value }]) => value !== undefined).map((change) => [change]),
+  ];
+  const pushes: Pending[][] = [];
+  let push: Pending[] = [];
+  for (const group of groups) {
+    const sent = group.filter((change) => !withheld(change));
+    // A group stays in one push where it fits one.
+    if (push.length > 0 && push.length + sent.length > SYNC_BATCH_SIZE) {
+      pushes.push(push);
+      push = [];
+    }
+    for (const change of sent) {
+      if (push.length === SYNC_BATCH_SIZE) {
+        pushes.push(push);
+        push = [];
+      }
+      push.push(change);
+    }
+  }
+  if (push.length > 0) pushes.push(push);
+  return pushes.map((changes) => new Map(changes));
 }
 
 /**
@@ -304,8 +369,7 @@ export function createSyncExchange({
   /** The changes a push was refused for good, by key with the instant of the change, and the last such refusal. */
   const refused = new Map<string, number>();
   let refusal: SyncApiFailure | undefined;
-  const isRefused = ([key, { changedAt }]: readonly [string, PendingChange]) =>
-    refused.get(key) === changedAt.getTime();
+  const isRefused = ([key, { changedAt }]: Pending) => refused.get(key) === changedAt.getTime();
 
   return {
     forgetRefused() {
@@ -324,14 +388,7 @@ export function createSyncExchange({
         more = page.more && page.cursor !== after;
       }
       const all = [...(await userState.pendingChanges())];
-      // Deletions first: they free room in the Account before a batch adds records (ADR 0205).
-      const waiting = all.filter((change) => !isRefused(change));
-      const pending = [
-        ...waiting.filter(([, { value }]) => value === undefined),
-        ...waiting.filter(([, { value }]) => value !== undefined),
-      ];
-      for (let start = 0; start < pending.length; start += SYNC_BATCH_SIZE) {
-        const batch = new Map(pending.slice(start, start + SYNC_BATCH_SIZE));
+      for (const batch of pushesOf(all, isRefused)) {
         const answer = await api.push(
           token,
           [...batch].map(([key, change]) => changeOf(key, change)),
