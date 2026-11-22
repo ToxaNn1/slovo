@@ -25,6 +25,7 @@ import {
   word,
 } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { signInByCode } from '../fakes/fake-backend';
 import { trackChanges } from '../user-state/tracked-user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -315,7 +316,7 @@ describe('a Collection Link', () => {
       googleSheet: createFakeGoogleSignInSheet(),
       appleSheet: createFakeAppleSignInSheet(),
       userState,
-      sessions: createMemorySessionStore({ token: 'a-session', email: 'anna@mail.com' }),
+      sessions: createMemorySessionStore(await signInByCode(server)),
       clock: time.clock,
       schedule: timers.schedule,
       random: randomOf(0.5),
@@ -336,12 +337,14 @@ describe('a Collection Link', () => {
     sync.foreground();
     await timers.advance(0);
 
-    const kept = [...server.sync.records.keys()].filter((key) => key.startsWith('collection'));
+    const kept = [...server.sync.recordsOf('anna@mail.com').keys()].filter((key) =>
+      key.startsWith('collection'),
+    );
     expect(kept.sort()).toEqual([
       `collectionEntries.${copy.id}.w_one`,
       `collectionEntries.${copy.id}.w_two`,
       `collections.${copy.id}`,
     ]);
-    expect(JSON.stringify([...server.sync.records.values()])).not.toContain(id);
+    expect(JSON.stringify([...server.sync.recordsOf('anna@mail.com').values()])).not.toContain(id);
   });
 });

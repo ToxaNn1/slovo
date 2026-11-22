@@ -73,7 +73,7 @@ const starter = {
 };
 
 /** The Core media over a memory pack, a memory file cache and a fake fetcher serving every row. */
-async function device({
+function device({
   rows = {},
   off = [],
   needsNewRecording = [],
@@ -82,20 +82,25 @@ async function device({
   off?: MediaSwitch[];
   needsNewRecording?: string[];
 } = {}) {
-  const store = createMemoryContentStore({ contentVersion: 1, needsNewRecording });
-  const patch = patchOf(1, {
+  const held = {
     recordings: [...starterRows.recordings, ...(rows.recordings ?? [])],
     illustrations: [...starterRows.illustrations, ...(rows.illustrations ?? [])],
+  };
+  const store = createMemoryContentStore({
+    contentVersion: 2,
+    etag: '"uk.2.p3"',
+    mediaBase: BASE,
+    needsNewRecording,
+    media: held,
   });
-  await store.apply(patch, '"uk.2.p3"');
   const cache = createMemoryMediaCache();
   const fetcher = createFakeMediaFetcher();
-  for (const row of patch.recordings)
+  for (const row of held.recordings)
     fetcher.serve(
       `${BASE}/recordings/${row.narratorVoice}/plain/${row.wordId}.${row.hash}.mp3`,
       row.size,
     );
-  for (const row of patch.illustrations)
+  for (const row of held.illustrations)
     fetcher.serve(`${BASE}/illustrations/${row.wordId}.${row.hash}.png`, row.size);
   const time = fakeClock();
   const media = createMedia({
@@ -112,7 +117,7 @@ async function device({
 
 describe('the media of a Word card', () => {
   it('answers a Starter Media Word bundled, with no download', async () => {
-    const { media, fetcher } = await device();
+    const { media, fetcher } = device();
 
     expect(await media.ofWord('starter', 'oksana')).toEqual({
       recording: { kind: 'bundled', asset: 'bundled:starter.mp3' },
@@ -122,7 +127,7 @@ describe('the media of a Word card', () => {
   });
 
   it('answers a Starter Media Word whose Patch brought a new file remote, at the new URL', async () => {
-    const { media, store } = await device();
+    const { media, store } = device();
     const patch = patchOf(2, {
       recordings: [
         recording('starter', hashOf('s'), { retired: true }),
@@ -143,7 +148,7 @@ describe('the media of a Word card', () => {
   });
 
   it('answers a Word with rows and no cached file remote, at its Media Store URL', async () => {
-    const { media } = await device({
+    const { media } = device({
       rows: {
         recordings: [recording('w1', hashOf('a'))],
         illustrations: [illustration('w1', hashOf('b'))],
@@ -157,7 +162,7 @@ describe('the media of a Word card', () => {
   });
 
   it('answers a Word without rows absent', async () => {
-    const { media } = await device();
+    const { media } = device();
 
     expect(await media.ofWord('w1', 'oksana')).toEqual({
       recording: { kind: 'absent' },
@@ -166,7 +171,7 @@ describe('the media of a Word card', () => {
   });
 
   it('answers the Recording of a Word with Recordings in other voices only as other-voices', async () => {
-    const { media } = await device({
+    const { media } = device({
       rows: { recordings: [recording('w1', hashOf('a'), { narratorVoice: 'taras' })] },
     });
 
@@ -178,7 +183,7 @@ describe('the media of a Word card', () => {
   });
 
   it('answers a tap on a Word with Recordings in other voices only as other-voices, with no download', async () => {
-    const { media, fetcher } = await device({
+    const { media, fetcher } = device({
       rows: { recordings: [recording('w1', hashOf('a'), { narratorVoice: 'taras' })] },
     });
 
@@ -187,7 +192,7 @@ describe('the media of a Word card', () => {
   });
 
   it('answers the Recording of a Word marked «needs new recording» absent', async () => {
-    const { media } = await device({
+    const { media } = device({
       rows: { recordings: [recording('w1', hashOf('a'))] },
       needsNewRecording: ['w1', 'starter'],
     });
@@ -200,7 +205,7 @@ describe('the media of a Word card', () => {
 describe('the prefetch of the next Feed cards', () => {
   it('downloads the media of the next 20 cards in the chosen voice only, and answers them cached', async () => {
     const ids = Array.from({ length: 21 }, (_, i) => `w${String(i + 1)}`);
-    const { media, fetcher } = await device({
+    const { media, fetcher } = device({
       rows: {
         recordings: ids.flatMap((id) => [
           recording(id, hashOf('a')),
@@ -225,7 +230,7 @@ describe('the prefetch of the next Feed cards', () => {
   });
 
   it('downloads nothing twice', async () => {
-    const { media, fetcher } = await device({
+    const { media, fetcher } = device({
       rows: { recordings: [recording('w1', hashOf('a'))] },
     });
 
@@ -236,7 +241,7 @@ describe('the prefetch of the next Feed cards', () => {
   });
 
   it('leaves the cache unchanged after a half download, and keeps on with the next cards', async () => {
-    const { media, fetcher } = await device({
+    const { media, fetcher } = device({
       rows: { recordings: [recording('w1', hashOf('a')), recording('w2', hashOf('b'))] },
     });
     fetcher.cutShort(`${BASE}/recordings/oksana/plain/w1.${hashOf('a')}.mp3`);
@@ -248,7 +253,7 @@ describe('the prefetch of the next Feed cards', () => {
   });
 
   it('leaves the cache unchanged when a download fails', async () => {
-    const { media, fetcher } = await device({
+    const { media, fetcher } = device({
       rows: { recordings: [recording('w1', hashOf('a'))] },
     });
     fetcher.fail(`${BASE}/recordings/oksana/plain/w1.${hashOf('a')}.mp3`);
@@ -263,8 +268,8 @@ describe('the prefetch of the next Feed cards', () => {
       recordings: [recording('w1', hashOf('a'))],
       illustrations: [illustration('w1', hashOf('b'))],
     };
-    const silent = await device({ rows, off: ['pronunciation'] });
-    const plain = await device({ rows, off: ['illustrations'] });
+    const silent = device({ rows, off: ['pronunciation'] });
+    const plain = device({ rows, off: ['illustrations'] });
 
     await silent.media.prefetch(['w1'], 'oksana');
     await plain.media.prefetch(['w1'], 'oksana');
@@ -278,7 +283,7 @@ describe('the prefetch of the next Feed cards', () => {
   });
 
   it('downloads in the voice each call names, so a voice the reader changes takes effect at once', async () => {
-    const { media, fetcher } = await device({
+    const { media, fetcher } = device({
       rows: {
         recordings: [
           recording('w1', hashOf('a')),
@@ -301,7 +306,7 @@ describe('the prefetch of the next Feed cards', () => {
   });
 
   it('uses the default voice with `narratorVoice` off', async () => {
-    const { media, fetcher } = await device({
+    const { media, fetcher } = device({
       off: ['narratorVoice'],
       rows: {
         recordings: [
@@ -320,7 +325,7 @@ describe('the prefetch of the next Feed cards', () => {
 describe('the media cache', () => {
   it(`keeps at most ${String(MEDIA_CACHE_LIMIT / MB)} MB, the least recently played file evicted first, never a Starter file`, async () => {
     const size = 35 * MB;
-    const { media, advance } = await device({
+    const { media, advance } = device({
       rows: {
         recordings: [
           recording('w1', hashOf('a'), { size }),
@@ -343,7 +348,7 @@ describe('the media cache', () => {
   });
 
   it('downloads a remote Recording on a tap and answers it cached', async () => {
-    const { media } = await device({ rows: { recordings: [recording('w1', hashOf('a'))] } });
+    const { media } = device({ rows: { recordings: [recording('w1', hashOf('a'))] } });
 
     const cached = await media.downloadRecording('w1', 'oksana');
 
@@ -355,7 +360,7 @@ describe('the media cache', () => {
   });
 
   it('downloads a file once when a tap comes while the prefetch is downloading it', async () => {
-    const { media, fetcher } = await device({
+    const { media, fetcher } = device({
       rows: { recordings: [recording('w1', hashOf('a'))] },
     });
 
@@ -370,8 +375,26 @@ describe('the media cache', () => {
 });
 
 describe('a Patch applied', () => {
+  it('answers the new Recording of a marked Word once a Patch brings it', async () => {
+    const { media, store } = device({
+      rows: { recordings: [recording('w1', hashOf('a'))] },
+      needsNewRecording: ['w1'],
+    });
+    const patch = patchOf(2, {
+      recordings: [recording('w1', hashOf('a'), { retired: true }), recording('w1', hashOf('d'))],
+    });
+    await store.apply(patch, '"uk.3.p3"');
+
+    await media.patchApplied(patch);
+
+    expect((await media.ofWord('w1', 'oksana')).recording).toEqual({
+      kind: 'remote',
+      url: `${BASE}/recordings/oksana/plain/w1.${hashOf('d')}.mp3`,
+    });
+  });
+
   it('evicts the file of a retired row, and the card answers the new URL', async () => {
-    const { media, store, cache } = await device({
+    const { media, store, cache } = device({
       rows: {
         recordings: [recording('w1', hashOf('a'))],
         illustrations: [illustration('w1', hashOf('b'))],

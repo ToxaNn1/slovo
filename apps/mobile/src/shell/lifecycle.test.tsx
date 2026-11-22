@@ -14,6 +14,7 @@ import {
   createFakeBackend,
   createFakeGoogleSignInSheet,
   seedUserState,
+  signInByCode,
 } from '@slovo/core/testing';
 import { waitFor } from '@testing-library/react-native';
 import type { AppStateStatus } from 'react-native';
@@ -68,14 +69,14 @@ async function app() {
     edition,
     googleSheet: createFakeGoogleSignInSheet(),
     appleSheet: createFakeAppleSignInSheet(),
-    sessions: createMemorySessionStore({ token: 'a-session', email: 'anna@mail.com' }),
+    sessions: createMemorySessionStore(await signInByCode(server)),
     userState,
     clock,
     schedule,
     random: systemRandom,
   });
   const changedAt = clock.now().getTime() + 1_000;
-  const elsewhere = { context: { token: 'another-session' } };
+  const elsewhere = { context: { token: (await signInByCode(server)).token } };
   await server.backend.sync.push(
     { editionId: edition.id, changes: [{ key: 'mix.corrections', value: false, changedAt }] },
     elsewhere,

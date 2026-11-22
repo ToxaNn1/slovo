@@ -33,6 +33,7 @@ export function createMemoryContentStore({
   let lastEtag = etag;
   let failing = false;
   const applied: Patch[] = [];
+  const marked = new Set(needsNewRecording);
   const recordings = new Map<string, WordMedia['recordings'][number]>();
   const illustrations = new Map<string, WordMedia['illustrations'][number]>();
   function take(patch: {
@@ -65,6 +66,9 @@ export function createMemoryContentStore({
       }
       applied.push(patch);
       take(patch);
+      // A Word the Patch writes anew, or brings a live Recording of, is no longer marked (ADR 0099).
+      for (const word of patch.words) marked.delete(word.id);
+      for (const row of patch.recordings) if (!row.retired) marked.delete(row.wordId);
       base = patch.mediaBase;
       version = patch.contentVersion;
       lastEtag = patchEtag;
@@ -78,7 +82,7 @@ export function createMemoryContentStore({
           .map(([, row]) => row);
       return Promise.resolve({
         mediaBase: base,
-        needsNewRecording: needsNewRecording.includes(wordId),
+        needsNewRecording: marked.has(wordId),
         recordings: ofWord(recordings),
         illustrations: ofWord(illustrations),
       });

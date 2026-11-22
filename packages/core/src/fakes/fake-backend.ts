@@ -1,6 +1,7 @@
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
 import {
+  AccountEmailSchema,
   SYNC_BATCH_SIZE,
   type CollectionLink,
   type ForceUpdateMinimums,
@@ -111,15 +112,17 @@ export interface FakeBackend {
     endSessions(): void;
   };
   /**
-   * The Sync procedures: one Account's records in one Edition, by the
+   * The Sync procedures: each Account's records in one Edition, by the
    * backend's rules (ADR 0041): a change replaces the record kept under its
    * key only when it is later, a change time later than the clock's counts
    * as the clock's, and every kept change takes the next sequence number,
-   * which a pull pages by. Every token is the Account's.
+   * one sequence for every Account, which a pull pages by. A push or pull
+   * acts on the Account of its Session, without one it gets the contract's
+   * 401, and deleting the Account drops its records.
    */
   readonly sync: {
-    /** The records kept, by key. */
-    readonly records: ReadonlyMap<string, KeptRecord>;
+    /** The records kept of the Account of the email, by key; none for an email with none. */
+    recordsOf(email: string): ReadonlyMap<string, KeptRecord>;
   };
   /** The Mistake Report procedure: it keeps the reports it takes. */
   readonly reports: {
@@ -202,6 +205,16 @@ interface ServedRequest {
   offline: boolean;
 }
 
+/** Signs the email in on the fake by a Sign-in code, as the app does: the Session it issued. */
+export async function signInByCode(
+  fake: FakeBackend,
+  email = 'anna@mail.com',
+): Promise<{ token: string; email: string }> {
+  await fake.backend.account.requestCode({ email, editionId: 'uk' });
+  const code = fake.account.sentCodes.at(-1)?.code ?? '';
+  return fake.backend.account.verifyCode({ email, code });
+}
+
 /** The fake backend's time is the clock's; its links are under each Edition's path on the domain. */
 export function createFakeBackend({
   clock = systemClock,
@@ -222,7 +235,8 @@ export function createFakeBackend({
   const codes = new Map<string, { code: string; triesLeft: number }>();
   let sessionCount = 0;
   // Sync.
-  const records = new Map<string, KeptRecord>();
+  /** The records of each Account, by its email, then by key. */
+  const records = new Map<string, Map<string, KeptRecord>>();
   let sequence = 0;
   // Mistake Reports, Collection Links, content, counters, switches.
   const received: MistakeReport[] = [];
@@ -299,6 +313,19 @@ export function createFakeBackend({
     return email;
   }
 
+  /**
+   * Arrives as `arrive` does, with the email of the Session the request
+   * carries as it reaches the backend, or the contract's 401: a Session that
+   * ends while the request is held no longer stops it.
+   */
+  async function arriveSignedIn(name: ProcedureName, context: ServedContext): Promise<string> {
+    const token = context.headers.get('authorization')?.replace(/^Bearer /, '');
+    const email = token === undefined ? undefined : sessions.get(token);
+    await arrive(name, context);
+    if (email === undefined) throw refusal('UNAUTHORIZED', context);
+    return email;
+  }
+
   /** Signs the email in: its Account, created at its first sign-in, gets a new Session. */
   function startSession(email: string) {
     if (!accounts.has(email)) accounts.set(email, { createdAt: clock.now().toISOString() });
@@ -306,6 +333,13 @@ export function createFakeBackend({
     const token = `session-${String(sessionCount)}`;
     sessions.set(token, email);
     return { token, email };
+  }
+
+  /** The email as the backend keeps it, trimmed and lower-cased, or the contract's 400. */
+  function emailOf(email: string, context: ServedContext): string {
+    const parsed = AccountEmailSchema.safeParse(email);
+    if (!parsed.success) throw refusal('BAD_REQUEST', context);
+    return parsed.data;
   }
 
   function endSessionsOf(email: string): void {
@@ -316,22 +350,27 @@ export function createFakeBackend({
     account: {
       async requestCode({ input, context }) {
         await arrive('account.requestCode', context);
+        const email = emailOf(input.email, context);
         const code = String(100_001 + sentCodes.length);
-        codes.set(input.email, { code, triesLeft: CODE_TRIES });
-        sentCodes.push({ email: input.email, code });
+        codes.set(email, { code, triesLeft: CODE_TRIES });
+        sentCodes.push({ email, code });
         return {};
       },
       async verifyCode({ input, context, errors }) {
         await arrive('account.verifyCode', context);
-        const live = codes.get(input.email);
+        const email = emailOf(input.email, context);
+        const live = codes.get(email);
         if (live === undefined) throw errors.CODE_EXPIRED();
+        // A spent code stays spent, even for the right code, until a new one is sent;
+        // it passes with no time, so the answer has no Retry-After.
+        if (live.triesLeft === 0) throw errors.TOO_MANY_REQUESTS();
         if (live.code !== input.code) {
           live.triesLeft -= 1;
-          if (live.triesLeft === 0) codes.delete(input.email);
+          if (live.triesLeft === 0) throw errors.TOO_MANY_REQUESTS();
           throw errors.WRONG_CODE({ data: { triesLeft: live.triesLeft } });
         }
-        codes.delete(input.email);
-        return startSession(input.email);
+        codes.delete(email);
+        return startSession(email);
       },
       async signInWithGoogle({ input, context, errors }) {
         await arrive('account.signInWithGoogle', context);
@@ -367,12 +406,17 @@ export function createFakeBackend({
         const email = sessionOf(context);
         endSessionsOf(email);
         accounts.delete(email);
+        // The Account's records go with it, as `user_records` cascades; the
+        // sequence goes on, as the backend's one for every Account does.
+        records.delete(email);
         return {};
       },
     },
     sync: {
       async push({ input, context }) {
-        await arrive('sync.push', context);
+        const email = await arriveSignedIn('sync.push', context);
+        const kept = records.get(email) ?? new Map<string, KeptRecord>();
+        records.set(email, kept);
         // Of two changes of one key, the later is kept, the first on a tie, and only then cut.
         const latest = new Map<string, (typeof input.changes)[number]>();
         for (const change of input.changes) {
@@ -383,19 +427,19 @@ export function createFakeBackend({
         }
         const now = clock.now().getTime();
         for (const { key, value, changedAt } of latest.values()) {
-          const kept = records.get(key);
+          const before = kept.get(key);
           const cut = Math.min(changedAt, now);
-          if (kept === undefined || cut > kept.changedAt) {
+          if (before === undefined || cut > before.changedAt) {
             sequence += 1;
-            records.set(key, { value, changedAt: cut, sequence });
+            kept.set(key, { value, changedAt: cut, sequence });
           }
         }
         return {};
       },
       async pull({ input, context }) {
-        await arrive('sync.pull', context);
+        const email = await arriveSignedIn('sync.pull', context);
         const after = input.after;
-        const following = [...records]
+        const following = [...(records.get(email) ?? [])]
           .filter(([, record]) => record.sequence > (after ?? 0))
           .sort(([, first], [, second]) => first.sequence - second.sequence);
         const page = following.slice(0, SYNC_BATCH_SIZE);
@@ -557,7 +601,9 @@ export function createFakeBackend({
         sessions.clear();
       },
     },
-    sync: { records },
+    sync: {
+      recordsOf: (email) => records.get(email) ?? new Map(),
+    },
     reports: { received, sessions: reportSessions },
     collectionLinks: { made },
     content: {
