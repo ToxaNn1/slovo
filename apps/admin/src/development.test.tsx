@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { expect, test } from 'vitest';
 
 import { FIXTURES } from './mock/fixtures';
-import { override } from './mock/handlers';
+import { override, refusal } from './mock/handlers';
 import { server } from './mock/server';
 import { Admin } from './router';
 
@@ -51,6 +51,21 @@ test('a failing GitHub or EAS shows its own unavailable state, the same in both 
   await user.click(screen.getByRole('button', { name: 'Темна' }));
   expect(document.documentElement.dataset['theme']).toBe('dark');
   expect(screen.getByRole('region', { name: 'Розробка' }).textContent).toBe(light);
+});
+
+test('a failed read of Розробка shows GitHub and EAS unavailable at once, with no retries', async () => {
+  server.use(override('development', () => refusal(500, { code: 'INTERNAL_SERVER_ERROR' })));
+  const section = await openDevelopment();
+
+  expect(await section.findByText('GitHub недоступний')).toBeDefined();
+  expect(section.getByText('EAS недоступний')).toBeDefined();
+});
+
+test('Розробка says it is loading while its read is on the way', async () => {
+  server.use(override('development', () => new Promise<never>(() => undefined)));
+  const section = await openDevelopment();
+
+  expect(await section.findByText('Завантаження…')).toBeDefined();
 });
 
 test('Розробка reads neither filter, so the bar is switched off and says so', async () => {

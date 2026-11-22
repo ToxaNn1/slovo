@@ -143,6 +143,41 @@ describe('the EAS source', () => {
     expect(body).toMatchObject({ variables: { appId: 'p1', limit: 5 } });
   });
 
+  it('reads a status Expo adds later as still going, and leaves out only a build it cannot read', async () => {
+    const build = {
+      buildProfile: 'preview',
+      appVersion: '0.8.0',
+      appBuildVersion: '12',
+      createdAt: '2026-11-07T18:00:00.000Z',
+    };
+    const { fetch } = fakeFetch({
+      '/graphql': {
+        data: {
+          app: {
+            byId: {
+              slug: 'slovo',
+              ownerAccount: { name: 'anton_de' },
+              builds: [
+                { ...build, id: 'b1', platform: 'IOS', status: 'WAITING_FOR_CAPACITY' },
+                { ...build, id: 'b2', platform: 'WINDOWS', status: 'FINISHED' },
+                { ...build, id: 'b3', platform: 'ANDROID', status: 'FINISHED' },
+              ],
+            },
+          },
+        },
+      },
+    });
+    const source = createEasSource({ token: 'eas', projectId: 'p1', logger: silentLogger, fetch });
+
+    expect(await source.latestBuilds(5)).toMatchObject({
+      ok: true,
+      value: [
+        { id: 'b1', platform: 'ios', status: 'in-progress' },
+        { id: 'b3', platform: 'android', status: 'finished' },
+      ],
+    });
+  });
+
   it('answers unavailable for an error answer or no token', async () => {
     const errors = fakeFetch({ '/graphql': { errors: [{ message: 'no access' }] } }).fetch;
     const unavailable = { ok: false, reason: 'unavailable' };

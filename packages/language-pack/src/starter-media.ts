@@ -102,6 +102,22 @@ export function starterMediaOf(config: EditionConfig, snapshot: ContentSnapshot)
 /** Downloads a file of the Media Store whole. */
 export type MediaDownload = (url: string) => Promise<Uint8Array>;
 
+/** How long one Starter Media file may take to download before the build gives up on it. */
+const MEDIA_TIMEOUT_MS = 30_000;
+
+/**
+ * A Media Store download over HTTP that gives up after `timeoutMs`, so a
+ * stalled server fails the build instead of hanging it, and refuses a file
+ * the server refuses.
+ */
+export function fetchMedia({ timeoutMs = MEDIA_TIMEOUT_MS } = {}): MediaDownload {
+  return async (url) => {
+    const response = await fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+    if (!response.ok) throw new Error(`${url} answered ${String(response.status)}`);
+    return new Uint8Array(await response.arrayBuffer());
+  };
+}
+
 /**
  * Downloads the Starter Media into `dir`, each file at its Media Store path,
  * and writes the list last, so the folder holds a list only once every file

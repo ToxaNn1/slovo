@@ -1,3 +1,5 @@
+import type { NodeOptions } from '@sentry/node';
+
 import { noErrorReporter, type ErrorReporter } from './error-reporter';
 
 /**
@@ -5,17 +7,20 @@ import { noErrorReporter, type ErrorReporter } from './error-reporter';
  * DSN. Sentry gets only the report: none of its integrations runs, so it
  * reads no request, header, body, IP address or user of its own, keeps no
  * breadcrumbs and traces nothing. Its SDK loads only with a DSN. Each report
- * carries the environment of its Deployment, `production` or `staging`.
+ * carries the environment of its Deployment, `production` or `staging`. A
+ * test gives a `transport` that keeps what would be sent.
  */
 export async function createSentryReporter(
   dsn: string | undefined,
   environment: 'production' | 'staging',
+  { transport }: Pick<NodeOptions, 'transport'> = {},
 ): Promise<ErrorReporter> {
   if (dsn === undefined) return noErrorReporter;
   const Sentry = await import('@sentry/node');
   Sentry.init({
     dsn,
     environment,
+    ...(transport === undefined ? {} : { transport }),
     defaultIntegrations: false,
     enableRuntimeChannelInjection: false,
     includeServerName: false,

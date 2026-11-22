@@ -61,6 +61,7 @@ function Analytics() {
   const counters = useQuery({
     queryKey: ['counters', editionId],
     queryFn: () => adminApi.counters({ editionId }),
+    retry: false,
   });
   // The Editions' questionnaire options name the counted answers.
   const cards = useQuery({
@@ -69,10 +70,12 @@ function Analytics() {
       Promise.all(
         (await editionIdsOf(search.edition)).map((id) => adminApi.editionCard({ editionId: id })),
       ),
+    retry: false,
   });
   const features = useQuery({
     queryKey: ['variantFeatures', search.edition],
     queryFn: () => variantFeatures(search.edition),
+    retry: false,
   });
   const data = overview.data;
   return (
@@ -105,8 +108,13 @@ function Analytics() {
       {counters.data !== undefined && (
         <CommunityCounters counters={counters.data} cards={cards.data ?? []} />
       )}
+      {counters.isError && (
+        <p className="text-sm text-destructive">Лічильники спільноти недоступні</p>
+      )}
+      {cards.isError && <p className="text-sm text-destructive">Назви відповідей недоступні</p>}
       <div className="flex flex-col gap-3">
         <h2 className="font-display text-[15px] font-medium">Варіанти</h2>
+        {features.isError && <p className="text-sm text-destructive">Варіанти недоступні</p>}
         {features.data?.length === 0 && (
           <p className="text-sm text-muted-foreground">Немає A/B-тестів</p>
         )}

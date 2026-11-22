@@ -3,6 +3,8 @@ import type pg from 'pg';
 /** What a message may quote that is personal data or a secret, and what takes its place. */
 const PERSONAL_DATA: readonly (readonly [RegExp, string])[] = [
   [/[^\s@"'<>()[\]]+@[^\s@"'<>()[\]]+/g, '[email]'],
+  // An email as a URL or a form body quotes it.
+  [/[\w.+-]+%40[\w.-]+/gi, '[email]'],
   // A Session's token, a Google identity token: a long run of token characters.
   [/[\w.-]{20,}/g, '[token]'],
   [/\b\d{1,3}(?:\.\d{1,3}){3}\b/g, '[ip]'],

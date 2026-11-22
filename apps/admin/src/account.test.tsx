@@ -254,3 +254,52 @@ test('the Account page names the synced kinds it knows, the Best results after t
   // The Best results kept before, which counted Rounds passed, are not read.
   expect(linesOf(page, 'Інші записи')).toEqual(['game: 1', 'mix: 2']);
 });
+
+test('the Account page reads the XP days the Core folds old records into, beside the records kept, each record once', async () => {
+  backend();
+  const hours = (count: number) => count * 3_600_000;
+  withRecords([
+    {
+      key: 'xpDay.2026-10-01-4-abc',
+      value: {
+        date: '2026-10-01',
+        rows: {
+          // Before the reset marker of the day: it no longer counts.
+          x0: { at: '2026-10-01T00:30:00.000Z', amount: 50 },
+          r1: { kind: 'reset', t: hours(1) },
+          x1: { t: hours(10), amount: 9 },
+          f1: { kind: 'freeze', t: hours(11) },
+          b1: { kind: 'badge', t: hours(12), badge: 'streak-7' },
+          // No record of the log: left out, as the Core leaves it out.
+          junk: { kind: 'no-such-kind', t: hours(13) },
+        },
+      },
+    },
+    {
+      key: 'xpDay.2026-11-06-1-def',
+      value: { date: '2026-11-06', rows: { x2: { t: hours(10), amount: 4 } } },
+    },
+    // The records folded leave tombstones; one is kept beside its XP day too.
+    { key: 'xp.x1', value: null },
+    { key: 'xp.f1', value: null },
+    {
+      key: 'xp.x2',
+      value: { kind: 'xp', date: '2026-11-06', at: '2026-11-06T10:00:00.000Z', amount: 4 },
+    },
+    { key: 'game.bestRight.guess-word~r1', value: 12 },
+  ]);
+  const page = await openFromList();
+
+  expect(linesOf(page, 'Прогрес')).toEqual([
+    'XP: 13',
+    'Заморозки використано: 1',
+    'Відзнака «Тиждень поспіль» · 2026-10-01',
+  ]);
+  // The reset marker folded into an XP day is the latest, so the Best result after it counts.
+  expect(linesOf(page, 'Найкраще в грі')).toEqual(['Гра «Вгадай слово»: 12']);
+  expect(
+    within(page.getByRole('region', { name: 'Видання uk' })).queryByRole('region', {
+      name: 'Інші записи',
+    }),
+  ).toBeNull();
+});
