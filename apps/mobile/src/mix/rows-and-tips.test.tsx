@@ -71,8 +71,12 @@ const tip: Tip = {
   retired: false,
 };
 
+/** While set, the user state keeps every write waiting for it, as a slow disk does. */
+let writesWait: Promise<void> | undefined;
+
 async function open(on: boolean, mixKindWeights = true) {
   editionInEffect = editionWith(on, mixKindWeights);
+  const userState = await seedUserState();
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
@@ -80,13 +84,20 @@ async function open(on: boolean, mixKindWeights = true) {
       tips: [tip],
     }),
     edition: editionInEffect,
-    userState: await seedUserState(),
+    userState: {
+      ...userState,
+      write: async (changes) => {
+        await writesWait;
+        await userState.write(changes);
+      },
+    },
     clock: { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
   });
 }
 
 beforeEach(async () => {
+  writesWait = undefined;
   await open(true);
 });
 
@@ -195,6 +206,25 @@ describe.each(kinds)('$name', ({ kind, feature, entry, title, subtitle }) => {
     await openSheet('kinds');
 
     await choose(`mix-${feature}-more`);
+    expect(composition.mix.state.kinds[kind]).toBe(true);
+    expect(composition.mix.state.kindWeights[kind]).toBe('more');
+    expect(screen.getByTestId(`mix-${feature}-more`)).toBeSelected();
+  });
+
+  it('keep the last of two quick taps, «Вимк» then «Більше», before the first lands', async () => {
+    await renderInApp(<MixChoices />);
+    await openSheet('kinds');
+
+    let land: () => void = () => undefined;
+    writesWait = new Promise((resolve) => {
+      land = resolve;
+    });
+    await choose(`mix-${feature}-off`);
+    await choose(`mix-${feature}-more`);
+    land();
+    await settle();
+    await settle();
+
     expect(composition.mix.state.kinds[kind]).toBe(true);
     expect(composition.mix.state.kindWeights[kind]).toBe('more');
     expect(screen.getByTestId(`mix-${feature}-more`)).toBeSelected();
