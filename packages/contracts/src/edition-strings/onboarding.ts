@@ -30,6 +30,14 @@ export const OnboardingStringsSchema = z.strictObject({
     title: TextSchema,
     next: TextSchema,
   }),
+  /** «ГОЛОС»: the Narrator Voices to pick from, each read on a tap; «ОБИРАЮ» goes on. */
+  voiceStep: z.strictObject({
+    /** The word the step shouts large on its red top. */
+    shout: TextSchema,
+    title: TextSchema,
+    subtitle: TextSchema,
+    next: TextSchema,
+  }),
   /** «ГРАЙ!»: the Games in one screen; «Далі» goes on. */
   playStep: z.strictObject({
     /** The word the step shouts large on its red top. */

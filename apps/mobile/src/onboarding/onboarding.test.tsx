@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import { openComposition, type Composition, type Edition } from '@slovo/core';
+import { createSettings, openComposition, type Composition, type Edition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
+import * as Speech from 'expo-speech';
 import { renderApp } from '../shell/test-app';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 
@@ -40,10 +41,12 @@ function word(id: string, lemma: string): Word {
 }
 
 let composition: Composition;
+let readerState: Awaited<ReturnType<typeof seedUserState>>;
 
 /** Draws the onboarding of a new reader over the Edition given, on 2026-10-28 in Kyiv. */
 async function renderOnboarding(shipped: Edition = loadEdition(activeEditionFiles.config)) {
   const userState = await seedUserState({}, { clock });
+  readerState = userState;
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [
@@ -86,7 +89,7 @@ afterEach(() => {
 
 // Spec #1358, ticket #1379: the onboarding of 1.0.
 describe('the onboarding', () => {
-  it('goes from the welcome to the first Word, «ГРАЙ!», «Рівень», «Навіщо», the Daily Goal and «Коли нагадати?», then the Feed', async () => {
+  it('goes from the welcome to the first Word, «ГОЛОС», «ГРАЙ!», «Рівень», «Навіщо», the Daily Goal and «Коли нагадати?», then the Feed', async () => {
     await renderOnboarding();
     expect(screen.getByText(strings.welcome.title)).toBeTruthy();
 
@@ -99,6 +102,9 @@ describe('the onboarding', () => {
     expect(screen.getAllByText(firstWord.word.primaryDefinition).length).toBeGreaterThan(0);
     // The sample card is the Feed's tabbed card in its fixed frame.
     expect(screen.getByTestId('word-tab-panel')).toBeTruthy();
+
+    await press('onboarding-next');
+    expect(screen.getByText(strings.voiceStep.title)).toBeTruthy();
 
     await press('onboarding-next');
     expect(screen.getByText(strings.playStep.title)).toBeTruthy();
@@ -151,6 +157,7 @@ describe('the onboarding', () => {
     await press('onboarding-start');
     await press('onboarding-next');
     await press('onboarding-next');
+    await press('onboarding-next');
     await press('onboarding-answer-dont-know');
 
     expect(screen.getByText(strings.level.shout)).toBeTruthy();
@@ -193,9 +200,10 @@ describe('the onboarding', () => {
   });
 
   // Spec #1553, ticket #1558: «ГРАЙ!» shows the Games after the first Word.
-  it('shows «ГРАЙ!» after the first Word with the happy Mascot, and «Далі» goes on to «Рівень»', async () => {
+  it('shows «ГРАЙ!» after «ГОЛОС» with the happy Mascot, and «Далі» goes on to «Рівень»', async () => {
     await renderOnboarding();
     await press('onboarding-start');
+    await press('onboarding-next');
     await press('onboarding-next');
 
     const play = within(screen.getByTestId('onboarding-play'));
@@ -209,19 +217,56 @@ describe('the onboarding', () => {
     expect(screen.getByText(strings.level.title)).toBeTruthy();
   });
 
-  it('goes from the first Word straight to «Рівень» with the Game off', async () => {
-    // Through the Edition's own switches, so `playStep` goes off with the Game it depends on.
+  it('goes from the first Word straight to «Рівень» with the Game and the Narrator Voice off', async () => {
+    // Through the Edition's own switches, so `playStep` and `voiceStep` go off with what they depend on.
     const { featureSwitches, ...rest } = activeEditionFiles.config as {
       featureSwitches: Record<string, string>;
     };
     await renderOnboarding(
-      loadEdition({ ...rest, featureSwitches: { ...featureSwitches, game: 'off' } }),
+      loadEdition({
+        ...rest,
+        featureSwitches: { ...featureSwitches, game: 'off', narratorVoice: 'off' },
+      }),
     );
     await press('onboarding-start');
     await press('onboarding-next');
 
+    expect(screen.queryByTestId('onboarding-voice')).toBeNull();
     expect(screen.queryByTestId('onboarding-play')).toBeNull();
     expect(screen.getByText(strings.level.title)).toBeTruthy();
+  });
+
+  // «ГОЛОС», step 3 of 8 (design XObVoice).
+  it('shows «ГОЛОС» after the first Word: a tap chooses the Narrator Voice, «ОБИРАЮ» goes on with it', async () => {
+    // The sample Word is read, here with no device voice to fall back on.
+    jest.spyOn(Speech, 'getAvailableVoicesAsync').mockResolvedValue([]);
+    await renderOnboarding();
+    await press('onboarding-start');
+    await press('onboarding-next');
+
+    const step = within(screen.getByTestId('onboarding-voice'));
+    expect(step.getByText(strings.voiceStep.shout)).toBeTruthy();
+    expect(step.getByRole('header', { name: strings.voiceStep.title })).toBeTruthy();
+    expect(step.getByText(strings.voiceStep.subtitle)).toBeTruthy();
+    expect(screen.getByLabelText('Крок 3 з 8')).toBeTruthy();
+    const row = (name: string) => screen.getByRole('button', { name }).props;
+    // Nothing chosen yet: the Edition's default voice is.
+    expect(row('Оксана')).toMatchObject({ accessibilityState: { selected: true } });
+    for (const name of ['Тарас', 'Марта', 'Остап']) {
+      expect(row(name)).toMatchObject({ accessibilityState: { selected: false } });
+    }
+
+    await press('onboarding-voice-list-taras');
+    expect(row('Тарас')).toMatchObject({ accessibilityState: { selected: true } });
+    expect(row('Оксана')).toMatchObject({ accessibilityState: { selected: false } });
+
+    await press('onboarding-next');
+    expect(screen.getByText(strings.playStep.title)).toBeTruthy();
+    const settings = createSettings({
+      userState: readerState,
+      defaults: loadEdition(activeEditionFiles.config).userSettingDefaults,
+    });
+    expect((await settings.read()).narratorVoice).toBe('taras');
   });
 
   it('asks no question while the questionnaire is off', async () => {
@@ -231,6 +276,7 @@ describe('the onboarding', () => {
       isFeatureEnabled: (name) => name !== 'questionnaire' && shipped.isFeatureEnabled(name),
     });
     await press('onboarding-start');
+    await press('onboarding-next');
     await press('onboarding-next');
     await press('onboarding-next');
 

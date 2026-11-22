@@ -661,13 +661,15 @@ export const EditionIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a
 /**
  * The steps of the onboarding, in order: the one place that has
  * them, so a step that joins changes the count everywhere. The first Word
- * comes only with a Word of the Day, «ГРАЙ!» only with `playStep`, the two
+ * comes only with a Word of the Day, «ГОЛОС» only with `voiceStep`, «ГРАЙ!»
+ * only with `playStep`, the two
  * questions only with the `questionnaire` Feature Switch, the Daily Goal only
  * with `dailyGoal`, «Коли нагадати?» only with `notificationTimeStep`.
  */
 export const ONBOARDING_STEPS = [
   'welcome',
   'firstWord',
+  'voiceStep',
   'playStep',
   'level',
   'why',

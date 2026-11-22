@@ -9104,6 +9104,14 @@
                           ],
                           "type": "string"
                         },
+                        "voiceStep": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "playStep": {
                           "enum": [
                             "on",
@@ -9674,6 +9682,7 @@
                         "streakBreak",
                         "quickQuestion",
                         "quickQuestionWordMeaning",
+                        "voiceStep",
                         "playStep",
                         "levels",
                         "dailyGoal",
@@ -10903,6 +10912,14 @@
                           ],
                           "type": "string"
                         },
+                        "voiceStep": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "playStep": {
                           "enum": [
                             "on",
@@ -11473,6 +11490,7 @@
                         "streakBreak",
                         "quickQuestion",
                         "quickQuestionWordMeaning",
+                        "voiceStep",
                         "playStep",
                         "levels",
                         "dailyGoal",
@@ -12626,6 +12644,14 @@
                           ],
                           "type": "string"
                         },
+                        "voiceStep": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
+                        },
                         "playStep": {
                           "enum": [
                             "on",
@@ -13196,6 +13222,7 @@
                         "streakBreak",
                         "quickQuestion",
                         "quickQuestionWordMeaning",
+                        "voiceStep",
                         "playStep",
                         "levels",
                         "dailyGoal",

@@ -6,6 +6,7 @@ import {
   noCardFeatures,
   LaterButton,
   OnboardingStep,
+  OnboardingVoiceList,
   OnboardingWelcome,
   Button,
   onboardingLayout,
@@ -24,7 +25,9 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { MascotAs } from '../mascot/mascot';
 import { useComposition } from '../composition';
-import { editionStrings } from '../edition/edition';
+import { edition, editionStrings } from '../edition/edition';
+import { useSampleReading } from '../entries/pronunciation-button';
+import { useSettings } from '../settings/settings';
 import { logError } from '../diagnostics/log';
 import { keep } from '../keep';
 import { useSubscribed } from '../opening';
@@ -70,6 +73,8 @@ export function Onboarding() {
     );
   } else if (step.kind === 'firstWord') {
     shown = <FirstWord step={step} word={step.word} mascot={mascot} onNext={next} onSkip={skip} />;
+  } else if (step.kind === 'voiceStep') {
+    shown = <VoiceStep step={step} onNext={next} onSkip={skip} />;
   } else if (step.kind === 'playStep') {
     shown = <PlayStep step={step} mascot={mascot} onNext={next} onSkip={skip} />;
   } else if (step.kind === 'dailyGoal') {
@@ -130,6 +135,7 @@ export function Onboarding() {
 const mascotState: Readonly<Record<Step['kind'], MascotState>> = {
   welcome: 'shouts',
   firstWord: 'happy',
+  voiceStep: 'waits',
   playStep: 'happy',
   level: 'waits',
   rarityTest: 'waits',
@@ -205,6 +211,73 @@ function Subtitle({ children }: { children: string }) {
     >
       {children}
     </Text>
+  );
+}
+
+/** The sample Word as its caption shows it, «за-пла́-ва · ім., ж. р.»: its syllables with the stress, and the rest. */
+function sampleLine(): { syllables: readonly string[]; rest: string } {
+  const { caption, syllables } = edition.narratorVoiceSample;
+  const cut = caption.indexOf(' ');
+  const shown = (cut < 0 ? caption : caption.slice(0, cut)).split('-');
+  return shown.length === syllables.length
+    ? { syllables: shown, rest: cut < 0 ? '' : caption.slice(cut) }
+    : { syllables, rest: '' };
+}
+
+/**
+ * «ГОЛОС»: the Narrator Voices in one card. A tap chooses the voice, the same
+ * setting as Settings › «Голос диктора», and reads the sample Word in it, the
+ * Mascot shouting while it reads; «ОБИРАЮ» goes on with the voice chosen, and
+ * the skip keeps it as it is.
+ */
+function VoiceStep({
+  step,
+  onNext,
+  onSkip,
+}: {
+  step: Step;
+  onNext: () => void;
+  onSkip: () => void;
+}) {
+  const { current, update } = useSettings();
+  const sample = useSampleReading();
+  const { syllables, rest } = sampleLine();
+  return (
+    <OnboardingStep
+      testID="onboarding-voice"
+      step={step.number}
+      total={step.total}
+      shout={strings.voiceStep.shout}
+      mascot={
+        <MascotAs
+          state={sample.playing ? 'shouts' : 'waits'}
+          onRed
+          width={onboardingLayout.mascot.width}
+        />
+      }
+      onSkip={onSkip}
+      footer={<Button testID="onboarding-next" label={strings.voiceStep.next} onPress={onNext} />}
+      // Only the card scrolls, when the screen is too short for every row.
+      framed
+    >
+      <View style={stepStyles.heading}>
+        <Title>{strings.voiceStep.title}</Title>
+        <Subtitle>{strings.voiceStep.subtitle}</Subtitle>
+      </View>
+      <OnboardingVoiceList
+        testID="onboarding-voice-list"
+        voices={edition.narratorVoices}
+        chosen={edition.narratorVoiceOf(current.narratorVoice).id}
+        playing={sample.playing}
+        silent={sample.silent}
+        syllables={syllables}
+        rest={rest}
+        onChoose={(id) => {
+          update({ narratorVoice: id });
+          sample.readIn(id);
+        }}
+      />
+    </OnboardingStep>
   );
 }
 

@@ -83,6 +83,7 @@ export default [
       'src/game/VowelButtons.tsx',
       'src/game/VowelRound.tsx',
       'src/onboarding/OnboardingStep.tsx',
+      'src/onboarding/OnboardingVoiceList.tsx',
       'src/onboarding/SplashOverlay.tsx',
       'src/progress/ActiveDaysCalendar.tsx',
       'src/progress/BadgeStamp.tsx',

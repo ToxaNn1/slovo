@@ -504,6 +504,13 @@ export const FEATURE_SWITCHES = catalogue({
     group: 'feed',
     dependsOn: ['quickQuestion'],
   },
+  /** The onboarding step «ГОЛОС» after the first Word, which picks the Narrator Voice; off while `narratorVoice` is (ADR 0206). */
+  voiceStep: {
+    name: 'Крок «Голос»',
+    line: 'У вступі після першого слова читач обирає голос диктора.',
+    group: 'content',
+    dependsOn: ['narratorVoice'],
+  },
   /** The onboarding step «ГРАЙ!» after the first Word, which shows the Games; off while `game` is. */
   playStep: {
     name: 'Крок «Грай!»',
