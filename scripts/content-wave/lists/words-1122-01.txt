@@ -1,0 +1,51 @@
+# <lemma> <category> <rarity>  # part of speech, Zipf in wordfreq (uk)
+колорист arts-culture 3 # noun, Zipf 1.66
+трикстер arts-culture 3 # noun, Zipf 1.87
+білозірка folk-names 3 # noun, Zipf 1.65
+еллінський history-antiquity 3 # adj, Zipf 1.54
+плісе household-crafts 3 # noun, Zipf 1.01 lowered: known from clothing (плісована спідниця)
+довгобуд language-speech 3 # noun, Zipf 1.75
+зчаста language-speech 3 # adv, Zipf 1.50
+галябарда military 3 # noun, Zipf 1.65
+твань nature-weather 3 # noun, Zipf 1.50
+корабел old-crafts 3 # noun, Zipf 1.50
+антинейтрино science 3 # noun, Zipf 1.59
+аустеніт technology 3 # noun, Zipf 1.50
+парктронік technology 3 # noun, Zipf 1.80
+розпірка technology 3 # noun, Zipf 1.42 lowered: known building term
+розпусниця witty-insults 3 # noun, Zipf 1.20 lowered: commonly known
+кубофутуризм arts-culture 4 # noun, Zipf 1.06
+віншування arts-culture 4 # noun, Zipf 1.47
+неславний emotions-character 4 # adj, Zipf 0.00 lowered: transparent meaning
+чепурушка emotions-character 4 # noun, Zipf 0.00 lowered: transparent from чепурний
+хмелик folk-names 4 # noun, Zipf 1.30
+індикт history-antiquity 4 # noun, Zipf 1.25
+айван history-antiquity 4 # noun, Zipf 1.06
+арак household-crafts 4 # noun, Zipf 1.36
+хлібня household-crafts 4 # noun, Zipf 1.40
+мерзлякуватий human-body 4 # adj, Zipf 0.00 lowered: transparent from мерзляк
+доконче language-speech 4 # adv, Zipf 1.01
+сторчака language-speech 4 # adv, Zipf 1.47
+супресор military 4 # noun, Zipf 1.20
+хуга nature-weather 4 # noun, Zipf 1.17
+квітконіжка nature-weather 4 # noun, Zipf 1.11
+копіїст old-crafts 4 # noun, Zipf 0.00 lowered: transparent from копія
+закам'янілість science 4 # noun, Zipf 0.00 lowered: fossil sense widely known
+гальванопластика technology 4 # noun, Zipf 1.27
+металокераміка technology 4 # noun, Zipf 1.37
+формфактор technology 4 # noun, Zipf 1.41
+кібервандал technology 4 # noun, Zipf 0.00 lowered: transparent compound
+безстидниця witty-insults 4 # noun, Zipf 0.00 lowered: transparent from безстидний
+бабисько witty-insults 4 # noun, Zipf 0.00 lowered: augmentative of баба, transparent to any speaker
+іконознавство arts-culture 5 # noun, Zipf 0.00
+проживотіти emotions-character 5 # verb, Zipf 0.00
+екзекутор history-antiquity 5 # noun, Zipf 0.00
+підстолій history-antiquity 5 # noun, Zipf 0.00
+сльозовидільний human-body 5 # adj, Zipf 0.00
+загамселити language-speech 5 # verb, Zipf 0.00
+такання language-speech 5 # noun, Zipf 0.00
+шамотіти nature-weather 5 # verb, Zipf 0.00
+плахіття old-crafts 5 # noun, Zipf 0.00
+щільник old-crafts 5 # noun, Zipf 0.00
+декомпілятор technology 5 # noun, Zipf 0.00
+перегрівник technology 5 # noun, Zipf 0.00
