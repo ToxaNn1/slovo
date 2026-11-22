@@ -11,7 +11,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 import type { Schedule } from '@slovo/core';
 import Animated, {
   ReduceMotion,
@@ -103,7 +103,7 @@ function noPlate() {
  * The plate: the Theme's ink (the cream in the dark Theme) with its left edge
  * leaning in at the bottom, the no-signal mark crossed in red and the message
  * in the Theme's background colour. It drops in from above; with Reduce
- * Motion it stands in place at once. VoiceOver reads it as an alert.
+ * Motion it stands in place at once. It reads its message out as it appears.
  */
 function Plate({
   id,
@@ -133,6 +133,10 @@ function Plate({
   });
 
   useEffect(() => schedule(timeOut, offlinePlate.lasts), [schedule]);
+  // iOS reads no view that appears by itself, whatever its role, so the plate says its message.
+  useEffect(() => {
+    AccessibilityInfo.announceForAccessibility(message);
+  }, [message]);
   useEffect(() => {
     if (ready) comeIn();
   }, [ready]);
@@ -147,7 +151,6 @@ function Plate({
       accessible
       accessibilityRole="alert"
       accessibilityLabel={message}
-      accessibilityLiveRegion="polite"
       {...voice}
       onLayout={(event) => {
         height.value = event.nativeEvent.layout.height;

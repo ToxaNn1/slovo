@@ -332,12 +332,11 @@ export function QuickQuestionRound({
       : undefined;
   const gameHaptics = useGameHaptics();
   const answer = answered === undefined ? undefined : { chosen: answered, correct: round.correct };
-  // The sheet explains the answer picked on this card, not one kept from an earlier visit.
-  const [explaining, setExplaining] = useState(false);
-  const explained: RoundAnswer | undefined =
-    explaining && answer !== undefined
-      ? { form: 'pick', ...answer, right: answer.chosen === answer.correct, sheet: round.sheet }
-      : undefined;
+  // The sheet explains the answer picked on this card, not one kept from an earlier visit. It is
+  // kept from the pick, so a card drawn again while the sheet is open shows the same answer,
+  // which VoiceOver does not hear again.
+  const [picked, setPicked] = useState<RoundAnswer>();
+  const explained = answer === undefined ? undefined : picked;
   return (
     <View testID="quick-question" style={styles.quickQuestion}>
       <View
@@ -384,7 +383,13 @@ export function QuickQuestionRound({
             onPick={(option) => {
               if (option === round.correct) gameHaptics.rightAnswer();
               else gameHaptics.wrongAnswer();
-              setExplaining(true);
+              setPicked({
+                form: 'pick',
+                chosen: option,
+                correct: round.correct,
+                right: option === round.correct,
+                sheet: round.sheet,
+              });
               onAnswer(option);
             }}
           />
@@ -394,7 +399,7 @@ export function QuickQuestionRound({
         answer={explained}
         line={cardLine(round.sheet, entry)}
         onNext={() => {
-          setExplaining(false);
+          setPicked(undefined);
         }}
       />
     </View>

@@ -144,8 +144,10 @@ function CascadeIn({ index, children }: { index: number; children: ReactNode }) 
 /** The Games screen's big title. */
 export function GamesTitle({ children }: { children: string }) {
   const tokens = useTokens();
+  const { voice } = useEdition();
   return (
     <Text
+      {...voice}
       accessibilityRole="header"
       maxFontSizeMultiplier={fontScaleCap.text}
       style={[typeStyle('gamesTitle', tokens), { color: tokens.colors.ink }]}
@@ -158,10 +160,12 @@ export function GamesTitle({ children }: { children: string }) {
 /** The title of a group of Game Modes on the mode screen, after a red mark. */
 export function GameModeGroupTitle({ children }: { children: string }) {
   const tokens = useTokens();
+  const { voice } = useEdition();
   return (
     <View style={styles.groupTitle}>
       <Wedge points={wedges.band} color={tokens.colors.accent} {...modeRow.groupMark} />
       <Text
+        {...voice}
         accessibilityRole="header"
         maxFontSizeMultiplier={fontScaleCap.text}
         style={[typeStyle('groupTitle', tokens), { color: tokens.colors.ink }]}
