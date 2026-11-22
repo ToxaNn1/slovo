@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { TextSchema } from '../shared';
-import { pluralOf, templateOf } from './shared';
+import { byMixPlaceOf, pluralOf, templateOf } from './shared';
 
 /** A first-week card of days 1 to 6: what the app offers that day. */
 const FirstWeekCardSchema = z.strictObject({ title: TextSchema, text: TextSchema });
@@ -105,7 +105,8 @@ export const FeedNoticesStringsSchema = z.strictObject({
       FirstWeekCardSchema,
       FirstWeekCardSchema,
       FirstWeekCardSchema,
-      FirstWeekCardSchema,
+      /** Day 4 names where the Mix is. */
+      z.strictObject({ title: TextSchema, text: byMixPlaceOf(TextSchema) }),
       FirstWeekCardSchema,
       FirstWeekCardSchema,
     ]),
@@ -118,8 +119,8 @@ export const FeedNoticesStringsSchema = z.strictObject({
   levelMilestone: z.strictObject({
     /** Its title. Takes `{level}` and `{name}`, the Edition's name for the Level. */
     title: templateOf('level', 'name'),
-    /** What it suggests: a wider rarity or a new Category. */
-    message: TextSchema,
+    /** What it suggests: a wider rarity or a new Category, and where the Mix is. */
+    message: byMixPlaceOf(TextSchema),
   }),
   /**
    * The later questions of the questionnaire, each a Feed Notice
@@ -135,8 +136,8 @@ export const FeedNoticesStringsSchema = z.strictObject({
     /** Sets the Daily Goal or the interests picked. */
     done: TextSchema,
     wordGoalChoice: z.strictObject({ title: TextSchema, text: TextSchema }),
-    /** The Word Categories not picked become Hidden Categories. */
-    interests: z.strictObject({ title: TextSchema, text: TextSchema }),
+    /** The Word Categories not picked become Hidden Categories; its text says where the Mix brings them back. */
+    interests: z.strictObject({ title: TextSchema, text: byMixPlaceOf(TextSchema) }),
     selfRating: z.strictObject({ title: TextSchema }),
     rarityTest: z.strictObject({ title: TextSchema, text: TextSchema }),
     mixReview: z.strictObject({ title: TextSchema, text: TextSchema }),

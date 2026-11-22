@@ -14,6 +14,7 @@ function editionWithout(...off: FeatureSwitch[]) {
 
 const everything: Shown = {
   tabs: ['home', 'game', 'mix', 'saved', 'settings'],
+  mixPlace: 'tab',
   selfCheck: false,
   shareCountersSetting: true,
   stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
@@ -49,10 +50,10 @@ describe('what the reader is shown', () => {
       },
     ],
     [
-      'the four tabs of before, no «Мікс», with the mixTab switch off (ADR 0201)',
+      'the four tabs of before, no «Мікс», and the texts sending to Settings, with the mixTab switch off (ADR 0201)',
       {
         off: ['mixTab'],
-        shown: { tabs: ['home', 'game', 'saved', 'settings'] },
+        shown: { tabs: ['home', 'game', 'saved', 'settings'], mixPlace: 'settings' },
       },
     ],
     [

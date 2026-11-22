@@ -90,6 +90,8 @@ export type EditionStrings = z.infer<typeof EditionStringsSchema>;
 
 export {
   fill,
+  inMixPlace,
+  type MixPlace,
   pluralCount,
   pluralForm,
   PluralLabelSchema,

@@ -1,4 +1,4 @@
-import { fill, type EditionStrings } from '@slovo/contracts';
+import { fill, inMixPlace, type EditionStrings, type MixPlace } from '@slovo/contracts';
 import { GAME_HUB_GROUPS, type GameModeOffer, type OfferedBest } from '@slovo/core';
 import type { GameModeCard } from '@slovo/ui';
 import type { ComponentProps } from 'react';
@@ -38,16 +38,19 @@ export interface GameModeCardLook {
  * its record («Рекорд: 12 з 15», «Ще жодної гри»), read as it stands;
  * a mode still planned can't start yet and says no reason. With
  * the toast, a mode that can't start looks like one that can. It throws for a
- * mode without texts, or without a text for the reason it can't start.
+ * mode without texts, or without a text for the reason it can't start. A
+ * reason that names where the Mix is reads its version for `mixPlace`.
  */
 export function gameModeCard(
   offer: GameModeOffer,
   strings: GameStrings,
+  mixPlace: MixPlace,
   { toast = false }: GameModeCardLook = {},
 ): GameModeCardContent {
   const { glyph, title, oneLiner, refusals } = gameModeStrings(strings.modes, offer.modeId);
   const reason = 'refusal' in offer ? offer.refusal : undefined;
-  const refusal = reason === undefined ? undefined : refusals[reason];
+  const text = reason === undefined ? undefined : refusals[reason];
+  const refusal = text === undefined ? undefined : inMixPlace(text, mixPlace);
   if (reason !== undefined && refusal === undefined) {
     throw new Error(
       `The Edition has no text for why the Game Mode «${offer.modeId}» can't start: «${reason}»`,
@@ -83,16 +86,18 @@ const FALLBACK_TOAST_MODE = 'pairs';
  * («Виправлення вимкнено. …»). Otherwise it is «Пари» ще розминається.
  * Влучай поки в «Наголос»!: it names «Наголос» while it can start; else, in
  * its own words («Спробуй поки „Пари“!»), «Пари» while it can, else the first
- * mode on offer that can (still «Пари» when none can).
+ * mode on offer that can (still «Пари» when none can). The reason's text is
+ * its version for `mixPlace`.
  */
 export function gameModeToast(
   offer: GameModeOffer,
   offers: readonly GameModeOffer[],
   strings: GameStrings,
+  mixPlace: MixPlace,
 ): string {
   if ('refusal' in offer && offer.refusal.endsWith(OUT_OF_MIX)) {
     const refusal = gameModeStrings(strings.modes, offer.modeId).refusals[offer.refusal];
-    if (refusal !== undefined) return refusal;
+    if (refusal !== undefined) return inMixPlace(refusal, mixPlace);
   }
   const startable = offers.filter(({ canStart }) => canStart);
   const titleOf = (modeId: string) => gameModeStrings(strings.modes, modeId).title;

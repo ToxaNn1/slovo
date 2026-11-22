@@ -185,7 +185,7 @@ describe('Settings › «Пройти тест ще раз»', () => {
       }),
     ).toBeOnTheScreen();
     expect(
-      screen.getByText('5 з 10 слів знайомі. Змінити рідкість можна на вкладці «Теми».'),
+      screen.getByText('5 з 10 слів знайомі. Змінити рідкість можна в Налаштуваннях.'),
     ).toBeOnTheScreen();
     await fireEvent.press(screen.getByRole('button', { name: rarityTest.done }));
     await settle();

@@ -242,7 +242,10 @@ describe('the 0.8.13 strings', () => {
       retake: 'Перевірити рівень ще раз',
       resultChanged: 'Рідкість тепер {range}',
       resultKept: 'Рідкість лишається {range}',
-      known: '{known} з {total} слів знайомі. Змінити рідкість можна на вкладці «Теми».',
+      known: {
+        tab: '{known} з {total} слів знайомі. Змінити рідкість можна на вкладці «Теми».',
+        settings: '{known} з {total} слів знайомі. Змінити рідкість можна в Налаштуваннях.',
+      },
     });
     expect(parsed.knowledge).toMatchObject({ known: 'Знаю', unknown: 'Не знаю' });
   });
@@ -983,7 +986,7 @@ describe('the board 11 strings', () => {
   it('the UA Edition names the Category «Фразеологізми» by its set expressions and proverbs', () => {
     expect(parsed.mix.idioms).toEqual({
       title: 'Фразеологізми',
-      subtitle: 'Сталі вирази й прислів’я з їхнім походженням',
+      subtitle: 'Сталі вирази й прислів’я з походженням',
     });
   });
 
@@ -1018,7 +1021,10 @@ describe('the board 11 strings', () => {
       question: 'Чи знаєш ти це слово?',
       resultChanged: 'Рідкість тепер {range}',
       resultKept: 'Рідкість лишається {range}',
-      known: '{known} з {total} слів знайомі. Змінити рідкість можна на вкладці «Теми».',
+      known: {
+        tab: '{known} з {total} слів знайомі. Змінити рідкість можна на вкладці «Теми».',
+        settings: '{known} з {total} слів знайомі. Змінити рідкість можна в Налаштуваннях.',
+      },
       again: 'Перевірити рівень ще раз',
     });
     expect(parsed.mix.count).toBe('{selected} з {total}');

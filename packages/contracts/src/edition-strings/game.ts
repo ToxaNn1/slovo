@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { TextSchema } from '../shared';
-import { PluralSchema, pluralOf, templateOf } from './shared';
+import { MaybeByMixPlaceSchema, PluralSchema, pluralOf, templateOf } from './shared';
 
 /**
  * The texts of one Game Mode, alike for every mode: its row on the mode
@@ -17,18 +17,18 @@ const GameModeStringsSchema = z.strictObject({
   oneLiner: TextSchema,
   /** The label over a Round's prompt, e.g. «ВИЗНАЧЕННЯ». */
   roundLabel: TextSchema,
-  /** What the card says for each reason the Core gives that the mode can't start. */
+  /** What the card says for each reason the Core gives that the mode can't start; a text that names where the Mix is comes in a version for each place. */
   refusals: z.strictObject({
     /** Too few eligible Entries of the mode's kind to play it; any mode may meet it. */
-    'too-few-entries': TextSchema,
+    'too-few-entries': MaybeByMixPlaceSchema,
     /** Corrections out of the reader's Mix; only a mode that asks about Corrections meets it. */
-    'corrections-out-of-mix': TextSchema.optional(),
+    'corrections-out-of-mix': MaybeByMixPlaceSchema.optional(),
     /** Idioms out of the reader's Mix; only a mode that asks about Idioms meets it (0.8.8). */
-    'idioms-out-of-mix': TextSchema.optional(),
+    'idioms-out-of-mix': MaybeByMixPlaceSchema.optional(),
     /** Synonym Rows out of the reader's Mix; only a mode that asks about Synonym Rows alone meets it. */
-    'synonymRows-out-of-mix': TextSchema.optional(),
+    'synonymRows-out-of-mix': MaybeByMixPlaceSchema.optional(),
     /** Tips out of the reader's Mix; only a mode that asks about Tips alone meets it. */
-    'tips-out-of-mix': TextSchema.optional(),
+    'tips-out-of-mix': MaybeByMixPlaceSchema.optional(),
   }),
 });
 

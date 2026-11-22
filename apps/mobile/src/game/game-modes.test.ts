@@ -1,4 +1,4 @@
-import type { Word } from '@slovo/contracts';
+import type { MixPlace, Word } from '@slovo/contracts';
 import { openComposition, systemRandom, type Composition, type GameModeOffer } from '@slovo/core';
 import {
   createMemoryContentPort,
@@ -90,8 +90,8 @@ async function open({
 }
 
 /** The cards of the modes on offer, as the Game screen shows them. */
-const cardsOf = ({ game }: Composition) =>
-  game.state.modes.map((offer) => gameModeCard(offer, strings));
+const cardsOf = ({ game }: Composition, mixPlace: MixPlace = 'tab') =>
+  game.state.modes.map((offer) => gameModeCard(offer, strings, mixPlace));
 
 const guessWordCard = {
   glyph: 'Д?',
@@ -121,6 +121,7 @@ describe('the card of each Game Mode on offer', () => {
     const card = gameModeCard(
       { modeId: 'guess-word', entryKind: 'word', group: 'lead', canStart: false, planning: true },
       strings,
+      'tab',
     );
 
     expect(card).toEqual({
@@ -161,6 +162,18 @@ describe('the card of each Game Mode on offer', () => {
     });
   });
 
+  it('sends the reader to Settings, «Мої Теми», while the Mix has no tab (ADR 0201)', async () => {
+    const tooFew = cardsOf(await open({ words: 14 }), 'settings');
+    const outOfMix = cardsOf(await open({ words: 14, correctionsInMix: false }), 'settings');
+
+    expect(tooFew[0]?.refusal).toBe(
+      'Цьому режиму бракує слів і висловів. Поверни категорії в Налаштуваннях, «Мої Теми».',
+    );
+    expect(outOfMix[1]?.refusal).toBe(
+      'Виправлення вимкнено. Увімкни їх у Налаштуваннях, «Мої Теми».',
+    );
+  });
+
   it.each([
     [{ result: 12, of: 15 }, 'Рекорд: 12 з 15'],
     [{ result: 23 }, 'Рекорд: 23'],
@@ -175,6 +188,7 @@ describe('the card of each Game Mode on offer', () => {
         ...(best === undefined ? {} : { best }),
       },
       strings,
+      'tab',
     );
 
     expect(card).toEqual({
@@ -190,7 +204,7 @@ describe('the card of each Game Mode on offer', () => {
 
   it("with the toast, draws a mode that can't start as one that can, with no refusal", async () => {
     const [guessWord] = (await open({ words: 14 })).game.state.modes.map((offer) =>
-      gameModeCard(offer, strings, { toast: true }),
+      gameModeCard(offer, strings, 'tab', { toast: true }),
     );
 
     expect(guessWord).toMatchObject({ ...guessWordCard, canStart: true, refusal: undefined });
@@ -200,7 +214,7 @@ describe('the card of each Game Mode on offer', () => {
     const app = await open({ words: 15, gameModes: [unnamedMode] });
 
     expect(app.game.state.modes.map(({ modeId }) => modeId)).toContain('test-unnamed');
-    expect(() => app.game.state.modes.map((offer) => gameModeCard(offer, strings))).toThrow(
+    expect(() => app.game.state.modes.map((offer) => gameModeCard(offer, strings, 'tab'))).toThrow(
       'test-unnamed',
     );
   });
@@ -254,10 +268,27 @@ const shapeOf = (groups: ReturnType<typeof gameModeGroups>) =>
 describe("the toast on a mode that can't start", () => {
   const stuck = stuckOffer('pairs', 'meaning');
 
+  it('names the reason the reader took out of their Mix, in the version for where the Mix is', () => {
+    const outOfMix: GameModeOffer = {
+      modeId: 'correction',
+      entryKind: 'correction',
+      group: 'lead',
+      canStart: false,
+      refusal: 'corrections-out-of-mix',
+    };
+
+    expect(gameModeToast(outOfMix, [outOfMix], strings, 'tab')).toBe(
+      'Виправлення вимкнено. Увімкни їх на вкладці «Теми».',
+    );
+    expect(gameModeToast(outOfMix, [outOfMix], strings, 'settings')).toBe(
+      'Виправлення вимкнено. Увімкни їх у Налаштуваннях, «Мої Теми».',
+    );
+  });
+
   it('sends the reader to «Наголос» while it can start', () => {
     const offers = [offer('guess-word', 'lead'), offer('stress', 'sound'), stuck];
 
-    expect(gameModeToast(stuck, offers, strings)).toBe(
+    expect(gameModeToast(stuck, offers, strings, 'tab')).toBe(
       '«Пари» ще розминається. Влучай поки в «Наголос»!',
     );
   });
@@ -266,7 +297,7 @@ describe("the toast on a mode that can't start", () => {
     const stress = stuckOffer('stress', 'sound');
     const offers = [offer('anagram', 'letters'), stress, offer('pairs', 'meaning')];
 
-    expect(gameModeToast(stress, offers, strings)).toBe(
+    expect(gameModeToast(stress, offers, strings, 'tab')).toBe(
       '«Наголос» ще розминається. Спробуй поки «Пари»!',
     );
   });
@@ -279,7 +310,7 @@ describe("the toast on a mode that can't start", () => {
       offer('timed', 'speed'),
     ];
 
-    expect(gameModeToast(stuck, offers, strings)).toBe(
+    expect(gameModeToast(stuck, offers, strings, 'tab')).toBe(
       '«Пари» ще розминається. Спробуй поки «Анаграми»!',
     );
   });

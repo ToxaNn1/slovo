@@ -255,7 +255,7 @@ function Segments({
 function RarityTestOutcome({ result }: { result: RarityTestResult }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { voice, strings } = useEdition();
+  const { voice, strings, mixPlace } = useEdition();
   const [lowest] = RARITIES;
   const range = rarityRangeLabel(strings.settings.rarity, { from: lowest, to: result.top });
   return (
@@ -296,7 +296,7 @@ function RarityTestOutcome({ result }: { result: RarityTestResult }) {
         maxFontSizeMultiplier={fontScaleCap.text}
         style={[typeStyle('statsNote', tokens), styles.outcomeNote, { color: colors.muted }]}
       >
-        {fill(strings.rarityTest.known, {
+        {fill(strings.rarityTest.known[mixPlace], {
           known: String(result.known),
           total: String(result.total),
         })}

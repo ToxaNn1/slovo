@@ -1,3 +1,4 @@
+import type { MixPlace } from '@slovo/contracts';
 import type { Haptics } from '@slovo/core';
 import {
   EnoughForTodayCard,
@@ -25,7 +26,10 @@ const strings = testStrings({
     notificationReask: { title: 'Once more?', message: 'The word each morning.', yes: 'Yes' },
     levelMilestone: {
       title: 'Level {level}: {name}',
-      message: 'Try rarer words or a new Category in the Mix.',
+      message: {
+        tab: 'Try rarer words or a new Category on the Mix tab.',
+        settings: 'Try rarer words or a new Category in Settings.',
+      },
     },
     firstWeek: {
       close: 'Got it',
@@ -34,7 +38,10 @@ const strings = testStrings({
         { title: 'Know it or not?', text: 'Tap Know or Don’t know.' },
         { title: 'Time for a Game', text: 'The Game tab waits.' },
         { title: 'Save the best', text: 'Tap the heart.' },
-        { title: 'Your Mix', text: 'Choose what the Feed shows.' },
+        {
+          title: 'Your Mix',
+          text: { tab: 'It is on the Mix tab.', settings: 'It is in Settings, My Mix.' },
+        },
         { title: 'Always near', text: 'Add the widget.' },
         { title: 'Check yourself', text: 'Turn Self-check on.' },
       ],
@@ -58,9 +65,13 @@ const haptics: Haptics = {
   warning: jest.fn(),
 };
 
-async function renderFeed(notice: ReactNode, onIndexChange: (index: number) => void = jest.fn()) {
+async function renderFeed(
+  notice: ReactNode,
+  onIndexChange: (index: number) => void = jest.fn(),
+  mixPlace: MixPlace = 'tab',
+) {
   await render(
-    <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+    <EditionProvider edition={{ locale: 'en' }} strings={strings} mixPlace={mixPlace}>
       <HapticsProvider haptics={haptics}>
         <VerticalPager
           testID="pager"
@@ -84,8 +95,15 @@ describe('the level-milestone card', () => {
 
     expect(screen.getByTestId('feed-notice-levelMilestone')).toBeTruthy();
     expect(screen.getByText('Level 5: Sprout')).toBeTruthy();
-    expect(screen.getByText('Try rarer words or a new Category in the Mix.')).toBeTruthy();
+    expect(screen.getByText('Try rarer words or a new Category on the Mix tab.')).toBeTruthy();
     expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('sends the reader to Settings while the Mix has no tab (ADR 0201)', async () => {
+    await renderFeed(<LevelMilestoneCard level={5} name="Sprout" />, jest.fn(), 'settings');
+
+    expect(screen.getByText('Try rarer words or a new Category in Settings.')).toBeTruthy();
+    expect(screen.queryByText('Try rarer words or a new Category on the Mix tab.')).toBeNull();
   });
 });
 
@@ -182,6 +200,15 @@ describe('the first-week card', () => {
     await renderFeed(<FirstWeekCard day={6} streak={undefined} />);
     expect(screen.getByText('Check yourself')).toBeTruthy();
     expect(screen.queryByTestId('mascot-happy')).toBeNull();
+  });
+
+  it('names the Mix tab on day 4 while it is shown, and Settings while it is not (ADR 0201)', async () => {
+    await renderFeed(<FirstWeekCard day={4} streak={undefined} />);
+    expect(screen.getByText('It is on the Mix tab.')).toBeTruthy();
+
+    await renderFeed(<FirstWeekCard day={4} streak={undefined} />, jest.fn(), 'settings');
+    expect(screen.getByText('It is in Settings, My Mix.')).toBeTruthy();
+    expect(screen.queryByText('It is on the Mix tab.')).toBeNull();
   });
 
   it('shows the card of its own day', async () => {

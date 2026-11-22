@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
 import { TextSchema } from '../shared';
-import { templateOf } from './shared';
+import { byMixPlaceOf, templateOf } from './shared';
 
 /** The Feed's own texts: its screen states, the hint and the Word of the Day badge. */
 export const feedStringsShape = {
-  /** Shown when the Language Pack holds no Words. */
-  noWords: TextSchema,
+  /** Shown when the Language Pack holds no Words; it names where the Mix is. */
+  noWords: byMixPlaceOf(TextSchema),
   /** The end-of-Cycle card, shown once the reader has Seen every live Entry. */
   endOfCycle: z.strictObject({
     title: TextSchema,
