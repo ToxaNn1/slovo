@@ -166,7 +166,7 @@ afterEach(() => {
 
 // Ticket #1386: the Mascot's celebrations, which never interrupt the Feed.
 describe('the Mascot’s celebrations', () => {
-  it('celebrates the first Streak day and the Daily Goal met, each for a while, and screens a new Level', async () => {
+  it('celebrates the first Streak day for a while, leaves the Daily Goal met to the Feed’s card, and screens a new Level', async () => {
     const composition = await renderCelebrations();
     expect(shownMascot()).toBeNull();
 
@@ -186,7 +186,8 @@ describe('the Mascot’s celebrations', () => {
     });
     expect(shownMascot()).toBeNull();
 
-    // The first Word Seen meets a Daily Goal of 1 Word.
+    // The first Word Seen meets a Daily Goal of 1 Word; the Feed's card holds
+    // the Mascot then, so no second one covers it (owner bug 21.11).
     await act(async () => {
       await composition.xpLog.setDailyGoal(1);
       await composition.feed.show(0);
@@ -194,7 +195,8 @@ describe('the Mascot’s celebrations', () => {
       await composition.feed.show(undefined);
       await jest.advanceTimersByTimeAsync(0);
     });
-    expect(celebration('dailyGoal')).toHaveTextContent(mascot.dailyGoal);
+    expect(composition.xpLog.state.dailyGoal?.met).toBe(true);
+    expect(shownMascot()).toBeNull();
 
     // The 50th XP reaches Level 1.
     await playRounds(composition, 45);
