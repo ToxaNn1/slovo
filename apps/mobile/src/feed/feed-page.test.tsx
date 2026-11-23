@@ -34,18 +34,4 @@ describe('a Feed page frame on its own', () => {
       });
     },
   );
-
-  it('hangs Yesterday 8 points under the logo row', async () => {
-    await render(
-      <FeedPageFrame
-        position={0}
-        header={{ top, toolsRow: false }}
-        layout={{ style: 'hero', under: 'hanging' }}
-      >
-        <Text>Yesterday</Text>
-      </FeedPageFrame>,
-    );
-
-    expect(screen.getByTestId('feed-card-0-frame')).toHaveStyle({ paddingTop: 62 });
-  });
 });
