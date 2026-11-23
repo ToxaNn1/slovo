@@ -21,7 +21,7 @@ import {
   useGesturesDemo,
 } from '@slovo/ui';
 import { LATER_QUESTIONS, type FeedCard, type FeedNoticeCard } from '@slovo/core';
-import { memo, useCallback, useRef, type ComponentProps } from 'react';
+import { memo, useCallback, useEffect, useRef, type ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { edition, editionStrings } from '@/edition/edition';
@@ -50,7 +50,7 @@ import { useNotificationsChanges } from '@/notifications/notifications';
 import { LaterQuestionNotice } from '@/feed/later-question-notice';
 import { useEditionInEffect } from '@/edition/remote-switches';
 import { mixPlaceOf } from '@/shown';
-import { MascotAs } from '@/mascot/mascot';
+import { MascotAs, tellGoalCardOnScreen } from '@/mascot/mascot';
 
 const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
@@ -121,10 +121,18 @@ function FeedScreen() {
   const onIndexChange = useCallback(
     (position: number) => {
       onCardChange(position);
+      // The goal-reached card holds its own Mascot: no celebration covers it (owner bug 23.11).
+      tellGoalCardOnScreen(isGoalCard(cards[position]));
       // The undo toast of a side swipe goes once the reader moves on to another card.
       closeUndoToast();
     },
-    [onCardChange, closeUndoToast],
+    [onCardChange, cards, closeUndoToast],
+  );
+  useEffect(
+    () => () => {
+      tellGoalCardOnScreen(false);
+    },
+    [],
   );
 
   if (cards.length === 0)
@@ -178,6 +186,10 @@ function FeedScreen() {
     </View>
   );
 }
+
+/** Whether `card` is the Feed's goal-reached card. */
+const isGoalCard = (card: FeedCard | undefined) =>
+  card?.kind === 'notice' && card.notice === 'goalReached';
 
 /** The key of a card's page, by the Entry, Feed Notice or Quick Question it shows. */
 function pageKey(card: FeedCard): string {

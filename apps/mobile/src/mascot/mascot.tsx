@@ -1,7 +1,7 @@
 import type { MascotMoment, MascotState } from '@slovo/contracts';
 import type { BadgeState } from '@slovo/core';
 import { BadgeStamp, BadgeToast, fill, Mascot, NewLevelScreen, useRouteOnScreen } from '@slovo/ui';
-import { useEffect, useEffectEvent, useState } from 'react';
+import { useEffect, useEffectEvent, useState, useSyncExternalStore } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useComposition } from '../composition';
@@ -41,6 +41,32 @@ const CROSSWORD_ROUTE = '/game/crossword';
  * 23.11): a Streak milestone or Daily Goal celebration waits until it closes.
  */
 const STREAK_BREAK_ROUTE = '/settings/streak-break';
+
+/** The route of the Feed, whose goal-reached card celebrates with a Mascot of its own. */
+const FEED_ROUTE = '/feed';
+
+/** Whether the Feed's card on screen is its goal-reached card, as the Feed tells it. */
+let goalCardOnScreen = false;
+const goalCardListeners = new Set<() => void>();
+
+/**
+ * Tells the celebrations whether the Feed's card on screen is its goal-reached
+ * card, which celebrates the Daily Goal and the Streak with its own Mascot: a
+ * Daily Goal or Streak milestone celebration is dropped while it shows there,
+ * so no second Mascot covers the card (owner bug 23.11).
+ */
+export function tellGoalCardOnScreen(onScreen: boolean) {
+  if (onScreen === goalCardOnScreen) return;
+  goalCardOnScreen = onScreen;
+  for (const listener of goalCardListeners) listener();
+}
+
+function subscribeGoalCard(listener: () => void) {
+  goalCardListeners.add(listener);
+  return () => {
+    goalCardListeners.delete(listener);
+  };
+}
 
 /** How long a celebration keeps the Mascot on screen. */
 export const CELEBRATION_MS = 4000;
@@ -121,7 +147,8 @@ export function MascotAs({
  * (board 10.7); the stamp's «ГОТОВО» opens the Badge, which ends its «НОВА»
  * mark. Badges earned at once show in turn; a celebration met under a screen,
  * a stamp or a toast, or while Settings › Перерва is on screen, waits for it
- * to close and then has its while.
+ * to close and then has its while. One met or on screen while the Feed shows
+ * its goal-reached card is dropped: the card celebrates it already.
  */
 export function MascotCelebrations() {
   const { xpLog, badges, progress } = useComposition();
@@ -132,6 +159,10 @@ export function MascotCelebrations() {
   // One action can earn several Badges at once: each shows in turn.
   const [earned, setEarned] = useState<readonly Earned[]>([]);
   const route = useRouteOnScreen();
+  const goalCardShown =
+    useSyncExternalStore(subscribeGoalCard, () => goalCardOnScreen) && route === FEED_ROUTE;
+  // Dropped, not deferred: the card celebrates it already.
+  if (goalCardShown && shown !== undefined) setShown(undefined);
   // What is met while the counters are hidden is never shown later (ADR 0066).
   const celebrates = useEffectEvent(() => celebrations);
   const goalCardOn = useEffectEvent(() => edition.isFeatureEnabled('goalReachedCard'));
@@ -233,7 +264,7 @@ export function MascotCelebrations() {
   }
   if (earnedBadge?.kind === 'toast')
     return <GameBadgeToast key={earnedBadge.badge.id} badge={earnedBadge.badge} onGone={next} />;
-  if (shown === undefined || route === STREAK_BREAK_ROUTE) return null;
+  if (shown === undefined || route === STREAK_BREAK_ROUTE || goalCardShown) return null;
   return (
     <CelebrationMoment
       key={shown.told}
