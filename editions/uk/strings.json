@@ -1056,6 +1056,19 @@
       "many": "{count} записів",
       "other": "{count} запису"
     },
+    "countCategories": {
+      "one": "{count} категорія",
+      "few": "{count} категорії",
+      "many": "{count} категорій",
+      "other": "{count} категорії"
+    },
+    "countKinds": {
+      "one": "{count} тип карток",
+      "few": "{count} типи карток",
+      "many": "{count} типів карток",
+      "other": "{count} типу карток"
+    },
+    "countSeparator": " · ",
     "restore": "Повернути",
     "restoreLabel": "Повернути «{title}»",
     "turnOn": "Увімкнути",

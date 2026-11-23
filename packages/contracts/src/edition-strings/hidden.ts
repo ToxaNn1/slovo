@@ -13,8 +13,14 @@ export const HiddenStringsSchema = z.strictObject({
   entries: TextSchema,
   /** The heading over the Hidden Categories. */
   categories: TextSchema,
-  /** The Settings row's value: how many Entries are hidden. Takes `{count}`. */
+  /** How many Entries are hidden, in the value of the rows that open the screen. Takes `{count}`. */
   count: PluralSchema,
+  /** How many Categories are hidden, in the same value. Takes `{count}`. */
+  countCategories: PluralSchema,
+  /** How many kinds of cards are out of the Mix, in the same value. Takes `{count}`. */
+  countKinds: PluralSchema,
+  /** What joins the parts of that value, e.g. «4 типи карток · 1 запис». */
+  countSeparator: TextSchema,
   /** The button that brings an Entry back. */
   restore: TextSchema,
   /** The same button as VoiceOver reads it. Takes `{title}`, what the row leads with. */

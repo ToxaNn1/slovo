@@ -95,15 +95,30 @@ export function hiddenScreenModel({
   return { rows: [...categories, ...kinds, ...entries] };
 }
 
-/** The value of the «Приховані записи» row of Settings: how many Entries are hidden. */
+/**
+ * The value of the rows that open the Hidden screen («Приховане» of «Мої Теми»
+ * and «Приховані записи» of Settings), from the screen's own rows, so it counts
+ * exactly what the screen lists: each part in the list's order, e.g.
+ * «4 типи карток · 1 запис»; only Entries, or nothing, as «N записів».
+ */
 export function hiddenSummary({
-  hiddenEntries,
+  rows,
   strings,
   count,
 }: {
-  hiddenEntries: readonly HiddenEntry[];
+  rows: readonly HiddenRowModel[];
   strings: EditionStrings['hidden'];
   count: (forms: Plural, count: number) => string;
 }): string {
-  return count(strings.count, hiddenEntries.length);
+  const of = (kind: HideTarget['kind']) => rows.filter(({ target }) => target.kind === kind).length;
+  const parts = (
+    [
+      [strings.countCategories, of('category')],
+      [strings.countKinds, of('whole-kind')],
+      [strings.count, of('entry')],
+    ] as const
+  ).filter(([, each]) => each > 0);
+  return parts.length === 0
+    ? count(strings.count, 0)
+    : parts.map(([forms, each]) => count(forms, each)).join(strings.countSeparator);
 }

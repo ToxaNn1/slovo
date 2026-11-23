@@ -22,13 +22,6 @@ function useHiddenList(): readonly HiddenEntry[] {
   return useSubscribed(useComposition().hiddenEntries, ({ list }) => list);
 }
 
-/** The value of the «Приховані записи» row of Settings: how many Entries are hidden. */
-export function useHiddenSummary(): string {
-  const list = useHiddenList();
-  const { count } = useEdition();
-  return useMemo(() => hiddenSummary({ hiddenEntries: list, strings, count }), [list, count]);
-}
-
 /** What the Hidden screen draws, kept up to date. */
 export function useHiddenScreenModel(): HiddenScreenModel {
   const list = useHiddenList();
@@ -37,6 +30,16 @@ export function useHiddenScreenModel(): HiddenScreenModel {
     () => hiddenScreenModel({ hiddenEntries: list, outOfMix, kindsOn, strings: editionStrings }),
     [list, outOfMix, kindsOn],
   );
+}
+
+/**
+ * The value of «Приховане» of «Мої Теми» and «Приховані записи» of Settings,
+ * from the Hidden screen's own rows, kept up to date with them.
+ */
+export function useHiddenSummary(): string {
+  const { rows } = useHiddenScreenModel();
+  const { count } = useEdition();
+  return useMemo(() => hiddenSummary({ rows, strings, count }), [rows, count]);
 }
 
 /**
