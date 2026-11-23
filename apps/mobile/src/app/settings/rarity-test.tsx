@@ -9,7 +9,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useEffect, useEffectEvent, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useComposition } from '@/composition';
 import { logError } from '@/diagnostics/log';
@@ -25,6 +25,7 @@ import { rarityTestQuestionOf, useApplyRarityTest } from '@/mix/rarity-test';
  */
 export default function RarityTestScreen() {
   const { colors } = useTokens();
+  const { bottom } = useSafeAreaInsets();
   const router = useRouter();
   const { rarityTest } = useComposition();
   const applyRarityTest = useApplyRarityTest();
@@ -54,7 +55,11 @@ export default function RarityTestScreen() {
     router.back();
   };
   const frame = ({ testID, footer, children }: Screen) => (
-    <SafeAreaView testID={testID} style={[styles.screen, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      testID={testID}
+      edges={['top', 'left', 'right']}
+      style={[styles.screen, { backgroundColor: colors.background }]}
+    >
       <View style={styles.top}>
         <BackLink testID="rarity-test-back" label={editionStrings.settings.title} onPress={back} />
       </View>
@@ -65,7 +70,8 @@ export default function RarityTestScreen() {
       >
         {children}
       </ScrollView>
-      <View style={styles.footer}>{footer}</View>
+      {/* The buttons sit on the home indicator's safe area, not a padding above it (XSettings t7). */}
+      <View style={[styles.footer, { paddingBottom: Math.max(bottom, space[4]) }]}>{footer}</View>
     </SafeAreaView>
   );
 
@@ -100,7 +106,6 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: space[5],
     paddingTop: space[3],
-    paddingBottom: space[4],
-    gap: space[5],
+    gap: space[4],
   },
 });

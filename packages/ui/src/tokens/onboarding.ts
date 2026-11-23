@@ -223,15 +223,15 @@ export const rarityTestLayout = {
   /** The bar of one segment per Word over the question. */
   progressBar: { height: 6, gap: 4 },
   /** The five rarity bars of the result, lit up to the Rarity Range. */
-  rarityBars: { height: 14, gap: 5 },
+  rarityBars: { height: 16, gap: 6 },
   /** How skewed every segment is. */
   skew: '-20deg',
-  /** The result's card: its corners and the room around its content (XSettings t7). */
-  resultCard: { radius: 24, paddingVertical: 22, paddingHorizontal: 20, gap: 14 },
+  /** The result's card: its corners and the room around its content, a step roomier than XSettings t7 (owner). */
+  resultCard: { radius: 24, paddingVertical: 32, paddingHorizontal: 24, gap: 18 },
   /** How wide the result's line and bars run beside the big number. */
-  resultWidth: 200,
+  resultWidth: 220,
   /** How wide the note under the bars runs. */
-  noteWidth: 220,
+  noteWidth: 240,
   /** Where the big number sits, off the card's top right corner, which cuts it. */
   number: { right: -14, top: -40 },
 } as const;
