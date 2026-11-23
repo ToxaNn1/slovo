@@ -36,6 +36,12 @@ const inGame = (route: string | undefined) =>
 /** The route of the Daily Crossword, where a Badge of its solves in a row is stamped. */
 const CROSSWORD_ROUTE = '/game/crossword';
 
+/**
+ * The route of Settings › Перерва, where the Mascot never shows (owner check
+ * 23.11): a Streak milestone or Daily Goal celebration waits until it closes.
+ */
+const STREAK_BREAK_ROUTE = '/settings/streak-break';
+
 /** How long a celebration keeps the Mascot on screen. */
 export const CELEBRATION_MS = 4000;
 
@@ -114,7 +120,8 @@ export function MascotAs({
  * A Badge earned shows its ink toast during a Game and its stamp anywhere else
  * (board 10.7); the stamp's «ГОТОВО» opens the Badge, which ends its «НОВА»
  * mark. Badges earned at once show in turn; a celebration met under a screen,
- * a stamp or a toast waits for it to close and then has its while.
+ * a stamp or a toast, or while Settings › Перерва is on screen, waits for it
+ * to close and then has its while.
  */
 export function MascotCelebrations() {
   const { xpLog, badges, progress } = useComposition();
@@ -226,7 +233,7 @@ export function MascotCelebrations() {
   }
   if (earnedBadge?.kind === 'toast')
     return <GameBadgeToast key={earnedBadge.badge.id} badge={earnedBadge.badge} onGone={next} />;
-  if (shown === undefined) return null;
+  if (shown === undefined || route === STREAK_BREAK_ROUTE) return null;
   return (
     <CelebrationMoment
       key={shown.told}

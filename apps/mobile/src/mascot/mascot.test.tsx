@@ -293,6 +293,27 @@ describe('the Mascot’s celebrations', () => {
     expect(shownMascot()).toBeNull();
   });
 
+  it('shows no Mascot on Settings › Перерва, for a Streak milestone or the Daily Goal met', async () => {
+    const composition = await renderCelebrations({
+      route: '/settings/streak-break',
+      goalCard: false,
+    });
+
+    // The 5th XP makes the first Streak day.
+    await playRounds(composition, 5);
+    expect(shownMascot()).toBeNull();
+    await act(async () => {
+      await composition.xpLog.setDailyGoal(1);
+      await composition.feed.show(0);
+      await jest.advanceTimersByTimeAsync(SEEN_DWELL_MS);
+      await composition.feed.show(undefined);
+      await jest.advanceTimersByTimeAsync(CELEBRATION_MS);
+    });
+
+    expect(composition.xpLog.state.dailyGoal?.met).toBe(true);
+    expect(shownMascot()).toBeNull();
+  });
+
   it('celebrates nothing met while the counters were hidden once they show again', async () => {
     const composition = await renderCelebrations({ noCounters: true });
     await playRounds(composition, 5);
