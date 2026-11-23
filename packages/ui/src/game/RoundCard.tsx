@@ -136,11 +136,15 @@ export function RoundCard({
     quickQuestion?.instead,
     bare ? undefined : definition,
   ]);
+  // A long question, such as a Definition to guess the Word by, takes the text face at its full
+  // size in a Quick Question too, and scrolls in its card, rather than shrink the display face.
+  const long = Array.from(prompt).length > DISPLAY_MOST;
   const promptRole: TypeRole =
     quickQuestion !== undefined
-      ? 'quickQuestionPrompt'
-      : look.questionFace === 'text' ||
-          (look.questionFace === 'byLength' && Array.from(prompt).length > DISPLAY_MOST)
+      ? long
+        ? 'roundPrompt'
+        : 'quickQuestionPrompt'
+      : look.questionFace === 'text' || (look.questionFace === 'byLength' && long)
         ? 'roundPrompt'
         : 'roundAsk';
   // A head stands over the answer, beside the Mascot if any, the answer in the middle of the room under it.
