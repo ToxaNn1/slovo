@@ -32,6 +32,7 @@ const CHECK_HOLDS = 60 * 60_000;
  */
 export type AccountProblem =
   | 'offline'
+  | 'no-email'
   | 'invalid-email'
   | 'wrong-code'
   | 'code-expired'
@@ -66,7 +67,7 @@ export type AccountState =
   | {
       readonly status: 'signed-out';
       readonly inFlight: SheetSignIn | 'requestCode' | undefined;
-      readonly problem: RequestProblem | 'invalid-email' | 'refused' | undefined;
+      readonly problem: RequestProblem | 'no-email' | 'invalid-email' | 'refused' | undefined;
     }
   | {
       readonly status: 'code-sent';
@@ -106,7 +107,7 @@ export interface Account {
   subscribe(listener: () => void): () => void;
   /**
    * Sends a Sign-in code to the email, when signed out. The email is trimmed
-   * and put in lower case, and nothing is sent when it is not an email.
+   * and put in lower case, and nothing is sent when it is empty or not an email.
    */
   requestCode(email: string): Promise<void>;
   /** Sends a new Sign-in code to the same email, 60 s after the last one at the earliest. */
@@ -458,6 +459,10 @@ export async function openAccount({
     subscribe: subscribers.subscribe,
     async requestCode(typed) {
       if (state.status !== 'signed-out' || state.inFlight !== undefined) return;
+      if (typed.trim() === '') {
+        change({ ...state, problem: 'no-email' });
+        return;
+      }
       const email = AccountEmailSchema.safeParse(typed);
       if (!email.success) {
         change({ ...state, problem: 'invalid-email' });

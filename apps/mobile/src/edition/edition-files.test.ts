@@ -1664,6 +1664,7 @@ describe('the 0.7 account and email strings groups', () => {
   );
 
   it.each([
+    'no-email',
     'invalid-email',
     'wrong-code',
     'code-expired',
