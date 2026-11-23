@@ -11,7 +11,7 @@ import { fill } from '@slovo/contracts';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { renderApp } from '../shell/test-app';
 import { useSettings } from '../settings/settings';
-import { CELEBRATION_MS, MascotCelebrations } from './mascot';
+import { CELEBRATION_MS, MascotCelebrations, tellGoalCardOnScreen } from './mascot';
 
 /** The UA Edition as it ships, with the Daily Crossword on, so its Badges show. */
 const edition: Edition = {
@@ -204,6 +204,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  tellGoalCardOnScreen(false);
   jest.useRealTimers();
 });
 
@@ -291,6 +292,54 @@ describe('the Mascot’s celebrations', () => {
       await jest.advanceTimersByTimeAsync(CELEBRATION_MS);
     });
     expect(shownMascot()).toBeNull();
+  });
+
+  it('drops a Streak milestone met while the Feed’s goal-reached card is on screen, which celebrates it itself', async () => {
+    const composition = await renderCelebrations();
+    await act(async () => {
+      tellGoalCardOnScreen(true);
+      await jest.advanceTimersByTimeAsync(0);
+    });
+
+    // The 5th XP makes the first Streak day (owner bug 23.11).
+    await playRounds(composition, 5);
+    expect(shownMascot()).toBeNull();
+
+    // Dropped, not deferred: it shows neither once the card leaves.
+    await act(async () => {
+      tellGoalCardOnScreen(false);
+      await jest.advanceTimersByTimeAsync(0);
+    });
+    expect(shownMascot()).toBeNull();
+  });
+
+  it('drops a Streak milestone on screen once the Feed turns to its goal-reached card', async () => {
+    const composition = await renderCelebrations();
+    await playRounds(composition, 5);
+    expect(celebration('streakMilestone')).toHaveTextContent(mascot.streakMilestone);
+
+    await act(async () => {
+      tellGoalCardOnScreen(true);
+      await jest.advanceTimersByTimeAsync(0);
+    });
+    expect(shownMascot()).toBeNull();
+    await act(async () => {
+      tellGoalCardOnScreen(false);
+      await jest.advanceTimersByTimeAsync(0);
+    });
+    expect(shownMascot()).toBeNull();
+  });
+
+  it('still celebrates a Streak milestone met in a Game while the Feed was left on its goal-reached card', async () => {
+    const composition = await renderCelebrations({ route: '/game/guess-word' });
+    await act(async () => {
+      tellGoalCardOnScreen(true);
+      await jest.advanceTimersByTimeAsync(0);
+    });
+
+    await playRounds(composition, 5);
+
+    expect(celebration('streakMilestone')).toHaveTextContent(mascot.streakMilestone);
   });
 
   it('shows no Mascot on Settings › Перерва, for a Streak milestone or the Daily Goal met', async () => {
