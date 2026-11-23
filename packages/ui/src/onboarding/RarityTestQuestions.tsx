@@ -294,7 +294,7 @@ function RarityTestOutcome({ result }: { result: RarityTestResult }) {
       <Text
         {...voice}
         maxFontSizeMultiplier={fontScaleCap.text}
-        style={[typeStyle('statsNote', tokens), styles.outcomeNote, { color: colors.muted }]}
+        style={[typeStyle('rarityTestNote', tokens), styles.outcomeNote, { color: colors.muted }]}
       >
         {fill(strings.rarityTest.known[mixPlace], {
           known: String(result.known),

@@ -399,7 +399,9 @@ export const typeRoles = {
   /** The Rarity Range's big number behind the Rarity Test's result (board 11, screen 93). */
   rarityTestNumber: role('word', '900', 200, 200),
   /** The line over the Rarity Test's result, «Твоя рідкість — до {n}…» (XSettings t7). */
-  rarityTestResult: role('word', '900', 26, 27.3),
+  rarityTestResult: role('word', '900', 30, 31.5),
+  /** The note under the Rarity Test result's bars, «{known} з {total} слів знайомі…». */
+  rarityTestNote: role('ui', '400', 17, 22),
   /** A quiet text button of the onboarding, such as «Пропустити» and «Пізніше». */
   quietAction: role('ui', '700', 15, 18.2),
   /** A Word on its cell of the Pairs Game. */
