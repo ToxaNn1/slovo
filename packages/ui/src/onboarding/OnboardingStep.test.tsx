@@ -1,7 +1,13 @@
-import { coreTokens, EditionProvider, OnboardingWelcome, TokensProvider } from '@slovo/ui';
+import {
+  coreTokens,
+  EditionProvider,
+  OnboardingStep,
+  OnboardingWelcome,
+  TokensProvider,
+} from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
-import { AccessibilityInfo, StyleSheet } from 'react-native';
+import { AccessibilityInfo, StyleSheet, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
@@ -297,5 +303,88 @@ describe('An onboarding step', () => {
       await layOut({ footer: 108, content: 200 });
       expect(styleOf('onboarding-hero')['height']).toBe(440);
     });
+  });
+});
+
+describe('The first Word’s step, which opens on its red top over the whole screen', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    reduceMotion(false);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  async function renderIntro(on: Metrics = small) {
+    await render(
+      <SafeAreaProvider initialMetrics={on}>
+        <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+          <OnboardingStep
+            step={2}
+            total={4}
+            shout="HOLD!"
+            onSkip={jest.fn()}
+            footer={<Text>Take</Text>}
+            intro
+            testID="onboarding"
+          >
+            <Text>Card</Text>
+          </OnboardingStep>
+        </EditionProvider>
+      </SafeAreaProvider>,
+    );
+  }
+
+  /** How far a view is moved up or down from its place. */
+  function shift(testID: string): number {
+    const style = getAnimatedStyle(screen.getByTestId(testID)) as {
+      transform?: { translateY?: number }[];
+    };
+    return style.transform?.[0]?.translateY ?? 0;
+  }
+
+  // On iPhone SE: the dots' room is 6 + 8 + 40 points, the band «Пропустити»'s row and the cut.
+  const cover = small.frame.height - (6 + 8 + 40);
+  const band = small.insets.top + 44 + 24;
+
+  it('covers the screen down to its dots, the content waiting under the red', async () => {
+    await renderIntro();
+    await pass(50);
+
+    expect(styleOf('onboarding-hero')['height']).toBe(cover);
+    expect(shift('onboarding-hero')).toBeCloseTo(0);
+    expect(shift('onboarding-content')).toBeCloseTo(cover - band);
+    expect(screen.getByTestId('onboarding-skip')).toBeTruthy();
+  });
+
+  it('gives way to its band once the shout word has flown in and held, the content risen to its place', async () => {
+    await renderIntro();
+    await pass(600 + 400 + 500 + 50);
+
+    expect(shift('onboarding-hero')).toBeCloseTo(band - cover);
+    expect(shift('onboarding-content')).toBeCloseTo(0);
+    expect(screen.queryByTestId('onboarding-intro')).toBeNull();
+  });
+
+  it('gives way at once at a tap while the red covers the screen', async () => {
+    await renderIntro();
+    await pass(100);
+    await fireEvent.press(screen.getByTestId('onboarding-intro'));
+    await pass(500 + 50);
+
+    expect(shift('onboarding-hero')).toBeCloseTo(band - cover);
+    expect(shift('onboarding-content')).toBeCloseTo(0);
+  });
+
+  it('opens at once, nothing moving, with Reduce Motion', async () => {
+    reduceMotion(true);
+    await renderIntro();
+    await pass(0);
+
+    expect(shift('onboarding-hero')).toBeCloseTo(band - cover);
+    expect(shift('onboarding-content')).toBeCloseTo(0);
+    expect(screen.queryByTestId('onboarding-intro')).toBeNull();
   });
 });
