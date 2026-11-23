@@ -1633,6 +1633,24 @@ describe('QuickQuestionRound', () => {
     ).toBeOnTheScreen();
   });
 
+  it('sets a long question, such as a Definition, in the text face at full size, never shrunk', async () => {
+    await renderTip(tip);
+
+    const text = typeStyle('roundPrompt', coreTokens);
+    const drawn = screen.getByText(tip.gameQuestion.prompt);
+    expect(drawn).toHaveStyle({ fontSize: text.fontSize, fontFamily: text.fontFamily });
+    expect(drawn).not.toHaveProp('adjustsFontSizeToFit', true);
+  });
+
+  it('sets a short question in the display face', async () => {
+    await renderTip({ ...tip, gameQuestion: { ...tip.gameQuestion, prompt: 'Frank or candid?' } });
+    const display = typeStyle('quickQuestionPrompt', coreTokens);
+    expect(screen.getByText('Frank or candid?')).toHaveStyle({
+      fontSize: display.fontSize,
+      fontFamily: display.fontFamily,
+    });
+  });
+
   it('names the non-standard form a Tip replaces under its question', async () => {
     await renderTip({ ...tip, nonStandardForm: 'frank' });
 
