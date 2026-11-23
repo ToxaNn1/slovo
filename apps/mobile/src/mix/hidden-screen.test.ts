@@ -247,32 +247,62 @@ describe('the «Приховані записи» screen', () => {
   });
 });
 
-describe('the «Приховані записи» row of Settings', () => {
-  it('counts the Hidden Entries in the Edition’s plural forms', async () => {
+describe('the «Приховане» row of «Мої Теми» and «Приховані записи» of Settings', () => {
+  const summaryOf = (app: Composition) =>
+    hiddenSummary({ rows: modelOf(app).rows, strings: strings.hidden, count });
+
+  /** The numbers the summary says, added up. */
+  const totalOf = (summary: string) =>
+    summary.match(/\d+/g)?.reduce((sum, each) => sum + Number(each), 0);
+
+  it('says nothing is hidden as no Entries', async () => {
     const { app } = await open();
-    const said = [
-      hiddenSummary({ hiddenEntries: app.hiddenEntries.list, strings: strings.hidden, count }),
-    ];
 
-    for (const id of ['w_one', 'w_two', 'w_three']) {
-      await app.hiddenEntries.hide(id);
-      said.push(
-        hiddenSummary({ hiddenEntries: app.hiddenEntries.list, strings: strings.hidden, count }),
-      );
-    }
-
-    expect(said).toEqual(['0 записів', '1 запис', '2 записи', '3 записи']);
+    expect(summaryOf(app)).toBe('0 записів');
   });
 
-  it('follows a restore', async () => {
+  it('counts only Entries in the Edition’s plural forms while only Entries are hidden', async () => {
+    const { app } = await open();
+    const said = [];
+    for (const id of ['w_one', 'w_two', 'w_three']) {
+      await app.hiddenEntries.hide(id);
+      said.push(summaryOf(app));
+    }
+
+    expect(said).toEqual(['1 запис', '2 записи', '3 записи']);
+  });
+
+  it('counts the kinds of cards out of the Mix while only they are hidden', async () => {
+    const { app } = await open();
+    await app.mix.setKind('correction', false);
+    const one = summaryOf(app);
+    await app.mix.setKind('idiom', false);
+
+    expect([one, summaryOf(app)]).toEqual(['1 тип карток', '2 типи карток']);
+  });
+
+  it('counts each part of the list in its order: Categories, kinds of cards, Entries', async () => {
+    const { app } = await open();
+    await app.hiddenEntries.hide('w_three');
+    await app.mix.setKind('idiom', false);
+    await app.mix.setKind('correction', false);
+    const kindsAndEntry = summaryOf(app);
+    await app.mix.takeOut(first.id);
+
+    expect([kindsAndEntry, summaryOf(app)]).toEqual([
+      '2 типи карток · 1 запис',
+      '1 категорія · 2 типи карток · 1 запис',
+    ]);
+    expect(totalOf(summaryOf(app))).toBe(modelOf(app).rows.length);
+  });
+
+  it('follows a show from the screen', async () => {
     const { app } = await open();
     await app.hiddenEntries.hide('w_one');
-    await app.hiddenEntries.hide('w_two');
+    await app.mix.setKind('idiom', false);
 
-    await app.hiddenEntries.restore('w_one');
+    await app.unhide({ kind: 'whole-kind', entryKind: 'idiom' });
 
-    expect(
-      hiddenSummary({ hiddenEntries: app.hiddenEntries.list, strings: strings.hidden, count }),
-    ).toBe('1 запис');
+    expect(summaryOf(app)).toBe('1 запис');
   });
 });
