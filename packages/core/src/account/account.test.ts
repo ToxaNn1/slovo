@@ -111,6 +111,19 @@ describe('the Account', () => {
     expect(reopened.state).toMatchObject({ status: 'signed-in', email: 'anna@mail.com' });
   });
 
+  it.each(['', '   '])('sends nothing when no email was typed (%j), and says so', async (typed) => {
+    const { account, api } = await setup();
+
+    await account.requestCode(typed);
+
+    expect(api.calls).toEqual([]);
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: 'no-email',
+    });
+  });
+
   it('sends nothing to an email that is not one, and says so', async () => {
     const { account, api } = await setup();
 

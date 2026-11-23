@@ -63,6 +63,14 @@ describe('the problem line of the Account screen', () => {
     expect(problemOf(account)).toBeUndefined();
   });
 
+  it('asks for an email when none was typed', async () => {
+    const { account } = await open();
+
+    await account.requestCode('  ');
+
+    expect(problemOf(account)).toBe('Введи адресу пошти.');
+  });
+
   it('asks to check an email that is not one', async () => {
     const { account } = await open();
 

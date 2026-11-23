@@ -10,6 +10,8 @@ import { PluralSchema, templateOf } from './shared';
  * never gives, is refused.
  */
 const AccountProblemsSchema = z.strictObject({
+  /** No email was typed, or only spaces; nothing was sent. */
+  'no-email': TextSchema,
   /** The email is not an email; nothing was sent. */
   'invalid-email': TextSchema,
   /** The code is wrong. Takes `{count}`, the tries left, which picks the form. */
