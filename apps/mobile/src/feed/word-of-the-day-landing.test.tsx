@@ -15,6 +15,7 @@ import {
 } from '@slovo/core/testing';
 import type { VerticalPagerHandle } from '@slovo/ui';
 import { act, waitFor } from '@testing-library/react-native';
+import { Activity, type ReactNode } from 'react';
 
 import { renderHookInApp } from '../shell/test-app';
 import { openOnce } from '../opening';
@@ -28,11 +29,48 @@ const { config } = activeEditionFiles;
 /** The composition the Feed reads, opened afresh for each test. */
 let composition: Composition;
 
-// The Feed is in sight: its tab is focused.
+/**
+ * The Feed's tab as a test moves it: focused, or out of focus and then
+ * hidden in an Activity a frame later, as the tabs' screen layout does.
+ */
+let mockTab = { focused: true, hidden: false };
+const mockTabListeners = new Set<() => void>();
+function mockUseTab() {
+  return jest.requireActual<typeof import('react')>('react').useSyncExternalStore(
+    (listener: () => void) => {
+      mockTabListeners.add(listener);
+      return () => {
+        mockTabListeners.delete(listener);
+      };
+    },
+    () => mockTab,
+  );
+}
+
 jest.mock('expo-router', () => ({
   ...jest.requireActual<object>('expo-router'),
-  useIsFocused: () => true,
+  useIsFocused: () => mockUseTab().focused,
 }));
+
+/** The Feed's tab as the tabs' screen layout keeps it: out of focus, it waits in a hidden Activity. */
+function TabScreen({ children }: { children: ReactNode }) {
+  return <Activity mode={mockUseTab().hidden ? 'hidden' : 'visible'}>{children}</Activity>;
+}
+
+/** Moves the Feed's tab to `to`, and lets the Feed take it. */
+async function moveTab(to: typeof mockTab) {
+  mockTab = to;
+  await act(() => {
+    for (const listener of mockTabListeners) listener();
+  });
+}
+
+/** Opens another tab, and comes back to the Feed's. */
+async function switchTabAndBack() {
+  await moveTab({ focused: false, hidden: false });
+  await moveTab({ focused: false, hidden: true });
+  await moveTab({ focused: true, hidden: false });
+}
 
 /** Whether the app is in the foreground, as a test moves it, and who listens to it. */
 let mockInForeground = true;
@@ -136,6 +174,7 @@ async function openFeed(clock: Clock, kept: UserStateFacts = {}) {
   const shell = testShell({ composition: compositionOpening });
   const feed = await renderHookInApp(() => useFeed(ref, { clock, landing, voice: 'oksana' }), {
     shell,
+    Screen: TabScreen,
   });
   await waitFor(() => {
     expect(feed.result.current.cards.length).toBeGreaterThan(1);
@@ -159,6 +198,7 @@ async function ask(landing: WordOfTheDayLanding) {
 
 beforeEach(() => {
   mockInForeground = true;
+  mockTab = { focused: true, hidden: false };
 });
 
 describe('the «Слово дня» intent', () => {
@@ -231,6 +271,24 @@ describe('the «Слово дня» intent', () => {
     await ask(landing);
 
     expect(pager.page).toBe(0);
+  });
+
+  it('keeps the reader on the card they read on to when they switch tabs and come back after a landing', async () => {
+    const clock = clockAt('2026-10-26T09:00:00Z');
+    const { feed, pager, landing } = await openFeed(clock);
+    await ask(landing);
+    expect(pager.page).toBe(0);
+    await act(() => {
+      feed.result.current.onCardChange(2);
+    });
+    pager.page = 2;
+
+    await switchTabAndBack();
+
+    expect(pager.page).toBe(2);
+    await waitFor(() => {
+      expect(composition.feed.position).toBe(2);
+    });
   });
 
   it('keeps the reader on the card they read on to when the composition reopens after a landing', async () => {

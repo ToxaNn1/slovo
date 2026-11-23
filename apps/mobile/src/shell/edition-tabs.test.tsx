@@ -3,7 +3,7 @@ import type { Edition } from '@slovo/core';
 import { renderApp } from './test-app';
 import { act, fireEvent, screen } from 'expo-router/testing-library';
 import { router, useIsFocused } from 'expo-router';
-import { useSyncExternalStore, type ReactNode } from 'react';
+import { useState, useSyncExternalStore, type ReactNode } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 
@@ -304,6 +304,28 @@ describe('the «Стрічка» tab', () => {
 
     expect(screen.getByText('Feed opened')).toBeVisible();
     expect(screen.queryByText('Feed')).toBeNull();
+  });
+
+  it('brings the reader back to the Feed they left, not a new one', async () => {
+    function FeedAt() {
+      const [card, setCard] = useState(0);
+      return (
+        <Text
+          onPress={() => {
+            setCard((at) => at + 1);
+          }}
+        >{`Card ${String(card)}`}</Text>
+      );
+    }
+    await renderTabs('/feed', edition, { feed: FeedAt });
+    await settle(() => fireEvent.press(screen.getByText('Card 0')));
+    await settle(() => fireEvent.press(screen.getByText('Card 1')));
+    await settle(() => fireEvent.press(screen.getByText(tabs.game)));
+    await settle(() => undefined);
+
+    await settle(() => fireEvent.press(screen.getByText(tabs.home)));
+
+    expect(screen.getByText('Card 2')).toBeVisible();
   });
 
   it('shows as selected while the Feed is on screen', async () => {

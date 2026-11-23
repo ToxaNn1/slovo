@@ -161,9 +161,16 @@ export function useFeed(
     void keep('the media ahead', prefetchAhead(shell, wordIdsAhead(cards, feed.position), voice));
   }, [shell, feed, cards, inSight, voice]);
 
+  /**
+   * The last turn and landing the pager took. Out of focus the Feed waits in a
+   * hidden Activity, and back in sight its effects run again: a turn or a
+   * landing it already took must not take the reader back to its page.
+   */
+  const taken = useRef<{ turnTo?: { readonly page: number }; landed?: LandingAsked }>({});
   // Each opening is a new turn, even to the same page.
   useEffect(() => {
-    if (turnTo === undefined) return;
+    if (turnTo === undefined || taken.current.turnTo === turnTo) return;
+    taken.current.turnTo = turnTo;
     pager.current?.turnTo(turnTo.page);
   }, [pager, turnTo]);
   // A hide or its undo drops or puts back cards, and the reader's card moves
@@ -197,7 +204,8 @@ export function useFeed(
   }, [turn]);
   // Lands once per ask.
   useEffect(() => {
-    if (landed === undefined) return;
+    if (landed === undefined || taken.current.landed === landed.ask) return;
+    taken.current.landed = landed.ask;
     landing.landed();
     pager.current?.showPage(landed.page);
     turnNow.current(landed.page);
