@@ -77,6 +77,7 @@ export { ChipChoice } from './mix/ChipChoice';
 export { coverToneAt, MixCategoryCover, type MixCoverTone } from './mix/MixCategoryCover';
 export { MixSettingTile, type MixSettingBar } from './mix/MixSettingTile';
 export { LaterButton, OnboardingStep, stepStyles } from './onboarding/OnboardingStep';
+export { OnboardingVoiceList } from './onboarding/OnboardingVoiceList';
 export { OnboardingWelcome, type HeroWord } from './onboarding/OnboardingWelcome';
 export {
   RarityTestQuestions,

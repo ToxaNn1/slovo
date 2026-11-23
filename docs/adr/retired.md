@@ -57,7 +57,7 @@ Every ADR number with no file, one line each: unused, merged into another ADR, o
 - 0058: removed, not a lasting decision; the history is in the commit log.
 - 0059: removed, not a lasting decision; the history is in the commit log.
 - 0060: removed, not a lasting decision; the history is in the commit log.
-- 0067: removed, not a lasting decision; the history is in the commit log.
+- 0067: superseded by 0206.
 - 0070: removed, not a lasting decision; the history is in the commit log.
 - 0071: removed, not a lasting decision; the history is in the commit log.
 - 0072: removed, not a lasting decision; the history is in the commit log.

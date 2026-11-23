@@ -209,6 +209,8 @@ describe('the whole Dashboard', () => {
     await press('onboarding-next');
     expect(composition.onboarding.state.status).toBe('open');
     expect(composition.history.list.map(({ entryId }) => entryId)).toEqual(['w_sumyrnyi']);
+    // «ОБИРАЮ» on «ГОЛОС», then «ГРАЙ!».
+    await press('onboarding-next');
     await press('onboarding-next');
     await press('onboarding-answer-good');
     await press('onboarding-later');
@@ -330,7 +332,16 @@ function FeedWithoutTheCard() {
 describe('a landing on the Word of the Day card', () => {
   it('opens the Feed once, so a return to the Dashboard stays there when the Feed lacks the card', async () => {
     const app = await openApp(FeedWithoutTheCard);
-    const onboarding = ['start', 'next', 'next', 'answer-good', 'later', 'done', 'time-20:30'];
+    const onboarding = [
+      'start',
+      'next',
+      'next',
+      'next',
+      'answer-good',
+      'later',
+      'done',
+      'time-20:30',
+    ];
     for (const step of onboarding) await press(`onboarding-${step}`);
     await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.toCard)));
     expect(app.pathname()).toBe('/feed');

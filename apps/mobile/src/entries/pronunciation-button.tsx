@@ -175,6 +175,8 @@ function PlayingLemma({ lemma, entryId }: { lemma: string; entryId: string }) {
 export interface SampleReading {
   /** Whether the chosen voice reads the sample Word now. */
   readonly playing: boolean;
+  /** Whether the last reading could not sound: offline, or no Recording or voice to read it. */
+  readonly silent: boolean;
   /** Reads the sample Word in the chosen voice, or stops it while it reads. */
   readonly toggle: () => void;
   /** Reads the sample Word from its start in the voice with this id, just chosen. */
@@ -209,6 +211,7 @@ export function useSampleReading(): SampleReading {
 
   return {
     playing: state === 'playing',
+    silent: state !== 'playing' && state !== 'idle',
     toggle: () => void read(voice.id, false),
     readIn: (chosen) => void read(chosen, true),
   };

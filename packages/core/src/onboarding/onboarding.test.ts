@@ -142,6 +142,39 @@ describe('the onboarding', () => {
     },
   );
 
+  // «ГОЛОС» picks the Narrator Voice after the first Word, before «ГРАЙ!».
+  it('shows «ГОЛОС» after the first Word while `narratorVoice` and `voiceStep` are on, counted in the steps', async () => {
+    const { app } = await run({
+      on: [...ALL_ON, 'game', 'playStep', 'pronunciation', 'narratorVoice', 'voiceStep'],
+    });
+    const seen = [];
+    for (let i = 0, step = stepOf(app); i < 9 && step !== undefined; i += 1, step = stepOf(app)) {
+      const { kind, number, total } = step;
+      seen.push(`${kind} ${String(number)}/${String(total)}`);
+      await app.onboarding.next();
+    }
+    expect(seen).toEqual([
+      'welcome 1/8',
+      'firstWord 2/8',
+      'voiceStep 3/8',
+      'playStep 4/8',
+      'level 5/8',
+      'why 6/8',
+      'dailyGoal 7/8',
+      'notificationTime 8/8',
+    ]);
+  });
+
+  it.each([
+    ['`narratorVoice`', ['pronunciation', 'voiceStep']],
+    ['`voiceStep`', ['pronunciation', 'narratorVoice']],
+  ] as const)('leaves out «ГОЛОС» with %s off', async (_, more) => {
+    const { app } = await run({ on: [...ALL_ON, ...more] });
+    await app.onboarding.next();
+    await app.onboarding.next();
+    expect(stepOf(app)).toMatchObject({ kind: 'level', number: 3, total: 6 });
+  });
+
   it('shows the Word of the Day as the first Word, and the Edition options of the questions', async () => {
     const { app } = await run();
     await app.onboarding.next();

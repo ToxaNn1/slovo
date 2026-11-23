@@ -235,3 +235,33 @@ export const rarityTestLayout = {
   /** Where the big number sits, off the card's top right corner, which cuts it. */
   number: { right: -14, top: -40 },
 } as const;
+
+/**
+ * «ГОЛОС», the onboarding's Narrator Voice step (design `XObVoice`): one card
+ * of voice rows, each with its play mark, which turns into swinging bars while
+ * the voice reads and the sample Word's syllables light up in turn. On a short
+ * screen (under `compactBelow` high, the iPhone SE) the rows and marks are the
+ * board's smaller ones; a card that still does not fit scrolls inside itself.
+ */
+export const onboardingVoiceLayout = {
+  compactBelow: 700,
+  card: { radius: 18, edge: 4 },
+  row: {
+    height: 62,
+    compactHeight: 54,
+    paddingLeft: 16,
+    paddingRight: 10,
+    paddingVertical: 8,
+    gap: 12,
+    lineGap: 5,
+  },
+  mark: { size: 42, compactSize: 38, radius: 12, glyph: 16 },
+  bars: { count: 4, width: 3, height: 16, gap: 3, rest: 0.3, half: 350, stagger: 120 },
+  /** How faded a pressed row is, and the line under a voice's name. */
+  pressedOpacity: 0.85,
+  descriptionOpacity: 0.8,
+  /** The ink's alpha on the chosen row's mark while the sample cannot sound. */
+  silent: { fill: 0.16, glyph: 0.45 },
+  /** A syllable lights up for `lit` ms, `step` ms after the one before, once every `cycle` ms. */
+  syllable: { cycle: 1800, step: 320, rise: 144, lit: 108 },
+} as const;

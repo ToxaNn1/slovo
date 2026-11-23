@@ -95,6 +95,7 @@ const press = (testID: string) => settle(() => fireEvent.press(screen.getByTestI
 const shouts = [
   strings.welcome.shout,
   strings.firstWord.shout,
+  strings.voiceStep.shout,
   strings.playStep.shout,
   strings.level.shout,
   strings.why.shout,
@@ -102,7 +103,7 @@ const shouts = [
   strings.notificationTime.shout,
 ];
 
-/** Expects step `number` of the seven on screen, under its shout and no other. */
+/** Expects step `number` of the eight on screen, under its shout and no other. */
 function expectStep(number: number) {
   const shout = shouts[number - 1] ?? '';
   expect(screen.getByLabelText(`Крок ${String(number)} з ${String(shouts.length)}`)).toBeTruthy();
@@ -123,11 +124,20 @@ afterEach(() => {
 
 // Spec #1553, ticket #1562: the whole onboarding flow lands on the home, the Dashboard.
 describe('the whole onboarding flow', () => {
-  it('walks СЛОВО → ПЕРШЕ → ГРАЙ! → РІВЕНЬ? → НАВІЩО? → ЦІЛЬ → НАГАДУВАННЯ and lands on the Dashboard', async () => {
+  it('walks СЛОВО → ТРИМАЙ! → ГОЛОС → ГРАЙ! → РІВЕНЬ? → НАВІЩО? → ЦІЛЬ → НАГАДУВАННЯ and lands on the Dashboard', async () => {
     await openApp();
     // The Onboarding covers the home: a modal over it hides it from the reader.
     expect(screen.queryByTestId('dashboard')).toBeNull();
-    expect(shouts).toEqual(['СЛОВО', 'ТРИМАЙ!', 'ГРАЙ!', 'РІВЕНЬ?', 'НАВІЩО?', 'ЦІЛЬ', 'ДЗИНЬ!']);
+    expect(shouts).toEqual([
+      'СЛОВО',
+      'ТРИМАЙ!',
+      'ГОЛОС',
+      'ГРАЙ!',
+      'РІВЕНЬ?',
+      'НАВІЩО?',
+      'ЦІЛЬ',
+      'ДЗИНЬ!',
+    ]);
 
     expectStep(1);
     expect(screen.getByText(strings.welcome.title)).toBeTruthy();
@@ -138,22 +148,26 @@ describe('the whole onboarding flow', () => {
     await press('onboarding-next');
 
     expectStep(3);
-    expect(screen.getByTestId('onboarding-play')).toBeTruthy();
+    expect(screen.getByTestId('onboarding-voice')).toBeTruthy();
     await press('onboarding-next');
 
     expectStep(4);
+    expect(screen.getByTestId('onboarding-play')).toBeTruthy();
+    await press('onboarding-next');
+
+    expectStep(5);
     expect(screen.getByText(strings.level.title)).toBeTruthy();
     await press('onboarding-answer-good');
 
-    expectStep(5);
+    expectStep(6);
     expect(screen.getByText(strings.why.title)).toBeTruthy();
     await press('onboarding-later');
 
-    expectStep(6);
+    expectStep(7);
     expect(screen.getByTestId('onboarding-daily-goal')).toBeTruthy();
     await press('onboarding-done');
 
-    expectStep(7);
+    expectStep(8);
     expect(screen.getByTestId('onboarding-notification-time')).toBeTruthy();
     await press('onboarding-time-20:30');
 

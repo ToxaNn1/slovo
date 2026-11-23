@@ -30,6 +30,7 @@ import { userStateRecords } from '../user-state-schema';
 
 /** The Feature Switch each step is shown under; a step not named here is shown under none. */
 const STEP_SWITCH: Partial<Record<OnboardingStepKind, FeatureSwitch>> = {
+  voiceStep: 'voiceStep',
   playStep: 'playStep',
   level: 'questionnaire',
   why: 'questionnaire',
@@ -56,6 +57,8 @@ export type OnboardingStep =
   | (StepPlace & { readonly kind: 'welcome' })
   /** Today's Word of the Day, the reader's first Word, with its Pronunciation on the card. */
   | (StepPlace & { readonly kind: 'firstWord'; readonly word: WordCardModel })
+  /** «ГОЛОС», where the shell lets the reader choose the Narrator Voice; going on keeps it as it is. */
+  | (StepPlace & { readonly kind: 'voiceStep' })
   /** «ГРАЙ!», which shows the Games; it asks nothing. */
   | (StepPlace & { readonly kind: 'playStep' })
   /** «Рівень» or «Навіщо», with the Edition's options; going on without an answer keeps the defaults. */
@@ -86,7 +89,7 @@ export type OnboardingState =
   | { readonly status: 'finished'; readonly finishedAt: Date };
 
 /**
- * The onboarding: the welcome, the first Word, «ГРАЙ!», «Рівень» (whose
+ * The onboarding: the welcome, the first Word, «ГОЛОС», «ГРАЙ!», «Рівень» (whose
  * «Не знаю» opens the Rarity Test) and «Навіщо», the Daily Goal, «Коли
  * нагадати?», then the Feed; and whether the reader finished
  * it, which is also when they skipped it. It opens on launch until then, at
@@ -209,7 +212,8 @@ export async function openOnboarding({
     const place = { number: index + 1, total: steps.length };
     const kind = steps[index];
     if (kind === undefined) return undefined;
-    if (kind === 'welcome' || kind === 'playStep') return { kind, ...place };
+    if (kind === 'welcome' || kind === 'voiceStep' || kind === 'playStep')
+      return { kind, ...place };
     if (kind === 'firstWord' && firstWord !== undefined) return { kind, ...place, word: firstWord };
     if (kind === 'dailyGoal') {
       return {
