@@ -244,7 +244,7 @@ const FeedPage = memo(function FeedPage({
               <YesterdayCard
                 word={card.yesterday.word}
                 quiz={card.yesterday.quiz}
-                fill
+                fill="rest"
                 onAnswer={(option) => {
                   onAnswerYesterday(position, option);
                 }}
@@ -277,19 +277,16 @@ const FeedPage = memo(function FeedPage({
         {card.kind === 'end-of-cycle' ? <EndOfCycleCard /> : <NoticeCard card={card} />}
       </FeedPageFrame>
     );
-  // Yesterday on its own page fills it, edge to edge as the Word cards (owner 15.11), and
-  // scrolls inside its card when its meanings run longer: nothing around it scrolls (owner 16.11).
+  // Yesterday on its own page is in the Word card's frame, edge to edge and the same height
+  // (owner 15.11, 23.11), and scrolls inside its card when its meanings run longer: nothing
+  // around it scrolls (owner 16.11).
   if (card.kind === 'notice')
     return (
-      <FeedPageFrame
-        position={position}
-        header={header}
-        layout={{ style: 'hero', under: 'hanging' }}
-      >
+      <FeedPageFrame position={position} header={header} layout={{ style: 'hero', under: 'card' }}>
         <YesterdayCard
           word={card.word}
           quiz={card.quiz}
-          fill
+          fill="page"
           onAnswer={(option) => {
             onAnswerYesterday(position, option);
           }}

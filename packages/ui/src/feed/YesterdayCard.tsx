@@ -13,7 +13,7 @@ import { useTokens } from '../providers/TokensProvider';
 import { QuizOption, type QuizOptionLook } from '../primitives/QuizOption';
 import { useCascade } from '../primitives/useCascade';
 import { usePageTurnActions } from '../primitives/VerticalPager';
-import { typeStyle, yesterdayCard } from '../tokens';
+import { entryCardFrame, swipeStampLayout, typeStyle, yesterdayCard } from '../tokens';
 import { FeedNoticeCard } from './FeedNoticeCard';
 
 /**
@@ -25,19 +25,24 @@ import { FeedNoticeCard } from './FeedNoticeCard';
  * option clears the pick, and another option can be picked, as on the board;
  * only the first pick goes to `onAnswer`, the rest change the look alone.
  * It rises in; under Reduce Motion it fades in and nothing pops or shakes.
+ * Filled, the question sits at the top of the card and the options with the
+ * verdict at its bottom, the free room between them.
  */
 export function YesterdayCard({
   word,
   quiz,
   onAnswer,
-  fill = false,
+  fill,
 }: {
   word: WordCardModel;
   quiz: YesterdayQuiz;
   /** Told the reader's first pick, the place of the meaning among `quiz.meanings`. */
   onAnswer: (option: number) => void;
-  /** On a page of its own the card fills the page's height (owner 15.11). */
-  fill?: boolean;
+  /**
+   * `page`: on a page of its own the card is a Word card's height (owner 15.11, 23.11);
+   * `rest`: it fills what the page leaves it, under the Weekly Recap.
+   */
+  fill?: 'page' | 'rest' | undefined;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -103,50 +108,57 @@ export function YesterdayCard({
         ? strings.feedNotices.yesterday.right
         : strings.feedNotices.yesterday.wrong;
   return (
-    <Animated.View style={[entered, fill && styles.fill]}>
-      <FeedNoticeCard notice="yesterday" gap={yesterdayCard.gap} fill={fill}>
-        <Text
-          accessibilityRole="header"
-          {...voice}
-          {...turnActions}
-          style={[typeStyle('yesterdayTitle', tokens), { color: colors.ink }]}
-        >
-          {title}
-        </Text>
-        <Text
-          {...voice}
-          accessibilityLabel={stressLabel(strings.wordCard, word.lemma, word.stressedVowels)}
-          style={[typeStyle('yesterdayLemma', tokens), { color: colors.accent }]}
-        >
-          {capitalised(word.lemma, voice.accessibilityLanguage)}
-        </Text>
-        <View testID="yesterday-options" style={styles.options}>
-          {quiz.meanings.map((meaning, place) => (
-            <QuizOption
-              key={String(place)}
-              testID={`yesterday-option-${String(place)}`}
-              meaning={meaning}
-              look={lookOf(place)}
-              accessibilityLabel={optionLabel(meaning, lookOf(place))}
-              picked={place === chosen}
-              onPress={() => {
-                choose(place);
-              }}
-            />
-          ))}
+    <Animated.View
+      testID="yesterday"
+      style={[entered, fill !== undefined && styles.fill, fill === 'page' && styles.wordCardHeight]}
+    >
+      <FeedNoticeCard notice="yesterday" gap={yesterdayCard.gap} fill={fill !== undefined}>
+        <View style={styles.part}>
+          <Text
+            accessibilityRole="header"
+            {...voice}
+            {...turnActions}
+            style={[typeStyle('yesterdayTitle', tokens), { color: colors.ink }]}
+          >
+            {title}
+          </Text>
+          <Text
+            {...voice}
+            accessibilityLabel={stressLabel(strings.wordCard, word.lemma, word.stressedVowels)}
+            style={[typeStyle('yesterdayLemma', tokens), { color: colors.accent }]}
+          >
+            {capitalised(word.lemma, voice.accessibilityLanguage)}
+          </Text>
         </View>
-        <Text
-          testID="yesterday-verdict"
-          accessibilityLiveRegion="polite"
-          {...voice}
-          style={[
-            typeStyle('yesterdayVerdict', tokens),
-            styles.verdict,
-            { color: chosen === quiz.right ? colors.accent : colors.ink },
-          ]}
-        >
-          {verdict}
-        </Text>
+        <View testID="yesterday-answers" style={[styles.part, fill !== undefined && styles.bottom]}>
+          <View testID="yesterday-options" style={styles.options}>
+            {quiz.meanings.map((meaning, place) => (
+              <QuizOption
+                key={String(place)}
+                testID={`yesterday-option-${String(place)}`}
+                meaning={meaning}
+                look={lookOf(place)}
+                accessibilityLabel={optionLabel(meaning, lookOf(place))}
+                picked={place === chosen}
+                onPress={() => {
+                  choose(place);
+                }}
+              />
+            ))}
+          </View>
+          <Text
+            testID="yesterday-verdict"
+            accessibilityLiveRegion="polite"
+            {...voice}
+            style={[
+              typeStyle('yesterdayVerdict', tokens),
+              styles.verdict,
+              { color: chosen === quiz.right ? colors.accent : colors.ink },
+            ]}
+          >
+            {verdict}
+          </Text>
+        </View>
       </FeedNoticeCard>
     </Animated.View>
   );
@@ -154,6 +166,12 @@ export function YesterdayCard({
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  // Ends where a framed Word card's face ends: over the room it leaves for the swipe stamp
+  // and its offset shadow, as the Quick Question does (owner, 23.11).
+  wordCardHeight: { paddingBottom: swipeStampLayout.room + entryCardFrame.shadow },
+  part: { gap: yesterdayCard.gap },
+  // The auto margin takes the free room, so the answers sit at the card's bottom (owner, 23.11).
+  bottom: { marginTop: 'auto' },
   // A clear gap from the bottom of an option's edge to the next option (owner, 16.11).
   options: { gap: yesterdayCard.optionGap },
   verdict: { minHeight: yesterdayCard.verdictHeight },

@@ -39,7 +39,7 @@ interface FeedClearance {
   readonly row: number;
   /** Where a card the page's height starts: where the header ends under the logo row alone. */
   readonly card: number;
-  /** A row's 8 points lower: the red card of the Word of the Day and Yesterday hang from it (board p1). */
+  /** A row's 8 points lower: the red card of the Word of the Day that scrolls hangs from it (board p1). */
   readonly hanging: number;
 }
 

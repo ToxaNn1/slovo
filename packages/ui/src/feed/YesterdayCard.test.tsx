@@ -11,7 +11,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react-n
 import { Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
-import { quizOption, yesterdayCard } from '../tokens';
+import { entryCardFrame, quizOption, swipeStampLayout, yesterdayCard } from '../tokens';
 
 const strings = testStrings({
   feedNotices: {
@@ -63,8 +63,8 @@ const PAGES = ['yesterday', 'next'] as const;
 async function renderFeed({
   given = quiz,
   reduceMotion = false,
-  fill = false,
-}: { given?: YesterdayQuiz; reduceMotion?: boolean; fill?: boolean } = {}) {
+  fill,
+}: { given?: YesterdayQuiz; reduceMotion?: boolean; fill?: 'page' | 'rest' } = {}) {
   const onAnswer = jest.fn();
   await render(
     <ReduceMotionProvider reduceMotion={reduceMotion}>
@@ -137,12 +137,30 @@ describe('the Yesterday card', () => {
   });
 
   it('fills its page as a fixed frame, and its meanings scroll inside it, never the page (owner, 16.11)', async () => {
-    await renderFeed({ fill: true });
+    await renderFeed({ fill: 'page' });
 
     const card = screen.getByTestId('feed-notice-yesterday');
     expect(card).toHaveStyle({ flexGrow: 1, overflow: 'hidden' });
     expect(within(card).getByTestId('feed-notice-yesterday-scroll').type).toBe('RCTScrollView');
     expect(within(card).getByTestId('yesterday-options')).toBeTruthy();
+  });
+
+  it('on its own page ends where a framed Word card ends, the question on top and the answers at the bottom (owner, 23.11)', async () => {
+    await renderFeed({ fill: 'page' });
+
+    expect(screen.getByTestId('yesterday')).toHaveStyle({
+      paddingBottom: swipeStampLayout.room + entryCardFrame.shadow,
+    });
+    expect(screen.getByTestId('yesterday-answers')).toHaveStyle({ marginTop: 'auto' });
+  });
+
+  it('under the Weekly Recap fills the rest of the page, its answers at the bottom', async () => {
+    await renderFeed({ fill: 'rest' });
+
+    expect(screen.getByTestId('yesterday')).not.toHaveStyle({
+      paddingBottom: swipeStampLayout.room + entryCardFrame.shadow,
+    });
+    expect(screen.getByTestId('yesterday-answers')).toHaveStyle({ marginTop: 'auto' });
   });
 
   it('sets its options apart by a clear gap below each one’s edge, and a long meaning clear of the tile’s edges (owner, 16.11)', async () => {
