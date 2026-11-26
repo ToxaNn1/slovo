@@ -182,3 +182,11 @@
 прицюцюркуватий witty-insults 5
 пріснопам'ятний language-speech 5
 прясельце history-antiquity 5
+пандур history-antiquity 5
+папіровка folk-names 4
+петиметр witty-insults 5
+півчий arts-culture 5
+підголосок arts-culture 5
+підгрузд folk-names 5
+полукіпок old-crafts 5
+протереб nature-weather 5
