@@ -91,9 +91,9 @@
 низь nature-weather 3
 нипати language-speech 5
 нобілітет history-antiquity 4
-новиця history-antiquity 4
+новиця history-antiquity 3
 новоявлений language-speech 3
-номос history-antiquity 4
+номос history-antiquity 3
 нувориш witty-insults 5
 ніздрюватий nature-weather 4
 обвалькувати old-crafts 5
