@@ -89,3 +89,12 @@
 здоровай witty-insults 5
 зурна arts-culture 5
 зугарно language-speech 5
+завиграшки conversation 4
+зцупити conversation 4
+забарливий emotions-character 5
+закусь conversation 5
+запиндючитися emotions-character 5
+заум arts-culture 5
+збиточник witty-insults 5
+зікурат history-antiquity 5
+зюйдвестка household-crafts 5
