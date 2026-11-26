@@ -17,6 +17,10 @@ const HEADWORDS = [
   'ООН\tnoun:inanim:f:v_naz:nv:abbr',
   'вуй\tnoun:anim:m:v_naz:arch',
   'гуторити\tverb:imperf:inf:rare',
+  'ґазда\tnoun:anim:m:v_naz:dial',
+  'перст\tnoun:inanim:m:v_naz:arch',
+  'вельми\tadv:arch',
+  'вельми\tadv',
   'гарбуз\tnoun:inanim:m:v_naz:alt',
   'гарбуз\tnoun:inanim:m:v_naz',
   'замазурений\tadj:m:v_naz:adjp:pasv:perf',
@@ -39,6 +43,8 @@ const ZIPF: Readonly<Record<string, number>> = {
   ґречний: 1.48,
   ґречно: 1.93,
   бринькати: 0.8,
+  перст: 1.62,
+  вельми: 1.62,
 };
 
 function input(overrides: Partial<LemmaSourcingInput> = {}): LemmaSourcingInput {
@@ -87,12 +93,44 @@ describe('sourceLemmas', () => {
         'бабак ? 2',
         'бринькати ? 4',
         'битися ? 5',
+        'вельми ? 3',
+        'вуй ? 5',
+        'гуторити ? 5',
         'дзвонар ? 5',
         'мжичка ? 3',
+        'перст ? 4',
         'ґречний ? 3',
         'ґречно ? 2',
       ].sort(),
     );
+  });
+
+  it('keeps rare and archaic Lemmas, an archaic one a rarity higher (at most 5), and drops dialect ones', () => {
+    const result = sourceLemmas(input({ options: { count: '100' } }));
+    if (!result.ok) throw new Error(result.errors.join('\n'));
+    const picked = lines(result.list);
+    expect(picked).toContain('гуторити ? 5');
+    expect(picked).toContain('перст ? 4');
+    expect(picked).toContain('вуй ? 5');
+    expect(picked.map((line) => line.split(' ')[0])).not.toContain('ґазда');
+  });
+
+  it('gives an archaic Lemma the rarity that keeps it out of band 1 a place in band 2', () => {
+    const result = sourceLemmas(
+      input({
+        headwords: 'перст\tnoun:inanim:m:v_naz:arch',
+        zipf: () => 3.1,
+        options: { count: '100' },
+      }),
+    );
+    if (!result.ok) throw new Error(result.errors.join('\n'));
+    expect(lines(result.list)).toEqual(['перст ? 2']);
+  });
+
+  it('does not raise the rarity of a Lemma with a form that is not archaic', () => {
+    const result = sourceLemmas(input({ options: { count: '100', letters: 'в', pos: 'adv:1' } }));
+    if (!result.ok) throw new Error(result.errors.join('\n'));
+    expect(lines(result.list)).toEqual(['вельми ? 3']);
   });
 
   it('notes the part of speech and the Zipf on each line, after a comment sign', () => {
@@ -175,12 +213,12 @@ describe('sourceLemmas', () => {
     if (!result.ok) throw new Error(result.errors.join('\n'));
     expect(result.pool).toEqual({
       2: { noun: 1, verb: 0, adj: 0, adv: 1 },
-      3: { noun: 1, verb: 0, adj: 1, adv: 0 },
-      4: { noun: 0, verb: 1, adj: 0, adv: 0 },
-      5: { noun: 1, verb: 1, adj: 0, adv: 0 },
+      3: { noun: 1, verb: 0, adj: 1, adv: 1 },
+      4: { noun: 1, verb: 1, adj: 0, adv: 0 },
+      5: { noun: 2, verb: 2, adj: 0, adv: 0 },
     });
-    expect(lines(result.list)).toEqual(['ґречно ? 2']);
-    expect(result.shortfall).toBe(3);
+    expect(lines(result.list).sort()).toEqual(['вельми ? 3', 'ґречно ? 2'].sort());
+    expect(result.shortfall).toBe(2);
   });
 
   it.each([

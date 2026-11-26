@@ -6,8 +6,9 @@
  * The headword list has one line per Lemma form, `<lemma>\t<tags>`, the tags
  * as the dict_uk tagset writes them (`noun:inanim:f:v_naz`). A candidate is a
  * common noun, verb, adjective or adverb of the Edition's alphabet whose
- * rarity, from its Zipf in `wordfreq` on the bands of ADR 0146, is 2 to 5,
- * that the Edition does not have yet and no exclude list names.
+ * rarity, from its Zipf in `wordfreq` on the bands of ADR 0146 (one higher,
+ * at most 5, for an archaic Lemma), is 2 to 5, that the Edition does not have
+ * yet and no exclude list names.
  */
 import { matchKey } from './text';
 
@@ -28,8 +29,8 @@ const DEFAULT_RARITY_SHARES = '2:1,3:1,4:1,5:1';
 
 /**
  * Tags that keep a Lemma form out: proper names, abbreviations, participles,
- * pronouns and numerals, rare, dialect or archaic words, non-standard,
- * erroneous and obscene forms.
+ * pronouns and numerals, dialect words, non-standard, erroneous and obscene
+ * forms. Rare (`rare`) and archaic (`arch`) words stay: a wave wants them.
  */
 const EXCLUDING_TAGS = new Set([
   'prop',
@@ -47,8 +48,7 @@ const EXCLUDING_TAGS = new Set([
   'numr',
   '&numr',
   '&_numr',
-  'rare',
-  'arch',
+  'dial',
   'alt',
   'bad',
   'err',
@@ -73,6 +73,9 @@ function isLemmaForm(pos: CandidatePos, tags: readonly string[]): boolean {
       return !tags.some((t) => t.startsWith('comp'));
   }
 }
+
+/** The tag of an archaic Lemma form, which adds 1 to the rarity (ADR 0146). */
+const ARCHAIC_TAG = 'arch';
 
 /** The rarity ADR 0146 gives a Zipf frequency: 2.5 / 1.93 / 1.48 / above 0 / absent. */
 export function rarityBand(zipf: number): Rarity {
@@ -166,12 +169,12 @@ export function sourceLemmas(input: LemmaSourcingInput): LemmaSourcingResult {
 
   const cells = new Map<string, Candidate[]>();
   const pool = emptyPool();
-  for (const { lemma, pos } of headwordLemmas(input.headwords)) {
+  for (const { lemma, pos, archaic } of headwordLemmas(input.headwords)) {
     if (!letterSequence(lemma).every((letter) => alphabet.has(letter) || letter === "'")) continue;
     if (letters !== undefined && !letters.has(lemma[0] ?? '')) continue;
     if (isKnown(lemma)) continue;
     const zipf = input.zipf(lemma);
-    const rarity = rarityBand(zipf);
+    const rarity = archaic ? raised(rarityBand(zipf)) : rarityBand(zipf);
     if (rarity === 1) continue;
     pool[rarity][pos] += 1;
     if ((rarityShares.get(String(rarity)) ?? 0) === 0) continue;
@@ -214,10 +217,31 @@ export function sourceLemmas(input: LemmaSourcingInput): LemmaSourcingResult {
   return { ok: true, list: `${list}\n`, pool, shortfall: count - picked.length };
 }
 
+/** The rarity one step higher, at most 5: what `archaic` adds (ADR 0146). */
+function raised(rarity: Rarity): CandidateRarity {
+  switch (rarity) {
+    case 1:
+      return 2;
+    case 2:
+      return 3;
+    case 3:
+      return 4;
+    case 4:
+    case 5:
+      return 5;
+  }
+}
+
+interface HeadwordLemma {
+  readonly lemma: string;
+  readonly pos: CandidatePos;
+  /** Every clean Lemma form of it is tagged archaic. */
+  readonly archaic: boolean;
+}
+
 /** The distinct (Lemma, part of speech) pairs with at least one clean Lemma form. */
-function headwordLemmas(headwords: string): { lemma: string; pos: CandidatePos }[] {
-  const seen = new Set<string>();
-  const lemmas: { lemma: string; pos: CandidatePos }[] = [];
+function headwordLemmas(headwords: string): HeadwordLemma[] {
+  const lemmas = new Map<string, HeadwordLemma>();
   for (const line of headwords.split('\n')) {
     const [rawLemma, tagText] = line.split('\t');
     if (rawLemma === undefined || tagText === undefined) continue;
@@ -227,11 +251,10 @@ function headwordLemmas(headwords: string): { lemma: string; pos: CandidatePos }
     if (pos === undefined || !isLemmaForm(pos, tags)) continue;
     if (tags.some((tag) => EXCLUDING_TAGS.has(tag))) continue;
     const key = `${lemma}\t${pos}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    lemmas.push({ lemma, pos });
+    const archaic = tags.includes(ARCHAIC_TAG) && (lemmas.get(key)?.archaic ?? true);
+    lemmas.set(key, { lemma, pos, archaic });
   }
-  return lemmas;
+  return [...lemmas.values()];
 }
 
 /** The first field of every line of a Lemma list, `#` comments left out. */
