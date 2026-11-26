@@ -18,3 +18,10 @@
 мокрина nature-weather 3
 мушва nature-weather 5
 мжиця nature-weather 5
+леліти emotions-character 5
+м'яльня old-crafts 5
+мамона history-antiquity 4
+мерхнути nature-weather 5
+мовкнути language-speech 5
+лудити old-crafts 5
+мантачити old-crafts 5
