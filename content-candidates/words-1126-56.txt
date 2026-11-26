@@ -95,3 +95,10 @@
 журкіт nature-weather 4
 ікономаляр arts-culture 5
 історієписання language-speech 5
+ейкумена history-antiquity 5
+жезлоносець history-antiquity 4
+живоглот witty-insults 4
+жовклий nature-weather 4
+жовтофіоль nature-weather 5
+іглиця nature-weather 4
+ісихаст history-antiquity 5
