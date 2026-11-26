@@ -85,7 +85,6 @@
 стожильний human-body 5
 стріти history-antiquity 5
 сув'яззя language-speech 5
-сукнина household-crafts 5
 супротивлення emotions-character 5
 сурміння military 5
 сухітник human-body 5
@@ -179,7 +178,6 @@
 сакма history-antiquity 5
 сварливець witty-insults 5
 світодержець history-antiquity 5
-славолюбець emotions-character 5
 смолокурня old-crafts 5
 сницарство old-crafts 5
 снотлумачення history-antiquity 5
@@ -201,3 +199,17 @@
 сулійка household-crafts 5
 супоня household-crafts 5
 схмарніти nature-weather 5
+свистальце arts-culture 5
+сиром'ятний old-crafts 5
+сіверець nature-weather 5
+скородрукарня technology 5
+скриводушити emotions-character 5
+слабодухий emotions-character 5
+славословець language-speech 5
+спідсподу language-speech 5
+сповільна language-speech 5
+стайняр old-crafts 5
+стужитися emotions-character 5
+сузьма household-crafts 5
+сукмана household-crafts 5
+сумливий emotions-character 5
