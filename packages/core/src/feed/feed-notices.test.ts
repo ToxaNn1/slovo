@@ -8,6 +8,8 @@ import {
   type Feed,
   type FeedCard,
   type FeedNotice,
+  type EntryRowModel,
+  type WeeklyRecapModel,
   type WordCardModel,
 } from '../index';
 import { type FeedNoticeContent, type FeedNotices } from './feed-notices';
@@ -41,6 +43,29 @@ const yesterdaysWord: WordCardModel = {
   linkedCorrections: [],
   synonymRow: undefined,
   sourceNames: [],
+};
+
+/** The numbers a Weekly Recap of these tests shows. */
+const recap: WeeklyRecapModel = {
+  firstDay: { year: 2026, month: 10, day: 19 },
+  lastDay: { year: 2026, month: 10, day: 25 },
+  seen: 1,
+  saved: 0,
+  streak: 1,
+};
+
+/** The row the Community Word of these tests shows: that of `w_00`. */
+const communityRow: EntryRowModel = {
+  kind: 'word',
+  entryId: 'w_00',
+  title: '00',
+  secondLine: 'The meaning of 00.',
+  labelKey: 'word',
+  spoken: '00, The meaning of 00.',
+  partOfSpeech: 'noun',
+  gender: undefined,
+  registers: [],
+  rarity: 3,
 };
 
 const synonymRows: readonly SynonymRow[] = Array.from({ length: 3 }, (_, index) => ({
@@ -87,11 +112,11 @@ const fakeNotices = (notices: readonly FeedNotice[]): FeedNotices => ({
  */
 const contentOf = (notice: FeedNotice): FeedNoticeContent => {
   if (notice === 'firstWeek') return { notice, firstWeekDay: 1 };
-  if (notice === 'weeklyRecap') return { notice, folded: false, yesterday: undefined };
+  if (notice === 'weeklyRecap') return { notice, recap, folded: false, yesterday: undefined };
   if (notice === 'yesterday')
     return { notice, word: yesterdaysWord, quiz: { meanings: ['a', 'b', 'c'], right: 0 } };
   if (notice === 'communityWord')
-    return { notice, card: { kind: 'word', entryId: 'w_00', model: yesterdaysWord }, adds: 3 };
+    return { notice, row: communityRow, adds: 3 };
   if (notice === 'levelMilestone') return { notice, level: 5, name: 'Sprout' };
   if (notice === 'goalReached') return { notice, goal: 10, words: ['00'] };
   return { notice };
