@@ -315,6 +315,7 @@
 пустиня nature-weather 3
 пустище nature-weather 5
 пустоб'яка witty-insults 5
+пустолобий witty-insults 5
 пустомолка witty-insults 5
 пустопаш language-speech 5
 пустіти nature-weather 5
