@@ -261,3 +261,16 @@
 нестатечно emotions-character 5
 нехарапутний witty-insults 5
 нівідкіля language-speech 5
+навзаклад language-speech 5
+навзнаки language-speech 4
+навідліг language-speech 5
+найпослідущий language-speech 5
+наледве language-speech 5
+невелемовно language-speech 5
+нежурливий emotions-character 5
+незлобливий emotions-character 5
+немудрячий emotions-character 5
+нерадий emotions-character 5
+несосвітенно language-speech 5
+несповідимо language-speech 5
+нирцем language-speech 5
