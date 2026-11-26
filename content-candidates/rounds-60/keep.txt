@@ -31,7 +31,6 @@
 мерзити emotions-character 5
 мертвизна emotions-character 5
 метикувати emotions-character 4
-минущість emotions-character 4
 мишва nature-weather 5
 міжкоролів'я history-antiquity 5
 міздряний old-crafts 5
@@ -79,7 +78,6 @@
 мисколиз witty-insults 5
 мислено conversation 5
 митусем conversation 5
-мідниця household-crafts 5
 міжвіконня home 5
 мінута conversation 4
 мірник old-crafts 4
@@ -115,7 +113,6 @@
 мурашва nature-weather 5
 магнатерія history-antiquity 5
 мадярон history-antiquity 5
-маковиння household-crafts 5
 малотямущий witty-insults 5
 мандрьоха witty-insults 5
 мастачка emotions-character 5
@@ -155,3 +152,10 @@
 моцуватий human-body 5
 мракобіс witty-insults 5
 муніція military 5
+макорженик household-crafts 5
+мандатарій history-antiquity 5
+марище arts-culture 5
+минувщина history-antiquity 5
+миршавець witty-insults 5
+мідяниця folk-names 5
+мотоциклет transport 5
