@@ -56,3 +56,14 @@
 очевисто language-speech 5
 очілля history-antiquity 5
 ошанцювати military 5
+обмацки language-speech 5
+окова history-antiquity 4
+омріяти emotions-character 4
+опашень history-antiquity 5
+оперіщити conversation 4
+опойок old-crafts 5
+осоруга witty-insults 5
+оторочка household-crafts 4
+оцупок household-crafts 5
+осичняк nature-weather 5
+оклунок household-crafts 5
