@@ -258,7 +258,11 @@ describe('loadWiktionaryLabels', () => {
       Buffer.concat([
         utf8(`-- MySQL dump\nCREATE TABLE \`${table}\` (\n  \`x\` int\n);\n`),
         utf8(`INSERT INTO \`${table}\` VALUES\n`),
-        Buffer.concat(rows.map((row, at) => Buffer.concat([utf8(row), utf8(at === rows.length - 1 ? ';\n' : ',\n')]))),
+        Buffer.concat(
+          rows.map((row, at) =>
+            Buffer.concat([utf8(row), utf8(at === rows.length - 1 ? ';\n' : ',\n')]),
+          ),
+        ),
       ]),
     );
   const pinned = (url: string, bytes: Uint8Array) => ({

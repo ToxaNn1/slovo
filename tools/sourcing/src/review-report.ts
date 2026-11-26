@@ -54,6 +54,7 @@ export type FlagKind =
   | 'spelling-differs'
   | 'existing-entry'
   | 'cross-reference'
+  | 'followed-reference'
   | 'region-missing'
   | 'write-fresh'
   | 'check';

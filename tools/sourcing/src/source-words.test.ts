@@ -55,6 +55,9 @@ const savedPages: Record<string, { status: number; file: string }> = {
   // СУМ-11: віконце only points at вікно; фіра is a dialect Word.
   [`${GOROH}Тлумачення/віконце`]: { status: 200, file: 'goroh/definitions-vikontse.html' },
   [`${GOROH}Тлумачення/фіра`]: { status: 200, file: 'goroh/definitions-fira.html' },
+  // A made-up article that only points at ятір; ЕСУМ lists мжа, glossed, under мжи́ти.
+  [`${GOROH}Тлумачення/вершечок`]: { status: 200, file: 'goroh/definitions-vershechok.html' },
+  [`${GOROH}Етимологія/мжа`]: { status: 200, file: 'goroh/etymology-mzhychka.html' },
 };
 
 function savedLemma(
@@ -192,6 +195,7 @@ function setup(overrides: Partial<SourcingOptions> = {}, network?: NetworkOption
     fetch: net.fetch,
     clock,
     random: seededRandom(),
+    sumAccess: 'auto',
     ...overrides,
   };
   return { options, net, workDir, clock };
@@ -1125,5 +1129,148 @@ describe('the filters of source:words', () => {
       ],
     });
     expect(net.requests).toEqual([]);
+  });
+});
+
+describe('a cross-reference, followed one step', () => {
+  it('drafts the Lemma it points at when that is rare and no Word, flagged', async () => {
+    const { options } = setup({ lemmaList: 'вершечок household-crafts 3\n', zipf: () => 0 });
+
+    const result = await sourceWords(options);
+
+    const [word, ...others] = readDrafts(options.outDir).map((draft) => WordSchema.parse(draft));
+    expect(others).toEqual([]);
+    expect(word).toMatchObject({ lemma: 'ятір', categoryId: 'household-crafts', rarity: 5 });
+    expect(readDrafts(options.outDir, 'incomplete')).toEqual([]);
+    expect(flagsOf(result, 'вершечок')).toContainEqual({
+      kind: 'followed-reference',
+      message: '"вершечок" only points at "ятір" («Те саме, що я́тір 1.»): drafted "ятір" instead',
+    });
+  });
+
+  it('gives the Lemma it points at the rarity of its own Zipf', async () => {
+    const { options } = setup({
+      lemmaList: 'вершечок household-crafts 3\n',
+      zipf: (lemma) => (lemma === 'ятір' ? 2 : 0),
+    });
+
+    await sourceWords(options);
+
+    expect(WordSchema.parse(readDrafts(options.outDir)[0])).toMatchObject({
+      lemma: 'ятір',
+      rarity: 2,
+    });
+  });
+
+  it('drops the Lemma when it points at a common word, with the reason', async () => {
+    const { options } = setup({
+      lemmaList: 'віконце household-crafts 2\n',
+      zipf: (lemma) => (lemma === 'вікно' ? 4.6 : 0),
+    });
+
+    const result = await sourceWords(options);
+
+    expect(readDrafts(options.outDir)).toEqual([]);
+    expect(readDrafts(options.outDir, 'incomplete')).toEqual([]);
+    expect(lemmaOutcome(result, 'віконце').flags).toEqual([
+      {
+        kind: 'cross-reference',
+        message:
+          '"віконце" only points at "вікно" («Зменш. до вікно́.»), a common word (Zipf 4.60): left out',
+      },
+    ]);
+  });
+
+  it('drops the Lemma when it points at a Word of the Edition, with the reason', async () => {
+    const edition = editionWith((config) => config, {
+      w_exist1: {
+        id: 'w_exist1',
+        lemma: 'ятір',
+        stress: [1],
+        partOfSpeech: 'noun',
+        gender: 'masculine',
+        primaryDefinition: 'Рибальська снасть.',
+        categoryId: 'household-crafts',
+        rarity: 3,
+        sources: [{ title: 'Тестове джерело' }],
+        retired: false,
+      },
+    });
+    const { options } = setup({
+      lemmaList: 'вершечок household-crafts 3\n',
+      edition,
+      zipf: () => 0,
+    });
+
+    const result = await sourceWords(options);
+
+    expect(readDrafts(options.outDir)).toEqual([]);
+    expect(readDrafts(options.outDir, 'incomplete')).toEqual([]);
+    expect(lemmaOutcome(result, 'вершечок').flags).toEqual([
+      {
+        kind: 'cross-reference',
+        message:
+          '"вершечок" only points at "ятір" («Те саме, що я́тір 1.»), already a Word of the Edition: left out',
+      },
+    ]);
+  });
+
+  it('keeps the cross-reference in incomplete/ when no dictionary has the Lemma it points at', async () => {
+    const { options } = setup({ lemmaList: 'віконце household-crafts 2\n', zipf: () => 0 });
+
+    const result = await sourceWords(options);
+
+    expect(readDrafts(options.outDir)).toEqual([]);
+    expect(readDrafts(options.outDir, 'incomplete')).toMatchObject([{ lemma: 'віконце' }]);
+    expect(flagsOf(result, 'віконце').map((flag) => flag.kind)).toContain('cross-reference');
+  });
+});
+
+describe('ЕСУМ as the basis of a Definition', () => {
+  it('drafts a Lemma no explanatory dictionary has from its ЕСУМ gloss, needing a normative dictionary', async () => {
+    const { options } = setup({ lemmaList: 'мжа nature-weather 4\n' });
+
+    const result = await sourceWords(options);
+
+    expect(readDrafts(options.outDir)).toEqual([]);
+    const [draft, ...others] = readDrafts(options.outDir, 'incomplete');
+    expect(others).toEqual([]);
+    const { id } = z.looseObject({ id: z.string() }).parse(draft);
+    expect(draft).toEqual({
+      id,
+      lemma: 'мжа',
+      categoryId: 'nature-weather',
+      rarity: 4,
+      sources: [
+        {
+          title: 'Горох: етимологія (Етимологічний словник української мови, стаття «мжи́ти»)',
+          url: 'https://goroh.pp.ua/Етимологія/мжа',
+        },
+      ],
+    });
+    const [outcome] = lemmaOutcome(result, 'мжа').drafts;
+    expect(outcome?.issues).toContain(
+      'sources: no normative dictionary has the Lemma yet; cite one that proves the Word',
+    );
+    expect(outcome?.flags).toContainEqual({
+      kind: 'write-fresh',
+      message:
+        'No explanatory dictionary has the Lemma; ЕСУМ glosses it «мжичка» (article «мжи́ти»). The gloss is a basis, never a quote: write the Definition fresh and prove the Word in a normative dictionary',
+    });
+  });
+});
+
+describe('sum.in.ua', () => {
+  it('is not asked unless the run asks for it', async () => {
+    const { options, net } = setup(
+      { lemmaList: 'мжичка nature-weather 3\n' },
+      { withoutGorohDefinitions: true },
+    );
+    const { sumAccess, ...byDefault } = options;
+    expect(sumAccess).toBe('auto');
+
+    await sourceWords(byDefault);
+
+    expect(net.requests.filter((address) => !address.startsWith(GOROH))).toEqual([]);
   });
 });

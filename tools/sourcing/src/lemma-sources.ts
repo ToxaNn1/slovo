@@ -57,7 +57,8 @@ export interface WiktionaryDump {
   readonly categories: readonly string[];
 }
 
-const UK_WIKTIONARY_DUMP = 'https://dumps.wikimedia.org/ukwiktionary/20261101/ukwiktionary-20261101';
+const UK_WIKTIONARY_DUMP =
+  'https://dumps.wikimedia.org/ukwiktionary/20261101/ukwiktionary-20261101';
 
 const UK_WIKTIONARY: WiktionaryDump = {
   date: '20261101',
@@ -168,7 +169,13 @@ function utf8(field: string): string {
  */
 function* sqlRows(gzipped: Uint8Array): Generator<string[]> {
   const text = gunzipSync(gzipped).toString('latin1');
-  const escapes: Readonly<Record<string, string>> = { n: '\n', r: '\r', t: '\t', '0': '\0', Z: '\x1a' };
+  const escapes: Readonly<Record<string, string>> = {
+    n: '\n',
+    r: '\r',
+    t: '\t',
+    '0': '\0',
+    Z: '\x1a',
+  };
   for (const statement of text.matchAll(/^INSERT INTO `\w+` VALUES\s*/gm)) {
     let at = statement.index + statement[0].length;
     while (text[at] === '(') {

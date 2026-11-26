@@ -7,7 +7,7 @@ Dev-only tooling, never shipped in an app. It turns a list of Lemmas into draft 
   - «Словозміна»: Stress, part of speech and gender when the article lacks them (asked only then).
   - «Синонімія»: Synonyms, from Karavansky's and the mphdict synonym dictionaries only.
   - «Етимологія»: etymology from ЕСУМ.
-- **СУМ-11** on [sum.in.ua](https://sum.in.ua), or the newest copy in the [Wayback Machine](https://web.archive.org): a fallback for Lemmas goroh has no explanatory article for. Both addresses go into the sources (`url` and `archivedUrl`). Each host gets one quick try per run; once it refuses or times out, it is skipped for the rest of the run.
+- **СУМ-11** on [sum.in.ua](https://sum.in.ua), or the newest copy in the [Wayback Machine](https://web.archive.org): asked only with `--sum auto|direct|wayback`, for Lemmas goroh has no explanatory article for (sum.in.ua was down at every check of November 2026, so it is off by default). Both addresses go into the sources (`url` and `archivedUrl`). Each host gets one quick try per run; once it refuses or times out, it is skipped for the rest of the run.
 
 Every command checks its drafts against the Edition's existing records, read from its content snapshot (ADR 0090): `--snapshot <file>`, else the backend's at `$SLOVO_API_URL` (`GET /v1/editions/{id}/content/snapshot`); with neither it exits 2 and drafts nothing, never against an empty Edition, and it never reads the Edition folder's content files. The dictionaries are Ukrainian, so the tool refuses an Edition in any other language. Every field comes from one of these sources. What they leave open stays empty and is flagged. A human or an agent writes the ready drafts through the write API with `pnpm content add <kind> <drafts folder> --edition <id>`; the CLI never writes the Edition folder.
 
@@ -30,7 +30,7 @@ pnpm source:words path/to/lemmas.txt --edition uk
 | `--edition <id>`                   | required                | The Edition whose Categories, Stress rules and id registry apply.           |
 | `--out <dir>`                      | `tools/sourcing/review` | The review folder (git-ignored).                                            |
 | `--cache <dir>`                    | see below               | Fetched pages and the shared request schedule.                              |
-| `--sum auto\|direct\|wayback\|off` | `auto`                  | The sum.in.ua fallback: the site then the archive, one of them, or neither. |
+| `--sum off\|auto\|direct\|wayback` | `off`                   | The sum.in.ua fallback: neither, the site then the archive, or one of them. |
 
 ### Running several at once
 
@@ -74,6 +74,16 @@ Each kind of Entry writes into its own folder of the review folder; Words go to 
 | `cross-reference` | The primary Definition only points at another article («Зменш. до вікно», «Див.…», «Те саме, що…»), with or without a register label in front, so it explains nothing on an Entry card. |
 | `region-missing`  | A dialect Word (the dialectal register label) with no Region. The tool does not source a Region: add one from a cited source, or drop the Word.                                         |
 
+**A cross-reference is followed one step.** When a Lemma's only article points at another Lemma, `source:words` reads the Lemma it points at (the first word after the marker, Stress and homonym index dropped) and:
+
+- drops the Lemma, flagged `cross-reference` with the reason, when the Lemma it points at is a Word of the Edition (Retired ones too) or common (Zipf in `wordfreq` 2.5 or more);
+- else drafts the Lemma it points at in its place, with the rarity of its own Zipf on the bands of ADR 0146 and the line's Category, flagged `followed-reference`;
+- else, when no dictionary has the Lemma it points at, drafts the cross-reference as before, to `incomplete/`.
+
+Only one step: a Lemma it points at that only points further stays a `cross-reference` in `incomplete/`.
+
+**No explanatory article.** A Lemma neither goroh's explanatory dictionaries nor СУМ-11 has is drafted from Грінченко (below) when its index has it, else from ЕСУМ's gloss on goroh's «Етимологія» page (the gloss of the article it heads, or of its variant under another headword; `«тс.»` does not count): ЕСУМ as the Source, no Definition, flagged `write-fresh` with the gloss. ЕСУМ explains a word but does not prove it, so the draft also carries the issue that a normative dictionary must be cited before it is ready. A Lemma neither has is flagged `no-entry`.
+
 The reference markers live in one list, `REFERENCE_MARKERS` in `src/word-filters.ts`; the next marker is one more line. They match case-insensitive at the start of the Definition.
 
 A Lemma list line whose Category is one of the Edition's `categoriesRequiringHistory` (in the UA Edition `repressed-words` and `chameleon-words`) is refused like an unknown Category, naming the line, before anything is fetched: the tool does not source a Word History, so such a Word cannot pass the build.
@@ -112,9 +122,15 @@ pnpm source:lemmas --edition uk --count 200 --letters абв --out scripts/conte
 мжичка ? 3 # noun, Zipf 1.11
 ```
 
-The Category is a placeholder, `?`: the writer fills in each one (and may move the rarity ±1, or lower an absent Word the reader knows, ADR 0146) before `source:words`, which refuses `?`. The pick is random within each part of speech and rarity, so expect some dull Lemmas (relative adjectives of place names, technical compounds): the writer strikes them, which is why a list is written a third longer than the count.
+The comment ends with the Lemma's evidence, if any: `arch`, `Wiktionary`, `ЕСУМ`.
 
-`source:words` still flags a Lemma whose Definition is only a reference («див. …», «те саме, що …») as `cross-reference`; it does not follow it to the main Lemma.
+The Category is a placeholder, `?`: the writer fills in each one (and may move the rarity ±1, or lower an absent Word the reader knows, ADR 0146) before `source:words`, which refuses `?`.
+
+**Productive derivatives are left out** before a writer sees them: verbal nouns in `-ння`/`-ття`, `-ість` nouns, `-о` adverbs and `-ся` verbs whose base is a Word or at least as frequent; compounds with `взаємо-`, `енерго-`, `макро-`, `міні-` and the like; adjectives of place names in `-ський`, `-цький`, `-зький`; and an archaic Lemma that is a live Lemma in an old spelling (ґ as г, е/є, і/ї/и). The count of those left out goes to standard error.
+
+**Ranked by evidence.** Within each part of speech and rarity, a Lemma tagged `arch` or labelled dated, dialect, historical or rare by uk.wiktionary ranks first; ЕСУМ on goroh's «Етимологія» page is then asked about a shortlist of twice the cell's count, and a Lemma it lists ranks higher. Ties are random. The Wiktionary labels come from the categorylinks of a dated uk.wiktionary dump (CC BY-SA, read as facts, no text), downloaded once into `<cache>/lemmas/`, pinned by dump date and SHA-256 (ADR 0196).
+
+`source:words` follows a Lemma whose Definition is only a reference one step: see [Filters of `source:words`](#filters-of-sourcewords).
 
 ## Грінченко: `source:hrinchenko`
 

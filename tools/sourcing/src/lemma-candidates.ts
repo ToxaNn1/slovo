@@ -380,8 +380,7 @@ function derivativeTest(
   const hasBase = (lemma: string, pos: CandidatePos, candidates: readonly string[]) =>
     candidates.some(
       (base) =>
-        base !== lemma &&
-        (isWord(base) || (bases[pos].has(base) && zipf(base) >= zipf(lemma))),
+        base !== lemma && (isWord(base) || (bases[pos].has(base) && zipf(base) >= zipf(lemma))),
     );
   return (lemma, pos, archaic) => {
     if (archaic && oldSpellings(lemma).some((spelling) => live.has(spelling) || isWord(spelling)))
@@ -428,7 +427,7 @@ function oldSpellings(lemma: string): string[] {
   const withG = lemma.replaceAll('ґ', 'г');
   const spellings = new Set<string>([withG]);
   if (/^[оу]/.test(withG)) spellings.add(`г${withG}`);
-  const letters = [...withG];
+  const letters = Array.from(withG);
   letters.forEach((letter, at) => {
     for (const swap of SPELLING_SWAPS[letter] ?? []) {
       spellings.add([...letters.slice(0, at), swap, ...letters.slice(at + 1)].join(''));

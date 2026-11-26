@@ -39,14 +39,21 @@ import {
 } from './pipeline';
 import type { Flag, FlagKind } from './review-report';
 import type { DictionaryArticle } from './article';
+import { rarityBand } from './lemma-candidates';
 import { SumDictionary, type SumAccess } from './sum';
 import { matchKey, readStress, unstressed, withoutHomonymIndexes } from './text';
-import { filterWord } from './word-filters';
+import { crossReferenceTarget, filterWord, isCrossReference } from './word-filters';
 
 export type SourcingOptions = PipelineOptions & {
   /** The Lemmas to draft, one per line: `<lemma> <category id> <rarity>`; `#` starts a comment. */
   readonly lemmaList: string;
+  /** СУМ-11 on sum.in.ua or the Wayback Machine, asked only when the run says so: `off` by default. */
   readonly sumAccess?: SumAccess;
+  /**
+   * The `wordfreq` Zipf of a Lemma, 0 when absent: tells whether the Lemma a
+   * cross-reference points at is common, and gives it its rarity.
+   */
+  readonly zipf?: (lemma: string) => number;
   /** Грінченко's articles: a basis for a Lemma no explanatory dictionary has (ADR 0207). */
   readonly hrinchenko?: HrinchenkoIndex;
 };
@@ -55,15 +62,20 @@ export type SourcingOptions = PipelineOptions & {
  * Drafts Words for a list of Lemmas from goroh.pp.ua (its explanatory
  * dictionaries, inflection, synonym and etymological dictionaries), with
  * СУМ-11 on sum.in.ua or its Wayback Machine copies as a fallback for
- * Definitions, and writes them with a review report to the `words` folder of
- * the review folder. Every field comes from a source; what the sources leave
- * open stays empty and is flagged for a human.
+ * Definitions when `sumAccess` asks for it, and writes them with a review
+ * report to the `words` folder of the review folder. A Lemma whose only
+ * article points at another is followed one step. Every field comes from a
+ * source; what the sources leave open stays empty and is flagged for a human.
  */
 export function sourceWords(options: SourcingOptions): Promise<SourcingResult> {
   return runSourcing(
     options.lemmaList,
     options,
-    wordsKind(options.sumAccess ?? 'auto', options.hrinchenko ?? new Map()),
+    wordsKind({
+      sumAccess: options.sumAccess ?? 'off',
+      hrinchenko: options.hrinchenko ?? new Map(),
+      zipf: options.zipf ?? (() => 0),
+    }),
   );
 }
 
@@ -74,7 +86,15 @@ interface WordRequest {
 }
 
 /** Words as a kind of the sourcing run. */
-function wordsKind(sumAccess: SumAccess, hrinchenko: HrinchenkoIndex): SourcingKind<WordRequest> {
+function wordsKind({
+  sumAccess,
+  hrinchenko,
+  zipf,
+}: {
+  sumAccess: SumAccess;
+  hrinchenko: HrinchenkoIndex;
+  zipf: (lemma: string) => number;
+}): SourcingKind<WordRequest> {
   return {
     entryKind: 'word',
     folder: 'words',
@@ -85,6 +105,13 @@ function wordsKind(sumAccess: SumAccess, hrinchenko: HrinchenkoIndex): SourcingK
         ...draftContext,
         sum: new SumDictionary(draftContext.client, sumAccess),
         hrinchenko,
+        zipf,
+        wordLemmas: new Set(
+          draftContext.edition
+            .entryTexts()
+            .filter((entry) => entry.kind === 'word')
+            .map((entry) => entry.text),
+        ),
       };
       return (request) => draftLemma(request, context);
     },
@@ -120,7 +147,13 @@ function parseLemmaLine(content: string, edition: EditionFolder): ParsedLine<Wor
 interface Context extends DraftContext {
   readonly sum: SumDictionary;
   readonly hrinchenko: HrinchenkoIndex;
+  readonly zipf: (lemma: string) => number;
+  /** The Lemmas of the Edition's Words, Retired ones too. */
+  readonly wordLemmas: ReadonlySet<string>;
 }
+
+/** A Lemma at or above this Zipf is common: rarity 1, never a Rare Word (ADR 0146). */
+const COMMON_ZIPF = 2.5;
 
 /**
  * A Word as drafted: the authored shape, except that the sources may leave the
@@ -154,7 +187,16 @@ interface GorohEntry {
   readonly etymologies: readonly GorohEtymology[];
 }
 
-async function draftLemma(request: WordRequest, context: Context): Promise<KindOutcome> {
+/**
+ * Drafts a Lemma. When its only article points at another Lemma, follows it
+ * one step (`followed` is then the Lemma that pointed): a rare Lemma that is
+ * no Word becomes the draft, and a common one or a Word drops the Lemma.
+ */
+async function draftLemma(
+  request: WordRequest,
+  context: Context,
+  followed?: { readonly lemma: string; readonly definition: string },
+): Promise<KindOutcome> {
   const { lemma } = request;
   const flags: Flag[] = [];
   let articles: readonly DictionaryArticle[];
@@ -177,8 +219,8 @@ async function draftLemma(request: WordRequest, context: Context): Promise<KindO
       const lookup = await context.sum.lookUp(lemma);
       if (!lookup.found) {
         const tried = [gorohUrl('Тлумачення', lemma), ...lookup.tried];
-        const fromHrinchenko = draftFromHrinchenko(request, context, flags);
-        if (fromHrinchenko !== undefined) return fromHrinchenko;
+        const basis = await draftWithoutDefinition(request, context, flags, followed);
+        if (basis !== undefined) return basis;
         flags.push({
           kind: 'no-entry',
           message: `No dictionary entry found; tried ${tried.join(', ')}`,
@@ -187,14 +229,26 @@ async function draftLemma(request: WordRequest, context: Context): Promise<KindO
       }
       articles = lookup.articles.filter((article) => sumKey(article.headword) === sumKey(lemma));
       if (articles.length === 0) {
-        const fromHrinchenko = draftFromHrinchenko(request, context, flags);
-        if (fromHrinchenko !== undefined) return fromHrinchenko;
+        const basis = await draftWithoutDefinition(request, context, flags, followed);
+        if (basis !== undefined) return basis;
         flags.push({
           kind: 'no-entry',
           message: `${lookup.articles[0]?.source.url ?? 'sum.in.ua'} has no article for "${lemma}" (it has ${lookup.articles.map((article) => article.headword).join(', ')})`,
         });
         return { drafts: [], flags };
       }
+    }
+
+    const [only] = articles;
+    const reference = only?.definitions[0]?.text;
+    if (
+      followed === undefined &&
+      articles.length === 1 &&
+      reference !== undefined &&
+      isCrossReference(reference)
+    ) {
+      const followedOutcome = await followReference(request, context, reference);
+      if (followedOutcome !== undefined) return followedOutcome;
     }
 
     // The inflection dictionary is only asked when an article lacks Stress or grammar.
@@ -255,7 +309,129 @@ async function draftLemma(request: WordRequest, context: Context): Promise<KindO
   const drafts = articles.map((article) =>
     draftArticle(article, { request, goroh, isHomonym, context }),
   );
-  return { drafts, flags };
+  return {
+    drafts,
+    flags: [...(followed === undefined ? [] : [followedFlag(request, followed)]), ...flags],
+  };
+}
+
+/**
+ * Follows a cross-reference one step. Gives the outcome for the Lemma it
+ * points at, or a drop with the reason; `undefined` when no dictionary has
+ * that Lemma either, so the cross-reference is drafted as it is.
+ */
+async function followReference(
+  request: WordRequest,
+  context: Context,
+  definition: string,
+): Promise<KindOutcome | undefined> {
+  const target = crossReferenceTarget(definition);
+  if (target === undefined || target === request.lemma) return undefined;
+  const pointsAt = `"${request.lemma}" only points at "${target}" («${definition}»)`;
+  const drop = (reason: string): KindOutcome => ({
+    drafts: [],
+    flags: [{ kind: 'cross-reference', message: `${pointsAt}, ${reason}: left out` }],
+  });
+  if (context.wordLemmas.has(target)) return drop('already a Word of the Edition');
+  const zipf = context.zipf(target);
+  if (zipf >= COMMON_ZIPF) return drop(`a common word (Zipf ${zipf.toFixed(2)})`);
+  const outcome = await draftLemma(
+    { ...request, lemma: target, rarity: rarityBand(zipf) },
+    context,
+    { lemma: request.lemma, definition },
+  );
+  return outcome.drafts.length === 0 ? undefined : outcome;
+}
+
+function followedFlag(
+  request: WordRequest,
+  followed: { readonly lemma: string; readonly definition: string },
+): Flag {
+  return {
+    kind: 'followed-reference',
+    message: `"${followed.lemma}" only points at "${request.lemma}" («${followed.definition}»): drafted "${request.lemma}" instead`,
+  };
+}
+
+/**
+ * A draft for a Lemma no explanatory dictionary has: from Грінченко, which
+ * proves it, else from ЕСУМ's gloss, which only explains it. Neither gives a
+ * Definition, so the draft stays incomplete; `undefined` when neither has it.
+ */
+async function draftWithoutDefinition(
+  request: WordRequest,
+  context: Context,
+  flags: readonly Flag[],
+  followed: { readonly lemma: string; readonly definition: string } | undefined,
+): Promise<KindOutcome | undefined> {
+  const leading = followed === undefined ? [] : [followedFlag(request, followed)];
+  const fromHrinchenko = draftFromHrinchenko(request, context, flags);
+  if (fromHrinchenko !== undefined) {
+    return { ...fromHrinchenko, flags: [...leading, ...fromHrinchenko.flags] };
+  }
+  const fromEsum = await draftFromEsum(request, context, flags);
+  return fromEsum === undefined
+    ? undefined
+    : { ...fromEsum, flags: [...leading, ...fromEsum.flags] };
+}
+
+/**
+ * A draft from ЕСУМ's gloss of the Lemma: the citation, no Definition. ЕСУМ
+ * is an etymological dictionary, so the draft also needs a normative
+ * dictionary that proves the Word before it is ready.
+ */
+async function draftFromEsum(
+  request: WordRequest,
+  context: Context,
+  flags: readonly Flag[],
+): Promise<KindOutcome | undefined> {
+  const { lemma } = request;
+  const page = await fetchGoroh(context.client, 'Етимологія', lemma);
+  if (page === undefined) return undefined;
+  const { entries, underOtherHeadword } = matchingEtymologies(parseEtymologies(page), lemma);
+  const glossed = entries.flatMap((entry) => {
+    const gloss = underOtherHeadword ? entry.variantGlosses[lemma] : entry.gloss;
+    return gloss === undefined || gloss === '«тс.»' ? [] : [{ entry, gloss }];
+  });
+  const [first] = glossed;
+  if (first === undefined) return undefined;
+  const word: WordDraft = {
+    id: context.newId(),
+    lemma,
+    categoryId: request.categoryId,
+    rarity: request.rarity,
+    sources: [
+      {
+        title: underOtherHeadword
+          ? `Горох: етимологія (Етимологічний словник української мови, стаття «${first.entry.headword}»)`
+          : 'Горох: етимологія (Етимологічний словник української мови)',
+        url: gorohUrl('Етимологія', lemma),
+      },
+    ],
+  };
+  const writeFresh: Flag = {
+    kind: 'write-fresh',
+    message: `No explanatory dictionary has the Lemma; ЕСУМ glosses it ${glossed
+      .map(({ entry, gloss }) => `${gloss} (article «${entry.headword}»)`)
+      .join(
+        ' / ',
+      )}. The gloss is a basis, never a quote: write the Definition fresh and prove the Word in a normative dictionary`,
+  };
+  return {
+    drafts: [
+      {
+        entry: word,
+        headword: lemma,
+        issues: [
+          ...checkDraft(word, context.edition),
+          'sources: no normative dictionary has the Lemma yet; cite one that proves the Word',
+        ],
+        flags: [writeFresh],
+        summary: { text: lemma, group: request.categoryId, examples: 0, definition: '' },
+      },
+    ],
+    flags,
+  };
 }
 
 /**

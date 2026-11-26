@@ -130,7 +130,9 @@ describe('sourceLemmas', () => {
   });
 
   it('does not raise the rarity of a Lemma with a form that is not archaic', async () => {
-    const result = await sourceLemmas(input({ options: { count: '100', letters: 'в', pos: 'adv:1' } }));
+    const result = await sourceLemmas(
+      input({ options: { count: '100', letters: 'в', pos: 'adv:1' } }),
+    );
     if (!result.ok) throw new Error(result.errors.join('\n'));
     expect(lines(result.list)).toEqual(['вельми ? 3']);
   });
@@ -303,9 +305,11 @@ describe('sourceLemmas', () => {
       input({ headwords, existingLemmas: ['єнот'], options: { count: '100' } }),
     );
     if (!result.ok) throw new Error(result.errors.join('\n'));
-    expect(lines(result.list).map((line) => line.split(' ')[0]).sort()).toEqual(
-      ['густовно', 'горіх', 'перст', 'вуй'].sort(),
-    );
+    expect(
+      lines(result.list)
+        .map((line) => line.split(' ')[0])
+        .sort(),
+    ).toEqual(['густовно', 'горіх', 'перст', 'вуй'].sort());
   });
 
   it('ranks candidates by evidence: archaic and labelled by Wiktionary first', async () => {

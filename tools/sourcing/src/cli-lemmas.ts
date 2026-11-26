@@ -114,7 +114,13 @@ async function main(): Promise<number> {
     await loadWiktionaryLabels(sources),
   ];
   // ЕСУМ on goroh, through the polite client and the cache source:words shares.
-  const client = new PoliteClient(fetchPage, systemClock, sources.cacheDir, POLITE_INTERVAL_MS, log);
+  const client = new PoliteClient(
+    fetchPage,
+    systemClock,
+    sources.cacheDir,
+    POLITE_INTERVAL_MS,
+    log,
+  );
   const inEsum = async (lemma: string) => {
     try {
       const page = await fetchGoroh(client, 'Етимологія', lemma);
@@ -159,9 +165,7 @@ async function main(): Promise<number> {
   const written = result.list
     .split('\n')
     .filter((line) => line !== '' && !line.startsWith('#')).length;
-  log(
-    `Left out ${String(result.derivatives)} productive derivative(s) and old spelling(s).`,
-  );
+  log(`Left out ${String(result.derivatives)} productive derivative(s) and old spelling(s).`);
   log(
     `Wrote ${String(written)} line(s)${result.shortfall > 0 ? `, ${String(result.shortfall)} short of the count` : ''}; --seed ${String(seed)} repeats this pick.`,
   );
