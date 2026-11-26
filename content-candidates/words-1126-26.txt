@@ -16,3 +16,8 @@
 контрапроші military 5
 конкіста history-antiquity 4
 благовісний language-speech 4
+бичкуватий emotions-character 5
+бовтун witty-insults 4
+бурмоситися emotions-character 5
+дільний emotions-character 5
+колесування history-antiquity 4
