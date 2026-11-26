@@ -62,3 +62,5 @@
 шкарубіти human-body 5
 ярмити old-crafts 5
 яріти emotions-character 5
+тогоріч language-speech 4
+упень language-speech 5
