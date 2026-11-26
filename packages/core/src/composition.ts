@@ -10,7 +10,10 @@ import { anglicismMode } from './game/anglicism-mode';
 import { buildIdiomMode } from './game/build-idiom-mode';
 import { byLettersMode } from './game/by-letters-mode';
 import { correctionMode } from './game/correction-mode';
-import { openDailyCrossword, type DailyCrosswordOpening } from './game/daily-crossword';
+import {
+  openCrossingCrossword,
+  type CrossingCrosswordOpening,
+} from './game/crossing-crossword-progress';
 import { openCycle } from './feed/cycle';
 import { openCorrectionTypes, type CorrectionTypes } from './dashboard/correction-types';
 import { openCuratedCollections, type CuratedCollections } from './dashboard/curated-collections';
@@ -200,7 +203,7 @@ export interface Composition extends Hiding {
    * on a day no pattern fills or while it is off. Open it again
    * once the next local day starts.
    */
-  openDailyCrossword(): Promise<DailyCrosswordOpening>;
+  openDailyCrossword(): Promise<CrossingCrosswordOpening>;
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
    * kept Entry or the Synonym Row a Word card links back to; nothing for an id the Language Pack doesn't have. The card of
@@ -452,6 +455,7 @@ export async function openComposition({
     dayTurned,
     analytics,
     history,
+    rows,
     isFirstCycle: () => cycle.isFirst(),
   });
   const readerName = await openReaderName({ userState });
@@ -571,6 +575,7 @@ export async function openComposition({
     knowledge,
     wordOfTheDay,
     history: recorder,
+    xpLog,
     archive: archiveRecorder,
     notices: openFeedNotices({
       edition,
@@ -809,7 +814,7 @@ export async function openComposition({
     rarityTest,
     rarityRange,
     openDailyCrossword: () =>
-      openDailyCrossword({ entries, userState, clock, edition, xp: xpLog, analytics }),
+      openCrossingCrossword({ entries, userState, clock, edition, xp: xpLog, analytics }),
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,
     openedFromNotification: openedFromOutside,

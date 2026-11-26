@@ -56,7 +56,7 @@ export {
   type TipFeedCard,
 } from './feed/feed-card';
 export { entryCardTitle } from './feed/entry-feed-card';
-export { type FeedNotice, LATER_QUESTIONS, type LaterQuestion } from './feed-notice';
+export { type FeedNotice, type LaterQuestion } from './feed-notice';
 export { ENOUGH_FOR_TODAY_SEEN, type FirstWeekDay, type YesterdayQuiz } from './feed/feed-notices';
 export {
   answerBannerDelay,
@@ -82,6 +82,7 @@ export {
   type FixedChip,
   type RoundContent,
   type RoundOption,
+  type RoundPresentation,
   type TextRange,
 } from './game/game-mode';
 export { buildGameReview } from './game/game-review';
@@ -130,12 +131,14 @@ export { type CrossingPuzzle, type CrossingWord } from './game/crossing-crosswor
 export {
   crossingCellKey,
   crossingGridOf,
-  isCrossingSolved,
   type CrossingAction,
   type CrossingPlay,
 } from './game/crossing-play';
-export { type CrossingCrossword } from './game/crossing-crossword-progress';
-export { type DailyCrosswordOpening } from './game/daily-crossword';
+export {
+  type CrossingCrossword,
+  type CrossingCrosswordOpening,
+  type DailyCrosswordProgress,
+} from './game/crossing-crossword-progress';
 export { decorOf, loadSeasonalMotifs } from './decor/decor-of';
 export { inEffectWithoutRules, loadShippedEdition, type Edition } from './edition/edition';
 export { openRemoteSwitches, type ReaderFacts } from './edition/remote-switches';

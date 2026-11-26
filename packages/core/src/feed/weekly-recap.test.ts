@@ -136,21 +136,22 @@ describe('the Weekly Recap', () => {
 
     const cards = await firstCards(app);
 
+    // The card carries the numbers, so the Feed draws them with the card.
     expect(cards[1]).toEqual({
       kind: 'notice',
       notice: 'weeklyRecap',
+      recap: {
+        firstDay: { year: 2026, month: 10, day: 19 },
+        lastDay: { year: 2026, month: 10, day: 25 },
+        seen: 3,
+        saved: 1,
+        known: 1,
+        // Saturday, Sunday and Monday, today's open.
+        streak: 3,
+      },
       folded: false,
       yesterday: undefined,
       day: { year: 2026, month: 10, day: 26 },
-    });
-    expect(await app.weeklyRecap.of({ year: 2026, month: 10, day: 26 })).toEqual({
-      firstDay: { year: 2026, month: 10, day: 19 },
-      lastDay: { year: 2026, month: 10, day: 25 },
-      seen: 3,
-      saved: 1,
-      known: 1,
-      // Saturday, Sunday and Monday, today's open.
-      streak: 3,
     });
   });
 

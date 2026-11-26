@@ -32,7 +32,7 @@ import { PairsRound } from './PairsRound';
 import { PagerScrollView } from '../primitives/VerticalPager';
 import { AnswerOptions, PickRound } from './PickRound';
 import { RoundCard, RoundKicker } from './RoundCard';
-import { RoundLookContext, type QuestionFace } from './round-look';
+import { RoundLookContext } from './round-look';
 import { askedAs, cardOf, RoundHead, type CardText } from './RoundPrompt';
 import { TypedRound } from './TypedRound';
 import { useGameHaptics } from './useGameHaptics';
@@ -111,15 +111,16 @@ export function GameRound({
 
   const [asking, setAsking] = useState(false);
   const exit = strings.game.exit;
-  // «Англіцизми» heads its sentence with the mode's title, «АНГЛІЦИЗМИ» (board g5).
-  const modeLabel = game.modeId === 'anglicism' ? title : label;
+  const { head = 'label', questionFace = 'byLength', card: cardLook } = game.presentation;
+  // A mode headed by its title, as «Англіцизми», «АНГЛІЦИЗМИ» (board g5), shows it in the label's place.
+  const modeLabel = head === 'title' ? title : label;
   const asked = askedAs(round, modeLabel, strings.game.round);
-  const card = cardOf(game.modeId, round, asked.prompt, strings.game.round.prompts);
+  const card = cardOf(cardLook, round, asked.prompt, strings.game.round.prompts);
   const look = {
     onGround: true,
     optionStamp: true,
-    questionFace: questionFaceOf(game.modeId),
-    inkHeaded: INK_HEADED.has(game.modeId),
+    questionFace,
+    inkHeaded: head === 'ink',
     mascot: mascot?.({ state: mascotState(answer, game.lives), width: roundMascotWidth }),
     // The header has no title: the mode and the Round head the question (board «slogo game last»).
     kicker:
@@ -214,32 +215,6 @@ export function GameRound({
 /** Waits for nothing besides the banner's delay. */
 function noWait(): void {
   // Nothing to wait for.
-}
-
-/**
- * The Game Modes the board heads with an ink heading of their own, which
- * draw no red label on the ground: «Наголос», «Впиши слово», «Звідки
- * слово», «Склади вислів» and «Виживання».
- */
-const INK_HEADED: ReadonlySet<string> = new Set([
-  'stress',
-  'type-word',
-  'origin',
-  'build-idiom',
-  'survival',
-]);
-
-/**
- * The Game Modes whose question the board sets in the text face on the
- * ground whatever its length: the Definition in «За літерами», the sentence
- * in «Англіцизми», the meaning in «Склади вислів».
- */
-const TEXT_FACED: ReadonlySet<string> = new Set(['by-letters', 'anglicism', 'build-idiom']);
-
-/** The face of a Game Mode's question on the ground: «Анаграми» asks its Definition as the large question (board 06). */
-function questionFaceOf(modeId: string): QuestionFace {
-  if (modeId === 'anagram') return 'display';
-  return TEXT_FACED.has(modeId) ? 'text' : 'byLength';
 }
 
 /**

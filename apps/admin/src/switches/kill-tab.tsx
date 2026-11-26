@@ -20,6 +20,8 @@ export function KillTab() {
   const navigate = useNavigate();
   const [feature, setFeature] = useState<FeatureSwitch>(FEATURES[0] ?? 'game');
   const [confirming, setConfirming] = useState(false);
+  // The states are read at the moment of the render: a schedule holds by it.
+  const now = new Date();
   const scope = picked === undefined ? loaded : loaded.filter(({ edition }) => edition === picked);
   const where = picked === undefined ? 'усі Editions' : `Edition ${picked.displayName}`;
   const choose = (editionId: string | undefined) =>
@@ -46,7 +48,7 @@ export function KillTab() {
               <span className="flex flex-1 flex-col gap-2 max-md:gap-0.5">
                 <strong className="font-mono text-[14px] max-md:text-[15px]">{name}</strong>
                 <span className="text-xs opacity-75">
-                  {summaryText(scope.map(({ answer }) => cellOf(answer, name)))}
+                  {summaryText(scope.map(({ answer }) => cellOf(answer, name, now)))}
                 </span>
               </span>
               <span

@@ -4,6 +4,8 @@ import type { Random } from '../ports';
 import { writeStaged } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import { shuffled } from '../shuffled';
+import { markAnswer } from './answer-mark';
+import { pickForm } from './pick-form';
 import type { GameEdition, GameMode, RoundContent } from './game-mode';
 import { WORD_MEANING_ID, asksWordMeaning, wordMeaningRound } from './word-meaning';
 import type { GameXp } from './game-xp';
@@ -51,7 +53,10 @@ export interface QuickQuestion {
    * `QUICK_QUESTION_PROMPT_LIMIT` characters can give one. Nothing when none can.
    */
   build(avoid?: string): Promise<QuickQuestionContent | undefined>;
-  /** Keeps the option the reader picked and resolves whether it is right. */
+  /**
+   * Keeps the option the reader picked, judged by the pick form, and resolves
+   * whether it is right; an option the Round lacks is wrong and writes nothing.
+   */
   answer(content: QuickQuestionContent, option: number): Promise<boolean>;
 }
 
@@ -137,11 +142,18 @@ export function createQuickQuestion({
   }
 
   async function answer(content: QuickQuestionContent, option: number): Promise<boolean> {
-    const right = option === content.round.correct;
-    if (right) {
-      await writeStaged(userState, [xp.award({ source: 'quick-question' })]);
-      await knowledge.confirm(content.entry.id);
-    } else await knowledge.answer(content.entry.id, 'unknown');
+    const { round } = content;
+    // Judged by its Answer Form, as a Game's pick Round is; an option the Round lacks is no answer.
+    const judged = pickForm.judge(
+      round,
+      pickForm.shown(round, []),
+      { form: 'pick', option },
+      comparison,
+    );
+    if (judged === undefined) return false;
+    const { right } = judged.answer;
+    if (right) await writeStaged(userState, [xp.award({ source: 'quick-question' })]);
+    await markAnswer(knowledge, content.entry.id, right);
     await answered?.(content, right);
     return right;
   }

@@ -26,6 +26,7 @@ export {
 } from './fakes/fake-notification-scheduler';
 export { createMemoryContentPort } from './fakes/memory-content';
 export { loadEdition } from './edition/edition';
+export { LATER_QUESTIONS } from './feed-notice';
 export {
   readFact,
   seedUserState,
@@ -47,6 +48,16 @@ export { buildEntryCard, SEEN_DWELL_MS } from './feed/feed';
 export { type IdiomFeedCard, type WordFeedCard } from './feed/feed-card';
 export { type PlayingGame } from './game/game';
 export { type GameHubGroup, type GameMode } from './game/game-mode';
+export { anagramMode } from './game/anagram-mode';
+export { anglicismMode } from './game/anglicism-mode';
+export { byLettersMode } from './game/by-letters-mode';
+export { guessWord } from './game/guess-word';
+export { originMode } from './game/origin-mode';
+export { pairsMode } from './game/pairs-mode';
+export { stressMode } from './game/stress-mode';
+export { survivalMode } from './game/survival-mode';
+export { timedMode } from './game/timed-mode';
+export { typeWordMode } from './game/type-word-mode';
 export { relativeTimeOf } from './saved/history-time';
 export { renderStress } from './entries/stress';
 export { buildWordCard } from './entries/word-card';

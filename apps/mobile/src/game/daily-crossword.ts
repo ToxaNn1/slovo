@@ -1,10 +1,11 @@
 import { fill, pluralCount, type EditionStrings } from '@slovo/contracts';
 import type {
   Composition,
+  CrossingCrosswordOpening,
   CrossingPlay,
   CrossingPuzzle,
   CrosswordSolve,
-  DailyCrosswordOpening,
+  DailyCrosswordProgress,
 } from '@slovo/core';
 import type { CrosswordDayCardState } from '@slovo/ui';
 import { useFocusEffect } from 'expo-router';
@@ -15,7 +16,7 @@ import { edition, editionStrings } from '../edition/edition';
 import { deviceClock } from '../device/device-clock';
 import { logError } from '../diagnostics/log';
 import { useTodayKey } from '../foreground/today';
-import { crossingMiniGrid, crossingProgress, crossingSolveOf } from './crossing-crossword';
+import { crossingMiniGrid } from './crossing-crossword';
 import { solveTimeText } from './crossword-share';
 
 /** What the Daily Crossword's card draws: the crossing one's card in board 08's states. */
@@ -44,12 +45,11 @@ function resultOf(solve: CrosswordSolve, strings: Strings): string | undefined {
 
 /** The crossing Daily Crossword's card in the Edition's texts, by how far the reader is. */
 function crossingCard(
-  { puzzle, state, solve }: CrossingCardState,
+  { puzzle, state, solve, progress }: CrossingCardState,
   strings: Strings,
   months: Months,
 ): DailyCrosswordCardContent {
   const title = `${strings.title} · ${dayOf(puzzle.date, strings, months)}`;
-  const progress = crossingProgress(state, solve);
   if (solve !== undefined)
     return {
       title,
@@ -80,27 +80,31 @@ function crossingCard(
   };
 }
 
-/** Today's crossing Daily Crossword, the play kept and its solve, synced in the XP log. */
+/** Today's crossing Daily Crossword, the play kept, its solve, synced in the XP log, and how far the reader is. */
 interface CrossingCardState {
   readonly puzzle: CrossingPuzzle;
   readonly state: CrossingPlay;
   readonly solve: CrosswordSolve | undefined;
+  readonly progress: DailyCrosswordProgress;
 }
 
 async function cardState(composition: Composition): Promise<CrossingCardState | undefined> {
   const opening = await composition.openDailyCrossword();
-  if (opening.kind === 'none') return undefined;
-  const { puzzle, state } = opening.crossword;
-  return { puzzle, state, solve: crossingSolveOf(composition, puzzle, state) };
+  if (opening.kind !== 'open') return undefined;
+  const { puzzle, state, solve, progress } = opening.crossword;
+  return { puzzle, state, solve, progress };
 }
+
+/** Today's Daily Crossword for its screen: as the Core opened it, or `failed` when the opening failed. */
+export type DailyCrosswordScreenOpening = CrossingCrosswordOpening | { readonly kind: 'failed' };
 
 /**
  * Today's Daily Crossword for its screen, as the Core opened it, opened as the
  * screen opens, again in a composition reopened and again once the next
  * local day has started: `undefined` while it first opens. An opening that
- * fails is logged and opens none.
+ * fails is logged.
  */
-export function useDailyCrossword(): DailyCrosswordOpening | undefined {
+export function useDailyCrossword(): DailyCrosswordScreenOpening | undefined {
   const today = useTodayKey(deviceClock);
   const open = useCallback(
     // Read again for each day: the Core opens the crossword of the day it is.
@@ -110,7 +114,7 @@ export function useDailyCrossword(): DailyCrosswordOpening | undefined {
   );
   const reading = useCompositionRead(open, 'Could not open the Daily Crossword');
   if (reading.status === 'loading') return undefined;
-  return reading.status === 'ready' ? reading.value : { kind: 'none' };
+  return reading.status === 'ready' ? reading.value : { kind: 'failed' };
 }
 
 /**

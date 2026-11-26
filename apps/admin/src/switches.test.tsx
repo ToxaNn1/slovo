@@ -151,6 +151,35 @@ test('a switch change asks for a reason, and a refused Rule names the switch it 
   ]);
 });
 
+test('the matrix reads the Rules as the backend does: a share of 100 is every reader, and a feature is off while one it depends on is', async () => {
+  threeEditions([
+    {
+      id: 'r1',
+      editionId: 'uk',
+      feature: 'xpLog',
+      order: 0,
+      verdict: 'off',
+      targets: { share: 100 },
+    },
+  ]);
+  window.history.replaceState(null, '', '/admin/switches?edition=uk');
+  render(<Admin />);
+
+  const xpLog = await rowOf('xpLog');
+  expect(
+    xpLog.getByRole('switch', { name: 'xpLog у Рідкісні слова' }).getAttribute('aria-checked'),
+  ).toBe('false');
+  expect(xpLog.queryByText(/правил/)).toBeNull();
+  // `progressShareCards` depends on `xpLog`: no device has it on now.
+  const dependent = await rowOf('progressShareCards');
+  expect(
+    dependent
+      .getByRole('switch', { name: 'progressShareCards у Рідкісні слова' })
+      .getAttribute('aria-checked'),
+  ).toBe('false');
+  expect(dependent.getByText('вимкнено')).toBeDefined();
+});
+
 test('a switch change replaces the Rule for every reader in its place, so no shadowed Rule starts to decide', async () => {
   threeEditions([
     { id: 'r1', editionId: 'uk', feature: 'badges', order: 0, verdict: 'off', targets: {} },

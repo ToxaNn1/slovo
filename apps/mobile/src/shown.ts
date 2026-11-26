@@ -122,7 +122,7 @@ export function shownOf({
     celebrations: on('xpLog') && !noCounters,
     levelLadder: on('levelLadder') && !noCounters,
     breakCard: on('breakCard') && !noCounters,
-    streakFreezeCard: on('streakFreezeCard') && on('streakFreezes') && !noCounters,
+    streakFreezeCard: on('streakFreezeCard') && !noCounters,
     badgeCounts: !noCounters,
     todayPending: !noCounters,
     progressShareCards: on('progressShareCards') && !noCounters,

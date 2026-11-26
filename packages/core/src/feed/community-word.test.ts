@@ -82,7 +82,7 @@ function apiOfWord(entryId = 'w_07') {
 
 // Spec #886: the Community Word, a Feed Notice on a local Monday.
 describe('The Community Word', () => {
-  it('shows on a local Monday right after the Weekly Recap, with its Entry card and its adds', async () => {
+  it('shows on a local Monday right after the Weekly Recap, with its Entry row and its adds', async () => {
     const app = await run({ records: await withLastWeek(), at: monday, api: apiOfWord() });
 
     const cards = await firstCards(app.feed, 4);
@@ -92,8 +92,9 @@ describe('The Community Word', () => {
       kind: 'notice',
       notice: 'communityWord',
       adds: 12,
-      card: { kind: 'word', entryId: 'w_07', model: { wordId: 'w_07' } },
+      row: await app.entryRow('w_07'),
     });
+    expect(cards[2]).toMatchObject({ row: { kind: 'word', entryId: 'w_07' } });
     expect(cards[3]?.kind).toBe('word');
   });
 

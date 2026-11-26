@@ -10,25 +10,42 @@ import {
   solvedIds,
   startCrossingPlay,
   type CrossingAction,
+  type CrossingMove,
   type CrossingPlay,
 } from './crossing-play';
-import { noXp, type CrosswordPorts } from './crossword-ports';
+import { noXp, type CrosswordPorts, type CrosswordSolve } from './crossword-ports';
 import { seededRandomOf } from './seeded-random';
 
 const { crossingCrosswordProgress } = userStateRecords;
+
+/**
+ * How far the reader is with today's Daily Crossword, for its card: nothing
+ * entered («Почати»), something entered («Продовжити»), or solved.
+ */
+export type DailyCrosswordProgress = 'untouched' | 'started' | 'solved';
 
 /** Today's crossing Daily Crossword in play. */
 export interface CrossingCrossword {
   readonly puzzle: CrossingPuzzle;
   readonly state: CrossingPlay;
+  /**
+   * Today's solve: the one the XP log records, which Sync brings from every
+   * device, or the one this device's play made while the log keeps none,
+   * with no Solve time; `undefined` until it is solved.
+   */
+  readonly solve: CrosswordSolve | undefined;
+  /** How far the reader is, as the card says it: solved by {@link solve}, else by the letters filled. */
+  readonly progress: DailyCrosswordProgress;
   /** Whether the Edition offers the Crossword Hint (`crosswordHint`); while it does not, a hint changes nothing. */
   readonly hint: boolean;
   /**
-   * Plays the reader's action. A hint, or a release that solves a Word,
-   * keeps the progress on this device first, so a failed write changes
-   * nothing; the solve of the day appends its XP in the same write.
+   * Plays the reader's action and says what it did. A hint, or a move that
+   * solves a Word, keeps the progress on this device first, so a failed
+   * write changes nothing; the solve of the day appends its XP in the same
+   * write. Once the day is solved, here or on another device, a tick
+   * changes nothing.
    */
-  play(action: CrossingAction): Promise<CrossingPlay>;
+  play(action: CrossingAction): Promise<CrossingMove>;
   /** Keeps the progress with the seconds so far: for when the time pauses, as the screen leaves or the app goes to the background. */
   keep(): Promise<void>;
 }
@@ -67,7 +84,7 @@ function fingerprintOf(puzzle: CrossingPuzzle): string {
  * this device with no Sync. The Word that solves the day appends its XP in
  * the same write, which the XP log gives once for the date (ADR 0066); the
  * record carries the Solve time and whether a hint was used, so they sync
- * with it. With `crosswordSolveTime` off a tick changes nothing and the
+ * with it, and answers today's solve. With `crosswordSolveTime` off a tick changes nothing and the
  * record carries no time.
  */
 export async function openCrossingCrossword({
@@ -108,21 +125,35 @@ export async function openCrossingCrossword({
     });
 
   const hint = edition.isFeatureEnabled('crosswordHint');
+  const solveOf = (): CrosswordSolve | undefined =>
+    xp.crosswordSolveOn(date) ??
+    (isCrossingSolved(state) ? { solveSeconds: undefined, hinted: state.hinted } : undefined);
+  const unmoved = (): CrossingMove => ({ state, outcome: { kind: 'nothing' } });
   const crossword: CrossingCrossword = {
     puzzle,
     hint,
     get state() {
       return state;
     },
+    get solve() {
+      return solveOf();
+    },
+    get progress() {
+      if (solveOf() !== undefined) return 'solved';
+      return Object.values(state.cells).some(({ kind }) => kind === 'filled')
+        ? 'started'
+        : 'untouched';
+    },
     play: (action) =>
       inTurn(async () => {
-        if (action.type === 'hint' && !hint) return state;
-        if (action.type === 'tick' && !timed) return state;
-        const next = playCrossing(puzzle, state, action);
+        if (action.type === 'hint' && !hint) return unmoved();
+        if (action.type === 'tick' && (!timed || solveOf() !== undefined)) return unmoved();
+        const move = playCrossing(puzzle, state, action);
+        const next = move.state;
         const hinted = action.type === 'hint' && next !== state;
-        if (!hinted && solvedIds(puzzle, next).length === solvedIds(puzzle, state).length) {
+        if (!hinted && move.outcome.kind !== 'hit') {
           state = next;
-          return state;
+          return move;
         }
         const solves = isCrossingSolved(next);
         const award = solves
@@ -137,7 +168,7 @@ export async function openCrossingCrossword({
         state = next;
         // Out of turn: the next play never waits for the network.
         if (solves) void analytics?.track('dailyCrosswordSolved', { date }).catch(() => undefined);
-        return state;
+        return move;
       }),
     keep: () => inTurn(() => userState.write(new Map(progressOf(state)))),
   };

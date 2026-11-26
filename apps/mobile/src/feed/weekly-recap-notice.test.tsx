@@ -1,9 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
 import type { WeeklyRecapModel } from '@slovo/core';
-import { act, fireEvent, screen, within } from '@testing-library/react-native';
+import { fireEvent, screen, within } from '@testing-library/react-native';
 
 import { editionAtLaunch as edition } from '../edition/edition-at-launch';
-import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
+import { settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { renderApp } from '../shell/test-app';
 import { WeeklyRecapNotice } from './weekly-recap-notice';
 
@@ -26,26 +26,16 @@ const editionWith = ({ shareCards }: { shareCards: boolean }): typeof edition =>
 });
 
 /**
- * The card over the Core's composition of a test Shell, whose recap of the
- * week holds the numbers above, on a binary that can capture the Share Card,
+ * The card of the week with the numbers above, on a binary that can capture the Share Card,
  * with Share Cards on in effect and the Streak shown unless a test says otherwise.
  */
 async function renderNotice({ shareCards = true, noCounters = false } = {}) {
-  const composition = await testShell().composition.opened();
   const shell = testShell({
-    composition: opened({
-      ...composition,
-      weeklyRecap: { ...composition.weeklyRecap, of: () => Promise.resolve(recap) },
-    }),
     remoteSwitches: switchedTo(editionWith({ shareCards })),
     settings: await settingsAt({ noCounters }),
     shareCard: () => Promise.resolve('closed'),
   });
-  await renderApp(<WeeklyRecapNotice day={{ year: 2026, month: 10, day: 26 }} />, { shell });
-  // The recap's numbers are read once the card is drawn.
-  await act(async () => {
-    await Promise.resolve();
-  });
+  await renderApp(<WeeklyRecapNotice recap={recap} />, { shell });
 }
 
 /** The Share Card in the share sheet's preview. */
