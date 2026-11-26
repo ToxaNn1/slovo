@@ -118,3 +118,7 @@
 хрия language-speech 5
 цаца witty-insults 5
 цілушка household-crafts 5
+фуляровий household-crafts 5
+хурдига history-antiquity 5
+цехін history-antiquity 5
+цьогосвітній language-speech 5
