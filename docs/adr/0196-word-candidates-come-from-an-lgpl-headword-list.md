@@ -1,5 +1,5 @@
 ---
-summary: Word candidates for a content wave come from `pnpm source:lemmas`, with no language model: the Lemma forms of LanguageTool's `morfologik-ukrainian-lt` (LGPL 2.1+, built from dict_uk) and `wordfreq` (`uk`) on the rarity bands of 0146, both pinned by version and SHA-256 and downloaded into the sourcing cache at run time, never committed; the dict_uk data itself (CC BY-NC-SA) is not used; nothing of the list ships, it only picks Lemmas.
+summary: Word candidates for a content wave come from `pnpm source:lemmas`, with no language model: the Lemma forms of LanguageTool's `morfologik-ukrainian-lt` (LGPL 2.1+, built from dict_uk) and `wordfreq` (`uk`) on the rarity bands of 0146 (Lemmas tagged `rare` or `arch` kept, `arch` one rarity higher, `dial` left out), both pinned by version and SHA-256 and downloaded into the sourcing cache at run time, never committed; the dict_uk data itself (CC BY-NC-SA) is not used; nothing of the list ships, it only picks Lemmas.
 ---
 
 # Word candidates come from an LGPL headword list
@@ -15,3 +15,7 @@ Owner decision of 2026-11-19 (ticket #1119).
 - **Not the dict_uk data.** dict_uk's own data files are under CC BY-NC-SA 4.0. SLOVO is a paid product, so even an internal use to pick Lemmas could count as commercial; the tool does not read them.
 - **Rarity** is the Zipf of the Lemma in `wordfreq` (`uk`, `large_uk`, version pinned) on the bands of ADR 0146; candidates are of rarity 2 to 5.
 - **Never in the repo.** Both files are downloaded at run time into the sourcing cache. Nothing of the headword list is shipped or quoted: it only decides which Lemmas a writer drafts, and every Entry's text stays the Edition's own (ADR 0146).
+
+## Amendment of 2026-11-26
+
+Lemmas tagged `rare` or `arch` are no longer left out: they are the rare Words a content wave wants. An `arch` Lemma (every clean Lemma form tagged so) gets 1 more rarity, at most 5, as ADR 0146 adds for archaic Words. `dial` and every other excluding tag stay left out; the pinned list carries no `dial` tag today.
