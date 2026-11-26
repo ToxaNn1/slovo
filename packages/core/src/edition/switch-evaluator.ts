@@ -2,9 +2,11 @@ import {
   FeatureSwitchesSchema,
   RuleTargetsSchema,
   RuleVerdictSchema,
+  readSwitches,
   type FeatureSwitch,
   type FeatureSwitches,
   type Platform,
+  type ReadableRule,
   type RuleTargets,
   type UpdateChannel,
   type Variant,
@@ -12,7 +14,6 @@ import {
 
 import type { Clock } from '../ports';
 import { compareVersions, isAppVersion } from './app-version';
-import { switchedOn } from './edition';
 
 const everyFeature = FeatureSwitchesSchema.keyof().options;
 
@@ -51,9 +52,6 @@ export type SwitchVerdict =
 
 export type SwitchVerdicts = Readonly<Record<FeatureSwitch, SwitchVerdict>>;
 
-const isFeature = (name: string): name is FeatureSwitch =>
-  everyFeature.some((feature) => feature === name);
-
 /** FNV-1a, 32 bits: the same bucket on every device for the same text. */
 function fnv1a(text: string): number {
   let hash = 0x811c9dc5;
@@ -74,8 +72,9 @@ const bucketOf = (ruleId: string, installId: string) => fnv1a(`${ruleId}:${insta
 const variantOf = (variants: readonly Variant[], ruleId: string, installId: string) =>
   variants[fnv1a(`${ruleId}:variant:${installId}`) % variants.length];
 
+/** Whether a Rule in force targets this device; its schedule is the reader's to hold. */
 function matches(ruleId: string, targets: RuleTargets, facts: SwitchFacts): boolean {
-  const { appVersion, platform, region, share, signedIn, schedule, channel } = targets;
+  const { appVersion, platform, region, share, signedIn, channel } = targets;
   // An app version that cannot be read, as a development build's, is in no range.
   if (appVersion !== undefined && !isAppVersion(facts.appVersion)) return false;
   if (appVersion?.from !== undefined && compareVersions(facts.appVersion, appVersion.from) < 0) {
@@ -90,33 +89,18 @@ function matches(ruleId: string, targets: RuleTargets, facts: SwitchFacts): bool
   }
   if (share !== undefined && bucketOf(ruleId, facts.installId) >= share) return false;
   if (signedIn !== undefined && signedIn !== facts.signedIn) return false;
-  if (channel !== undefined && channel !== facts.updateChannel) return false;
-  if (schedule !== undefined) {
-    const now = facts.clock.now().getTime() + facts.clockOffsetMs;
-    if (schedule.from !== undefined && now < Date.parse(schedule.from)) return false;
-    if (schedule.until !== undefined && now > Date.parse(schedule.until)) return false;
-  }
-  return true;
+  return channel === undefined || channel === facts.updateChannel;
 }
 
-/** The verdict of the first Rule of the feature that matches, or none. */
-function ruleVerdict(
-  feature: FeatureSwitch,
-  rules: readonly RemoteRule[],
-  facts: SwitchFacts,
-): SwitchVerdict | undefined {
-  for (const rule of rules) {
-    if (rule.feature !== feature) continue;
+/** The Rules this app can read: one with a verdict or a target it doesn't know is skipped alone. */
+function readable(rules: readonly RemoteRule[]): ReadableRule[] {
+  return rules.flatMap(({ id, feature, ...rule }) => {
     const verdict = RuleVerdictSchema.safeParse(rule.verdict);
     const targets = RuleTargetsSchema.safeParse(rule.targets);
-    if (!verdict.success || !targets.success) continue;
-    if (!matches(rule.id, targets.data, facts)) continue;
-    if (verdict.data === 'on') return { on: true };
-    if (verdict.data === 'off') return { on: false };
-    const variant = variantOf(verdict.data.variants, rule.id, facts.installId);
-    return variant === undefined ? { on: true } : { on: true, variant };
-  }
-  return undefined;
+    return verdict.success && targets.success
+      ? [{ id, feature, verdict: verdict.data, targets: targets.data }]
+      : [];
+  });
 }
 
 /**
@@ -135,20 +119,21 @@ export function evaluateSwitches({
   states: FeatureSwitches;
   facts: SwitchFacts;
 }): SwitchVerdicts {
-  const known = rules.filter((rule) => isFeature(rule.feature));
-  const own = new Map<FeatureSwitch, SwitchVerdict>(
-    everyFeature.map((feature) => {
-      const state = states[feature];
-      if (state === 'unavailable') return [feature, { on: false }];
-      return [feature, ruleVerdict(feature, known, facts) ?? { on: state === 'on' }];
-    }),
-  );
-  const inEffect = switchedOn((feature) => own.get(feature)?.on === true);
+  const { installId } = facts;
+  const verdictOf = readSwitches({
+    states,
+    rules: readable(rules),
+    now: new Date(facts.clock.now().getTime() + facts.clockOffsetMs),
+  }).forReader((rule) => matches(rule.id, rule.targets, facts));
   // The same typed-record builder as `mix.ts`: the keys are every Feature Switch.
   return Object.fromEntries(
-    everyFeature.map((feature): [FeatureSwitch, SwitchVerdict] => [
-      feature,
-      inEffect(feature) ? (own.get(feature) ?? { on: false }) : { on: false },
-    ]),
+    everyFeature.map((feature): [FeatureSwitch, SwitchVerdict] => {
+      const answer = verdictOf(feature);
+      if (!answer.on) return [feature, { on: false }];
+      const { by } = answer;
+      if (by === undefined || typeof by.verdict !== 'object') return [feature, { on: true }];
+      const variant = variantOf(by.verdict.variants, by.id, installId);
+      return [feature, variant === undefined ? { on: true } : { on: true, variant }];
+    }),
   ) as Record<FeatureSwitch, SwitchVerdict>;
 }
