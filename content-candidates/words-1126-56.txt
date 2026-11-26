@@ -52,3 +52,15 @@
 іродів witty-insults 4
 їдло household-crafts 3
 їдати language-speech 5
+єдваб household-crafts 5
+єпископія history-antiquity 4
+жеботіння language-speech 5
+жеброта history-antiquity 4
+жорстокосердя emotions-character 4
+журбота emotions-character 4
+ізвідкись language-speech 4
+ізмалечку language-speech 4
+імення history-antiquity 4
+імлисто nature-weather 4
+інфанта history-antiquity 3
+інфантерія military 4
