@@ -216,7 +216,7 @@
 стрункостанний human-body 5
 супокій emotions-character 5
 сухозлітка arts-culture 5
-свербець human-body 5
+свербига witty-insults 5
 свитина household-crafts 5
 свіжина household-crafts 4
 сидьма language-speech 5
@@ -243,3 +243,11 @@
 страстотерпиця history-antiquity 5
 суддиха history-antiquity 5
 суччя nature-weather 5
+салотоп old-crafts 5
+світань nature-weather 5
+світопис technology 5
+снохода human-body 5
+спружина technology 5
+стінобитний military 5
+стонога nature-weather 5
+суягна household-crafts 5
