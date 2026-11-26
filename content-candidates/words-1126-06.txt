@@ -49,3 +49,9 @@
 манаття household-crafts 5
 мимря witty-insults 4
 мочарина nature-weather 5
+лайда witty-insults 5
+лісун folk-names 5
+мзда history-antiquity 5
+міздря old-crafts 5
+місячина history-antiquity 5
+мудрощі emotions-character 4
