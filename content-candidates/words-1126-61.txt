@@ -365,3 +365,10 @@
 нерівня emotions-character 5
 нерозум witty-insults 5
 неспалимий history-antiquity 5
+навзаводи language-speech 5
+надлоб'я human-body 5
+надмор'я nature-weather 5
+невідмолений history-antiquity 5
+недоуздок old-crafts 5
+непліддя human-body 5
+непомалу language-speech 5
