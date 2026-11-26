@@ -3,3 +3,12 @@
 поворозка household-crafts 4
 поденка nature-weather 5
 пструг nature-weather 4
+потемки nature-weather 3
+пекмез household-crafts 5
+поволока household-crafts 4
+полатайко witty-insults 4
+провесінь nature-weather 3
+піддашок household-crafts 4
+підпасач old-crafts 5
+приямок household-crafts 4
+пуцьвірок witty-insults 5
