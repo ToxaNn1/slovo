@@ -6,6 +6,7 @@ import type { Clock, Random } from '../ports';
 import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
 import type { History } from '../saved/history';
+import type { CrosswordSolve } from '../game/crossword-ports';
 import type { XpAction, XpAward } from '../game/game-xp';
 import type { LocalDate } from '../local-date';
 import type { Subject } from '../subject';
@@ -112,11 +113,7 @@ export interface ResetMarker {
   readonly at: string;
 }
 
-/** A solved Daily Crossword as its XP log record keeps it. */
-export interface CrosswordSolve {
-  readonly solveSeconds: number | undefined;
-  readonly hinted: boolean;
-}
+export type { CrosswordSolve };
 
 /**
  * The XP log (ADR 0066): an append-only log of the XP each learning action

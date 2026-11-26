@@ -10,13 +10,20 @@ import { createMemoryUserStatePort, openUserState } from '../user-state/user-sta
 import { openCrossingCrossword, type CrossingCrossword } from './crossing-crossword-progress';
 import { vocabulary } from './crossing-crossword.test-support';
 import { crossingCellKey, type CrossingAction } from './crossing-play';
-import type { GameXp, XpAction } from './game-xp';
+import type { CrosswordSolve, CrosswordXp } from './crossword-ports';
+import type { XpAction } from './game-xp';
 
-/** An XP log that records every award under the XP log's key for the date, 15 XP each. */
-function fakeXp() {
+/**
+ * An XP log that records every award under the XP log's key for the date, 15
+ * XP each, and answers the solves it holds: the ones `synced` from another
+ * device and the ones committed here.
+ */
+function fakeXp(synced: Readonly<Record<string, CrosswordSolve>> = {}) {
   const awards: XpAction[] = [];
+  const solves = new Map(Object.entries(synced));
   let committed = 0;
-  const xp: GameXp = {
+  const xp: CrosswordXp = {
+    crosswordSolveOn: (date) => solves.get(date),
     award: (action) => {
       awards.push(action);
       const key = `xp.daily-crossword-${action.source === 'daily-crossword' ? action.date : '?'}`;
@@ -25,6 +32,11 @@ function fakeXp() {
         amount: 15,
         commit: () => {
           committed += 1;
+          if (action.source === 'daily-crossword')
+            solves.set(action.date, {
+              solveSeconds: action.solveSeconds,
+              hinted: action.hinted ?? false,
+            });
         },
       };
     },
@@ -44,7 +56,7 @@ async function open({
   start?: string;
   under?: readonly Word[];
   on?: readonly FeatureSwitch[];
-  xp?: GameXp;
+  xp?: CrosswordXp;
   analytics?: Pick<Analytics, 'track'>;
 } = {}) {
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
@@ -147,7 +159,10 @@ describe('the crossing Daily Crossword', () => {
     const crossword = await opened();
     expect(crossword.hint).toBe(false);
     const before = crossword.state;
-    expect(await crossword.play({ type: 'hint' })).toBe(before);
+    expect(await crossword.play({ type: 'hint' })).toEqual({
+      state: before,
+      outcome: { kind: 'nothing' },
+    });
   });
 
   it('keeps the seconds of a solve on the next tick-free reload, not the ticks after', async () => {
@@ -218,17 +233,57 @@ describe('the crossing Daily Crossword', () => {
     expect(other.state.seconds).toBe(0);
   });
 
-  it('writes nothing on a miss or a move, only on a solve', async () => {
+  it('writes nothing on a miss or a move, only on a solve, and says which it was', async () => {
     const records = new Map<string, string>();
     const crossword = await opened({ records });
     const [first] = crossword.puzzle.words;
-    await crossword.play({ type: 'next' });
-    await trace(crossword, 0, [...(first?.letters ?? [])].reverse());
+    expect((await crossword.play({ type: 'next' })).outcome).toEqual({ kind: 'nothing' });
+    const backwards = [...(first?.letters ?? [])].reverse();
+    expect((await trace(crossword, 0, backwards)).outcome).toEqual({
+      kind: 'miss',
+      letters: backwards,
+    });
     expect(crossword.state.words[0]).toEqual({ kind: 'open' });
     expect(records.has('crossword.crossing')).toBe(false);
 
-    await solve(crossword, 0);
+    expect((await solve(crossword, 0)).outcome).toEqual({ kind: 'hit' });
     expect(records.has('crossword.crossing')).toBe(true);
+  });
+
+  it("answers today's solve: none while a Word is open, this device's own with no time while the XP log holds none", async () => {
+    const crossword = await opened({ on: ['game', 'dailyCrossword'] });
+    expect(crossword.solve).toBeUndefined();
+    for (let i = 0; i < crossword.puzzle.words.length; i += 1) await solve(crossword, i);
+    expect(crossword.solve).toEqual({ solveSeconds: undefined, hinted: false });
+  });
+
+  it("answers today's solve by the XP log's record once it is written", async () => {
+    const { xp } = fakeXp();
+    const crossword = await opened({ xp });
+    await crossword.play({ type: 'tick', seconds: 12 });
+    for (let i = 0; i < crossword.puzzle.words.length; i += 1) await solve(crossword, i);
+    expect(crossword.solve).toEqual({ solveSeconds: 12, hinted: false });
+  });
+
+  it('answers a solve synced from another device and stops the Solve time there', async () => {
+    const { xp } = fakeXp({ '2026-11-04': { solveSeconds: 95, hinted: true } });
+    const crossword = await opened({ xp });
+    expect(crossword.state.words.every(({ kind }) => kind === 'open')).toBe(true);
+    expect(crossword.solve).toEqual({ solveSeconds: 95, hinted: true });
+    expect(crossword.progress).toBe('solved');
+    await crossword.play({ type: 'tick', seconds: 5 });
+    expect(crossword.state.seconds).toBe(0);
+  });
+
+  it("tells the card's progress: untouched, started once a letter is in, solved", async () => {
+    const crossword = await opened({ on: ['game', 'dailyCrossword', 'crosswordHint'] });
+    expect(crossword.progress).toBe('untouched');
+    await crossword.play({ type: 'next' });
+    expect(crossword.progress).toBe('untouched');
+    await crossword.play({ type: 'hint' });
+    expect(crossword.progress).toBe('started');
+    for (let i = 0; i < crossword.puzzle.words.length; i += 1) await solve(crossword, i);
+    expect(crossword.progress).toBe('solved');
   });
 
   it('appends the Daily Crossword XP of the date once when every Word is solved, in the write that keeps the solve', async () => {
@@ -293,10 +348,14 @@ describe('the crossing Daily Crossword of the composition', () => {
     });
   }
 
+  it('opens none while the Daily Crossword is off, no older crossword in its place', async () => {
+    expect(await (await app(['game'])).openDailyCrossword()).toEqual({ kind: 'off' });
+  });
+
   it('opens the puzzle of the Words within the Rarity Range, which a solve plays', async () => {
     const composition = await app(['game', 'dailyCrossword']);
     const opening = await composition.openDailyCrossword();
-    if (opening.kind !== 'crossing') throw new Error(`Expected the puzzle, got ${opening.kind}`);
+    if (opening.kind !== 'open') throw new Error(`Expected the puzzle, got ${opening.kind}`);
     const ids = vocabulary.map(({ id }) => id);
     for (const { word: placed } of opening.crossword.puzzle.words) expect(ids).toContain(placed.id);
     const before = opening.crossword.state.words.filter(({ kind }) => kind === 'solved').length;
@@ -311,7 +370,7 @@ describe('the crossing Daily Crossword of the composition', () => {
     const records = new Map([['crossword.progress', typed]]);
     const composition = await app(['game', 'dailyCrossword'], records);
     const opening = await composition.openDailyCrossword();
-    if (opening.kind !== 'crossing') throw new Error(`Expected the puzzle, got ${opening.kind}`);
+    if (opening.kind !== 'open') throw new Error(`Expected the puzzle, got ${opening.kind}`);
     expect(Object.values(opening.crossword.state.cells).some(({ kind }) => kind === 'filled')).toBe(
       false,
     );
@@ -326,7 +385,7 @@ describe('the crossing Daily Crossword of the composition', () => {
     const records = new Map<string, string>();
     const first = await app(on, records);
     const opening = await first.openDailyCrossword();
-    if (opening.kind !== 'crossing') throw new Error(`Expected the puzzle, got ${opening.kind}`);
+    if (opening.kind !== 'open') throw new Error(`Expected the puzzle, got ${opening.kind}`);
     await opening.crossword.play({ type: 'tick', seconds: 95 });
     for (let i = 0; i < opening.crossword.puzzle.words.length; i += 1)
       await solve(opening.crossword, i);
@@ -336,5 +395,8 @@ describe('the crossing Daily Crossword of the composition', () => {
     const synced = new Map([...records].filter(([id]) => id.startsWith('xp.')));
     const other = await app(on, synced);
     expect(other.xpLog.crosswordSolveOn('2026-11-04')).toEqual({ solveSeconds: 95, hinted: false });
+    const there = await other.openDailyCrossword();
+    if (there.kind !== 'open') throw new Error(`Expected the puzzle, got ${there.kind}`);
+    expect(there.crossword.solve).toEqual({ solveSeconds: 95, hinted: false });
   });
 });

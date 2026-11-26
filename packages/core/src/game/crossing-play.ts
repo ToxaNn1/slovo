@@ -45,6 +45,22 @@ export type CrossingAction =
   | { readonly type: 'hint' }
   | { readonly type: 'tick'; readonly seconds: number };
 
+/**
+ * What an action did: a release or a hint that solved a Word, the current
+ * one or a crossing one (`hit`), a release whose trace spelled no Word, with
+ * the letters it spelled (`miss`), or neither (`nothing`).
+ */
+export type CrossingOutcome =
+  | { readonly kind: 'nothing' }
+  | { readonly kind: 'hit' }
+  | { readonly kind: 'miss'; readonly letters: readonly string[] };
+
+/** An action played: the play after it, and what it did. */
+export interface CrossingMove {
+  readonly state: CrossingPlay;
+  readonly outcome: CrossingOutcome;
+}
+
 /** The progress of a day kept between openings: the letters filled by cell key, the ids of the Words solved, `hinted` and the seconds. */
 export interface KeptCrossingPlay {
   readonly filled: Readonly<Record<string, string>>;
@@ -186,43 +202,51 @@ export function startCrossingPlay(puzzle: CrossingPuzzle, kept?: KeptCrossingPla
   return { ...begun, words, current: first === -1 ? 0 : first };
 }
 
-/** Plays one action over the puzzle; a solved puzzle takes none. */
+const NOTHING: CrossingOutcome = { kind: 'nothing' };
+const HIT: CrossingOutcome = { kind: 'hit' };
+const moved = (state: CrossingPlay, outcome: CrossingOutcome = NOTHING): CrossingMove => ({
+  state,
+  outcome,
+});
+
+/** Plays one action over the puzzle and says what it did; a solved puzzle takes none. */
 export function playCrossing(
   puzzle: CrossingPuzzle,
   state: CrossingPlay,
   action: CrossingAction,
-): CrossingPlay {
-  if (isCrossingSolved(state)) return state;
+): CrossingMove {
+  if (isCrossingSolved(state)) return moved(state);
   const current = puzzle.words[state.current];
-  if (current === undefined) return state;
+  if (current === undefined) return moved(state);
   switch (action.type) {
     case 'select': {
       const through = wordsThrough(puzzle, action.place);
       const [first] = through;
-      if (first === undefined) return state;
-      if (!through.includes(state.current)) return { ...state, current: first, trace: [] };
+      if (first === undefined) return moved(state);
+      if (!through.includes(state.current)) return moved({ ...state, current: first, trace: [] });
       const other = through.find((i) => i !== state.current);
-      return other === undefined ? state : { ...state, current: other, trace: [] };
+      return moved(other === undefined ? state : { ...state, current: other, trace: [] });
     }
     case 'next':
-      return { ...state, current: nextOpen(state.words, state.current), trace: [] };
+      return moved({ ...state, current: nextOpen(state.words, state.current), trace: [] });
     case 'extend': {
       const { tile } = action;
-      if (state.words[state.current]?.kind === 'solved') return state;
-      if (!Number.isInteger(tile) || tile < 0 || tile >= current.wheel.length) return state;
-      if (state.trace.at(-2) === tile) return { ...state, trace: state.trace.slice(0, -1) };
-      if (state.trace.includes(tile)) return state;
-      return { ...state, trace: [...state.trace, tile] };
+      if (state.words[state.current]?.kind === 'solved') return moved(state);
+      if (!Number.isInteger(tile) || tile < 0 || tile >= current.wheel.length)
+        return moved(state);
+      if (state.trace.at(-2) === tile) return moved({ ...state, trace: state.trace.slice(0, -1) });
+      if (state.trace.includes(tile)) return moved(state);
+      return moved({ ...state, trace: [...state.trace, tile] });
     }
     case 'stepBack':
-      return state.trace.length === 0 ? state : { ...state, trace: state.trace.slice(0, -1) };
+      return moved(state.trace.length === 0 ? state : { ...state, trace: state.trace.slice(0, -1) });
     case 'release': {
-      if (state.trace.length === 0) return state;
-      const spelled = state.trace.map((tile) => current.wheel[tile]);
+      if (state.trace.length === 0) return moved(state);
+      const spelled = state.trace.flatMap((tile) => current.wheel[tile] ?? []);
       const hit =
         spelled.length === current.letters.length &&
         spelled.every((letter, i) => letter === current.letters[i]);
-      if (!hit) return { ...state, trace: [] };
+      if (!hit) return moved({ ...state, trace: [] }, { kind: 'miss', letters: spelled });
       const cells = { ...state.cells };
       crossingPlacesOf(current).forEach((place, i) => {
         const key = crossingCellKey(place);
@@ -235,7 +259,10 @@ export function playCrossing(
         cells,
         words: state.words.map((word, i) => (i === state.current ? { kind: 'solved' } : word)),
       });
-      return { ...state, cells, words, current: nextOpen(words, state.current), trace: [] };
+      return moved(
+        { ...state, cells, words, current: nextOpen(words, state.current), trace: [] },
+        HIT,
+      );
     }
     case 'hint': {
       const empty = crossingPlacesOf(current).findIndex(
@@ -243,27 +270,32 @@ export function playCrossing(
       );
       const place = crossingPlacesOf(current)[empty];
       const letter = current.letters[empty];
-      if (place === undefined || letter === undefined) return state;
+      if (place === undefined || letter === undefined) return moved(state);
       const filled: CrossingCell = { kind: 'filled', letter };
       const cells = { ...state.cells, [crossingCellKey(place)]: filled };
       const words = settled(puzzle, { ...state, cells });
-      const moved = words[state.current]?.kind === 'solved';
-      return {
-        ...state,
-        cells,
-        words,
-        current: moved ? nextOpen(words, state.current) : state.current,
-        trace: [],
-        hinted: true,
-      };
+      const done = words[state.current]?.kind === 'solved';
+      // The letter can finish a crossing Word as well as the current one.
+      const solves = words.some((word, i) => word.kind !== state.words[i]?.kind);
+      return moved(
+        {
+          ...state,
+          cells,
+          words,
+          current: done ? nextOpen(words, state.current) : state.current,
+          trace: [],
+          hinted: true,
+        },
+        solves ? HIT : NOTHING,
+      );
     }
     case 'tick':
       // Whole seconds, never back: the progress kept reads them as a count.
-      return {
+      return moved({
         ...state,
         seconds:
           state.seconds +
           (Number.isFinite(action.seconds) ? Math.max(0, Math.round(action.seconds)) : 0),
-      };
+      });
   }
 }
