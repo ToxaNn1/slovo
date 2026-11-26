@@ -108,3 +108,4 @@
 тараторка witty-insults 5
 твориво arts-culture 5
 товстосум witty-insults 5
+тремкий emotions-character 5
