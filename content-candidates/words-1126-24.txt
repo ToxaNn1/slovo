@@ -61,3 +61,17 @@
 втелепати language-speech 5
 вудженина household-crafts 5
 вшкварити language-speech 5
+вагавий emotions-character 5
+вамбак history-antiquity 5
+велегласно language-speech 5
+вельбот technology 5
+веретільник nature-weather 5
+вертиголова nature-weather 5
+вибідувати language-speech 5
+витуманити language-speech 5
+вихваляка witty-insults 5
+відгетькатися language-speech 5
+відкрилок technology 5
+впин language-speech 5
+врочити language-speech 5
+вуалетка household-crafts 5
