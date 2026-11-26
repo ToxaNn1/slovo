@@ -109,3 +109,12 @@
 худопахолок witty-insults 5
 цілосвітній language-speech 5
 цукерник old-crafts 5
+фантош arts-culture 5
+фільдекос household-crafts 5
+фортель emotions-character 5
+фотель household-crafts 5
+флюгерство emotions-character 5
+храмина history-antiquity 5
+хрия language-speech 5
+цаца witty-insults 5
+цілушка household-crafts 5
