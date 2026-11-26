@@ -39,3 +39,16 @@
 запопасти conversation 5
 захмар'я nature-weather 5
 забурунити nature-weather 5
+загогулина conversation 4
+замазка household-crafts 4
+заскок conversation 4
+змаленьку language-speech 4
+забалагуритися conversation 5
+зажерний emotions-character 5
+заздравиця conversation 5
+зашпарувати old-crafts 5
+збройниця military 5
+злопомний emotions-character 5
+зневір'я emotions-character 5
+зосібно language-speech 5
+зурочувати history-antiquity 5
