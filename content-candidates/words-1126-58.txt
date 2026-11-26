@@ -61,7 +61,7 @@
 камермузикант history-antiquity 5
 канцонета arts-culture 5
 карбівник old-crafts 5
-кармазинний arts-culture 4
+кармазинник history-antiquity 5
 квапно emotions-character 4
 квіття nature-weather 4
 квітярня nature-weather 5
@@ -168,3 +168,13 @@
 коломийкар arts-culture 5
 куверт household-crafts 5
 купцівна history-antiquity 5
+кавалерство history-antiquity 5
+каламуття nature-weather 5
+калатайло witty-insults 5
+канальство witty-insults 5
+каприза emotions-character 5
+каяння emotions-character 4
+королівщина history-antiquity 5
+корпія human-body 5
+коцарство old-crafts 5
+кропильниця history-antiquity 5
