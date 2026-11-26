@@ -41,7 +41,6 @@
 споминати language-speech 4
 сподвижництво history-antiquity 5
 срамотний emotions-character 5
-сріблина nature-weather 5
 стеблиння nature-weather 5
 стебнівка household-crafts 4
 сточище nature-weather 4
@@ -161,7 +160,6 @@
 скрушно emotions-character 5
 сластолюбство emotions-character 5
 смертовбивство history-antiquity 5
-сокільство history-antiquity 5
 співчарочник emotions-character 5
 споломеніти emotions-character 5
 спроневіритися emotions-character 5
@@ -213,3 +211,11 @@
 сузьма household-crafts 5
 сукмана household-crafts 5
 сумливий emotions-character 5
+сконання human-body 5
+сокільництво old-crafts 5
+спековище nature-weather 5
+спочивок emotions-character 5
+срібляк history-antiquity 5
+стрункостанний human-body 5
+супокій emotions-character 5
+сухозлітка arts-culture 5
