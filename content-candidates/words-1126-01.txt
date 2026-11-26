@@ -28,3 +28,8 @@
 бистрянка folk-names 4
 бонза witty-insults 4
 бугаєць folk-names 4
+байбак witty-insults 3
+балухатий human-body 5
+бардадим witty-insults 5
+борть old-crafts 4
+брань military 3
