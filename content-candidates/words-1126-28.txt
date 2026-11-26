@@ -25,3 +25,4 @@
 черсак nature-weather 4
 чугайстир arts-culture 5
 шулик household-crafts 4
+левкой nature-weather 4
