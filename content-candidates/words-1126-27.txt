@@ -24,3 +24,13 @@
 рицина nature-weather 3
 ротанг household-crafts 3
 уговтати emotions-character 4
+майоран nature-weather 3
+маранта nature-weather 4
+маримба arts-culture 4
+мильнянка folk-names 4
+міжусобиця history-antiquity 3
+молозиво human-body 3
+моток household-crafts 3
+мукомел old-crafts 4
+рифт science 4
+унадитися emotions-character 4
