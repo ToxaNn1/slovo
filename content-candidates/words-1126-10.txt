@@ -54,7 +54,7 @@
 сирівець household-crafts 4
 скальд arts-culture 4
 скрушний emotions-character 5
-смушкар old-crafts 5
+смух household-crafts 5
 солодівня old-crafts 5
 соловіти emotions-character 5
 сошник old-crafts 3
@@ -88,3 +88,14 @@
 суджена arts-culture 4
 суспіль language-speech 5
 свіжатина household-crafts 5
+сальцесон household-crafts 4
+світилка arts-culture 5
+скойка nature-weather 5
+смугач nature-weather 5
+снізка household-crafts 5
+сновія old-crafts 5
+сотати old-crafts 5
+стельвага household-crafts 5
+стриножити household-crafts 5
+сугорбок nature-weather 5
+сахнутися emotions-character 5
