@@ -108,7 +108,6 @@
 гугнявити language-speech 5
 гуслярство arts-culture 5
 гусарський military 3
-ґелґотати nature-weather 5
 ґешефтярський witty-insults 5
 гакаборт military 5
 галасвіта language-speech 5
@@ -242,3 +241,11 @@
 громничний folk-names 5
 гудочний arts-culture 5
 густопсовий witty-insults 5
+ганзейський history-antiquity 5
+гебановий household-crafts 5
+грізномовний language-speech 5
+гульливий emotions-character 5
+гвельф history-antiquity 5
+гетра household-crafts 5
+гармидерник witty-insults 5
+головотес witty-insults 5
