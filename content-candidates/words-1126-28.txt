@@ -35,3 +35,5 @@
 гзимс household-crafts 5
 лахтак nature-weather 4
 топчак old-crafts 5
+гальба household-crafts 4
+ларга nature-weather 4
