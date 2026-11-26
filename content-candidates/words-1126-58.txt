@@ -158,3 +158,13 @@
 крикнява language-speech 5
 ктиторка history-antiquity 5
 кухмістер household-crafts 5
+казаняр old-crafts 5
+камер'юнкер history-antiquity 5
+капральство military 5
+катівство history-antiquity 5
+кахельник old-crafts 5
+клеврет witty-insults 5
+книженція arts-culture 5
+коломийкар arts-culture 5
+куверт household-crafts 5
+купцівна history-antiquity 5
