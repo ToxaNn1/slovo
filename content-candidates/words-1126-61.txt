@@ -332,3 +332,12 @@
 неталан emotions-character 5
 наголів'я household-crafts 5
 невтишимий emotions-character 5
+надхмар'я nature-weather 5
+надчерев'я human-body 5
+народовбивство history-antiquity 5
+наступач military 5
+нев'янущість emotions-character 5
+непроглядь nature-weather 5
+новомученик history-antiquity 5
+надпоручик military 5
+насторч language-speech 5
