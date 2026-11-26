@@ -2,7 +2,6 @@
 магнет science 4
 магометанство history-antiquity 4
 маєтність history-antiquity 3
-мазепинець history-antiquity 4
 мазун emotions-character 4
 майнути conversation 3
 майстерзингер arts-culture 5
@@ -159,3 +158,10 @@
 миршавець witty-insults 5
 мідяниця folk-names 5
 мотоциклет transport 5
+мадаполам household-crafts 5
+мазепинка military 5
+манишка household-crafts 5
+милосердниця history-antiquity 5
+мірковання language-speech 5
+місильниця household-crafts 5
+мочеморда witty-insults 5
