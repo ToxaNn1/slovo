@@ -27,3 +27,13 @@
 дюгонь nature-weather 4
 каракульча household-crafts 5
 копитняк folk-names 4
+балухатий witty-insults 4
+бечівник old-crafts 5
+бомбаст language-speech 4
+бридня language-speech 5
+буфон witty-insults 4
+буцентавр history-antiquity 5
+кенінг language-speech 5
+котерія witty-insults 5
+кракле arts-culture 5
+крутояр nature-weather 4
