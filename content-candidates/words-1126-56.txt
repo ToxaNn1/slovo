@@ -104,3 +104,5 @@
 жарівня household-crafts 4
 жонкіль nature-weather 5
 іпотеза language-speech 5
+жіноцький language-speech 5
+іудин history-antiquity 4
