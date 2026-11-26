@@ -44,7 +44,7 @@ const wheelTexts = {
 export default function DailyCrosswordScreen() {
   const opening = useDailyCrossword();
   if (opening === undefined) return <CrosswordFrame />;
-  if (opening.kind === 'crossing') return <CrossingCrosswordScreen opened={opening.crossword} />;
+  if (opening.kind === 'open') return <CrossingCrosswordScreen opened={opening.crossword} />;
   return <Redirect href="/game" />;
 }
 

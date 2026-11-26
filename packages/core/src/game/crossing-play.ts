@@ -232,14 +232,15 @@ export function playCrossing(
     case 'extend': {
       const { tile } = action;
       if (state.words[state.current]?.kind === 'solved') return moved(state);
-      if (!Number.isInteger(tile) || tile < 0 || tile >= current.wheel.length)
-        return moved(state);
+      if (!Number.isInteger(tile) || tile < 0 || tile >= current.wheel.length) return moved(state);
       if (state.trace.at(-2) === tile) return moved({ ...state, trace: state.trace.slice(0, -1) });
       if (state.trace.includes(tile)) return moved(state);
       return moved({ ...state, trace: [...state.trace, tile] });
     }
     case 'stepBack':
-      return moved(state.trace.length === 0 ? state : { ...state, trace: state.trace.slice(0, -1) });
+      return moved(
+        state.trace.length === 0 ? state : { ...state, trace: state.trace.slice(0, -1) },
+      );
     case 'release': {
       if (state.trace.length === 0) return moved(state);
       const spelled = state.trace.flatMap((tile) => current.wheel[tile] ?? []);

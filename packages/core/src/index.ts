@@ -130,7 +130,6 @@ export { type CrossingPuzzle, type CrossingWord } from './game/crossing-crosswor
 export {
   crossingCellKey,
   crossingGridOf,
-  isCrossingSolved,
   type CrossingAction,
   type CrossingPlay,
 } from './game/crossing-play';
