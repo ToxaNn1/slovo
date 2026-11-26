@@ -9,6 +9,13 @@
  * rarity, from its Zipf in `wordfreq` on the bands of ADR 0146 (one higher,
  * at most 5, for an archaic Lemma), is 2 to 5, that the Edition does not have
  * yet and no exclude list names.
+ *
+ * Productive derivatives are left out before they reach a writer (verbal
+ * nouns, `-ість` nouns and `-о` adverbs, `-ся` verbs whose base is a Word or
+ * at least as frequent, prefix compounds, adjectives of place names), and so
+ * is an archaic Lemma that is a live Lemma in an old spelling. The rest are
+ * ranked by evidence within each part of speech and rarity: tagged archaic,
+ * labelled by Wiktionary, listed by ЕСУМ (ADR 0196); ties are random.
  */
 import { matchKey } from './text';
 
@@ -108,6 +115,10 @@ export interface LemmaSourcingInput {
   readonly existingLemmas: readonly string[];
   /** Lemma lists whose first field is a Lemma to leave out, e.g. earlier waves' lists. */
   readonly excludeLists: readonly string[];
+  /** The Lemmas Wiktionary labels dated, rare, archaic or dialectal. */
+  readonly labelled: ReadonlySet<string>;
+  /** Whether ЕСУМ lists the Lemma; asked only about each cell's shortlist. */
+  readonly inEsum: (lemma: string) => Promise<boolean>;
   readonly options: LemmaOptions;
   readonly random: () => number;
 }
@@ -123,18 +134,27 @@ export type LemmaSourcingResult =
       readonly pool: Pool;
       /** How many lines short of the count the list is, for want of candidates. */
       readonly shortfall: number;
+      /** How many Lemmas were left out as productive derivatives or old spellings. */
+      readonly derivatives: number;
     }
   | { readonly ok: false; readonly errors: readonly string[] };
+
+/** What speaks for a candidate being a rare Word rather than a generated form. */
+type Evidence = 'arch' | 'Wiktionary' | 'ЕСУМ';
 
 interface Candidate {
   readonly lemma: string;
   readonly pos: CandidatePos;
   readonly zipf: number;
   readonly rarity: CandidateRarity;
+  readonly evidence: readonly Evidence[];
 }
 
+/** How many candidates of a cell ЕСУМ is asked about, per line the cell gives. */
+const ESUM_SHORTLIST_FACTOR = 2;
+
 /** Picks the candidates and writes them as a Lemma list. */
-export function sourceLemmas(input: LemmaSourcingInput): LemmaSourcingResult {
+export async function sourceLemmas(input: LemmaSourcingInput): Promise<LemmaSourcingResult> {
   const alphabet = new Set(input.alphabet);
   const errors: string[] = [];
   const count = parseCount(input.options.count, errors);
@@ -167,12 +187,19 @@ export function sourceLemmas(input: LemmaSourcingInput): LemmaSourcingResult {
     return known.has(key) || (/с[яь]$/.test(key) && known.has(key.slice(0, -2)));
   };
 
+  const headwords = readHeadwords(input.headwords);
+  const isDerivative = derivativeTest(headwords, input.zipf, (lemma) => known.has(matchKey(lemma)));
   const cells = new Map<string, Candidate[]>();
   const pool = emptyPool();
-  for (const { lemma, pos, archaic } of headwordLemmas(input.headwords)) {
+  let derivatives = 0;
+  for (const { lemma, pos, archaic } of headwords.lemmas) {
     if (!letterSequence(lemma).every((letter) => alphabet.has(letter) || letter === "'")) continue;
     if (letters !== undefined && !letters.has(lemma[0] ?? '')) continue;
     if (isKnown(lemma)) continue;
+    if (isDerivative(lemma, pos, archaic)) {
+      derivatives += 1;
+      continue;
+    }
     const zipf = input.zipf(lemma);
     const rarity = archaic ? raised(rarityBand(zipf)) : rarityBand(zipf);
     if (rarity === 1) continue;
@@ -180,7 +207,10 @@ export function sourceLemmas(input: LemmaSourcingInput): LemmaSourcingResult {
     if ((rarityShares.get(String(rarity)) ?? 0) === 0) continue;
     const key = `${pos} ${String(rarity)}`;
     const cell = cells.get(key) ?? [];
-    cell.push({ lemma, pos, zipf, rarity });
+    const evidence: Evidence[] = [];
+    if (archaic) evidence.push('arch');
+    if (input.labelled.has(lemma)) evidence.push('Wiktionary');
+    cell.push({ lemma, pos, zipf, rarity, evidence });
     cells.set(key, cell);
   }
 
@@ -194,27 +224,53 @@ export function sourceLemmas(input: LemmaSourcingInput): LemmaSourcingResult {
     ),
   );
   const picked: Candidate[] = [];
-  CANDIDATE_POS.forEach((pos, index) => {
+  for (const [index, pos] of CANDIDATE_POS.entries()) {
     const rarityCounts = allocate(
       posCounts[index] ?? 0,
       CANDIDATE_RARITIES.map((rarity) => rarityShares.get(String(rarity)) ?? 0),
       CANDIDATE_RARITIES.map((rarity) => cellOf(pos, rarity).length),
     );
-    CANDIDATE_RARITIES.forEach((rarity, at) => {
-      picked.push(...sample(cellOf(pos, rarity), rarityCounts[at] ?? 0, input.random));
-    });
-  });
+    for (const [at, rarity] of CANDIDATE_RARITIES.entries()) {
+      picked.push(...(await best(cellOf(pos, rarity), rarityCounts[at] ?? 0, input)));
+    }
+  }
 
   picked.sort((a, b) => a.lemma.localeCompare(b.lemma, 'uk'));
   const list = [
     `# Word candidates from source:lemmas: fill in each Category in place of "${CATEGORY_PLACEHOLDER}" before source:words.`,
-    '# <lemma> <category> <rarity>  # part of speech, Zipf in wordfreq (uk)',
-    ...picked.map(
-      ({ lemma, pos, zipf, rarity }) =>
-        `${lemma} ${CATEGORY_PLACEHOLDER} ${String(rarity)} # ${pos}, Zipf ${zipf.toFixed(2)}`,
+    '# <lemma> <category> <rarity>  # part of speech, Zipf in wordfreq (uk), evidence',
+    ...picked.map(({ lemma, pos, zipf, rarity, evidence }) =>
+      [
+        `${lemma} ${CATEGORY_PLACEHOLDER} ${String(rarity)} # ${pos}`,
+        `Zipf ${zipf.toFixed(2)}`,
+        ...evidence,
+      ].join(', '),
     ),
   ].join('\n');
-  return { ok: true, list: `${list}\n`, pool, shortfall: count - picked.length };
+  return { ok: true, list: `${list}\n`, pool, shortfall: count - picked.length, derivatives };
+}
+
+/**
+ * The `count` candidates of a cell with the most evidence, ties at random:
+ * archaic and Wiktionary rank first, then ЕСУМ is asked about the shortlist
+ * of the best `ESUM_SHORTLIST_FACTOR × count` and ranks it once more.
+ */
+async function best(
+  cell: readonly Candidate[],
+  count: number,
+  { inEsum, random }: Pick<LemmaSourcingInput, 'inEsum' | 'random'>,
+): Promise<Candidate[]> {
+  if (count === 0) return [];
+  const byEvidence = (a: Candidate, b: Candidate) => b.evidence.length - a.evidence.length;
+  const ranked = sample(cell, cell.length, random).sort(byEvidence);
+  const shortlist: Candidate[] = [];
+  for (const candidate of ranked.slice(0, count * ESUM_SHORTLIST_FACTOR)) {
+    const listed = await inEsum(candidate.lemma);
+    shortlist.push(
+      listed ? { ...candidate, evidence: [...candidate.evidence, 'ЕСУМ'] } : candidate,
+    );
+  }
+  return shortlist.sort(byEvidence).slice(0, count);
 }
 
 /** The rarity one step higher, at most 5: what `archaic` adds (ADR 0146). */
@@ -239,9 +295,26 @@ interface HeadwordLemma {
   readonly archaic: boolean;
 }
 
-/** The distinct (Lemma, part of speech) pairs with at least one clean Lemma form. */
-function headwordLemmas(headwords: string): HeadwordLemma[] {
+interface Headwords {
+  /** The distinct (Lemma, part of speech) pairs with at least one clean Lemma form. */
+  readonly lemmas: readonly HeadwordLemma[];
+  /** Every Lemma form of the part of speech, clean or not: the bases a derivative may come from. */
+  readonly bases: Readonly<Record<CandidatePos, ReadonlySet<string>>>;
+  /** The live spellings: the Lemmas with a clean form that is not archaic. */
+  readonly live: ReadonlySet<string>;
+  /** Place names in lower case, each also cut by one and two letters, for their adjectives. */
+  readonly placeStems: ReadonlySet<string>;
+}
+
+function readHeadwords(headwords: string): Headwords {
   const lemmas = new Map<string, HeadwordLemma>();
+  const bases: Record<CandidatePos, Set<string>> = {
+    noun: new Set(),
+    verb: new Set(),
+    adj: new Set(),
+    adv: new Set(),
+  };
+  const placeStems = new Set<string>();
   for (const line of headwords.split('\n')) {
     const [rawLemma, tagText] = line.split('\t');
     if (rawLemma === undefined || tagText === undefined) continue;
@@ -249,12 +322,120 @@ function headwordLemmas(headwords: string): HeadwordLemma[] {
     const [posTag, ...tags] = tagText.trim().split(':');
     const pos = CANDIDATE_POS.find((candidate) => candidate === posTag);
     if (pos === undefined || !isLemmaForm(pos, tags)) continue;
+    if (tags.includes('geo')) {
+      const place = lemma.toLocaleLowerCase('uk');
+      for (const cut of [0, 1, 2]) placeStems.add(place.slice(0, place.length - cut));
+    }
+    if (!tags.includes('prop')) bases[pos].add(lemma);
     if (tags.some((tag) => EXCLUDING_TAGS.has(tag))) continue;
     const key = `${lemma}\t${pos}`;
     const archaic = tags.includes(ARCHAIC_TAG) && (lemmas.get(key)?.archaic ?? true);
     lemmas.set(key, { lemma, pos, archaic });
   }
-  return [...lemmas.values()];
+  const live = new Set(
+    [...lemmas.values()].filter(({ archaic }) => !archaic).map(({ lemma }) => lemma),
+  );
+  return { lemmas: [...lemmas.values()], bases, live, placeStems };
+}
+
+/** Prefixes of compounds a writer never keeps, when the rest is a Lemma of its own. */
+const COMPOUND_PREFIXES = [
+  'взаємо',
+  'енерго',
+  'макро',
+  'мікро',
+  'міні',
+  'мега',
+  'соц',
+  'псевдо',
+  'квазі',
+  'ультра',
+  'електро',
+  'гідро',
+  'напів',
+];
+
+/** The letters an old spelling has where today's has another: ґ, е/є and і/ї/и. */
+const SPELLING_SWAPS: Readonly<Record<string, readonly string[]>> = {
+  ґ: ['г'],
+  е: ['є', 'і'],
+  є: ['е'],
+  і: ['и', 'ї', 'е'],
+  ї: ['і'],
+  и: ['і'],
+};
+
+/**
+ * Whether a Lemma is a productive derivative a writer would strike, or an
+ * archaic Lemma that is a live one in an old spelling.
+ */
+function derivativeTest(
+  { bases, live, placeStems }: Headwords,
+  zipf: (lemma: string) => number,
+  isWord: (lemma: string) => boolean,
+): (lemma: string, pos: CandidatePos, archaic: boolean) => boolean {
+  const isLemma = (text: string) =>
+    CANDIDATE_POS.some((pos) => bases[pos].has(text)) || isWord(text);
+  // A suffix derivative goes when its base is a Word or at least as frequent.
+  const hasBase = (lemma: string, pos: CandidatePos, candidates: readonly string[]) =>
+    candidates.some(
+      (base) =>
+        base !== lemma &&
+        (isWord(base) || (bases[pos].has(base) && zipf(base) >= zipf(lemma))),
+    );
+  return (lemma, pos, archaic) => {
+    if (archaic && oldSpellings(lemma).some((spelling) => live.has(spelling) || isWord(spelling)))
+      return true;
+    const compound = COMPOUND_PREFIXES.find((prefix) => lemma.startsWith(prefix));
+    if (compound !== undefined) {
+      const rest = lemma.slice(compound.length).replace(/^-/, '');
+      if (rest.length >= 3 && isLemma(rest)) return true;
+    }
+    switch (pos) {
+      case 'noun': {
+        const verbal = /(?:ння|ття)$/.exec(lemma);
+        if (verbal !== null) {
+          const stem = lemma.slice(0, -3);
+          const verbs = [`${stem}ти`, ...(/[еі]$/.test(stem) ? [`${stem.slice(0, -1)}ити`] : [])];
+          if (hasBase(lemma, 'verb', [...verbs, ...verbs.map((verb) => `${verb}ся`)])) return true;
+        }
+        if (lemma.endsWith('ість')) {
+          const stem = lemma.slice(0, -4);
+          if (hasBase(lemma, 'adj', [`${stem}ий`, `${stem}ій`])) return true;
+        }
+        return false;
+      }
+      case 'adv':
+        return lemma.endsWith('о') && hasBase(lemma, 'adj', adjectivesOf(lemma.slice(0, -1)));
+      case 'verb':
+        return /с[яь]$/.test(lemma) && hasBase(lemma, 'verb', [lemma.slice(0, -2)]);
+      case 'adj': {
+        const place = /(?:ськ|цьк|зьк)ий$/.exec(lemma);
+        if (place === null) return false;
+        const stem = lemma.slice(0, place.index);
+        return stem.length >= 3 && placeStems.has(stem) && !bases.noun.has(stem);
+      }
+    }
+  };
+}
+
+function adjectivesOf(stem: string): string[] {
+  return [`${stem}ий`, `${stem}ій`];
+}
+
+/** The spellings today's orthography would give an old one: one letter swapped, ґ as г, or a г before a first vowel. */
+function oldSpellings(lemma: string): string[] {
+  const withG = lemma.replaceAll('ґ', 'г');
+  const spellings = new Set<string>([withG]);
+  if (/^[оу]/.test(withG)) spellings.add(`г${withG}`);
+  const letters = [...withG];
+  letters.forEach((letter, at) => {
+    for (const swap of SPELLING_SWAPS[letter] ?? []) {
+      spellings.add([...letters.slice(0, at), swap, ...letters.slice(at + 1)].join(''));
+    }
+  });
+  spellings.delete(lemma);
+  return [...spellings];
 }
 
 /** The first field of every line of a Lemma list, `#` comments left out. */

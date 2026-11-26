@@ -365,6 +365,8 @@ export interface GorohEtymology {
   readonly gloss?: string;
   readonly text: string;
   readonly variants: readonly string[];
+  /** The glosses ЕСУМ gives some of its Ukrainian variants, by the variant without stress marks. */
+  readonly variantGlosses: Readonly<Record<string, string>>;
 }
 
 export function parseEtymologies(html: string): GorohEtymology[] {
@@ -380,8 +382,41 @@ export function parseEtymologies(html: string): GorohEtymology[] {
           .map((item) => squeeze(item.text))
           .join(' '),
         variants: card.querySelectorAll('.section-content .word').map((word) => squeeze(word.text)),
+        variantGlosses: Object.fromEntries(
+          card.querySelectorAll('.section-content .list-item').flatMap((item) => {
+            const word = squeeze(unstressed(item.querySelector('.word')?.text ?? ''));
+            const variantGloss = squeeze(item.querySelector('.short-interpret')?.text ?? '');
+            return word === '' || variantGloss === '' ? [] : [[word, variantGloss]];
+          }),
+        ),
       };
     });
+}
+
+/**
+ * The ЕСУМ articles for a Lemma: those it heads, else those that list it as
+ * a variant (`underOtherHeadword`).
+ */
+export function matchingEtymologies(
+  entries: readonly GorohEtymology[],
+  lemma: string,
+): { entries: GorohEtymology[]; underOtherHeadword: boolean } {
+  const headed = entries.filter((entry) => isSameWord(entry.headword, lemma));
+  if (headed.length > 0) return { entries: headed, underOtherHeadword: false };
+  return {
+    entries: entries.filter((entry) =>
+      entry.variants.some((variant) => isSameWord(variant, lemma)),
+    ),
+    underOtherHeadword: true,
+  };
+}
+
+/** The ЕСУМ articles for a Lemma on its «Етимологія» page. */
+export function esumArticles(
+  html: string,
+  lemma: string,
+): { entries: GorohEtymology[]; underOtherHeadword: boolean } {
+  return matchingEtymologies(parseEtymologies(html), lemma);
 }
 
 /** Same spelling, ignoring stress marks; letter case counts, so proper names stay apart. */

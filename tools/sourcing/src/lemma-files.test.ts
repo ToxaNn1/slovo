@@ -6,7 +6,7 @@ import { deflateRawSync, gzipSync } from 'node:zlib';
 
 import { describe, expect, it, onTestFinished } from 'vitest';
 
-import { loadHeadwords } from './lemma-sources';
+import { loadHeadwords, loadWiktionaryLabels } from './lemma-sources';
 import { headwordList } from './morfologik';
 import { readWordfreq, zipfOf } from './wordfreq';
 import { readZipEntry } from './zip';
@@ -248,5 +248,91 @@ describe('loadHeadwords', () => {
       log: () => undefined,
     };
     await expect(loadHeadwords(options, source)).rejects.toThrow(/SHA-256/);
+  });
+});
+
+describe('loadWiktionaryLabels', () => {
+  /** A table dump as MediaWiki writes it: `INSERT INTO … VALUES` and rows with escaped strings. */
+  const dump = (table: string, rows: readonly string[]) =>
+    gzipSync(
+      Buffer.concat([
+        utf8(`-- MySQL dump\nCREATE TABLE \`${table}\` (\n  \`x\` int\n);\n`),
+        utf8(`INSERT INTO \`${table}\` VALUES\n`),
+        Buffer.concat(rows.map((row, at) => Buffer.concat([utf8(row), utf8(at === rows.length - 1 ? ';\n' : ',\n')]))),
+      ]),
+    );
+  const pinned = (url: string, bytes: Uint8Array) => ({
+    url,
+    sha256: createHash('sha256').update(bytes).digest('hex'),
+  });
+  const files = {
+    page: dump('page', [
+      "(1,0,'перст',0,0,0.5,'20261101000000',NULL,1,10,'wikitext',NULL)",
+      "(2,0,'вуй',0,0,0.5,'20261101000000',NULL,1,10,'wikitext',NULL)",
+      "(3,0,'кінь',0,0,0.5,'20261101000000',NULL,1,10,'wikitext',NULL)",
+      "(4,14,'Застарілі_вирази/uk',0,0,0.5,'20261101000000',NULL,1,10,'wikitext',NULL)",
+      "(5,0,'старий_як_світ',0,0,0.5,'20261101000000',NULL,1,10,'wikitext',NULL)",
+    ]),
+    linktarget: dump('linktarget', [
+      "(10,14,'Застарілі_вирази/uk')",
+      "(11,14,'Діалектні_вирази/uk')",
+      "(12,14,'Іменники/uk')",
+    ]),
+    // Sort keys are binary: a quote, a backslash and bytes that are no UTF-8.
+    categorylinks: Buffer.concat([
+      dump('categorylinks', [
+        "(1,'\\'r\\\\F\\0','2025-06-20 16:22:36','','page',1,10)",
+        "(2,'x','2025-06-20 16:22:36','','page',1,11)",
+        "(3,'x','2025-06-20 16:22:36','','page',1,12)",
+        "(5,'x','2025-06-20 16:22:36','','page',1,10)",
+        "(4,'x','2025-06-20 16:22:36','','subcat',1,10)",
+      ]),
+    ]),
+  };
+  const source = {
+    date: '20261101',
+    page: pinned('https://example.test/page.sql.gz', files.page),
+    linktarget: pinned('https://example.test/linktarget.sql.gz', files.linktarget),
+    categorylinks: pinned('https://example.test/categorylinks.sql.gz', files.categorylinks),
+    categories: ['Застарілі_вирази/uk', 'Діалектні_вирази/uk'],
+  };
+  const byUrl: Record<string, Uint8Array> = {
+    [source.page.url]: files.page,
+    [source.linktarget.url]: files.linktarget,
+    [source.categorylinks.url]: files.categorylinks,
+  };
+
+  it('lists the pages in the labelling categories, once, from the cache after', async () => {
+    const cacheDir = mkdtempSync(join(tmpdir(), 'slovo-lemmas-'));
+    onTestFinished(() => {
+      rmSync(cacheDir, { recursive: true, force: true });
+    });
+    const urls: string[] = [];
+    const options = {
+      cacheDir,
+      download: (url: string) => {
+        urls.push(url);
+        const bytes = byUrl[url];
+        return bytes === undefined ? Promise.reject(new Error(url)) : Promise.resolve(bytes);
+      },
+      log: () => undefined,
+    };
+    const labelled = await loadWiktionaryLabels(options, source);
+    expect([...labelled].sort()).toEqual(['вуй', 'перст', 'старий як світ'].sort());
+    expect([...(await loadWiktionaryLabels(options, source))].sort()).toEqual([...labelled].sort());
+    expect(urls.sort()).toEqual(Object.keys(byUrl).sort());
+  });
+
+  it('refuses a dump file whose SHA-256 is not the pinned one', async () => {
+    const cacheDir = mkdtempSync(join(tmpdir(), 'slovo-lemmas-'));
+    onTestFinished(() => {
+      rmSync(cacheDir, { recursive: true, force: true });
+    });
+    const options = {
+      cacheDir,
+      download: () => Promise.resolve(utf8('something else')),
+      log: () => undefined,
+    };
+    await expect(loadWiktionaryLabels(options, source)).rejects.toThrow(/SHA-256/);
   });
 });

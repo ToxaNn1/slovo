@@ -14,8 +14,8 @@ import type { EditionFolder } from '@slovo/language-pack/edition';
 import {
   fetchGoroh,
   gorohUrl,
-  isSameWord,
   isSynonymDictionary,
+  matchingEtymologies,
   parseDefinitions,
   parseEtymologies,
   parseInflections,
@@ -705,20 +705,6 @@ function sumKey(text: string): string {
  * The ЕСУМ articles about the Lemma: those headed by it, or else those that
  * list it among their related words.
  */
-function matchingEtymologies(
-  entries: readonly GorohEtymology[],
-  lemma: string,
-): { entries: GorohEtymology[]; underOtherHeadword: boolean } {
-  const headed = entries.filter((entry) => isSameWord(entry.headword, lemma));
-  if (headed.length > 0) return { entries: headed, underOtherHeadword: false };
-  return {
-    entries: entries.filter((entry) =>
-      entry.variants.some((variant) => isSameWord(variant, lemma)),
-    ),
-    underOtherHeadword: true,
-  };
-}
-
 function describeEtymology(entry: GorohEtymology): string {
   return [entry.headword, entry.gloss].filter(Boolean).join(' ');
 }
