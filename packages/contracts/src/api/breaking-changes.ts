@@ -168,7 +168,8 @@ function schemaChanges(
 
   const promisedOthers = promised['additionalProperties'];
   const describedOthers = described['additionalProperties'];
-  if (typeof promisedOthers === 'object' && typeof describedOthers === 'object') {
+  // Unknown fields that now take any value are read as the schema `{}`.
+  if (typeof promisedOthers === 'object' && describedOthers !== false) {
     changes.push(
       ...schemaChanges(part(promisedOthers), part(describedOthers), direction, `${at}.*`),
     );
