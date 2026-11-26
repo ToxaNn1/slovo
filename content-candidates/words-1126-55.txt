@@ -154,3 +154,14 @@
 дочимчикувати human-body 5
 дружкувати history-antiquity 5
 дубельтівка military 5
+дзвонарство old-crafts 5
+дибуляти human-body 5
+дикотрав'я nature-weather 5
+добродумний emotions-character 5
+довікувати emotions-character 5
+докука emotions-character 5
+доректи language-speech 5
+достотно language-speech 5
+дотарабанити human-body 5
+дошкутильгати human-body 5
+драндулет technology 5
