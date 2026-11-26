@@ -111,3 +111,15 @@
 стеньга technology 5
 суріпка nature-weather 5
 сутаж household-crafts 5
+салінг technology 5
+сандрик arts-culture 5
+синьйорія history-antiquity 5
+скализуб witty-insults 5
+скупиндра witty-insults 5
+снитка nature-weather 5
+снядіти nature-weather 5
+соверен history-antiquity 5
+спідтиха language-speech 5
+спохвату language-speech 5
+спурхнути nature-weather 5
+сукати old-crafts 5
