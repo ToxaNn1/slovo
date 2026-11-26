@@ -271,6 +271,18 @@ describe('«Твій тиждень» on the Feed', () => {
     expect(pageOf(screen.getByTestId('feed-notice-yesterday'))).toBe(pageOf(week));
   });
 
+  it('draws the week with its page, from the numbers the Feed Notice carries: the screen reads none itself', async () => {
+    await openMonday();
+    // A read of the week by the screen would never answer.
+    composition = { ...composition, weeklyRecap: { of: () => new Promise(() => undefined) } };
+    await openApp();
+    await swipeTo(screen.getByTestId('feed-notice-weeklyRecap', hidden));
+
+    const week = screen.getByTestId('feed-notice-weeklyRecap');
+    expect(within(week).getByText('26.10–1.11')).toBeOnTheScreen();
+    expect(within(week).getByRole('button', { name: words.done })).toBeOnTheScreen();
+  });
+
   it('scrolls nothing around its cards: Yesterday fills the rest of the page and scrolls inside its card (owner, 16.11)', async () => {
     await onWeeklyRecap();
 

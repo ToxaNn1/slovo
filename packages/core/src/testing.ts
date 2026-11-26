@@ -26,6 +26,7 @@ export {
 } from './fakes/fake-notification-scheduler';
 export { createMemoryContentPort } from './fakes/memory-content';
 export { loadEdition } from './edition/edition';
+export { LATER_QUESTIONS } from './feed-notice';
 export {
   readFact,
   seedUserState,

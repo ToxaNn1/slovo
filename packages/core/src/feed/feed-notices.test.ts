@@ -115,8 +115,7 @@ const contentOf = (notice: FeedNotice): FeedNoticeContent => {
   if (notice === 'weeklyRecap') return { notice, recap, folded: false, yesterday: undefined };
   if (notice === 'yesterday')
     return { notice, word: yesterdaysWord, quiz: { meanings: ['a', 'b', 'c'], right: 0 } };
-  if (notice === 'communityWord')
-    return { notice, row: communityRow, adds: 3 };
+  if (notice === 'communityWord') return { notice, row: communityRow, adds: 3 };
   if (notice === 'levelMilestone') return { notice, level: 5, name: 'Sprout' };
   if (notice === 'goalReached') return { notice, goal: 10, words: ['00'] };
   return { notice };
