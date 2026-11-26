@@ -341,3 +341,10 @@
 новомученик history-antiquity 5
 надпоручик military 5
 насторч language-speech 5
+надзирати history-antiquity 5
+небовид nature-weather 5
+невірство history-antiquity 5
+неволити emotions-character 5
+незнайбіда witty-insults 5
+непоборимість emotions-character 5
+непроминущість emotions-character 5
