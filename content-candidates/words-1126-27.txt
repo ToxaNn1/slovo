@@ -41,3 +41,10 @@
 моціон human-body 4
 рукомесник old-crafts 5
 устелиполе folk-names 5
+марудити emotions-character 4
+мафорій arts-culture 5
+метоп arts-culture 5
+місюрка military 5
+мулький human-body 4
+муругий nature-weather 5
+румбамбар language-speech 5
