@@ -189,3 +189,15 @@
 стражниця military 5
 сумота emotions-character 5
 супостатка witty-insults 5
+сажавка household-crafts 5
+своєкоштний history-antiquity 5
+сестринець household-crafts 5
+сикавка technology 5
+скоромитися history-antiquity 5
+слякотнява nature-weather 5
+спіх emotions-character 5
+спобігати language-speech 5
+спроста language-speech 5
+сулійка household-crafts 5
+супоня household-crafts 5
+схмарніти nature-weather 5
