@@ -357,3 +357,11 @@
 невдяка witty-insults 5
 неборачка emotions-character 5
 нетяма witty-insults 5
+надарма language-speech 5
+недвижний emotions-character 5
+недотика witty-insults 5
+незагайний language-speech 5
+непошана emotions-character 5
+нерівня emotions-character 5
+нерозум witty-insults 5
+неспалимий history-antiquity 5
