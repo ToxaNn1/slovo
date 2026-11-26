@@ -176,3 +176,16 @@
 сухоліття nature-weather 5
 сухопуттю history-antiquity 5
 сучити old-crafts 5
+сакма history-antiquity 5
+сварливець witty-insults 5
+світодержець history-antiquity 5
+славолюбець emotions-character 5
+смолокурня old-crafts 5
+сницарство old-crafts 5
+снотлумачення history-antiquity 5
+сповиток household-crafts 5
+спохмура emotions-character 5
+спрагота nature-weather 5
+стражниця military 5
+сумота emotions-character 5
+супостатка witty-insults 5
