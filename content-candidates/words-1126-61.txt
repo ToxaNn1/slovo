@@ -274,3 +274,8 @@
 несосвітенно language-speech 5
 несповідимо language-speech 5
 нирцем language-speech 5
+найлуччий language-speech 5
+невстидливий emotions-character 5
+невтолимий emotions-character 5
+нездвижно language-speech 5
+незичливий emotions-character 5
