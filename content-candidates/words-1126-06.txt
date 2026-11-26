@@ -55,3 +55,7 @@
 міздря old-crafts 5
 місячина history-antiquity 5
 мудрощі emotions-character 4
+межінь nature-weather 5
+милощі emotions-character 4
+мідяк history-antiquity 4
+моріг nature-weather 5
