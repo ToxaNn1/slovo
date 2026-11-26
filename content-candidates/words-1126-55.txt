@@ -176,3 +176,11 @@
 драговиння nature-weather 5
 драгет household-crafts 5
 душеубогий witty-insults 5
+дажбожий history-antiquity 5
+дальноокий human-body 5
+добромовний language-speech 5
+доброокий human-body 5
+довбешкуватий witty-insults 5
+достопам'ятний language-speech 5
+душетлінний emotions-character 5
+дрібномаєтний history-antiquity 5
