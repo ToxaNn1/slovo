@@ -390,3 +390,9 @@
 недоброхіть language-speech 5
 немрущий emotions-character 5
 неблагочестивий history-antiquity 5
+непритульний emotions-character 5
+нелицемірний emotions-character 5
+новоманірний language-speech 5
+несотворенний history-antiquity 5
+нездольний emotions-character 5
+несловесний language-speech 5
