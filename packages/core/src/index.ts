@@ -131,12 +131,14 @@ export { type CrossingPuzzle, type CrossingWord } from './game/crossing-crosswor
 export {
   crossingCellKey,
   crossingGridOf,
-  isCrossingSolved,
   type CrossingAction,
   type CrossingPlay,
 } from './game/crossing-play';
-export { type CrossingCrossword } from './game/crossing-crossword-progress';
-export { type DailyCrosswordOpening } from './game/daily-crossword';
+export {
+  type CrossingCrossword,
+  type CrossingCrosswordOpening,
+  type DailyCrosswordProgress,
+} from './game/crossing-crossword-progress';
 export { decorOf, loadSeasonalMotifs } from './decor/decor-of';
 export { inEffectWithoutRules, loadShippedEdition, type Edition } from './edition/edition';
 export { openRemoteSwitches, type ReaderFacts } from './edition/remote-switches';

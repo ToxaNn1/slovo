@@ -219,7 +219,7 @@ const back = () => settle(() => fireEvent.press(screen.getByTestId('daily-crossw
 /** Today's crossing Daily Crossword as the composition opens it again, with the progress kept. */
 async function crossing() {
   const opening = await composition.openDailyCrossword();
-  if (opening.kind !== 'crossing') throw new Error(`Expected the puzzle, got ${opening.kind}`);
+  if (opening.kind !== 'open') throw new Error(`Expected the puzzle, got ${opening.kind}`);
   return opening.crossword;
 }
 
@@ -489,7 +489,7 @@ describe('the crossing Daily Crossword', () => {
     await openFromCard();
     expect(screen.getByTestId('crossing-crossword-grid')).toBeOnTheScreen();
     // The next local day has no crossword: no pattern fills it.
-    jest.spyOn(composition, 'openDailyCrossword').mockResolvedValue({ kind: 'none' });
+    jest.spyOn(composition, 'openDailyCrossword').mockResolvedValue({ kind: 'no-fill' });
 
     await moveApp('background');
     await moveApp('foreground');

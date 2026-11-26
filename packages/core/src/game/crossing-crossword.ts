@@ -1,7 +1,8 @@
 import { CROSSWORD_SIZE, type Word } from '@slovo/contracts';
 
 import type { Random } from '../ports';
-import { shuffled, type PuzzlePlace } from './crossword-puzzle';
+import { shuffled } from '../shuffled';
+import type { PuzzlePlace } from './crossword-puzzle';
 
 /**
  * A block pattern: the rows of a 5 × 5 grid, `#` a block and `.` a white

@@ -9,6 +9,7 @@ import {
   playCrossing,
   startCrossingPlay,
   type CrossingAction,
+  type CrossingOutcome,
   type CrossingPlay,
 } from './crossing-play';
 
@@ -58,7 +59,14 @@ const puzzle: CrossingPuzzle = {
 const [CAT, COW, ANT, TOE] = [0, 1, 2, 3];
 
 const play = (state: CrossingPlay, ...actions: CrossingAction[]) =>
-  actions.reduce((before, action) => playCrossing(puzzle, before, action), state);
+  actions.reduce((before, action) => playCrossing(puzzle, before, action).state, state);
+
+/** What the last of these actions did, after the ones before it. */
+function outcomeOf(state: CrossingPlay, ...actions: CrossingAction[]): CrossingOutcome {
+  const last = actions.at(-1);
+  if (last === undefined) throw new Error('No action');
+  return playCrossing(puzzle, play(state, ...actions.slice(0, -1)), last).outcome;
+}
 
 const select = (row: number, column: number): CrossingAction => ({
   type: 'select',
@@ -223,14 +231,29 @@ describe('the crossing Daily Crossword play', () => {
         letter: 't',
       });
       expect(state).toMatchObject({ current: COW, trace: [] });
+      const start = startCrossingPlay(puzzle);
+      expect(outcomeOf(start, ...traced(start, 'cat'))).toEqual({ kind: 'hit' });
     });
 
-    it('misses on any other trace and changes nothing but the trace', () => {
+    it('misses on any other trace, with the letters it spelled, and changes nothing but the trace', () => {
       const before = startCrossingPlay(puzzle);
       expect(play(before, ...traced(before, 'cta'))).toEqual({ ...before, trace: [] });
       expect(play(before, ...traced(before, 'ca'))).toEqual({ ...before, trace: [] });
       expect(play(before, ...traced(before, 'catz'))).toEqual({ ...before, trace: [] });
+      expect(outcomeOf(before, ...traced(before, 'cta'))).toEqual({
+        kind: 'miss',
+        letters: ['c', 't', 'a'],
+      });
+      expect(outcomeOf(before, ...traced(before, 'ca'))).toEqual({
+        kind: 'miss',
+        letters: ['c', 'a'],
+      });
+    });
+
+    it('does nothing with no trace', () => {
+      const before = startCrossingPlay(puzzle);
       expect(play(before, { type: 'release' })).toEqual(before);
+      expect(outcomeOf(before, { type: 'release' })).toEqual({ kind: 'nothing' });
     });
 
     it('wraps to the first open Word after a solve', () => {
@@ -248,6 +271,9 @@ describe('the crossing Daily Crossword play', () => {
       expect(state.words[CAT]).toEqual({ kind: 'solved' });
       expect(state.current).toBe(TOE);
       expect(isCrossingSolved(state)).toBe(false);
+      const cow = solved(COW);
+      expect(cow.current).toBe(ANT);
+      expect(outcomeOf(cow, ...traced(cow, 'ant'))).toEqual({ kind: 'hit' });
     });
 
     it('keeps a filled letter where a crossing Word is entered', () => {
@@ -272,6 +298,7 @@ describe('the crossing Daily Crossword play', () => {
       expect(state.cells[crossingCellKey({ row: 0, column: 1 })]).toEqual({ kind: 'empty' });
       expect(state).toMatchObject({ current: CAT, hinted: true, trace: [] });
       expect(state.words[CAT]).toEqual({ kind: 'open' });
+      expect(outcomeOf(before, hint)).toEqual({ kind: 'nothing' });
     });
 
     it('solves a Word with no empty cell left and moves on to the next open Word', () => {
@@ -282,6 +309,7 @@ describe('the crossing Daily Crossword play', () => {
       });
       expect(state.words[CAT]).toEqual({ kind: 'solved' });
       expect(state.current).toBe(COW);
+      expect(outcomeOf(startCrossingPlay(puzzle), hint, hint)).toEqual({ kind: 'hit' });
       expect(play(state, hint).cells[crossingCellKey({ row: 1, column: 0 })]).toEqual({
         kind: 'filled',
         letter: 'o',

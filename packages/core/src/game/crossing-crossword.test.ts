@@ -29,6 +29,30 @@ describe('the crossing Daily Crossword generator', () => {
     expect(b.words.map((w) => w.word.id)).not.toEqual(a.words.map((w) => w.word.id));
   });
 
+  it('keeps the puzzle of a fixed date and seed the same for every reader, from release to release', () => {
+    const puzzle = puzzleOf('2026-11-07');
+    const lines = [
+      ...puzzle.words.map(
+        ({ word: placed, direction, start, wheel }) =>
+          `${placed.id} ${direction} ${String(start.row)}.${String(start.column)} ${wheel.join('')}`,
+      ),
+      ...puzzle.prefilled.map(
+        ({ place, letter }) => `${String(place.row)}.${String(place.column)}=${letter}`,
+      ),
+    ];
+    expect(lines).toMatchInlineSnapshot(`
+      [
+        "w_sloth across 0.0 oslhqt",
+        "w_sheep down 0.0 hsetep",
+        "w_hyena down 0.4 nhleay",
+        "w_eagle across 2.0 zgeeal",
+        "w_panda across 4.0 unadpa",
+        "4.4=a",
+        "0.4=h",
+      ]
+    `);
+  });
+
   it('puts every white cell in a Word of 3–5 letters, with no run of exactly two cells', () => {
     const puzzle = puzzleOf('2026-11-07');
     const rows = rowsOf(puzzle);
