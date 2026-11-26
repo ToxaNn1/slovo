@@ -34,3 +34,8 @@
 мочильня old-crafts 5
 мухояр history-antiquity 5
 ляпавиця nature-weather 5
+лестун witty-insults 4
+ложисько nature-weather 5
+меливо old-crafts 5
+мисліте language-speech 5
+млинар old-crafts 4
