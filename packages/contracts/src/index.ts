@@ -279,6 +279,12 @@ export {
 } from './feature-switch-rules';
 export { DEPENDS_ON, switchedOn } from './feature-switch-dependencies';
 export {
+  readSwitches,
+  rulesOf,
+  type ReadableRule,
+  type SwitchAnswer,
+} from './feature-switch-reader';
+export {
   FEATURE_SWITCHES,
   type FeatureSwitchGroup,
   type FeatureSwitchRecord,
