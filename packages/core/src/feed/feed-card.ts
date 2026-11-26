@@ -2,7 +2,7 @@ import type { Knowledge } from '../knowledge/knowledge';
 import type { AnyEntryCard } from './entry-feed-card';
 import type { FeedNoticeContent } from './feed-notices';
 import type { LocalDate } from '../local-date';
-import type { QuickQuestionContent } from '../game/quick-question';
+import type { AskedQuickQuestion } from '../game/quick-question';
 
 export type {
   AnyEntryCard,
@@ -30,14 +30,14 @@ export type FeedNoticeCard = FeedNoticeContent & {
 /**
  * The card of a Quick Question: one pick Round of an enabled Game Mode over
  * an Eligible Entry, in a Feed slot of its own. Like a Feed Notice it counts
- * in no turn and no Review slot and makes nothing Seen; `answered` is the
- * option the reader picked, once they did.
+ * in no turn and no Review slot and makes nothing Seen. It holds the
+ * question as the reader sees it, the right option kept out until its
+ * `answer`, judged by the Core, comes.
  */
-type QuickQuestionCard = QuickQuestionContent & {
+type QuickQuestionCard = AskedQuickQuestion & {
   readonly kind: 'quick-question';
   readonly entryId?: undefined;
   readonly review?: undefined;
-  readonly answered?: number;
 };
 
 /**
