@@ -31,3 +31,7 @@
 йняти language-speech 5
 таньга history-antiquity 5
 фільдеперс household-crafts 5
+ганус nature-weather 4
+гзимс household-crafts 5
+лахтак nature-weather 4
+топчак old-crafts 5
