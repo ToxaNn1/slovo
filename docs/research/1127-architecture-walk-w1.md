@@ -6,6 +6,15 @@ Read-only walk of `apps/backend/src`, `packages/server-core`, and the Sync and A
 
 Checked and not held: the modules that open apart from the composition (Account, remote switches, Mistake Reports, counter sending) keep only `device-only` records, so `reopenAfterSync` reopening the settings and the composition alone misses nothing; a sync's own writes (`merge`, `deleteSent`, `syncSyncedAt`) do not wake Sync again (`tracked-user-state.ts:96-121`).
 
+**Leads of the admin walk, not candidates.** A second subagent's report on the admin and services area arrived after the six were chosen. None of it was re-read by the walker, and it read test names only, not test bodies:
+
+- The Action log has no single seam: `admin-access.ts:112` calls itself the one write path while 11 places insert into `actionLog` directly, and in 17 places of the server Core a change and its log row go as separate queries; ADR 0204 settles this for the deletion of an Account only. Size L.
+- Services: `ServiceStore` offers only `list()`, so three callers do `list().find(id)` over three store instances and check `unknown` twice. Size S–M.
+- "A fresh TOTP opens the Vault" is assembled in the HTTP shell while the server Core's `unlock()` opens the window unconditionally; no defect found. Size S.
+- "Once an hour" and "the Kyiv day" are each encoded several times (cache TTL against the Cron window, three Kyiv formatters plus SQL), with the clock read more than once in one decision. Size S–M.
+
+`packages/server-core` holds no test file: every rule of it is tested through HTTP in `apps/backend`.
+
 ## 1. The Sync cursor belongs to a Session only while Sync happens to be open
 
 - **Files.** `packages/core/src/sync/sync.ts:128, 269-285`; `packages/core/src/sync/exchange.ts:260-275, 380`; `packages/core/src/sync/records.ts:18-27`; `apps/mobile/src/shell/app-shell.ts:157-180, 252-258`.
