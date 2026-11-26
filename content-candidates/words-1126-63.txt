@@ -14,6 +14,7 @@
 палітурня old-crafts 5
 пам'ятливий emotions-character 5
 паморока emotions-character 5
+панаїр history-antiquity 5
 панегіристка arts-culture 5
 панок witty-insults 4
 панчішник old-crafts 5
@@ -45,6 +46,7 @@
 перебрід nature-weather 5
 перевальцем human-body 5
 перегомін language-speech 5
+передбанник household-crafts 5
 передвечір'я nature-weather 5
 передвік history-antiquity 5
 передвістя language-speech 3
@@ -192,6 +194,7 @@
 похапливий emotions-character 5
 почварок witty-insults 5
 починальник emotions-character 4
+почтивий emotions-character 5
 почубеньки chameleon-words 5
 пошаноба emotions-character 5
 пошерхнути nature-weather 5
@@ -214,6 +217,7 @@
 премудрощі emotions-character 5
 преосвященніший history-antiquity 3
 преподобниця history-antiquity 5
+преспап'є household-crafts 5
 приваба emotions-character 5
 приварок household-crafts 5
 привиддя arts-culture 5
@@ -248,6 +252,7 @@
 прицмок language-speech 4
 прицюцькуватий witty-insults 5
 причасниця history-antiquity 5
+причетник history-antiquity 5
 пришелепуватий witty-insults 5
 пришелиця history-antiquity 5
 приїмище history-antiquity 5
@@ -257,6 +262,7 @@
 провожатий history-antiquity 4
 прогріх emotions-character 5
 проділка emotions-character 5
+прожект chameleon-words 5
 прожерливий emotions-character 5
 прозелень nature-weather 5
 прозорливиця emotions-character 5
@@ -274,6 +280,7 @@
 просвітник history-antiquity 3
 проскурка history-antiquity 5
 прослава language-speech 4
+просоння emotions-character 5
 простолюдинка history-antiquity 4
 простонароддя history-antiquity 5
 простосердя emotions-character 5
@@ -319,6 +326,7 @@
 підпиток emotions-character 5
 підпомога emotions-character 5
 підпрапорник military 5
+підпічок household-crafts 5
 підсака old-crafts 5
 підсклянник household-crafts 5
 підступник emotions-character 5
