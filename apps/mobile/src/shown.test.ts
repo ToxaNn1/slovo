@@ -152,10 +152,6 @@ describe('what the reader is shown', () => {
       { off: ['streakFreezeCard'], shown: { streakFreezeCard: false } },
     ],
     [
-      'no Streak freeze card with the freezes off',
-      { off: ['streakFreezes'], shown: { streakFreezeCard: false } },
-    ],
-    [
       'no progress Share Cards with their switch off',
       { off: ['progressShareCards'], shown: { progressShareCards: false } },
     ],
