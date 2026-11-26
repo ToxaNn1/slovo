@@ -4,19 +4,12 @@ import {
   type EntryKind,
   type FeatureSwitches,
   type Idiom,
-  type LanguageTraits,
   type SynonymRow,
   type Tip,
   type Word,
 } from '@slovo/contracts';
 
-import {
-  loadEdition,
-  switchedOn,
-  type DefaultMix,
-  type Edition,
-  type UserSettingDefaults,
-} from './edition/edition';
+import { loadEdition, switchedOn, type Edition } from './edition/edition';
 import type { CategoryKind } from './entries/entry-kinds';
 import type { PlayedRound, Round, RoundAnswer } from './game/game';
 import type { RoundOption } from './game/game-mode';
@@ -163,20 +156,41 @@ const testEditionConfig = {
 const baseTestEdition = loadEdition(testEditionConfig);
 
 /**
- * What a test changes of the test Edition: any field of the Edition, and
- * `languageTraits` and `userSettingDefaults`, its `mix` included, field by
- * field over the defaults.
+ * What a test changes of a value: a plain object field by field over the
+ * value, at every depth; a list, a function or anything else whole.
  */
-export interface TestEditionOverrides extends Partial<
-  Omit<Edition, 'languageTraits' | 'userSettingDefaults'>
-> {
-  readonly languageTraits?: Partial<LanguageTraits>;
-  readonly userSettingDefaults?: Partial<Omit<UserSettingDefaults, 'mix'>> & {
-    readonly mix?: Partial<Omit<DefaultMix, 'kinds'>> & {
-      readonly kinds?: Partial<DefaultMix['kinds']>;
-    };
+type Overrides<T> = T extends (...args: never[]) => unknown
+  ? T
+  : T extends readonly unknown[]
+    ? T
+    : T extends object
+      ? { readonly [Field in keyof T]?: Overrides<T[Field]> }
+      : T;
+
+const isPlainObject = (value: unknown): value is Readonly<Record<string, unknown>> =>
+  typeof value === 'object' && value !== null && Object.getPrototypeOf(value) === Object.prototype;
+
+/**
+ * The value with the overrides: each plain object field by field, at every
+ * depth, and anything else whole. Typed by its overload, since the compiler
+ * can't follow a merge over every field of a generic value.
+ */
+function overridden<T>(value: T, overrides: NoInfer<Overrides<T>>): T;
+function overridden(value: unknown, overrides: unknown): unknown {
+  if (!isPlainObject(value) || !isPlainObject(overrides)) return overrides;
+  return {
+    ...value,
+    ...Object.fromEntries(
+      Object.entries(overrides).map(([field, override]) => [
+        field,
+        overridden(value[field], override),
+      ]),
+    ),
   };
 }
+
+/** What a test changes of the test Edition: any field, a nested one field by field over the defaults. */
+export type TestEditionOverrides = Overrides<Edition>;
 
 /**
  * The Edition a test runs the Core as: the test Edition with the overrides,
@@ -186,28 +200,12 @@ export interface TestEditionOverrides extends Partial<
  * from a config in the shape of a real Edition's, so what the Core reads of
  * an Edition is what a config can say.
  */
-export function testEdition({
-  languageTraits = {},
-  userSettingDefaults = {},
-  ...overrides
-}: TestEditionOverrides = {}): Edition {
-  const { mix: { kinds = {}, ...mix } = {}, ...settings } = userSettingDefaults;
+export function testEdition(overrides: TestEditionOverrides = {}): Edition {
+  const edition = overridden(baseTestEdition, overrides);
   const { isFeatureEnabled } = overrides;
-  return {
-    ...baseTestEdition,
-    ...overrides,
-    ...(isFeatureEnabled === undefined ? {} : { isFeatureEnabled: switchedOn(isFeatureEnabled) }),
-    languageTraits: { ...baseTestEdition.languageTraits, ...languageTraits },
-    userSettingDefaults: {
-      ...baseTestEdition.userSettingDefaults,
-      ...settings,
-      mix: {
-        ...baseTestEdition.userSettingDefaults.mix,
-        ...mix,
-        kinds: { ...baseTestEdition.userSettingDefaults.mix.kinds, ...kinds },
-      },
-    },
-  };
+  return isFeatureEnabled === undefined
+    ? edition
+    : { ...edition, isFeatureEnabled: switchedOn(isFeatureEnabled) };
 }
 
 /** The Known counts by kind of Entry: those named, and 0 for every other kind. */

@@ -1,78 +1,67 @@
 import {
   EditionConfigSchema,
-  type DailyGoals,
-  type OnboardingNotificationTimes,
+  type EditionConfig,
   type FeatureSwitch,
   type FeatureSwitches,
-  type TextSize,
-  type LanguageTraits,
+  type MixConfig,
   type Mood,
   type NarratorVoice,
   type NarratorVoiceSample,
-  type OriginLanguage,
-  type Rarity,
-  type Theme,
-  type XpTable,
-  type Badge,
-  type CategoryGroup,
-  type BadgeFamily,
-  type MascotLines,
-  type Levels,
-  type Questionnaire,
-  type MixKind,
+  type UserSettingDefaultsConfig,
   switchedOn,
 } from '@slovo/contracts';
 
 export { switchedOn };
+
+/** A parsed config's field as the Core reads it: a list or a record of it not reassigned either. */
+type Frozen<V> = V extends readonly (infer E)[] ? readonly E[] : V extends object ? Readonly<V> : V;
+
+/** The fields of a parsed config as the Core reads them, each with the config's own doc. */
+type AsRead<Config> = { readonly [Field in keyof Config]: Frozen<Config[Field]> };
+
+/** The fields of the Edition config the Core reshapes before it reads them. */
+type Reshaped = 'featureSwitches' | 'userSettingDefaults' | 'dashboardMoods' | 'narratorVoices';
+
+/**
+ * The fields of the Edition config only the Language Pack build and the app
+ * config read: the Core reads its Categories from the Language Pack.
+ */
+type LeftToTheBuild =
+  | 'wordOfTheDayFont'
+  | 'widgetPalette'
+  | 'categories'
+  | 'correctionCategories'
+  | 'categoriesRequiringHistory'
+  | 'contentTargets';
 
 /**
  * The Edition's default Mix: the Categories, plus each kind of Entry beside
  * Words as a whole, a new user sees. `'all'` is every
  * Category of the Language Pack, also one a content update adds.
  */
-export interface DefaultMix {
+export interface DefaultMix extends AsRead<Omit<MixConfig, 'categories' | 'correctionCategories'>> {
   readonly categoryIds: 'all' | readonly string[];
   /** The Categories of Corrections in the Mix, under Corrections as a whole. */
   readonly correctionCategoryIds: 'all' | readonly string[];
-  /** Whether each kind of Entry beside Words is in the Mix as a whole. */
-  readonly kinds: Readonly<Record<MixKind, boolean>>;
 }
 
 /** The settings a new user starts with, as declared by the Edition. */
-export interface UserSettingDefaults {
-  readonly theme: Theme;
-  /** The three-step text size a new user starts with. */
-  readonly textSize: TextSize;
-  /** Whether haptics are on. */
-  readonly vibration: boolean;
+export interface UserSettingDefaults extends AsRead<Omit<UserSettingDefaultsConfig, 'mix'>> {
   /** The id of the Narrator Voice that reads until the reader chooses: the Edition's default voice. */
   readonly narratorVoice: string;
-  /** Local times of day, `HH:MM` on a 24-hour clock. */
-  readonly notificationTimes: readonly string[];
-  /** The top of the Rarity Range a new user starts with, «до 1» to «до 5» (ADR 0156). */
-  readonly rarityCeiling: Rarity;
   readonly mix: DefaultMix;
 }
 
 /**
  * What the Core knows about the Edition it runs as: only what can't change
- * without a store build. Its Categories come from the Language Pack.
+ * without a store build. Every field of the Edition config it does not
+ * reshape or leave to the build, as parsed; its Categories come from the
+ * Language Pack.
  */
-export interface Edition {
-  readonly id: string;
-  readonly locale: string;
+export interface Edition extends AsRead<Omit<EditionConfig, Reshaped | LeftToTheBuild>> {
   /** The app's name, such as «SLOVO»; its Share Cards carry it as their watermark. */
   readonly displayName: string;
-  /** What the Account is called on every screen, such as «Акаунт SLOVO». */
-  readonly accountName: string;
-  readonly languageTraits: LanguageTraits;
   readonly userSettingDefaults: UserSettingDefaults;
-  /** The file name of the Edition's notification sound, which the shell bundles; without one, notifications play the system sound. */
-  readonly notificationSound: string | undefined;
-  /** The languages Words come from, in their order, which «Звідки слово» offers. */
-  readonly originLanguages: readonly OriginLanguage[];
-  /** The Edition's moods, in their order. */
-  readonly moods: readonly Mood[];
   /** The three to five moods the Dashboard's Mood check-in offers, in display order. */
   readonly dashboardMoods: readonly Mood[];
   /** The Narrator Voices that read Words, in their order. */
@@ -84,34 +73,6 @@ export interface Edition {
   narratorVoiceOf(chosen: string | undefined): NarratorVoice;
   /** The Word the voice screen reads in every Narrator Voice, and how it shows it. */
   readonly narratorVoiceSample: NarratorVoiceSample;
-  /** The letters Search reads as another, such as ґ as г. */
-  readonly searchLetters: Readonly<Record<string, string>>;
-  /** The XP table: what each Game learning action earns (ADR 0066). */
-  readonly xp: XpTable;
-  /** The Level curve and the Level names (ADR 0066). */
-  readonly levels: Levels;
-  /** The Daily Goals in Words the reader chooses from, and the one highlighted. */
-  readonly dailyGoals: DailyGoals;
-  /** The Notification times «Коли нагадати?» offers, one for each bucket it counts. */
-  readonly onboardingNotificationTimes: OnboardingNotificationTimes;
-  /** The onboarding questions, their options and what each sets. */
-  readonly questionnaire: Questionnaire;
-  /** The Badge families the Edition declares, in their order. */
-  readonly badgeFamilies: readonly BadgeFamily[];
-  /** The Badges the Edition chooses and names, in their order, each of a family (ADR 0066). */
-  readonly badges: readonly Badge[];
-  /** The Mascot's short line for each moment it shows in. */
-  readonly mascot: MascotLines;
-  /**
-   * The id of the Category or Correction Category whose pictogram a Curated
-   * Collection's tile draws when the collection names none.
-   */
-  readonly curatedCollectionPictogram: string | undefined;
-  /**
-   * The groups the Mix screen shows the Categories of Words in, each Category
-   * in exactly one; unset, the Categories show as one list.
-   */
-  readonly categoryGroups: readonly CategoryGroup[] | undefined;
   /**
    * Whether the given Core feature is in effect (ADR 0203): by the remote
    * Rules the device read last, else as the Edition shipped it (ADR 0089),
@@ -173,72 +134,42 @@ export function loadShippedEdition(config: unknown): ShippedEdition {
     throw new InvalidEditionConfigError(`Invalid Edition config:\n${problems.join('\n')}`);
   }
   const {
-    id,
-    locale,
-    displayName,
-    accountName,
-    languageTraits,
     featureSwitches,
     userSettingDefaults,
-    notificationSound,
-    originLanguages,
-    moods,
     dashboardMoods,
     narratorVoices,
-    searchLetters,
-    xp,
-    levels,
-    dailyGoals,
-    onboardingNotificationTimes,
-    questionnaire,
-    badgeFamilies,
-    badges,
-    mascot,
-    curatedCollectionPictogram,
-    categoryGroups,
+    // Left to the Language Pack build and the app config.
+    wordOfTheDayFont: _font,
+    widgetPalette: _widgetPalette,
+    categories: _categories,
+    correctionCategories: _correctionCategories,
+    categoriesRequiringHistory: _requiringHistory,
+    contentTargets: _contentTargets,
+    ...carried
   } = result.data;
-  const moodOf = (id: string) => moods.find((mood) => mood.id === id);
+  const moodOf = (id: string) => carried.moods.find((mood) => mood.id === id);
   const voiceOf = (id: string | undefined) =>
     narratorVoices.voices.find((voice) => voice.id === id);
   const defaultVoice = voiceOf(narratorVoices.default);
   // The schema checks the default is declared; this keeps the type honest.
   if (defaultVoice === undefined)
     throw new InvalidEditionConfigError('Invalid Edition config:\nnarratorVoices.default');
-  const { mix, ...settings } = userSettingDefaults;
+  const {
+    mix: { categories, correctionCategories, ...mix },
+    ...settings
+  } = userSettingDefaults;
   return {
-    id,
-    locale,
-    displayName,
-    accountName,
-    languageTraits,
+    ...carried,
     userSettingDefaults: {
       ...settings,
       narratorVoice: defaultVoice.id,
-      mix: {
-        categoryIds: mix.categories,
-        correctionCategoryIds: mix.correctionCategories,
-        kinds: mix.kinds,
-      },
+      mix: { ...mix, categoryIds: categories, correctionCategoryIds: correctionCategories },
     },
-    notificationSound,
-    originLanguages,
-    moods,
     // Each id is one of `moods`: the schema checked it.
     dashboardMoods: dashboardMoods.flatMap((id) => moodOf(id) ?? []),
     narratorVoices: narratorVoices.voices,
     narratorVoiceSample: narratorVoices.sample,
     narratorVoiceOf: (chosen) => voiceOf(chosen) ?? defaultVoice,
-    searchLetters,
-    xp,
-    levels,
-    dailyGoals,
-    onboardingNotificationTimes,
-    questionnaire,
-    badgeFamilies,
-    badges,
-    mascot,
-    curatedCollectionPictogram,
-    categoryGroups,
     featureSwitches,
     isShippedOn: switchedOn((feature) => featureSwitches[feature] === 'on'),
   };
