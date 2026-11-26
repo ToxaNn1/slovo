@@ -2,26 +2,31 @@
  * Drafts Words for a list of Lemmas, for human review:
  *
  *   pnpm source:words <lemma-list> --edition <id> [--snapshot <file>] [--out <dir>] [--cache <dir>]
- *                     [--sum auto|direct|wayback|off]
+ *                     [--sum off|auto|direct|wayback]
  *
  * The list has one Lemma per line, `<lemma> <category id> <rarity>`, with
  * `#` comments. Drafts, incomplete drafts and `review-report.md` go to the
  * `words/` folder of the review folder, `tools/sourcing/review/` (git-ignored). Fetched pages go to one cache shared by every worktree and
  * run on the machine: `--cache`, else `$SLOVO_SOURCING_CACHE`, else
  * `$XDG_CACHE_HOME/slovo-sourcing` or `~/.cache/slovo-sourcing`. goroh.pp.ua
- * is the main source; sum.in.ua and the Wayback Machine are fallbacks for
- * Definitions, each tried once per run (`--sum off` skips them). A Lemma none
- * of them has is drafted from Грінченко, flagged `write-fresh`, once
- * `pnpm source:hrinchenko` has built its index.
+ * is the source; sum.in.ua and the Wayback Machine are asked for Definitions
+ * only with `--sum auto|direct|wayback`, each tried once per run. A Lemma whose
+ * only article points at another is followed one step, judged by `wordfreq`.
+ * A Lemma no explanatory dictionary has is drafted from Грінченко, once
+ * `pnpm source:hrinchenko` has built its index, else from ЕСУМ's gloss, both
+ * flagged `write-fresh`.
  */
 import { parseArgs } from 'node:util';
 
 import { prepareRun, printSummary } from './cli-common';
 import { cachedHrinchenko } from './hrinchenko';
 import { sourceWords, type SumAccess } from './index';
+import { loadWordfreq } from './lemma-sources';
+import { fetchBytes } from './node-ports';
+import { zipfOf } from './wordfreq';
 
 const USAGE =
-  'Usage: pnpm source:words <lemma-list> --edition <id> [--snapshot <file>] [--out <dir>] [--cache <dir>] [--sum auto|direct|wayback|off]';
+  'Usage: pnpm source:words <lemma-list> --edition <id> [--snapshot <file>] [--out <dir>] [--cache <dir>] [--sum off|auto|direct|wayback]';
 const SUM_ACCESS: readonly SumAccess[] = ['auto', 'direct', 'wayback', 'off'];
 
 async function main(): Promise<number> {
@@ -32,7 +37,7 @@ async function main(): Promise<number> {
       out: { type: 'string' },
       cache: { type: 'string' },
       snapshot: { type: 'string' },
-      sum: { type: 'string', default: 'auto' },
+      sum: { type: 'string', default: 'off' },
     },
   });
   const [listFile] = positionals;
@@ -58,8 +63,21 @@ async function main(): Promise<number> {
   if (!run.ok) return run.exitCode;
   // Грінченко's index, once `pnpm source:hrinchenko` has built it (ADR 0207).
   const hrinchenko = cachedHrinchenko(run.options.cacheDir) ?? new Map();
+  const frequencies = await loadWordfreq({
+    cacheDir: run.options.cacheDir,
+    download: fetchBytes,
+    log: (message) => {
+      console.error(message);
+    },
+  });
   return printSummary(
-    await sourceWords({ ...run.options, lemmaList: run.list, sumAccess, hrinchenko }),
+    await sourceWords({
+      ...run.options,
+      lemmaList: run.list,
+      sumAccess,
+      hrinchenko,
+      zipf: (lemma) => zipfOf(frequencies, lemma),
+    }),
   );
 }
 

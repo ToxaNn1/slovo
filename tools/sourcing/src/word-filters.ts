@@ -1,6 +1,7 @@
 import type { Register } from '@slovo/contracts';
 
 import type { Flag } from './review-report';
+import { unstressed } from './text';
 
 /**
  * The markers СУМ starts a Definition with to point at another article
@@ -34,6 +35,18 @@ const CROSS_REFERENCE = new RegExp(
 /** Whether a Definition only points at another article, e.g. «Зменш. до вікно.». */
 export function isCrossReference(definition: string): boolean {
   return CROSS_REFERENCE.test(definition.trim());
+}
+
+/** A marker at the start, then the word it points at, with its Stress marks. */
+const CROSS_REFERENCE_TARGET = new RegExp(
+  `${CROSS_REFERENCE.source}\\s+([\\p{L}\\p{M}'’ʼ-]+)`,
+  'iu',
+);
+
+/** The Lemma a cross-reference points at, without its Stress or homonym index, e.g. «Зменш. до вікно́.» → вікно. */
+export function crossReferenceTarget(definition: string): string | undefined {
+  const target = CROSS_REFERENCE_TARGET.exec(definition.trim())?.[1];
+  return target === undefined ? undefined : unstressed(target).normalize('NFC');
 }
 
 /** What a filter of `source:words` found: the flags for a human, and the issues that keep the draft out of `drafts/`. */

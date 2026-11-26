@@ -1,6 +1,9 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
-import { parseDefinitions } from './goroh';
+import { esumArticles, parseDefinitions } from './goroh';
 
 /** A «Тлумачення» article block as goroh prints it, cited to the explanatory dictionary. */
 function block(headword: string, definition: string): string {
@@ -28,5 +31,29 @@ describe('parseDefinitions', () => {
     expect(articles).toHaveLength(1);
     expect(articles[0]).not.toHaveProperty('homonymNumber');
     expect(articles[0]?.definitions[0]?.text).toBe('Міцна нитка.');
+  });
+});
+
+describe('the ЕСУМ articles of a Lemma', () => {
+  const page = readFileSync(
+    fileURLToPath(new URL('../fixtures/goroh/etymology-mzhychka.html', import.meta.url)),
+    'utf8',
+  );
+
+  it('finds a Lemma that heads an article or is listed as a variant under one', () => {
+    expect(esumArticles(page, 'мжити')).toMatchObject({
+      entries: [{ headword: 'мжи́ти', gloss: '«мрячити»' }],
+      underOtherHeadword: false,
+    });
+    expect(esumArticles(page, 'мжа')).toMatchObject({
+      entries: [{ headword: 'мжи́ти' }],
+      underOtherHeadword: true,
+    });
+    expect(esumArticles(page, 'дощ').entries).toEqual([]);
+  });
+
+  it('keeps the gloss ЕСУМ gives a variant', () => {
+    const [article] = esumArticles(page, 'мгун').entries;
+    expect(article?.variantGlosses['мгун']).toBe('«мряка»');
   });
 });
