@@ -372,3 +372,12 @@
 недоуздок old-crafts 5
 непліддя human-body 5
 непомалу language-speech 5
+навколінці language-speech 5
+напропале language-speech 5
+нарочитий language-speech 5
+небосяжний nature-weather 5
+невдивовижу language-speech 5
+невзабарі language-speech 5
+недосталь language-speech 5
+недремний emotions-character 5
+непристайний emotions-character 5
