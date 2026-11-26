@@ -33,3 +33,11 @@
 бардадим witty-insults 5
 борть old-crafts 4
 брань military 3
+багрянь nature-weather 5
+белькіт language-speech 5
+бзікуватий witty-insults 5
+брегет history-antiquity 5
+букшпан folk-names 5
+буркунець folk-names 5
+бурчун witty-insults 4
+бутень folk-names 5
