@@ -74,3 +74,11 @@
 замрячити nature-weather 5
 збороти language-speech 5
 змеркти nature-weather 5
+запанібрата conversation 4
+з'їди human-body 5
+забілка household-crafts 5
+завидна language-speech 5
+зелот history-antiquity 5
+зібгати conversation 5
+змикитити conversation 5
+зонг arts-culture 5
