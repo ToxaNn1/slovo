@@ -17,3 +17,5 @@
 плоскирка nature-weather 3
 помисел emotions-character 4
 пошанівок language-speech 4
+потіпаха witty-insults 5
+поспівка arts-culture 5
