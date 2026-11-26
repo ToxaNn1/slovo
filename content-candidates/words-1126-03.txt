@@ -34,3 +34,8 @@
 дудлити human-body 5
 жирандоля household-crafts 5
 журфікс arts-culture 5
+дертя household-crafts 5
+джереґеля household-crafts 5
+дибиці history-antiquity 5
+єпитимія history-antiquity 5
+жарівня household-crafts 5
