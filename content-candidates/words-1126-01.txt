@@ -29,7 +29,7 @@
 бонза witty-insults 4
 бугаєць folk-names 4
 байбак witty-insults 3
-балухатий human-body 5
+балухи human-body 5
 бардадим witty-insults 5
 борть old-crafts 4
 брань military 3
@@ -41,3 +41,7 @@
 буркунець folk-names 5
 бурчун witty-insults 4
 бутень folk-names 5
+басилей history-antiquity 5
+балощі emotions-character 5
+бандольєра military 5
+бурмистер history-antiquity 5
