@@ -140,7 +140,6 @@
 розкаряка witty-insults 5
 розкозачувати history-antiquity 5
 розкряжувати old-crafts 5
-розраяти emotions-character 5
 розстрига history-antiquity 5
 розталь nature-weather 5
 розтриклятий witty-insults 5
@@ -148,3 +147,12 @@
 розщелина nature-weather 3
 ропак nature-weather 5
 росянка nature-weather 4
+раяти language-speech 5
+ратиця nature-weather 4
+ретивий emotions-character 4
+ридикюль household-crafts 5
+розгуторитися language-speech 5
+роздобритися emotions-character 5
+розумаха witty-insults 5
+ронити emotions-character 5
+розсильний history-antiquity 5
