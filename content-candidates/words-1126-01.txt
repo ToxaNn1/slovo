@@ -45,3 +45,5 @@
 балощі emotions-character 5
 бандольєра military 5
 бурмистер history-antiquity 5
+байтала witty-insults 5
+барзо language-speech 5
