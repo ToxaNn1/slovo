@@ -312,6 +312,40 @@ describe('the Rule that decides', () => {
     expect(switches.everyoneRule('game')?.id).toBe('everyone');
     expect(switches.everyoneRule('mixTab')).toBeUndefined();
   });
+
+  it('holds a schedule open at either end, up to and including its last moment', () => {
+    const everyoneBy = (schedule: { from?: string; until?: string }) =>
+      read([rule({ feature: 'game', targets: { schedule } })]).everyoneRule('game')?.id;
+
+    expect(everyoneBy({ from: '2026-11-01T00:00:00Z' })).toBe('game-rule');
+    expect(everyoneBy({ until: '2026-11-09T00:00:00Z' })).toBe('game-rule');
+    expect(everyoneBy({ until: '2026-11-08T12:00:00Z' })).toBe('game-rule');
+    expect(everyoneBy({ from: '2026-11-08T12:00:01Z' })).toBeUndefined();
+  });
+
+  it('takes a Rule for a share below 100 or another target as one that singles readers out', () => {
+    const switches = read([
+      rule({ id: 'half', feature: 'game', order: 0, targets: { share: 50 } }),
+      rule({ id: 'ios', feature: 'game', order: 1, targets: { platform: 'ios' } }),
+      rule({ id: 'everyone', feature: 'game', order: 2, targets: { schedule: running } }),
+    ]);
+
+    expect(switches.everyoneRule('game')?.id).toBe('everyone');
+  });
+});
+
+describe('a feature on for anyone', () => {
+  it('is not an unavailable one, whatever its Rules say', () => {
+    const rules = [rule({ feature: 'game', verdict: 'on', targets: { region: ['UA'] } })];
+
+    expect(read(rules, { game: 'unavailable' }).onForAnyone('game')).toBe(false);
+  });
+
+  it('is not one off whose Rules only turn it off for some', () => {
+    const rules = [rule({ feature: 'game', verdict: 'off', targets: { region: ['UA'] } })];
+
+    expect(read(rules, { game: 'off' }).onForAnyone('game')).toBe(false);
+  });
 });
 
 describe('the order Rules are tried in', () => {
