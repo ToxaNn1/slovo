@@ -165,3 +165,14 @@
 дотарабанити human-body 5
 дошкутильгати human-body 5
 драндулет technology 5
+даремщина emotions-character 5
+даток history-antiquity 5
+дієйменник language-speech 5
+довкружжя language-speech 5
+дожевріти nature-weather 5
+дожидальня history-antiquity 5
+дохтур history-antiquity 5
+дощаник old-crafts 5
+драговиння nature-weather 5
+драгет household-crafts 5
+душеубогий witty-insults 5
