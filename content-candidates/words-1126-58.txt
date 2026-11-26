@@ -178,3 +178,5 @@
 корпія human-body 5
 коцарство old-crafts 5
 кропильниця history-antiquity 5
+кольчужник military 5
+красноголосий arts-culture 5
