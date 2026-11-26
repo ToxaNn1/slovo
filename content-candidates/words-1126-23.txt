@@ -82,3 +82,10 @@
 зібгати conversation 5
 змикитити conversation 5
 зонг arts-culture 5
+заверниголова witty-insults 5
+закоцюбнути human-body 5
+запліт old-crafts 5
+заталанити conversation 5
+здоровай witty-insults 5
+зурна arts-culture 5
+зугарно language-speech 5
