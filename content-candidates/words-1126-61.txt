@@ -381,3 +381,4 @@
 недосталь language-speech 5
 недремний emotions-character 5
 непристайний emotions-character 5
+несьогосвітній emotions-character 5
