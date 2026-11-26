@@ -177,3 +177,17 @@
 злотворець emotions-character 5
 знаскоку conversation 4
 зубодер old-crafts 5
+заворуха history-antiquity 5
+зазивайло shop 5
+заочі conversation 5
+запияка witty-insults 5
+запозавчора conversation 5
+запороха home 5
+затьма science 5
+збештати conversation 5
+збіговище conversation 5
+здибанка conversation 4
+злакомитися emotions-character 5
+знечев'я conversation 5
+зориця nature-weather 5
+зуботичина conversation 5
