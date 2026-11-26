@@ -24,3 +24,12 @@
 віднадити emotions-character 3
 віниччя household-crafts 4
 воловня household-crafts 4
+вагабунд witty-insults 5
+вишпортати language-speech 5
+відлюдок emotions-character 5
+вільгий nature-weather 5
+вітійствувати language-speech 5
+волоття nature-weather 5
+вовкун folk-names 3
+воркотуха witty-insults 5
+вспак language-speech 5
