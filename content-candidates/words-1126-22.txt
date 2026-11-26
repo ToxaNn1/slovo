@@ -35,3 +35,12 @@
 прийшляк witty-insults 5
 прискринок household-crafts 5
 пустоб'яха witty-insults 5
+павідь nature-weather 5
+пажиброда witty-insults 5
+пантофля household-crafts 4
+подимщина history-antiquity 5
+повада emotions-character 5
+поклеп language-speech 4
+похнюпа witty-insults 5
+предиво old-crafts 5
+просина nature-weather 5
