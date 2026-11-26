@@ -91,3 +91,15 @@
 очуняти human-body 5
 ошийок human-body 5
 нав'ючити old-crafts 4
+навсібіч language-speech 4
+надфіль technology 5
+найтов technology 5
+намарудитися emotions-character 5
+недолупок witty-insults 5
+нелюдько emotions-character 5
+огребки old-crafts 5
+одробина language-speech 5
+окоренкуватий human-body 5
+оксамитка household-crafts 5
+охлянути human-body 5
+очамріти emotions-character 5
