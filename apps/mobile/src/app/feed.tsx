@@ -21,7 +21,7 @@ import {
   useGesturesDemo,
 } from '@slovo/ui';
 import { LATER_QUESTIONS, type FeedCard, type FeedNoticeCard } from '@slovo/core';
-import { memo, useCallback, useEffect, useRef, type ComponentProps } from 'react';
+import { memo, useCallback, useRef, type ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { edition, editionStrings } from '@/edition/edition';
@@ -32,6 +32,7 @@ import { useFeed } from '@/feed/feed';
 import { useSettings } from '@/settings/settings';
 import { gameModeStrings } from '@/game/game-modes';
 import { wordOfTheDayLanding } from '@/feed/word-of-the-day-landing';
+import { readerPlace } from '@/feed/reader-place';
 import { useFirstWeekStreak } from '@/feed/first-week';
 import {
   entryPage,
@@ -50,7 +51,7 @@ import { useNotificationsChanges } from '@/notifications/notifications';
 import { LaterQuestionNotice } from '@/feed/later-question-notice';
 import { useEditionInEffect } from '@/edition/remote-switches';
 import { mixPlaceOf } from '@/shown';
-import { MascotAs, tellGoalCardOnScreen } from '@/mascot/mascot';
+import { MascotAs } from '@/mascot/mascot';
 
 const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
@@ -71,7 +72,12 @@ export default function FeedRoute() {
 function FeedScreen() {
   const pager = useRef<VerticalPagerHandle>(null);
   const voice = useSettings().current.narratorVoice;
-  const feed = useFeed(pager, { clock: deviceClock, landing: wordOfTheDayLanding, voice });
+  const feed = useFeed(pager, {
+    clock: deviceClock,
+    landing: wordOfTheDayLanding,
+    place: readerPlace,
+    voice,
+  });
   const { colors } = useTokens();
   const inEffect = useEditionInEffect();
   const header = useFeedHeaderRows();
@@ -121,18 +127,10 @@ function FeedScreen() {
   const onIndexChange = useCallback(
     (position: number) => {
       onCardChange(position);
-      // The goal-reached card holds its own Mascot: no celebration covers it (owner bug 23.11).
-      tellGoalCardOnScreen(isGoalCard(cards[position]));
       // The undo toast of a side swipe goes once the reader moves on to another card.
       closeUndoToast();
     },
-    [onCardChange, cards, closeUndoToast],
-  );
-  useEffect(
-    () => () => {
-      tellGoalCardOnScreen(false);
-    },
-    [],
+    [onCardChange, closeUndoToast],
   );
 
   if (cards.length === 0)
@@ -186,10 +184,6 @@ function FeedScreen() {
     </View>
   );
 }
-
-/** Whether `card` is the Feed's goal-reached card. */
-const isGoalCard = (card: FeedCard | undefined) =>
-  card?.kind === 'notice' && card.notice === 'goalReached';
 
 /** The key of a card's page, by the Entry, Feed Notice or Quick Question it shows. */
 function pageKey(card: FeedCard): string {
