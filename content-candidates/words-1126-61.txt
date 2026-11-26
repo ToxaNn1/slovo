@@ -311,3 +311,11 @@
 недоук witty-insults 5
 недужість human-body 5
 неславити language-speech 5
+намісникувати history-antiquity 5
+невідомщений emotions-character 5
+невсипущість emotions-character 5
+недогарок household-crafts 5
+непотребство emotions-character 5
+нищитель emotions-character 5
+нахідка language-speech 5
+нагнуздати old-crafts 5
