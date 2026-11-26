@@ -21,3 +21,7 @@
 єресіарх history-antiquity 5
 жучити emotions-character 4
 жовтопузик folk-names 5
+дурбелик witty-insults 5
+жданики emotions-character 5
+жерделя nature-weather 5
+двиготіти nature-weather 5
