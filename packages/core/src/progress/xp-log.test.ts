@@ -467,7 +467,6 @@ async function look(app: Composition, time: ReturnType<typeof fakeClock>): Promi
   await app.feed.show(app.feed.cards.length - 1);
   time.advance(SEEN_DWELL_MS);
   await app.feed.show(undefined);
-  await settle();
 }
 
 const recordsOf = (records: Map<string, string>) =>
@@ -497,7 +496,6 @@ describe('the Daily Goal', () => {
     expect(app.xpLog.state.dailyGoal).toEqual({ goal: 3, seen: 2, met: false });
 
     await app.history.clear();
-    await settle();
     expect(app.history.list).toEqual([]);
     expect(app.xpLog.state.dailyGoal).toEqual({ goal: 3, seen: 2, met: false });
 
@@ -509,7 +507,6 @@ describe('the Daily Goal', () => {
     expect(again.app.xpLog.state.dailyGoal).toEqual({ goal: 3, seen: 3, met: true });
     // A second clear the same day adds to the first.
     await again.app.history.clear();
-    await settle();
     expect(again.app.xpLog.state.dailyGoal).toEqual({ goal: 3, seen: 3, met: true });
   });
 
@@ -1028,7 +1025,8 @@ describe('the Seen-Word XP', () => {
     expect(new Set(told)).toEqual(new Set(['other']));
   });
 
-  it('earns the Seen-Word XP of a write that failed with the next Word Seen', async () => {
+  // Ticket #2115: a Word Seen and its XP are one write, so no restart finds one without the other.
+  it('keeps no Word Seen without its XP when the write fails and the app restarts', async () => {
     const records = new Map<string, string>();
     const memory = createMemoryUserStatePort(records);
     let failures = 1;
@@ -1045,14 +1043,20 @@ describe('the Seen-Word XP', () => {
     };
     const { app, time } = await run({ on, records, port });
     await app.xpLog.setDailyGoal(10);
+    await look(app, time).catch(() => undefined);
+    // The write that failed kept nothing: the Word is not Seen and nothing is earned.
+    expect([...records.keys()].filter((key) => key.startsWith('history.'))).toEqual([]);
+    expect(app.xpLog.state).toMatchObject({ today: 0, dailyGoal: { seen: 0 } });
 
-    await look(app, time);
-    expect(app.xpLog.state.today).toBe(0);
+    const again = await run({ on, records, time });
+    await look(again.app, time);
 
-    await look(app, time);
-
-    expect(app.xpLog.state.today).toBe(2);
-    expect(xpKeys(records).filter((key) => key.startsWith('xp.seen-word-'))).toHaveLength(2);
+    const inHistory = [...records.keys()].filter((key) => key.startsWith('history.'));
+    expect(inHistory.length).toBeGreaterThan(0);
+    expect(xpKeys(records).filter((key) => key.startsWith('xp.seen-word-'))).toHaveLength(
+      inHistory.length,
+    );
+    expect(again.app.xpLog.state.today).toBe(again.app.xpLog.state.dailyGoal?.seen);
   });
 
   it('earns nothing for an Entry that is not a Word', async () => {

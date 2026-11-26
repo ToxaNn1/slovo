@@ -452,6 +452,7 @@ export async function openComposition({
     dayTurned,
     analytics,
     history,
+    rows,
     isFirstCycle: () => cycle.isFirst(),
   });
   const readerName = await openReaderName({ userState });
@@ -571,6 +572,7 @@ export async function openComposition({
     knowledge,
     wordOfTheDay,
     history: recorder,
+    xpLog,
     archive: archiveRecorder,
     notices: openFeedNotices({
       edition,

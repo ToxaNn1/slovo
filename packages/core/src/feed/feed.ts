@@ -27,6 +27,7 @@ import { dateKeyOf, todayDate, todayKey, type LocalDate } from '../local-date';
 import type { Clock } from '../ports';
 import type { Mix } from '../entries/mix';
 import type { MoodCheckIns, MoodFeedParameters } from '../mood/mood';
+import type { XpLog } from '../progress/xp-log';
 import { staged, writeStaged, type StagedPiece } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
@@ -301,6 +302,7 @@ export async function openFeed({
   knowledge,
   wordOfTheDay,
   history,
+  xpLog,
   archive,
   notices,
   mix,
@@ -318,6 +320,8 @@ export async function openFeed({
   knowledge: Pick<Knowledge, 'state' | 'set'>;
   wordOfTheDay: WordOfTheDay;
   history: HistoryRecorder;
+  /** The XP log, whose XP of an Entry becoming Seen is kept in the write that makes it Seen. */
+  xpLog: Pick<XpLog, 'seen'>;
   archive: WordOfTheDayArchiveRecorder;
   notices: FeedNoticeQueue;
   /** The Mix, whose kind weights and Quick Question frequency in effect the next card follows, read for each card. */
@@ -726,15 +730,6 @@ export async function openFeed({
     return gettingReady ?? Promise.resolve();
   }
 
-  /** The Entry of a card that left the screen, if it stayed there long enough to be Seen. */
-  function seenOnLeaving(left: FeedCard | undefined, stayed: number): string | undefined {
-    const entryId = left?.entryId;
-    // A card of an earlier Cycle counts for that Cycle only.
-    if (left === undefined || entryId === undefined || !session.inCurrentCycle(left))
-      return undefined;
-    return stayed < SEEN_DWELL_MS ? undefined : entryId;
-  }
-
   /**
    * Keeps a change of the card on screen in one write: the Entry of the card
    * that `left` Seen if it stayed long enough, with its History entry, and
@@ -758,8 +753,11 @@ export async function openFeed({
     /** Whether the reader swiped from the card that left to another card. */
     swiped?: boolean;
   }): Promise<string | undefined> {
-    const seenId = seenOnLeaving(left, stayed);
-    if (left?.entryId !== undefined && stayed >= SEEN_DWELL_MS) readOn.set(left.entryId, date);
+    // The one dwell rule: a card that stayed long enough was read (ADR 0194).
+    const readId = stayed >= SEEN_DWELL_MS ? left?.entryId : undefined;
+    if (readId !== undefined) readOn.set(readId, date);
+    // A card of an earlier Cycle counts for that Cycle only.
+    const seenId = left !== undefined && session.inCurrentCycle(left) ? readId : undefined;
     const leftWordOfTheDay = left?.kind === 'word' ? left.wordOfTheDay : undefined;
     // A Feed Notice of a day before, left open over midnight, is closed already.
     const closed =
@@ -781,8 +779,8 @@ export async function openFeed({
   type Seeing = Omit<Seen, 'wordOfTheDay'> & { readonly wordOfTheDay: LocalDate | undefined };
 
   /**
-   * Writes the `pieces` in one write with the Entry's Seen mark and History
-   * entry, if given and it isn't Seen yet, and the archive's day
+   * Writes the `pieces` in one write with the Entry's Seen mark, History
+   * entry and XP, if given and it isn't Seen yet, and the archive's day
    * for the Word of the Day's card. Returns the Entry that became Seen, if
    * one did.
    */
@@ -797,11 +795,11 @@ export async function openFeed({
       becomesSeen && seen.wordOfTheDay !== undefined
         ? archive.record(seen.wordOfTheDay, seen.entryId)
         : undefined;
-    // History first, then the Seen mark, then the archive's day.
-    const rest = [mark, archived, ...pieces];
-    if (becomesSeen)
+    if (becomesSeen) {
+      // History first, then the Seen mark, the XP of the Entry Seen, then the archive's day.
+      const rest = [mark, await xpLog.seen(seen), archived, ...pieces];
       await history.record({ ...seen, wordOfTheDay: seen.wordOfTheDay !== undefined }, rest);
-    else await writeStaged(userState, rest);
+    } else await writeStaged(userState, [mark, archived, ...pieces]);
     return becomesSeen ? seen.entryId : undefined;
   }
 
