@@ -314,4 +314,45 @@ describe('pnpm content against the content write API', () => {
     expect(await snapshotOf(backend)).toEqual(before);
     expect(await backend.admin.actions('uk')).toEqual([]);
   });
+
+  it('refuses in `check` exactly the drafts the write API refuses, by the same rules', async () => {
+    const backend = await servedBackend();
+    const collection = (await snapshotOf(backend)).curatedCollections[0];
+    if (collection === undefined) throw new Error('no Curated Collection');
+    const { id: _id, publishedOn: _publishedOn, ...collectionFields } = collection;
+    // Two drafts of one Word in one file: the second repeats the first's Lemma and definition.
+    const words = input('twice.json', [
+      await draftOf(backend, { lemma: 'обручик', stress: [3] }),
+      await draftOf(backend, { lemma: 'обручик', stress: [3] }),
+      await draftOf(backend, { lemma: 'обручок', stress: [99] }),
+    ]);
+    // A collection with no publish date appears on the Edition's day.
+    const collections = input('collections.json', [{ ...collectionFields, name: 'Нова добірка' }]);
+    /** Each `<item>: REFUSED <rule>` the run printed, in order. */
+    const refusedOf = (stderr: string) =>
+      [...stderr.matchAll(/^(\S+): REFUSED ([a-z-]+)/gm)].map(([, at, rule]) => `${at} ${rule}`);
+
+    const runs = [];
+    for (const [kind, path] of [
+      ['word', words],
+      ['curatedCollection', collections],
+    ] as const) {
+      const checked = await content(backend, 'check', kind, path, '--edition', 'uk');
+      const added = await content(backend, 'add', kind, path, '--edition', 'uk');
+      runs.push({
+        checked: refusedOf(checked.stderr),
+        added: refusedOf(added.stderr),
+        codes: [checked.code, added.code],
+      });
+    }
+
+    expect(runs).toEqual([
+      {
+        checked: [`${words}[1] unique-lemma`, `${words}[2] stress`],
+        added: [`${words}[1] unique-lemma`, `${words}[2] stress`],
+        codes: [1, 1],
+      },
+      { checked: [], added: [], codes: [0, 0] },
+    ]);
+  });
 });
