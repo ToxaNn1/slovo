@@ -304,3 +304,10 @@
 незайманка emotions-character 5
 непорочний history-antiquity 3
 нерет old-crafts 5
+наїдок household-crafts 5
+напророкувати language-speech 5
+небіжка history-antiquity 3
+невороття emotions-character 5
+недоук witty-insults 5
+недужість human-body 5
+неславити language-speech 5
