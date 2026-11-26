@@ -185,3 +185,14 @@
 зостраху emotions-character 5
 зугарність emotions-character 5
 землепроходець history-antiquity 5
+завдовіти history-antiquity 5
+загаптувати old-crafts 5
+замироточити history-antiquity 5
+заобрійний nature-weather 5
+запрагти emotions-character 5
+запрохувати language-speech 5
+застаршинувати history-antiquity 5
+захурделитися nature-weather 5
+збабіти witty-insults 5
+знестямки emotions-character 5
+зучора language-speech 5
