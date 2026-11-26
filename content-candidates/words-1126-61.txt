@@ -382,3 +382,6 @@
 недремний emotions-character 5
 непристайний emotions-character 5
 несьогосвітній emotions-character 5
+негодящий witty-insults 5
+немилосердий emotions-character 5
+нехапливо language-speech 5
