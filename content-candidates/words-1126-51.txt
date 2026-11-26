@@ -74,3 +74,8 @@
 аршинний history-antiquity 5
 асекурація history-antiquity 5
 апрош military 5
+альтембас household-crafts 5
+амант emotions-character 5
+анагностик history-antiquity 5
+аркебуз military 5
+анналіст history-antiquity 5
