@@ -119,3 +119,13 @@
 озадок old-crafts 5
 осьмина history-antiquity 5
 отирлуватися old-crafts 5
+надибати language-speech 4
+надити language-speech 5
+надудлитися witty-insults 5
+напиндючитися emotions-character 5
+напродив language-speech 5
+нерозторопа witty-insults 5
+нехристь witty-insults 5
+обчикрижувати language-speech 5
+омрак nature-weather 5
+остріха old-crafts 5
