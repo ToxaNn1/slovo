@@ -82,6 +82,7 @@ export {
   type FixedChip,
   type RoundContent,
   type RoundOption,
+  type RoundPresentation,
   type TextRange,
 } from './game/game-mode';
 export { buildGameReview } from './game/game-review';

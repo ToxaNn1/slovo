@@ -39,6 +39,35 @@ export type GameHubGroup = (typeof GAME_HUB_GROUPS)[number];
 export type RoundLabelKind = 'mode' | 'synonymRow' | 'tip' | 'gap' | 'meaning';
 
 /**
+ * How a Game Mode's Rounds are presented, which the shell draws with no
+ * knowledge of the mode's id; every look left out is the default.
+ */
+export interface RoundPresentation {
+  /**
+   * What heads the question: the Round's label (`label`, the default), the
+   * mode's title in the label's place, as «Англіцизми» does (`title`), or an
+   * ink heading of the question's own with no label over it, as «Наголос»
+   * does (`ink`).
+   */
+  readonly head?: 'label' | 'title' | 'ink';
+  /**
+   * The face of the question: the large display face up to its length limit
+   * and the text face past it (`byLength`, the default), the text face
+   * whatever its length, as a Definition or a sentence (`text`), or the
+   * display face whatever its length, as the Definition of «Анаграми» (`display`).
+   */
+  readonly questionFace?: 'byLength' | 'text' | 'display';
+  /**
+   * How the card shows its prompt: as it is (`plain`, the default), the
+   * prompt as a Word on a tile of its own, unmarked (`word`), the marked part
+   * named over the prompt as the form it replaces (`instead`), or the marked
+   * part alone in the accent (`redMark`). A look that needs a marked part
+   * shows the prompt as it is in a Round with none.
+   */
+  readonly card?: 'plain' | 'word' | 'instead' | 'redMark';
+}
+
+/**
  * The form of a Round's answer, which the Game Mode decides: a
  * pick of options, a tap on a vowel, a pair in a pairs grid, chips tapped in
  * order, or typed text, each its own Answer Form. Each form but the pairs
@@ -131,6 +160,8 @@ export interface GameMode {
    * sheet and no «Далі»; when left out, the Round waits for «Далі».
    */
   readonly movesOn?: boolean;
+  /** How its Rounds are presented; every look the default when left out. */
+  readonly presentation?: RoundPresentation;
   /** Whether the Edition turns the mode on; a mode that is off is never on offer. */
   isOn(edition: GameEdition): boolean;
   /**

@@ -13,6 +13,7 @@ import type { GameMode } from './game-mode';
 export const typeWordMode: GameMode = {
   id: 'type-word',
   group: 'new',
+  presentation: { head: 'ink', card: 'instead' },
   entryKind: 'correction',
   isOn: (edition) => edition.isFeatureEnabled('gameTypeWord'),
   buildRound({ answer, comparison }) {

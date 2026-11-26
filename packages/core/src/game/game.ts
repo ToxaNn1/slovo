@@ -1,3 +1,4 @@
+import { markAnswer } from './answer-mark';
 import type { EntryKind } from '@slovo/contracts';
 
 import type { Analytics } from '../analytics/analytics';
@@ -517,9 +518,7 @@ export async function openGame({
     }
     if (round === undefined) return;
     // The Knowledge Mark of the answer, written in the background of the Game going on.
-    await inTurn(() =>
-      round.right ? knowledge.confirm(round.entry.id) : knowledge.answer(round.entry.id, 'unknown'),
-    );
+    await inTurn(() => markAnswer(knowledge, round.entry.id, round.right));
   }
 
   async function next(): Promise<void> {

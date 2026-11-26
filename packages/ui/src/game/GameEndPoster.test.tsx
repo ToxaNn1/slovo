@@ -1,3 +1,4 @@
+import { survivalMode, type GameMode } from '@slovo/core/testing';
 import type { CurrentGame, GameEnd, Haptics } from '@slovo/core';
 import { EditionProvider, GameEndPoster, HapticsProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
@@ -6,6 +7,9 @@ import type { ComponentProps } from 'react';
 import { AccessibilityInfo, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
+
+/** What a Game takes from the registered Game Mode it is played in. */
+const inMode = ({ id, presentation = {} }: GameMode) => ({ modeId: id, presentation });
 
 const strings = testStrings({
   game: {
@@ -26,7 +30,7 @@ const strings = testStrings({
 const end: GameEnd = { kind: 'lives-over', played: 5, right: 2, xp: 0, newBest: false };
 
 const game = {
-  modeId: 'survival',
+  ...inMode(survivalMode),
   round: {
     number: 2,
     entryKind: 'word',
