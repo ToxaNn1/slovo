@@ -47,3 +47,17 @@
 втямливий emotions-character 5
 вурдити household-crafts 5
 внадливий emotions-character 5
+в'язель nature-weather 5
+вибовкнути language-speech 5
+вивінувати history-antiquity 5
+вижлятник history-antiquity 5
+вилупатий human-body 5
+витурлити language-speech 5
+вицмулити language-speech 5
+відроду language-speech 5
+віцмундир history-antiquity 5
+владущий emotions-character 5
+ворохобня history-antiquity 5
+втелепати language-speech 5
+вудженина household-crafts 5
+вшкварити language-speech 5
