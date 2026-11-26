@@ -216,7 +216,7 @@
 стрункостанний human-body 5
 супокій emotions-character 5
 сухозлітка arts-culture 5
-свербига witty-insults 5
+свербигуз witty-insults 5
 свитина household-crafts 5
 свіжина household-crafts 4
 сидьма language-speech 5
@@ -251,3 +251,11 @@
 стінобитний military 5
 стонога nature-weather 5
 суягна household-crafts 5
+сильвета arts-culture 5
+скитниця history-antiquity 5
+скоробіжний history-antiquity 5
+соломкарка old-crafts 5
+соннота human-body 5
+списоносець military 5
+ставленець history-antiquity 5
+стеменний language-speech 5
