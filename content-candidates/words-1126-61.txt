@@ -161,3 +161,17 @@
 нидіння emotions-character 5
 нищечком language-speech 5
 новолітувати history-antiquity 5
+наброїти emotions-character 5
+наввимашки language-speech 5
+нагогошитися emotions-character 5
+наложництво history-antiquity 5
+намовник emotions-character 5
+наприндитися emotions-character 5
+наревтися emotions-character 5
+начільник history-antiquity 5
+нащедрувати history-antiquity 5
+нелукавий emotions-character 5
+нечупайда witty-insults 4
+ницьма language-speech 5
+новомісяччя nature-weather 5
+нутровище human-body 5
