@@ -90,3 +90,8 @@
 ізвечора language-speech 4
 іншовірний history-antiquity 4
 іпокрит witty-insults 5
+єрархія history-antiquity 5
+єфімок history-antiquity 5
+журкіт nature-weather 4
+ікономаляр arts-culture 5
+історієписання language-speech 5
