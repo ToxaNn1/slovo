@@ -1,3 +1,4 @@
+import type { RoundPresentation } from '@slovo/core';
 import { createContext, useContext, type ReactNode } from 'react';
 
 /**
@@ -8,7 +9,7 @@ import { createContext, useContext, type ReactNode } from 'react';
  * and no Mascot.
  */
 /** Which face a question on the ground takes; see `RoundLook.questionFace`. */
-export type QuestionFace = 'byLength' | 'text' | 'display';
+export type QuestionFace = NonNullable<RoundPresentation['questionFace']>;
 
 export interface RoundLook {
   /** Whether the question stands on the background, its options at the bottom, cascading in: always in a Game's Round, never in a Quick Question. */

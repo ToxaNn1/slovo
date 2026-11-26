@@ -12,7 +12,7 @@ import {
   type ShownRound,
 } from './answer-forms';
 import { LIFE_LOST_DELAY } from './game-haptics';
-import type { GameMode, RoundLabelKind, TextRange } from './game-mode';
+import type { GameMode, RoundLabelKind, RoundPresentation, TextRange } from './game-mode';
 import { GAME_ROUNDS, roundLimitOf, type PlannedRound, type RoundPlanner } from './round-plan';
 
 /**
@@ -92,6 +92,8 @@ export interface GameTime {
 /** What a Game in play and a Game just over both hold. */
 export interface GameRounds {
   readonly modeId: string;
+  /** How the mode presents its Rounds; empty, every look the default, for a mode that declares none. */
+  readonly presentation: RoundPresentation;
   /** The current Round; the last one played once the Game is over. */
   readonly round: Round;
   /**
@@ -239,6 +241,7 @@ export function firstGame(
   if (first === undefined) return undefined;
   return {
     modeId: mode.id,
+    presentation: mode.presentation ?? {},
     round: roundOf(first, 1, [], 0),
     roundsPassed: 0,
     roundLimit: roundLimitOf(mode),

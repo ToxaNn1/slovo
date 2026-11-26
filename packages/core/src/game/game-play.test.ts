@@ -1119,6 +1119,21 @@ describe('the Rounds built anew while the Game is in play', () => {
   });
 });
 
+describe('how a Game Mode presents its Rounds', () => {
+  it('carries the presentation the mode declares through the whole Game', async () => {
+    const presentation = { head: 'ink', questionFace: 'display', card: 'instead' } as const;
+    const { game } = await start(pick, { presentation });
+    expect(now(game).presentation).toEqual(presentation);
+
+    expect((await play(game, true)).presentation).toEqual(presentation);
+  });
+
+  it('carries an empty presentation, every look the default, when the mode declares none', async () => {
+    const { game } = await start(pick);
+    expect(now(game).presentation).toEqual({});
+  });
+});
+
 describe('the Rounds a Game Mode builds', () => {
   const gridOf = (of: readonly Word[], definitionOrder: readonly number[]): RoundContent => ({
     form: 'pairs',

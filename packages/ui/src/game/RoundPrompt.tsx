@@ -1,5 +1,5 @@
 import type { EditionStrings } from '@slovo/contracts';
-import type { Round, RoundContent, TextRange } from '@slovo/core';
+import type { Round, RoundContent, RoundPresentation, TextRange } from '@slovo/core';
 import { Text } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
@@ -43,35 +43,36 @@ export interface CardText {
 }
 
 /**
- * The card a Round shows by its Game Mode (board 07 g3, g4, spec #1674):
- * «Впиши слово» names the wrong form over its sentence, «замість «вірогідно»»;
- * «Англіцизм» shows the sentence alone, the anglicism in red (board g5); «Звідки слово» shows its Word on a
- * sunken tile. Any other Round shows its prompt as it is.
+ * The card a Round shows by its Game Mode's card look (board 07 g3, g4, spec #1674):
+ * `instead` names the marked form over its sentence, «замість «вірогідно»»,
+ * as «Впиши слово» does; `redMark` shows the sentence alone, its mark in red,
+ * as «Англіцизм» does (board g5); `word` shows the prompt on a sunken tile, as
+ * «Звідки слово» does. A plain card, or one with no mark to show, shows the prompt as it is.
  */
 export function cardOf(
-  modeId: string,
+  look: RoundPresentation['card'],
   round: Round,
   prompt: string,
   prompts: { readonly instead: string },
 ): CardText {
   const highlight = round.form === 'pick' || round.form === 'typed' ? round.highlight : undefined;
-  const plain = { prompt, highlight, face: undefined };
-  if (modeId === 'origin' && round.form === 'pick') {
-    return { prompt, highlight: undefined, face: { look: 'word' } };
+  if (look === 'word') return { prompt, highlight: undefined, face: { look: 'word' } };
+  if (highlight === undefined) return { prompt, highlight, face: undefined };
+  switch (look) {
+    case 'instead': {
+      const wrong = prompt.slice(highlight.start, highlight.end);
+      return {
+        prompt,
+        highlight,
+        face: { look: 'instead', instead: fill(prompts.instead, { wrong }) },
+      };
+    }
+    case 'redMark':
+      return { prompt, highlight, face: { look: 'redMark' } };
+    case 'plain':
+    case undefined:
+      return { prompt, highlight, face: undefined };
   }
-  if (highlight === undefined) return plain;
-  const marked = prompt.slice(highlight.start, highlight.end);
-  if (modeId === 'type-word' && round.form === 'typed') {
-    return {
-      prompt,
-      highlight,
-      face: { look: 'instead', instead: fill(prompts.instead, { wrong: marked }) },
-    };
-  }
-  if (modeId === 'anglicism' && round.form === 'pick') {
-    return { prompt, highlight, face: { look: 'redMark' } };
-  }
-  return plain;
 }
 
 /**

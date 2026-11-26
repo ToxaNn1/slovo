@@ -1,4 +1,17 @@
-import { type PlayingGame } from '@slovo/core/testing';
+import {
+  anagramMode,
+  anglicismMode,
+  byLettersMode,
+  guessWord,
+  originMode,
+  pairsMode,
+  stressMode,
+  survivalMode,
+  timedMode,
+  typeWordMode,
+  type GameMode,
+  type PlayingGame,
+} from '@slovo/core/testing';
 import type { Tip } from '@slovo/contracts';
 import type {
   GivenAnswer,
@@ -38,6 +51,9 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
 import { typeRoles } from '../tokens';
+
+/** What a Game takes from the registered Game Mode it is played in. */
+const inMode = ({ id, presentation = {} }: GameMode) => ({ modeId: id, presentation });
 
 const strings = testStrings({
   game: {
@@ -118,7 +134,7 @@ const OPTIONS = ['ardent', 'brittle', 'candid', 'dour'] as const;
 const CORRECT = 2;
 
 const first: PlayingGame = {
-  modeId: 'definition-to-word',
+  ...inMode(guessWord),
   round: {
     number: 1,
     entryKind: 'word',
@@ -178,7 +194,7 @@ function answeredPick(game: PlayingGame, given: GivenAnswer): PlayingGame {
 /** A Round of «Наголос» about a Word, «banana» with its second vowel stressed, its sheet the Word's Example. */
 const wordVowelRound: PlayingGame = {
   ...first,
-  modeId: 'stress',
+  ...inMode(stressMode),
   round: {
     number: 1,
     entryKind: 'word',
@@ -196,7 +212,7 @@ const wordVowelRound: PlayingGame = {
 /** A Round of «Наголос» about a stress trap, «mango» stressed on its first vowel, its sheet the explanation. */
 const trapVowelRound: PlayingGame = {
   ...first,
-  modeId: 'stress',
+  ...inMode(stressMode),
   round: {
     number: 1,
     entryKind: 'correction',
@@ -297,7 +313,7 @@ const OWN_DEFINITION = [1, 0] as const;
 
 const pairsRound: PlayingGame = {
   ...first,
-  modeId: 'pairs',
+  ...inMode(pairsMode),
   round: {
     number: 1,
     entryKind: 'word',
@@ -344,7 +360,7 @@ function answeredPair(game: PlayingGame, word: number, definition: number): Play
 const TYPED = 'well-read';
 const typedRound: PlayingGame = {
   ...first,
-  modeId: 'by-letters',
+  ...inMode(byLettersMode),
   round: {
     number: 1,
     entryKind: 'word',
@@ -403,7 +419,7 @@ const CHIPS = ['k', 'o', 'r', 'b', 'o'] as const;
 const ANAGRAM = ['o', 'b', 'r', 'o', 'k'] as const;
 const chipsRound: PlayingGame = {
   ...first,
-  modeId: 'anagram',
+  ...inMode(anagramMode),
   round: {
     number: 1,
     entryKind: 'word',
@@ -599,7 +615,7 @@ describe('GameRound', () => {
   it('counts the Rounds passed with no limit in a mode without one, and its own Lives', async () => {
     await renderRound(jest.fn(), jest.fn(), {
       ...first,
-      modeId: 'survival',
+      ...inMode(survivalMode),
       roundsPassed: 23,
       roundLimit: undefined,
       lives: 2,
@@ -725,7 +741,7 @@ describe('GameRound', () => {
   it('names the wrong form a type-word Round asks to replace over its sentence', async () => {
     await renderRound(jest.fn(), jest.fn(), {
       ...typedRound,
-      modeId: 'type-word',
+      ...inMode(typeWordMode),
       round: {
         ...typedRound.round,
         prompt: 'It is probly true.',
@@ -744,7 +760,7 @@ describe('GameRound', () => {
     const { ink, muted } = coreTokens.colors.light;
     await renderRound(jest.fn(), jest.fn(), {
       ...typedRound,
-      modeId: 'type-word',
+      ...inMode(typeWordMode),
       round: {
         ...typedRound.round,
         prompt: 'It is probly true.',
@@ -772,7 +788,7 @@ describe('GameRound', () => {
   });
 
   it('shows the anglicism’s sentence alone, the anglicism marked', async () => {
-    await renderRound(jest.fn(), jest.fn(), { ...highlightRound, modeId: 'anglicism' });
+    await renderRound(jest.fn(), jest.fn(), { ...highlightRound, ...inMode(anglicismMode) });
 
     expect(screen.getByTestId('game-prompt')).toHaveAccessibleName(
       'Definitions. She took measures quickly. Marked: took measures',
@@ -783,7 +799,7 @@ describe('GameRound', () => {
   it('shows the Word of an origin Round on its tile, read whole on the card', async () => {
     await renderRound(jest.fn(), jest.fn(), {
       ...first,
-      modeId: 'origin',
+      ...inMode(originMode),
       round: { ...first.round, prompt: 'candid' },
     });
 
@@ -794,13 +810,30 @@ describe('GameRound', () => {
   it('keeps the Word of an origin Round on one line, shrunk to it rather than broken inside', async () => {
     await renderRound(jest.fn(), jest.fn(), {
       ...first,
-      modeId: 'origin',
+      ...inMode(originMode),
       round: { ...first.round, prompt: 'candid' },
     });
 
     const word = within(screen.getByTestId('game-word')).getByText('andid', { exact: false });
     expect(word).toHaveProp('numberOfLines', 1);
     expect(word).toHaveProp('adjustsFontSizeToFit', true);
+  });
+
+  it('gives a mode an Edition adds the looks it declares, as a Core mode gets them', async () => {
+    const editionMode: GameMode = {
+      ...originMode,
+      id: 'edition-origin',
+      presentation: { head: 'ink', card: 'word' },
+    };
+    await renderRound(jest.fn(), jest.fn(), {
+      ...first,
+      ...inMode(editionMode),
+      round: { ...first.round, prompt: 'candid' },
+    });
+
+    expect(screen.getByTestId('game-word')).toHaveTextContent('candid');
+    // Headed in ink: the label is the question's own heading, not the red label on the ground.
+    expect(screen.getByTestId('game-ask')).toHaveTextContent('Definition');
   });
 
   it('keeps the plain prompt in any other mode', async () => {
@@ -847,7 +880,7 @@ describe('GameRound', () => {
     const onAnswer = jest.fn();
     await renderRound(onAnswer, jest.fn(), {
       ...first,
-      modeId: 'origin',
+      ...inMode(originMode),
       round: { ...first.round, prompt: 'candour', definition: 'Open honesty.' },
     });
 
@@ -1035,7 +1068,7 @@ describe('GameRound', () => {
     /** A Round of a mode that moves on, 60 seconds of play, with no Lives, its clock running. */
     const timed: PlayingGame = {
       ...first,
-      modeId: 'timed',
+      ...inMode(timedMode),
       roundLimit: undefined,
       lives: undefined,
       livesAtStart: undefined,

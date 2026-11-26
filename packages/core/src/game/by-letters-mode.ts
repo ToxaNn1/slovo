@@ -18,6 +18,7 @@ const staysInPlace = (character: string, comparison: TextComparison): boolean =>
 export const byLettersMode: GameMode = {
   id: 'by-letters',
   group: 'new',
+  presentation: { questionFace: 'text' },
   entryKind: 'word',
   isOn: (edition) => edition.isFeatureEnabled('gameByLetters'),
   buildRound({ answer, comparison }) {
