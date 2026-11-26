@@ -1,6 +1,9 @@
 п'янчуга witty-insults 3
+павза language-speech 4
+пагуба emotions-character 5
 пажерливість emotions-character 4
 паламарювати old-crafts 5
+паленка household-crafts 4
 палильня old-crafts 5
 пальчатка household-crafts 3
 панегіристка arts-culture 5
@@ -8,9 +11,13 @@
 паніматка history-antiquity 4
 пасемко household-crafts 4
 паскудниця witty-insults 4
+патронеса history-antiquity 4
 патякання language-speech 4
+первомучениця history-antiquity 5
 первосвященник history-antiquity 4
 перебрід nature-weather 5
+перевальцем human-body 5
+передвечір'я nature-weather 5
 передграддя nature-weather 5
 передгроззя nature-weather 4
 переоповідь language-speech 5
@@ -27,7 +34,10 @@
 пліснявина nature-weather 4
 поборниця emotions-character 4
 пов'язь human-body 4
+повесніти nature-weather 5
+повстина household-crafts 5
 повсякдень language-speech 4
+повісельник witty-insults 5
 повітроплав technology 5
 поганяйло chameleon-words 4
 погребиця household-crafts 4
@@ -37,6 +47,10 @@
 подосі language-speech 5
 пожевріти nature-weather 5
 позирнути emotions-character 4
+покаяльниця history-antiquity 5
+поквапцем emotions-character 5
+покіст household-crafts 5
+половіти nature-weather 5
 полуніч nature-weather 4
 полюбовник emotions-character 4
 помазаниця history-antiquity 5
@@ -59,6 +73,10 @@
 превелебна history-antiquity 4
 преосвященніший history-antiquity 3
 преподобниця history-antiquity 5
+приварок household-crafts 5
+привиддя arts-culture 5
+приголів'я household-crafts 5
+пригорбок nature-weather 5
 призвичаїти emotions-character 4
 призвук language-speech 5
 призвідець emotions-character 5
@@ -77,8 +95,10 @@
 просвітник history-antiquity 3
 прослава language-speech 4
 простолюдинка history-antiquity 4
+пужальце old-crafts 5
 пуночка folk-names 4
 пустинник history-antiquity 4
+пустиня nature-weather 3
 пустище nature-weather 5
 пустоб'яка witty-insults 5
 пустіти nature-weather 5
