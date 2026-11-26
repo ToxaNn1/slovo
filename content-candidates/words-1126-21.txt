@@ -42,3 +42,17 @@
 оговорити language-speech 5
 обозник military 5
 отарник old-crafts 5
+об'їдало witty-insults 4
+обагрити language-speech 5
+оброть household-crafts 5
+обхідливий emotions-character 5
+огарок household-crafts 4
+оглан history-antiquity 5
+огудити language-speech 5
+оковитка history-antiquity 5
+окоренок old-crafts 5
+оподалік language-speech 5
+ослава language-speech 5
+очевисто language-speech 5
+очілля history-antiquity 5
+ошанцювати military 5
