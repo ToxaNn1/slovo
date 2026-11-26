@@ -173,3 +173,4 @@
 омлівати human-body 5
 опочивати household-crafts 5
 осьмогласний arts-culture 5
+одороблуватий witty-insults 5
