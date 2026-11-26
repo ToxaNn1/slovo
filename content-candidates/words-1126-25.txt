@@ -43,3 +43,16 @@
 срібляник history-antiquity 4
 стовбурчити human-body 4
 сухоніс folk-names 4
+навтямки language-speech 4
+намова language-speech 4
+настира witty-insults 4
+нестаток household-crafts 4
+нечепура witty-insults 4
+синявець folk-names 5
+сириця old-crafts 4
+смагнути human-body 5
+смолярувати old-crafts 5
+сорокоуст history-antiquity 4
+сріблярство old-crafts 5
+столувати household-crafts 5
+стрибуха witty-insults 4
