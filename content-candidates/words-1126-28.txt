@@ -11,3 +11,6 @@
 шлик household-crafts 4
 шпеник household-crafts 4
 лепорелло arts-culture 4
+афронт emotions-character 5
+гасівка household-crafts 4
+ландкарта history-antiquity 5
