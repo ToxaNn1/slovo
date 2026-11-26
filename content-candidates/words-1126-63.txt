@@ -26,6 +26,7 @@
 пардус folk-names 5
 паремійник history-antiquity 5
 парцела history-antiquity 5
+пасаман household-crafts 5
 пасемко household-crafts 4
 пасерб history-antiquity 5
 пасеїст arts-culture 5
@@ -77,7 +78,9 @@
 першопредок history-antiquity 5
 песиголова folk-names 5
 пестливий language-speech 4
+печихвіст witty-insults 5
 печище history-antiquity 5
+пещенець emotions-character 5
 пиварня old-crafts 5
 писарчук witty-insults 3
 письмак witty-insults 5
@@ -88,6 +91,7 @@
 плавом nature-weather 4
 плебейка history-antiquity 5
 плекальниця emotions-character 5
+плектр arts-culture 5
 плетениця household-crafts 4
 плоскінь old-crafts 5
 плотолюбець emotions-character 5
@@ -116,6 +120,7 @@
 повістярка arts-culture 5
 повітроплав technology 5
 поганяйло chameleon-words 4
+поглум emotions-character 5
 поголоска language-speech 5
 погребиця household-crafts 4
 погубитель emotions-character 5
@@ -143,6 +148,8 @@
 покіст household-crafts 5
 покіт old-crafts 5
 полавочник household-crafts 5
+полив'яник household-crafts 5
+полизач witty-insults 5
 половіти nature-weather 5
 полонитель emotions-character 5
 полох emotions-character 5
@@ -189,9 +196,11 @@
 потолока history-antiquity 5
 потопельниця folk-names 5
 потороччя witty-insults 5
+потрата emotions-character 5
 потурач emotions-character 5
 потіпака witty-insults 5
 похапливий emotions-character 5
+похлібець witty-insults 5
 почварок witty-insults 5
 починальник emotions-character 4
 почтивий emotions-character 5
@@ -218,6 +227,7 @@
 преосвященніший history-antiquity 3
 преподобниця history-antiquity 5
 преспап'є household-crafts 5
+преторіанець history-antiquity 5
 приваба emotions-character 5
 приварок household-crafts 5
 привиддя arts-culture 5
@@ -242,8 +252,10 @@
 принука history-antiquity 5
 принцепс history-antiquity 5
 приповістка language-speech 5
+припона emotions-character 5
 пристигти nature-weather 5
 пристрітник folk-names 5
+присягопорушник emotions-character 5
 прителепкуватий witty-insults 5
 приторк human-body 5
 притул household-crafts 4
@@ -293,6 +305,7 @@
 псалтирниця history-antiquity 5
 псяюра witty-insults 5
 птахолов old-crafts 5
+пташва nature-weather 5
 пужальце old-crafts 5
 пуночка folk-names 4
 пустинник history-antiquity 4
@@ -308,9 +321,11 @@
 піастр history-antiquity 5
 півдесятина history-antiquity 5
 півморок nature-weather 5
+півустав arts-culture 5
 півшепіт language-speech 4
 півімперіал history-antiquity 5
 підбріхувач witty-insults 5
+підвоєвода history-antiquity 5
 піддівка household-crafts 5
 підзамчя history-antiquity 5
 підкліть household-crafts 5
