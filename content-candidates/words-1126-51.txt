@@ -67,3 +67,10 @@
 альфрейник old-crafts 5
 акцизник history-antiquity 5
 асасин history-antiquity 5
+августійший history-antiquity 5
+акратофор history-antiquity 5
+анахтема witty-insults 5
+архалук household-crafts 5
+аршинний history-antiquity 5
+асекурація history-antiquity 5
+апрош military 5
