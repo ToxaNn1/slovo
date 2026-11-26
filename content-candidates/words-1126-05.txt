@@ -144,3 +144,11 @@
 крейцар history-antiquity 5
 крисатий household-crafts 5
 куртуазія arts-culture 5
+інокиня history-antiquity 5
+ірмолой arts-culture 5
+кадівб household-crafts 5
+калуфер nature-weather 5
+кобоз arts-culture 5
+ковдобина nature-weather 5
+копитень nature-weather 5
+купинистий nature-weather 5
