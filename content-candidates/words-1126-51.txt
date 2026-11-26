@@ -79,3 +79,6 @@
 анагностик history-antiquity 5
 аркебуз military 5
 анналіст history-antiquity 5
+аналойний history-antiquity 5
+ампірний arts-culture 5
+амброзіальний arts-culture 5
