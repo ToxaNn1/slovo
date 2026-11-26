@@ -56,3 +56,14 @@
 архішахрай witty-insults 5
 атараксія emotions-character 5
 апаш witty-insults 5
+абатиса history-antiquity 5
+абецедарій language-speech 5
+адамашковий household-crafts 5
+амікошонство emotions-character 5
+архістратег history-antiquity 5
+асигнати history-antiquity 5
+апостат history-antiquity 5
+алмазник old-crafts 5
+альфрейник old-crafts 5
+акцизник history-antiquity 5
+асасин history-antiquity 5
