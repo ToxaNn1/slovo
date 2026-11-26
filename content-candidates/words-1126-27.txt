@@ -14,3 +14,13 @@
 упереміж language-speech 4
 уперекидь language-speech 5
 угукати nature-weather 4
+м'ясоїд arts-culture 4
+меандр nature-weather 3
+монпансьє household-crafts 4
+ратин household-crafts 5
+рафія household-crafts 4
+ренклод nature-weather 4
+репс household-crafts 3
+рицина nature-weather 3
+ротанг household-crafts 3
+уговтати emotions-character 4
