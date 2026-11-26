@@ -82,3 +82,12 @@
 осьмушка history-antiquity 5
 отерпти human-body 5
 очеретяник nature-weather 5
+обіручний military 5
+обкарнати conversation 5
+окульбачити old-crafts 5
+опецькуватий witty-insults 4
+опішити military 5
+оприскливий emotions-character 5
+остовпеніти emotions-character 5
+очмаріти emotions-character 5
+ощирити human-body 5
