@@ -177,7 +177,6 @@
 смолокурня old-crafts 5
 сницарство old-crafts 5
 снотлумачення history-antiquity 5
-сповиток household-crafts 5
 спохмура emotions-character 5
 спрагота nature-weather 5
 стражниця military 5
@@ -221,9 +220,8 @@
 свитина household-crafts 5
 свіжина household-crafts 4
 сидьма language-speech 5
-силопихом language-speech 5
 сірячина household-crafts 5
-скарбівниця history-antiquity 5
+скарбець history-antiquity 5
 скоробреха witty-insults 5
 скуфійка history-antiquity 5
 словоблуд witty-insults 5
@@ -233,3 +231,15 @@
 ставидло technology 5
 стогоклад old-crafts 5
 сутяжище witty-insults 5
+сап'янець household-crafts 5
+свирілка arts-culture 5
+світлінь nature-weather 5
+силомір technology 5
+скорописний arts-culture 5
+сопілкарство arts-culture 5
+споборниця military 5
+сповитуха household-crafts 5
+споряддя military 5
+страстотерпиця history-antiquity 5
+суддиха history-antiquity 5
+суччя nature-weather 5
