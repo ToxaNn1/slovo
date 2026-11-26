@@ -13,7 +13,7 @@
 дев'ятниця folk-names 4
 деревляччя household-crafts 5
 десятинний history-antiquity 3
-дзбанок household-crafts 5
+дзбанок household-crafts 4
 джеркіт language-speech 5
 дзвінкоголосся arts-culture 5
 дзвякати language-speech 5
@@ -37,14 +37,14 @@
 добротворець emotions-character 5
 довгополий history-antiquity 3
 довгостраждальний emotions-character 5
-довік language-speech 5
+довік language-speech 4
 дозорливий emotions-character 5
 долинати language-speech 5
 доленько emotions-character 5
 дометикуватися emotions-character 5
 домовичок folk-names 3
 домоправителька household-crafts 5
-домосида witty-insults 5
+домосида witty-insults 4
 донезмоги language-speech 4
 доокіл language-speech 5
 доп'яну language-speech 5
@@ -68,7 +68,7 @@
 дзюрком language-speech 5
 димарник old-crafts 5
 дидаскалка history-antiquity 5
-дитиня emotions-character 5
+дитиня emotions-character 4
 добросердо emotions-character 5
 доброчестя emotions-character 5
 доглибно language-speech 5
@@ -141,7 +141,7 @@
 дурисвітка witty-insults 5
 духівниця history-antiquity 5
 духмяніти nature-weather 5
-душогрійка household-crafts 5
+душогрійка household-crafts 4
 даленіти nature-weather 5
 дастьбі language-speech 5
 дзумкотіти language-speech 5
@@ -164,7 +164,7 @@
 достотно language-speech 5
 дотарабанити human-body 5
 дошкутильгати human-body 5
-драндулет technology 5
+драндулет technology 4
 даремщина emotions-character 5
 даток history-antiquity 5
 дієйменник language-speech 5
@@ -184,3 +184,7 @@
 достопам'ятний language-speech 5
 душетлінний emotions-character 5
 дрібномаєтний history-antiquity 5
+далекосяглий language-speech 5
+джинджигилястий witty-insults 5
+довгорунний nature-weather 5
+достославний language-speech 5
