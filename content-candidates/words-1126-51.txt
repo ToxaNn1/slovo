@@ -44,3 +44,15 @@
 акажу household-crafts 5
 анкерок household-crafts 5
 архаїст arts-culture 5
+аванзал household-crafts 5
+алебардник military 5
+аколіт history-antiquity 5
+алилуйний emotions-character 5
+анальфабет witty-insults 5
+аністілечки language-speech 5
+аніяк language-speech 5
+апостольник history-antiquity 5
+артільник old-crafts 5
+архішахрай witty-insults 5
+атараксія emotions-character 5
+апаш witty-insults 5
