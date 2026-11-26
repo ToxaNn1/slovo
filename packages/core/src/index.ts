@@ -56,7 +56,7 @@ export {
   type TipFeedCard,
 } from './feed/feed-card';
 export { entryCardTitle } from './feed/entry-feed-card';
-export { type FeedNotice, LATER_QUESTIONS, type LaterQuestion } from './feed-notice';
+export { type FeedNotice, type LaterQuestion } from './feed-notice';
 export { ENOUGH_FOR_TODAY_SEEN, type FirstWeekDay, type YesterdayQuiz } from './feed/feed-notices';
 export {
   answerBannerDelay,

@@ -3,8 +3,8 @@ import type { FeatureSwitch, Word } from '@slovo/contracts';
 import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
 import { buildWordCard, type WordCardModel } from '../entries/word-card';
-import type { AnyEntryCard } from './entry-feed-card';
-import type { WeeklyRecap } from './weekly-recap';
+import type { EntryRowModel } from '../entries/entry-row';
+import type { WeeklyRecap, WeeklyRecapModel } from './weekly-recap';
 import { FEED_NOTICES, type FeedNotice } from '../feed-notice';
 import { dateKeyOf, localDateAfter, localDayOf, type LocalDate } from '../local-date';
 import type { HiddenEntries } from '../mix/hidden-entries';
@@ -39,11 +39,13 @@ export interface YesterdayContent {
 }
 
 /**
- * The Weekly Recap's page: `folded` once the reader tapped
- * «Готово», and the day's Yesterday under it when both are due.
+ * The Weekly Recap's page: the numbers of its week, `folded` once the reader
+ * tapped «Готово», and the day's Yesterday under it when both are due.
  */
 export interface WeeklyRecapContent {
   readonly notice: 'weeklyRecap';
+  /** The numbers its rule read, as the Feed asked for the card. */
+  readonly recap: WeeklyRecapModel;
   readonly folded: boolean;
   readonly yesterday: YesterdayContent | undefined;
 }
@@ -51,7 +53,7 @@ export interface WeeklyRecapContent {
 /**
  * What a Feed Notice shows: the Weekly Recap, its page; the first-week card,
  * also its day of the first week; Yesterday, the card of the day before's
- * Word of the Day and its quiz; the Community Word, the card of its Entry and
+ * Word of the Day and its quiz; the Community Word, the row of its Entry and
  * how many readers added it; a level milestone, its Level and the Edition's
  * name for it; «Ціль дня виконано!», the Daily Goal met and the Lemmas of the
  * first Words Seen today.
@@ -71,7 +73,7 @@ export type FeedNoticeContent =
   | WeeklyRecapContent
   | { readonly notice: 'firstWeek'; readonly firstWeekDay: FirstWeekDay }
   | YesterdayContent
-  | { readonly notice: 'communityWord'; readonly card: AnyEntryCard; readonly adds: number }
+  | { readonly notice: 'communityWord'; readonly row: EntryRowModel; readonly adds: number }
   | { readonly notice: 'levelMilestone'; readonly level: LevelMilestone; readonly name: string }
   | {
       readonly notice: 'goalReached';
@@ -229,10 +231,12 @@ export function openFeedNotices({
   const on = (feature: FeatureSwitch) => edition.isFeatureEnabled(feature);
 
   /** «Твій тиждень» on the first open of a local Monday, when the week before has one. */
-  const weeklyRecapRule: NoticeRule = async (day) =>
-    (await weeklyRecap().of(day)) === undefined
+  const weeklyRecapRule: NoticeRule = async (day) => {
+    const recap = await weeklyRecap().of(day);
+    return recap === undefined
       ? undefined
-      : { notice: 'weeklyRecap', folded: false, yesterday: undefined };
+      : { notice: 'weeklyRecap', recap, folded: false, yesterday: undefined };
+  };
 
   /**
    * The first week: on each of the first 7 Active Days from the day the reader

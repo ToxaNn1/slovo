@@ -2,19 +2,19 @@ import { CommunityWordOutputSchema } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
+import { buildEntryRow } from '../entries/entry-row';
 import { dateKeyOf, isMonday, type LocalDate } from '../local-date';
 import type { HiddenEntries } from '../mix/hidden-entries';
 import { answerOf } from '../backend';
 import type { Backend, Clock, CommunityWordAnswer } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
-import { buildFeedCard } from './feed';
 import type { FeedNotices } from './feed-notices';
 
 const { communityWord: kept } = userStateRecords;
 
 /**
- * The Community Word («Слово тижня спільноти»): on a local Monday, the card of
+ * The Community Word («Слово тижня спільноти»): on a local Monday, the row of
  * the Entry readers most added to Favorites last ISO week, with its adds,
  * while that Entry is in the Language Pack and neither Hidden nor Retired. The
  * week is read once a day: the answer is kept for its local date. A read that
@@ -77,8 +77,7 @@ export function createCommunityWord({
       const { entryId, adds } = communityWord;
       const entry = (await entries.get(entryId)) ?? (await entries.getSynonymRowOrTip(entryId));
       if (entry === undefined || entry.retired) return [];
-      const card = await buildFeedCard(entries, entryId);
-      return card === undefined ? [] : [{ notice: 'communityWord', card, adds }];
+      return [{ notice: 'communityWord', row: buildEntryRow(entry), adds }];
     },
   };
 }

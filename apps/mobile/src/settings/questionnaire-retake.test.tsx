@@ -5,9 +5,13 @@ import {
   type Composition,
   type Edition,
   type FeatureSwitch,
-  LATER_QUESTIONS,
 } from '@slovo/core';
-import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
+import {
+  createMemoryContentPort,
+  LATER_QUESTIONS,
+  seedUserState,
+  loadEdition,
+} from '@slovo/core/testing';
 import { Stack } from 'expo-router';
 import { Text } from 'react-native';
 import { renderApp } from '../shell/test-app';

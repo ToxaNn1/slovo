@@ -1,4 +1,4 @@
-import { buildShareCardContent, type LocalDate, type WeeklyRecapModel } from '@slovo/core';
+import { buildShareCardContent, type WeeklyRecapModel } from '@slovo/core';
 import { deviceClock } from '../device/device-clock';
 import { ShareSheet, UnderWeeklyRecap, useUndoToast, WeeklyRecapCard } from '@slovo/ui';
 import { weeklyRecapPage } from '@slovo/ui/tokens';
@@ -10,23 +10,22 @@ import { edition, editionStrings } from '../edition/edition';
 import { useShell } from '../shell-value';
 import { sessionShareFormat } from '../share/share-card';
 import { useShown } from '../shown-in-effect';
-import { useWeeklyRecap } from './weekly-recap';
 import { useEditionInEffect } from '../edition/remote-switches';
 
 /**
- * The Weekly Recap's Feed page (board f5): «Твій тиждень» on top,
- * unless it is `folded`, and the day's Yesterday under it. «Готово» folds
+ * The Weekly Recap's Feed page (board f5): «Твій тиждень» on top, with the
+ * numbers of its week, unless it is `folded`, and the day's Yesterday under it. «Готово» folds
  * the card away through `onFold`, and a toast offers «Повернути», which
  * brings it back through `onRestore`.
  */
 export function WeeklyRecapPage({
-  day,
+  recap,
   folded,
   yesterday,
   onFold,
   onRestore,
 }: {
-  day: LocalDate;
+  recap: WeeklyRecapModel;
   folded: boolean;
   /** The Yesterday drawn under the week, if the page has one. */
   yesterday: ReactNode;
@@ -39,7 +38,7 @@ export function WeeklyRecapPage({
     <View style={styles.page}>
       {!folded && (
         <WeeklyRecapNotice
-          day={day}
+          recap={recap}
           onDone={() => {
             onFold();
             showToast({ message: words.folded, undoLabel: words.restore, onUndo: onRestore });
@@ -52,7 +51,7 @@ export function WeeklyRecapPage({
 }
 
 /**
- * The Weekly Recap card of the local day `day`, with the numbers of its week,
+ * The Weekly Recap card with the numbers of its week,
  * without the Streak while it is not shown, and without the week's XP and goal
  * days while the XP bar is not («Без лічильників»). Its Share icon opens the share
  * sheet over the recap's Share Card, the same numbers in the format chosen
@@ -61,16 +60,16 @@ export function WeeklyRecapPage({
  * state.
  */
 export function WeeklyRecapNotice({
-  day,
+  recap: model,
   onDone,
 }: {
-  day: LocalDate;
+  recap: WeeklyRecapModel;
   /** «Готово»: folds the card away; without it, no «Готово». */
   onDone?: () => void;
 }) {
   const shown = useShown();
   const inEffect = useEditionInEffect();
-  const recap = withoutCounters(useWeeklyRecap(day), shown.xpBar);
+  const recap = withoutCounters(model, shown.xpBar);
   const hideStreak = shown.stats?.streak !== true;
   const { shareCard } = useShell();
   const share = inEffect.isFeatureEnabled('shareCards') ? shareCard : undefined;
@@ -90,7 +89,7 @@ export function WeeklyRecapNotice({
               }
         }
       />
-      {recap !== undefined && share !== undefined && (
+      {share !== undefined && (
         <ShareSheet
           visible={open}
           content={buildShareCardContent(
@@ -119,11 +118,8 @@ export function WeeklyRecapNotice({
 }
 
 /** The recap without its XP and goal days while the XP bar is not shown. */
-function withoutCounters(
-  recap: WeeklyRecapModel | undefined,
-  xpShown: boolean,
-): WeeklyRecapModel | undefined {
-  if (recap === undefined || xpShown) return recap;
+function withoutCounters(recap: WeeklyRecapModel, xpShown: boolean): WeeklyRecapModel {
+  if (xpShown) return recap;
   const { xp: _xp, goalDays: _goalDays, ...rest } = recap;
   return rest;
 }

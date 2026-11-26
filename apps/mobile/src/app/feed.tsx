@@ -1,4 +1,5 @@
 import {
+  CommunityWordCard,
   EnoughForTodayCard,
   GoalReachedCard,
   NotificationAskCard,
@@ -20,8 +21,8 @@ import {
   type VerticalPagerHandle,
   useGesturesDemo,
 } from '@slovo/ui';
-import { LATER_QUESTIONS, type FeedCard, type FeedNoticeCard } from '@slovo/core';
-import { memo, useCallback, useRef, type ComponentProps } from 'react';
+import { type FeedCard, type FeedNoticeCard } from '@slovo/core';
+import { memo, useCallback, useRef, type ComponentProps, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { edition, editionStrings } from '@/edition/edition';
@@ -40,13 +41,13 @@ import {
   FeedPageFrame,
   useFeedHeaderRows,
   type FeedHeaderRows,
+  type FeedPageLayout,
 } from '@/feed/feed-page';
 import { ShownCardFeatures } from '@/entries/card-features';
 import { StatsPillAndSheet } from '@/progress/progress';
 import { useGesturesHint } from '@/feed/gestures-hint';
 import { todayText } from '@/feed/today-text';
 import { WeeklyRecapPage } from '@/feed/weekly-recap-notice';
-import { CommunityWordNotice } from '@/feed/community-word-notice';
 import { useNotificationsChanges } from '@/notifications/notifications';
 import { LaterQuestionNotice } from '@/feed/later-question-notice';
 import { useEditionInEffect } from '@/edition/remote-switches';
@@ -237,66 +238,25 @@ const FeedPage = memo(function FeedPage({
         />
       </FeedPageFrame>
     );
-  // The week on top under the header, Yesterday under it (board f5). Nothing
-  // around the cards scrolls: Yesterday fills the rest and scrolls inside its card.
-  if (card.kind === 'notice' && card.notice === 'weeklyRecap')
-    return (
-      <FeedPageFrame position={position} header={header} layout={{ style: 'stack', under: 'row' }}>
-        <WeeklyRecapPage
-          day={card.day}
-          folded={card.folded}
-          yesterday={
-            card.yesterday === undefined ? undefined : (
-              <YesterdayCard
-                word={card.yesterday.word}
-                quiz={card.yesterday.quiz}
-                fill="rest"
-                onAnswer={(option) => {
-                  onAnswerYesterday(position, option);
-                }}
-              />
-            )
-          }
-          onFold={() => {
-            onFoldWeeklyRecap(position);
-          }}
-          onRestore={onRestoreWeeklyRecap}
-        />
-      </FeedPageFrame>
-    );
-  if (card.kind === 'end-of-cycle' || (card.kind === 'notice' && card.notice !== 'yesterday'))
-    return (
-      <FeedPageFrame
-        position={position}
-        header={header}
-        layout={{
-          style:
-            card.kind === 'notice' && card.notice === 'goalReached'
-              ? 'goal'
-              : // A later question fills its page edge to edge as Yesterday does (owner, 16.11).
-                card.kind === 'notice' && isLaterQuestion(card.notice)
-                ? 'hero'
-                : 'centred',
-          under: 'row',
-        }}
-      >
-        {card.kind === 'end-of-cycle' ? <EndOfCycleCard /> : <NoticeCard card={card} />}
-      </FeedPageFrame>
-    );
-  // Yesterday on its own page is in the Word card's frame, edge to edge and the same height
-  // (owner 15.11, 23.11), and scrolls inside its card when its meanings run longer: nothing
-  // around it scrolls (owner 16.11).
   if (card.kind === 'notice')
     return (
-      <FeedPageFrame position={position} header={header} layout={{ style: 'hero', under: 'card' }}>
-        <YesterdayCard
-          word={card.word}
-          quiz={card.quiz}
-          fill="page"
-          onAnswer={(option) => {
-            onAnswerYesterday(position, option);
-          }}
-        />
+      <NoticePage
+        card={card}
+        position={position}
+        header={header}
+        onAnswerYesterday={(option) => {
+          onAnswerYesterday(position, option);
+        }}
+        onFoldWeeklyRecap={() => {
+          onFoldWeeklyRecap(position);
+        }}
+        onRestoreWeeklyRecap={onRestoreWeeklyRecap}
+      />
+    );
+  if (card.kind === 'end-of-cycle')
+    return (
+      <FeedPageFrame position={position} header={header} layout={CENTRED}>
+        <EndOfCycleCard />
       </FeedPageFrame>
     );
   const page = entryPage(header, position);
@@ -341,53 +301,120 @@ function SwipedEntryCard(props: Omit<ComponentProps<typeof EntryCard>, 'slots'>)
   return <EntryCard {...props} slots={useEntrySlots(props.card)} />;
 }
 
-/** Whether the Feed Notice is a later question of the questionnaire. */
-function isLaterQuestion(notice: FeedNoticeCard['notice']): boolean {
-  return LATER_QUESTIONS.some((question) => question === notice);
-}
+/** The frame of a card that sits in the middle of its page. */
+const CENTRED: FeedPageLayout = { style: 'centred', under: 'row' };
 
 /**
- * A Feed Notice that sits in the middle of its page: the Community Word, the first-week card, a level milestone, a later question
- * of the questionnaire, the offer to save progress, «Може, на сьогодні
- * досить?» or the notification explainer and its re-ask.
+ * A Feed Notice's page: its frame and its card, chosen together by the
+ * Notice. The Weekly Recap's week sits on top under the header with
+ * Yesterday under it (board f5), and nothing around its cards scrolls:
+ * Yesterday fills the rest and scrolls inside its card. Yesterday on its own
+ * page, and a later question of the questionnaire, are in the Word card's
+ * frame, edge to edge and the same height (owner 15.11, 16.11, 23.11).
+ * «Ціль дня виконано!» has the goal frame; every other Notice sits in the
+ * middle of its page.
  */
-function NoticeCard({
+function NoticePage({
   card,
+  position,
+  header,
+  onAnswerYesterday,
+  onFoldWeeklyRecap,
+  onRestoreWeeklyRecap,
 }: {
-  card: Exclude<FeedNoticeCard, { notice: 'yesterday' | 'weeklyRecap' }>;
+  card: FeedNoticeCard;
+  position: number;
+  header: FeedHeaderRows;
+  onAnswerYesterday: (option: number) => void;
+  onFoldWeeklyRecap: () => void;
+  onRestoreWeeklyRecap: () => void;
 }) {
   const streak = useFirstWeekStreak();
   const openScreen = useOpenScreen();
   const { askPermission } = useNotificationsChanges();
-  if (card.notice === 'notificationExplainer' || card.notice === 'notificationReask')
-    return <NotificationAskCard notice={card.notice} onYes={askPermission} />;
-  if (card.notice === 'communityWord')
-    return <CommunityWordNotice entryId={card.card.entryId} adds={card.adds} />;
-  if (card.notice === 'levelMilestone')
-    return <LevelMilestoneCard level={card.level} name={card.name} />;
-  if (card.notice === 'enoughForToday') return <EnoughForTodayCard />;
-  if (card.notice === 'goalReached')
-    return (
-      <GoalReachedCard
-        goal={card.goal}
-        words={card.words}
-        streak={streak}
-        mascot={(width) => <MascotAs state="celebrates" onRed width={width} />}
-      />
-    );
-  if (card.notice === 'saveProgress')
-    return (
-      <SaveProgressCard
-        onSave={() => {
-          openScreen('/settings/account');
-        }}
-      />
-    );
-  return card.notice === 'firstWeek' ? (
-    <FirstWeekCard day={card.firstWeekDay} streak={streak} />
-  ) : (
-    <LaterQuestionNotice question={card.notice} />
+  const page = (layout: FeedPageLayout, content: ReactNode) => (
+    <FeedPageFrame position={position} header={header} layout={layout}>
+      {content}
+    </FeedPageFrame>
   );
+  switch (card.notice) {
+    case 'weeklyRecap':
+      return page(
+        { style: 'stack', under: 'row' },
+        <WeeklyRecapPage
+          recap={card.recap}
+          folded={card.folded}
+          yesterday={
+            card.yesterday === undefined ? undefined : (
+              <YesterdayCard
+                word={card.yesterday.word}
+                quiz={card.yesterday.quiz}
+                fill="rest"
+                onAnswer={onAnswerYesterday}
+              />
+            )
+          }
+          onFold={onFoldWeeklyRecap}
+          onRestore={onRestoreWeeklyRecap}
+        />,
+      );
+    case 'yesterday':
+      return page(
+        { style: 'hero', under: 'card' },
+        <YesterdayCard
+          word={card.word}
+          quiz={card.quiz}
+          fill="page"
+          onAnswer={onAnswerYesterday}
+        />,
+      );
+    case 'wordGoalChoice':
+    case 'interests':
+    case 'selfRating':
+    case 'rarityTest':
+    case 'mixReview':
+      return page({ style: 'hero', under: 'row' }, <LaterQuestionNotice question={card.notice} />);
+    case 'goalReached':
+      return page(
+        { style: 'goal', under: 'row' },
+        <GoalReachedCard
+          goal={card.goal}
+          words={card.words}
+          streak={streak}
+          mascot={(width) => <MascotAs state="celebrates" onRed width={width} />}
+        />,
+      );
+    case 'communityWord':
+      // A tap opens the Entry over the Feed, which, as from every Feed Notice, makes nothing Seen.
+      return page(
+        CENTRED,
+        <CommunityWordCard
+          row={card.row}
+          adds={card.adds}
+          onOpen={() => {
+            openScreen(`/entry/${card.row.entryId}`);
+          }}
+        />,
+      );
+    case 'firstWeek':
+      return page(CENTRED, <FirstWeekCard day={card.firstWeekDay} streak={streak} />);
+    case 'levelMilestone':
+      return page(CENTRED, <LevelMilestoneCard level={card.level} name={card.name} />);
+    case 'saveProgress':
+      return page(
+        CENTRED,
+        <SaveProgressCard
+          onSave={() => {
+            openScreen('/settings/account');
+          }}
+        />,
+      );
+    case 'enoughForToday':
+      return page(CENTRED, <EnoughForTodayCard />);
+    case 'notificationExplainer':
+    case 'notificationReask':
+      return page(CENTRED, <NotificationAskCard notice={card.notice} onYes={askPermission} />);
+  }
 }
 
 const styles = StyleSheet.create({
