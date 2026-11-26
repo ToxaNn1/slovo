@@ -107,6 +107,7 @@
 побудка military 5
 побутописець arts-culture 5
 пов'язь human-body 4
+поварня household-crafts 5
 повелительниця history-antiquity 5
 повесніти nature-weather 5
 повечоріти nature-weather 5
@@ -141,6 +142,7 @@
 поквапцем emotions-character 5
 покволом emotions-character 5
 поклепниця witty-insults 5
+покойова history-antiquity 5
 покоїк household-crafts 5
 покрик language-speech 5
 покутник history-antiquity 5
@@ -243,6 +245,7 @@
 призвідець emotions-character 5
 призвілля nature-weather 5
 призір history-antiquity 5
+приключка chameleon-words 5
 прилипа witty-insults 4
 примеркти nature-weather 5
 примліти emotions-character 5
@@ -331,6 +334,8 @@
 підкліть household-crafts 5
 підлабузниця witty-insults 5
 підлесник witty-insults 5
+підлизень witty-insults 5
+підлота emotions-character 5
 підлісся nature-weather 3
 підмальовок arts-culture 5
 підмовник emotions-character 4
@@ -346,6 +351,7 @@
 підсклянник household-crafts 5
 підступник emotions-character 5
 підупад emotions-character 5
+підхмар'я nature-weather 5
 пілігримка history-antiquity 5
 пісноспів arts-culture 5
 пітія history-antiquity 5
