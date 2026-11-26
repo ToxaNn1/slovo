@@ -75,3 +75,16 @@
 впин language-speech 5
 врочити language-speech 5
 вуалетка household-crafts 5
+вашгерд old-crafts 5
+вговтати emotions-character 5
+вербель military 5
+верея household-crafts 5
+верп technology 5
+виднокіл nature-weather 5
+вискочень witty-insults 5
+відтарабанити language-speech 5
+відчаяка emotions-character 5
+вовтузити language-speech 5
+возовиця old-crafts 5
+всовіщувати language-speech 5
+вторувати language-speech 5
