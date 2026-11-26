@@ -39,3 +39,10 @@
 меливо old-crafts 5
 мисліте language-speech 5
 млинар old-crafts 4
+лапанки history-antiquity 5
+луда human-body 5
+лютощі emotions-character 4
+мокриця nature-weather 4
+морозник folk-names 5
+мосяжник old-crafts 5
+ліхтарня technology 5
