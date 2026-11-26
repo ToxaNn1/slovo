@@ -31,10 +31,12 @@
 первосвященник history-antiquity 4
 перебрід nature-weather 5
 перевальцем human-body 5
+перегомін language-speech 5
 передвечір'я nature-weather 5
 передвістя language-speech 3
 передграддя nature-weather 5
 передгроззя nature-weather 4
+переджнив'я nature-weather 5
 передніш language-speech 5
 передосінь nature-weather 5
 передучора language-speech 5
@@ -48,6 +50,7 @@
 перешепт language-speech 5
 першак household-crafts 4
 першодрукар history-antiquity 3
+першообраз arts-culture 5
 першопредок history-antiquity 5
 песиголова folk-names 5
 пестливий language-speech 4
@@ -58,6 +61,7 @@
 плавом nature-weather 4
 плебейка history-antiquity 5
 плетениця household-crafts 4
+плотолюбець emotions-character 5
 плугар old-crafts 5
 плутня emotions-character 5
 плутяга witty-insults 5
@@ -69,10 +73,14 @@
 поборниця emotions-character 4
 побутописець arts-culture 5
 пов'язь human-body 4
+повелительниця history-antiquity 5
 повесніти nature-weather 5
 повечоріти nature-weather 5
+поволеньки language-speech 5
+повороззя household-crafts 5
 повстина household-crafts 5
 повсякдень language-speech 4
+повірниця emotions-character 5
 повісельник witty-insults 5
 повітроплав technology 5
 поганяйло chameleon-words 4
@@ -98,6 +106,7 @@
 полуніч nature-weather 4
 полюбовник emotions-character 4
 помазаниця history-antiquity 5
+померхти nature-weather 5
 помордас witty-insults 5
 поморозь nature-weather 5
 помстник emotions-character 5
@@ -107,6 +116,7 @@
 попівщина history-antiquity 4
 поранок nature-weather 5
 порохівня military 5
+порубник old-crafts 5
 порціон military 5
 посамперед language-speech 5
 посвист language-speech 4
@@ -118,6 +128,8 @@
 посуш nature-weather 5
 потворище witty-insults 4
 потопельниця folk-names 5
+потурач emotions-character 5
+потіпака witty-insults 5
 починальник emotions-character 4
 пошерхнути nature-weather 5
 прабатьківщина history-antiquity 3
@@ -142,9 +154,11 @@
 призвичаїти emotions-character 4
 призвук language-speech 5
 призвідець emotions-character 5
+призвілля nature-weather 5
 призір history-antiquity 5
 прилипа witty-insults 4
 примеркти nature-weather 5
+принда witty-insults 5
 принука history-antiquity 5
 принцепс history-antiquity 5
 пристигти nature-weather 5
@@ -155,10 +169,13 @@
 прихідець history-antiquity 5
 прицмок language-speech 4
 причасниця history-antiquity 5
+пришелепуватий witty-insults 5
+пришелиця history-antiquity 5
 провожатий history-antiquity 4
 проділка emotions-character 5
 прозорливиця emotions-character 5
 прозорінь nature-weather 5
+пройдисвітка witty-insults 5
 прокволистий emotions-character 5
 пролаза witty-insults 5
 промишляти old-crafts 4
@@ -170,7 +187,9 @@
 просвітник history-antiquity 3
 прослава language-speech 4
 простолюдинка history-antiquity 4
+простонароддя history-antiquity 5
 простосердя emotions-character 5
+протяглий language-speech 5
 прошак witty-insults 3
 псалмоспів arts-culture 5
 псалтирниця history-antiquity 5
