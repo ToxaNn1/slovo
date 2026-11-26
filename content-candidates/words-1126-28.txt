@@ -2,3 +2,12 @@
 флінта military 3
 глаголиця language-speech 3
 шансонетка arts-culture 5
+говіти history-antiquity 4
+гульфик household-crafts 4
+товкуша household-crafts 4
+фарандола arts-culture 5
+хлястик household-crafts 4
+чемерник nature-weather 4
+шлик household-crafts 4
+шпеник household-crafts 4
+лепорелло arts-culture 4
