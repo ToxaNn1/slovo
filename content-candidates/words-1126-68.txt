@@ -96,3 +96,16 @@
 цьоголіток nature-weather 5
 цугом history-antiquity 5
 фортанцюристка arts-culture 5
+фатуватий emotions-character 5
+фланерство emotions-character 5
+флібустьєрство history-antiquity 5
+фурманування old-crafts 5
+халамидниця witty-insults 5
+характерництво history-antiquity 5
+хизун witty-insults 5
+хлопоманство history-antiquity 5
+хоромина household-crafts 5
+храмовник history-antiquity 5
+худопахолок witty-insults 5
+цілосвітній language-speech 5
+цукерник old-crafts 5
