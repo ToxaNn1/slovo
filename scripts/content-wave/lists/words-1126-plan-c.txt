@@ -1,0 +1,13 @@
+wave content/1126-wave 150
+content/1126-words-31    words    scripts/content-wave/lists/words-1126-31.txt    49
+content/1126-words-32    words    scripts/content-wave/lists/words-1126-32.txt    49
+content/1126-words-33    words    scripts/content-wave/lists/words-1126-33.txt    49
+content/1126-words-34    words    scripts/content-wave/lists/words-1126-34.txt    49
+content/1126-words-35    words    scripts/content-wave/lists/words-1126-35.txt    49
+content/1126-words-36    words    scripts/content-wave/lists/words-1126-36.txt    49
+content/1126-words-37    words    scripts/content-wave/lists/words-1126-37.txt    49
+content/1126-words-38    words    scripts/content-wave/lists/words-1126-38.txt    49
+content/1126-words-39    words    scripts/content-wave/lists/words-1126-39.txt    49
+content/1126-words-40    words    scripts/content-wave/lists/words-1126-40.txt    49
+content/1126-words-41    words    scripts/content-wave/lists/words-1126-41.txt    49
+content/1126-words-42    words    scripts/content-wave/lists/words-1126-42.txt    49
