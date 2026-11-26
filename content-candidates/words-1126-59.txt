@@ -72,7 +72,7 @@
 лямурний emotions-character 5
 ляндвірт history-antiquity 5
 лібертинаж emotions-character 5
-ліврея household-crafts 5
+ліврея household-crafts 4
 лігвисько nature-weather 5
 ліжникар old-crafts 5
 лікантропія folk-names 5
