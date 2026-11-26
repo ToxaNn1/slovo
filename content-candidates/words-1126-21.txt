@@ -91,3 +91,4 @@
 остовпеніти emotions-character 5
 очмаріти emotions-character 5
 ощирити human-body 5
+обітований language-speech 4
