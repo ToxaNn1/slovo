@@ -14,3 +14,17 @@
 арканити history-antiquity 5
 архітект arts-culture 3
 апель military 3
+авдиторія language-speech 3
+авдієнція history-antiquity 5
+австріяк history-antiquity 5
+аграмантовий household-crafts 5
+азиль history-antiquity 5
+алод history-antiquity 5
+амури emotions-character 4
+анідесь language-speech 5
+аніже language-speech 5
+апракос history-antiquity 5
+аритметика science 5
+атукати language-speech 5
+апотеозувати arts-culture 5
+афектація emotions-character 5
