@@ -165,3 +165,6 @@
 мірковання language-speech 5
 місильниця household-crafts 5
 мочеморда witty-insults 5
+м'ясопусний arts-culture 5
+моровий history-antiquity 5
+мухояровий household-crafts 5
