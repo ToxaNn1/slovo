@@ -1,0 +1,5 @@
+пелерина household-crafts 4
+перипатетик history-antiquity 5
+поворозка household-crafts 4
+поденка nature-weather 5
+пструг nature-weather 4
