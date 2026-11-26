@@ -5,7 +5,6 @@
 єдиносутність history-antiquity 5
 єретицький history-antiquity 4
 єхидствувати emotions-character 5
-жадливість emotions-character 4
 жалійка arts-culture 4
 жалоносний nature-weather 4
 жардиньєрка household-crafts 4
@@ -26,7 +25,6 @@
 ідолопоклонство history-antiquity 3
 ієродиякон history-antiquity 3
 ірмологій arts-culture 5
-іменито language-speech 4
 іспитувати language-speech 5
 іскряний nature-weather 4
 йменувати language-speech 4
@@ -67,7 +65,6 @@
 езопів language-speech 4
 жагучість emotions-character 4
 жаконет household-crafts 5
-жарота nature-weather 4
 жаско emotions-character 5
 женолюб emotions-character 4
 жерловина nature-weather 4
@@ -102,3 +99,8 @@
 жовтофіоль nature-weather 5
 іглиця nature-weather 4
 ісихаст history-antiquity 5
+єдиноутробний history-antiquity 4
+жадюга witty-insults 4
+жарівня household-crafts 4
+жонкіль nature-weather 5
+іпотеза language-speech 5
