@@ -389,3 +389,4 @@
 назирцем language-speech 5
 недоброхіть language-speech 5
 немрущий emotions-character 5
+неблагочестивий history-antiquity 5
