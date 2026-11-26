@@ -6,8 +6,6 @@
 обмішка language-speech 5
 обморочувати emotions-character 5
 обслід language-speech 5
-обсудливий emotions-character 5
-огнистий nature-weather 5
 огруддя human-body 5
 одвірочок household-crafts 5
 одколи language-speech 5
@@ -61,7 +59,6 @@
 огудник old-crafts 5
 одвага emotions-character 5
 одворот household-crafts 5
-оддалитися language-speech 5
 одежина household-crafts 4
 одноплеменець history-antiquity 5
 одноутробний human-body 5
@@ -153,14 +150,12 @@
 облизень language-speech 5
 обмосковлення history-antiquity 5
 обрійний nature-weather 5
-огнекрилий arts-culture 5
 одвершок old-crafts 5
 одвідини household-crafts 5
 оддяка emotions-character 5
 одмовка language-speech 5
 одописець arts-culture 5
 одправа history-antiquity 5
-оманка emotions-character 5
 опряга old-crafts 5
 ораниця old-crafts 5
 оруддя military 5
@@ -170,3 +165,11 @@
 оцупалок witty-insults 5
 остаркуватий human-body 5
 острішок household-crafts 5
+обітний history-antiquity 5
+одгадливий emotions-character 5
+одинюсінький emotions-character 5
+оклигувати human-body 5
+окрилатіти emotions-character 5
+омлівати human-body 5
+опочивати household-crafts 5
+осьмогласний arts-culture 5
