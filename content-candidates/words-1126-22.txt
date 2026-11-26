@@ -19,3 +19,12 @@
 пошанівок language-speech 4
 потіпаха witty-insults 5
 поспівка arts-culture 5
+пасока nature-weather 5
+пачоси old-crafts 5
+перекидько witty-insults 5
+позивайло witty-insults 5
+потішник arts-culture 5
+пропіяка witty-insults 5
+призвідця emotions-character 5
+прошва household-crafts 5
+повивальниця old-crafts 5
