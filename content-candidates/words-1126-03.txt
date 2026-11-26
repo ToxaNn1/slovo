@@ -29,3 +29,8 @@
 дитирамб arts-culture 5
 евпатрид history-antiquity 5
 дичак nature-weather 5
+декарх history-antiquity 5
+дзвонець folk-names 5
+дудлити human-body 5
+жирандоля household-crafts 5
+журфікс arts-culture 5
