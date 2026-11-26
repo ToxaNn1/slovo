@@ -27,6 +27,7 @@
 патлань witty-insults 5
 патронеса history-antiquity 4
 патякання language-speech 4
+пахоля folk-names 5
 пашалик history-antiquity 5
 пащека chameleon-words 5
 пейзанка arts-culture 5
@@ -47,6 +48,7 @@
 передосінь nature-weather 5
 передучора language-speech 5
 перекірливий emotions-character 5
+перелесниця folk-names 5
 перелюбниця emotions-character 5
 переоповідь language-speech 5
 переплеск nature-weather 5
@@ -62,6 +64,7 @@
 песиголова folk-names 5
 пестливий language-speech 4
 печище history-antiquity 5
+пиварня old-crafts 5
 писарчук witty-insults 3
 письмак witty-insults 5
 питець witty-insults 4
@@ -108,12 +111,15 @@
 подмух nature-weather 5
 подосі language-speech 5
 пожевріти nature-weather 5
+позасвіття arts-culture 5
 позирнути emotions-character 4
 позлота arts-culture 5
+позументник old-crafts 5
 покаяльниця history-antiquity 5
 поквапцем emotions-character 5
 покволом emotions-character 5
 поклепниця witty-insults 5
+покоїк household-crafts 5
 покрик language-speech 5
 покутник history-antiquity 5
 покіль language-speech 5
@@ -127,11 +133,13 @@
 помазаниця history-antiquity 5
 поманливий emotions-character 5
 помацки human-body 5
+померки nature-weather 5
 померхти nature-weather 5
 помордас witty-insults 5
 поморозь nature-weather 5
 помстник emotions-character 5
 поневольник history-antiquity 5
+понизка household-crafts 5
 понизов'я nature-weather 5
 поножів'я history-antiquity 5
 понюх household-crafts 5
@@ -161,6 +169,7 @@
 почварок witty-insults 5
 починальник emotions-character 4
 пошерхнути nature-weather 5
+поярок household-crafts 5
 прабатьківщина history-antiquity 3
 правдолюб emotions-character 4
 праведниця emotions-character 4
@@ -178,6 +187,7 @@
 премудрощі emotions-character 5
 преосвященніший history-antiquity 3
 преподобниця history-antiquity 5
+приваба emotions-character 5
 приварок household-crafts 5
 привиддя arts-culture 5
 приводець emotions-character 5
@@ -210,6 +220,7 @@
 причасниця history-antiquity 5
 пришелепуватий witty-insults 5
 пришелиця history-antiquity 5
+пробийголова witty-insults 5
 провинник emotions-character 5
 проводар history-antiquity 5
 провожатий history-antiquity 4
@@ -251,6 +262,7 @@
 пустіти nature-weather 5
 пуховиця household-crafts 5
 пуцьверінок witty-insults 5
+півдесятина history-antiquity 5
 півморок nature-weather 5
 півшепіт language-speech 4
 півімперіал history-antiquity 5
