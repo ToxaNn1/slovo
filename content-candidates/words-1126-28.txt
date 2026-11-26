@@ -26,3 +26,8 @@
 чугайстир arts-culture 5
 шулик household-crafts 4
 левкой nature-weather 4
+ґерлиґа old-crafts 5
+егретка household-crafts 5
+йняти language-speech 5
+таньга history-antiquity 5
+фільдеперс household-crafts 5
