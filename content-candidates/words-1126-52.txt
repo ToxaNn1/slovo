@@ -7,10 +7,13 @@
 базграння language-speech 5
 базиліанин history-antiquity 5
 байдачний history-antiquity 4
+байраччя nature-weather 5
 бакаляр history-antiquity 5
 бакенник old-crafts 5
 бакир history-antiquity 5
 баклажок household-crafts 5
+балабушка household-crafts 5
+балагула history-antiquity 5
 балагурити language-speech 5
 балас arts-culture 4
 баляндрасниця witty-insults 5
@@ -24,6 +27,7 @@
 баришувати history-antiquity 5
 басаманити old-crafts 5
 басонник old-crafts 5
+бастея military 5
 бастонада history-antiquity 5
 батожити household-crafts 5
 бахрімчатий household-crafts 5
@@ -34,6 +38,7 @@
 безвислідний language-speech 5
 безвладний human-body 5
 безвстидний emotions-character 5
+безвік language-speech 5
 безвір'я emotions-character 4
 безгрішшя history-antiquity 5
 безденний nature-weather 5
@@ -42,6 +47,9 @@
 бездіяння emotions-character 5
 безецник witty-insults 5
 безженний history-antiquity 5
+безжурно emotions-character 5
+беззавадний language-speech 5
+беззакидно language-speech 5
 беззаконство language-speech 5
 беззвітно emotions-character 5
 беззглядний emotions-character 5
@@ -50,6 +58,7 @@
 безкормиця household-crafts 5
 безкрай nature-weather 5
 безличниця witty-insults 5
+безлюдь nature-weather 5
 безлік language-speech 5
 безмаєтний history-antiquity 5
 безмилосердний emotions-character 5
@@ -57,6 +66,7 @@
 безмір'я nature-weather 5
 безодрадно emotions-character 5
 безпам'ятько witty-insults 5
+безплужний history-antiquity 5
 безпораддя emotions-character 5
 безприданниця history-antiquity 4
 безпросвіття emotions-character 5
@@ -65,7 +75,9 @@
 безрушно language-speech 5
 безсердно emotions-character 5
 безславити language-speech 5
+безсмак emotions-character 5
 безсрібниця emotions-character 5
+безстрашшя emotions-character 5
 безсуд history-antiquity 5
 безталанниця emotions-character 5
 безтарка household-crafts 5
@@ -76,6 +88,7 @@
 безуміти emotions-character 5
 безустанний language-speech 5
 безхліб'я history-antiquity 5
+безхмар'я nature-weather 5
 безхосенний language-speech 5
 безчас history-antiquity 5
 безчесник witty-insults 5
@@ -100,6 +113,7 @@
 благостиня history-antiquity 5
 блазнювати witty-insults 5
 бланманже household-crafts 5
+блейвас arts-culture 5
 близити language-speech 5
 блискотати nature-weather 5
 блудниця history-antiquity 3
@@ -118,11 +132,17 @@
 борозник household-crafts 5
 бортникувати old-crafts 5
 боріння emotions-character 4
+боскет arts-culture 5
 бочитися emotions-character 5
+боярщина history-antiquity 5
+боївкар repressed-words 5
 боїще military 5
 брамник history-antiquity 5
+брандвахта military 5
+брандмайор history-antiquity 5
 бранль arts-culture 5
 братогубство history-antiquity 5
+братолюбство emotions-character 5
 братчиця history-antiquity 5
 бридувати emotions-character 5
 брижувати old-crafts 5
