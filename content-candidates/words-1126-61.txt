@@ -348,3 +348,12 @@
 незнайбіда witty-insults 5
 непоборимість emotions-character 5
 непроминущість emotions-character 5
+надзоря nature-weather 5
+надперенісся human-body 5
+наокіл language-speech 5
+насподі language-speech 5
+натуга human-body 5
+невдогад language-speech 5
+невдяка witty-insults 5
+неборачка emotions-character 5
+нетяма witty-insults 5
