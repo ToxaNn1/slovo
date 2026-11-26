@@ -21,3 +21,9 @@
 бурмоситися emotions-character 5
 дільний emotions-character 5
 колесування history-antiquity 4
+баргузин nature-weather 4
+брульйон language-speech 5
+давильня old-crafts 5
+дюгонь nature-weather 4
+каракульча household-crafts 5
+копитняк folk-names 4
