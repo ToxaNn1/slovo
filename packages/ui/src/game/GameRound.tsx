@@ -1,10 +1,10 @@
 import type {
-  AskableEntry,
   CurrentGame,
   GivenAnswer,
+  QuickQuestionAnswer,
+  QuickQuestionRound as AskedRound,
   Round,
   RoundAnswer,
-  RoundContent,
 } from '@slovo/core';
 import { answerBannerDelay, sentences } from '@slovo/core';
 import type { MascotState } from '@slovo/contracts';
@@ -282,19 +282,17 @@ function FormRound({
 export function QuickQuestionRound({
   title,
   round,
-  entry,
   label,
-  answered,
+  answer,
   onAnswer,
 }: {
   title: string;
-  round: Extract<RoundContent, { readonly form: 'pick' }>;
-  /** The Entry asked about, whose Definition the answer card explains the answer with. */
-  entry: AskableEntry;
+  /** The Round as the reader sees it before the pick, the right option kept out. */
+  round: AskedRound;
   /** The Game Mode's label, over the prompt of a Round asked under the mode's label. */
   label: string;
-  /** The option the reader picked; none yet. */
-  answered: number | undefined;
+  /** The pick as the Core judged it; none yet. */
+  answer: QuickQuestionAnswer | undefined;
   onAnswer: (option: number) => void;
 }) {
   const tokens = useTokens();
@@ -302,16 +300,23 @@ export function QuickQuestionRound({
   const { strings, voice } = useEdition();
   const asked = askedAs(round, label, strings.game.round);
   const instead =
-    entry.kind === 'tip' && entry.nonStandardForm !== undefined
-      ? fill(strings.game.round.prompts.instead, { wrong: entry.nonStandardForm })
-      : undefined;
+    round.nonStandardForm === undefined
+      ? undefined
+      : fill(strings.game.round.prompts.instead, { wrong: round.nonStandardForm });
   const gameHaptics = useGameHaptics();
-  const answer = answered === undefined ? undefined : { chosen: answered, correct: round.correct };
-  // The sheet explains the answer picked on this card, not one kept from an earlier visit. It is
-  // kept from the pick, so a card drawn again while the sheet is open shows the same answer,
-  // which VoiceOver does not hear again.
-  const [picked, setPicked] = useState<RoundAnswer>();
-  const explained = answer === undefined ? undefined : picked;
+  // The answer shown before, so only the answer given now plays, not one kept from an earlier visit.
+  const shownAnswer = useRef(answer);
+  useEffect(() => {
+    if (answer === shownAnswer.current) return;
+    shownAnswer.current = answer;
+    if (answer === undefined) return;
+    if (answer.right) gameHaptics.rightAnswer();
+    else gameHaptics.wrongAnswer();
+  }, [answer, gameHaptics]);
+  // The sheet explains the answer picked on this card, not one kept from an earlier visit; a card
+  // drawn again while the sheet is open shows the same answer, which VoiceOver does not hear again.
+  const [picked, setPicked] = useState(false);
+  const explained = picked ? answer : undefined;
   return (
     <View testID="quick-question" style={styles.quickQuestion}>
       <View
@@ -356,15 +361,7 @@ export function QuickQuestionRound({
             answer={answer}
             inQuickQuestion
             onPick={(option) => {
-              if (option === round.correct) gameHaptics.rightAnswer();
-              else gameHaptics.wrongAnswer();
-              setPicked({
-                form: 'pick',
-                chosen: option,
-                correct: round.correct,
-                right: option === round.correct,
-                sheet: round.sheet,
-              });
+              setPicked(true);
               onAnswer(option);
             }}
           />
@@ -372,9 +369,9 @@ export function QuickQuestionRound({
       </View>
       <AnswerSheet
         answer={explained}
-        line={cardLine(round.sheet, entry)}
+        line={explained === undefined ? undefined : cardLine(explained.sheet, explained.entry)}
         onNext={() => {
-          setPicked(undefined);
+          setPicked(false);
         }}
       />
     </View>
