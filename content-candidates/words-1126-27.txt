@@ -34,3 +34,10 @@
 мукомел old-crafts 4
 рифт science 4
 унадитися emotions-character 4
+мангуста nature-weather 3
+маркізет household-crafts 5
+меляса household-crafts 3
+монодія arts-culture 4
+моціон human-body 4
+рукомесник old-crafts 5
+устелиполе folk-names 5
