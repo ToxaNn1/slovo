@@ -13,6 +13,7 @@
     "source-corrections": "tsx --disable-warning=ExperimentalWarning src/cli-corrections.ts",
     "source-synonyms": "tsx --disable-warning=ExperimentalWarning src/cli-synonyms.ts",
     "source-lemmas": "tsx --disable-warning=ExperimentalWarning src/cli-lemmas.ts",
+    "source-hrinchenko": "tsx --disable-warning=ExperimentalWarning src/cli-hrinchenko.ts",
     "lint": "eslint .",
     "typecheck": "tsc --build",
     "test": "vitest run"

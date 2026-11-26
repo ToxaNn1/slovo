@@ -25,6 +25,7 @@ import {
   type GorohSynonymArticle,
 } from './goroh';
 import { errorMessage } from './error-message';
+import { HRINCHENKO_SOURCE, hrinchenkoGrammar, type HrinchenkoIndex } from './hrinchenko';
 import {
   draftIssues,
   runSourcing,
@@ -46,6 +47,8 @@ export type SourcingOptions = PipelineOptions & {
   /** The Lemmas to draft, one per line: `<lemma> <category id> <rarity>`; `#` starts a comment. */
   readonly lemmaList: string;
   readonly sumAccess?: SumAccess;
+  /** Грінченко's articles: a basis for a Lemma no explanatory dictionary has (ADR 0207). */
+  readonly hrinchenko?: HrinchenkoIndex;
 };
 
 /**
@@ -57,7 +60,11 @@ export type SourcingOptions = PipelineOptions & {
  * open stays empty and is flagged for a human.
  */
 export function sourceWords(options: SourcingOptions): Promise<SourcingResult> {
-  return runSourcing(options.lemmaList, options, wordsKind(options.sumAccess ?? 'auto'));
+  return runSourcing(
+    options.lemmaList,
+    options,
+    wordsKind(options.sumAccess ?? 'auto', options.hrinchenko ?? new Map()),
+  );
 }
 
 interface WordRequest {
@@ -67,7 +74,7 @@ interface WordRequest {
 }
 
 /** Words as a kind of the sourcing run. */
-function wordsKind(sumAccess: SumAccess): SourcingKind<WordRequest> {
+function wordsKind(sumAccess: SumAccess, hrinchenko: HrinchenkoIndex): SourcingKind<WordRequest> {
   return {
     entryKind: 'word',
     folder: 'words',
@@ -77,6 +84,7 @@ function wordsKind(sumAccess: SumAccess): SourcingKind<WordRequest> {
       const context: Context = {
         ...draftContext,
         sum: new SumDictionary(draftContext.client, sumAccess),
+        hrinchenko,
       };
       return (request) => draftLemma(request, context);
     },
@@ -111,6 +119,7 @@ function parseLemmaLine(content: string, edition: EditionFolder): ParsedLine<Wor
 
 interface Context extends DraftContext {
   readonly sum: SumDictionary;
+  readonly hrinchenko: HrinchenkoIndex;
 }
 
 /**
@@ -168,6 +177,8 @@ async function draftLemma(request: WordRequest, context: Context): Promise<KindO
       const lookup = await context.sum.lookUp(lemma);
       if (!lookup.found) {
         const tried = [gorohUrl('Тлумачення', lemma), ...lookup.tried];
+        const fromHrinchenko = draftFromHrinchenko(request, context, flags);
+        if (fromHrinchenko !== undefined) return fromHrinchenko;
         flags.push({
           kind: 'no-entry',
           message: `No dictionary entry found; tried ${tried.join(', ')}`,
@@ -176,6 +187,8 @@ async function draftLemma(request: WordRequest, context: Context): Promise<KindO
       }
       articles = lookup.articles.filter((article) => sumKey(article.headword) === sumKey(lemma));
       if (articles.length === 0) {
+        const fromHrinchenko = draftFromHrinchenko(request, context, flags);
+        if (fromHrinchenko !== undefined) return fromHrinchenko;
         flags.push({
           kind: 'no-entry',
           message: `${lookup.articles[0]?.source.url ?? 'sum.in.ua'} has no article for "${lemma}" (it has ${lookup.articles.map((article) => article.headword).join(', ')})`,
@@ -243,6 +256,51 @@ async function draftLemma(request: WordRequest, context: Context): Promise<KindO
     draftArticle(article, { request, goroh, isHomonym, context }),
   );
   return { drafts, flags };
+}
+
+/**
+ * A draft from Грінченко's article, for a Lemma no explanatory dictionary
+ * has: the grammar of its label and the citation, never its text. Without a
+ * Definition it stays incomplete; the flag gives the writer the article as
+ * the basis of a Definition written fresh (ADR 0207).
+ */
+function draftFromHrinchenko(
+  request: WordRequest,
+  context: Context,
+  flags: readonly Flag[],
+): KindOutcome | undefined {
+  const articles = context.hrinchenko.get(matchKey(request.lemma));
+  const [article] = articles ?? [];
+  if (articles === undefined || article === undefined) return undefined;
+  const grammar = hrinchenkoGrammar(article.gloss);
+  const word: WordDraft = {
+    id: context.newId(),
+    lemma: request.lemma,
+    ...grammar,
+    categoryId: request.categoryId,
+    rarity: request.rarity,
+    sources: [{ ...HRINCHENKO_SOURCE }],
+  };
+  const writeFresh: Flag = {
+    kind: 'write-fresh',
+    message: `No explanatory dictionary has the Lemma; Грінченко does: ${articles
+      .map(({ gloss, sigla }) => `«${gloss}»${sigla.length === 0 ? '' : ` (${sigla.join('; ')})`}`)
+      .join(
+        ' / ',
+      )}. Its Russian gloss is a basis, never a quote: write the Definition fresh; a folklore Example may be an Example lead`,
+  };
+  return {
+    drafts: [
+      {
+        entry: word,
+        headword: article.headword,
+        issues: checkDraft(word, context.edition),
+        flags: [writeFresh],
+        summary: { text: request.lemma, group: request.categoryId, examples: 0, definition: '' },
+      },
+    ],
+    flags,
+  };
 }
 
 function draftArticle(

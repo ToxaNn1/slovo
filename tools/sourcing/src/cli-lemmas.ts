@@ -5,12 +5,15 @@
  *   pnpm source:lemmas --edition <id> [--snapshot <file>] [--count <n>] [--letters <letters>]
  *                      [--pos noun:55,adj:20,verb:20,adv:5] [--rarity 2:1,3:1,4:1,5:1]
  *                      [--exclude <list file>]… [--seed <n>] [--out <file>] [--cache <dir>]
+ *                      [--from hrinchenko]
  *
  * The headword list (LanguageTool's morfologik-ukrainian-lt, from dict_uk) and
  * the `wordfreq` list are downloaded once into the sourcing cache. The
  * Edition's Words, Retired ones too, come from its content snapshot:
  * `--snapshot`, else the backend at `$SLOVO_API_URL`. The list goes to
  * `--out`, else to standard output; the pool and the seed go to standard error.
+ * `--from hrinchenko` keeps only the Lemmas Грінченко has (ADR 0207), from the
+ * index `pnpm source:hrinchenko` builds.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -28,6 +31,7 @@ import {
   randomFromSeed,
   sourceLemmas,
 } from './lemma-candidates';
+import { cachedHrinchenko, onlyHrinchenkoHeadwords } from './hrinchenko';
 import { loadHeadwords, loadWordfreq } from './lemma-sources';
 import { defaultCacheDir, fetchBytes } from './node-ports';
 import { contentSnapshot } from './snapshot';
@@ -35,7 +39,7 @@ import { SOURCE_LANGUAGE } from './text';
 import { zipfOf } from './wordfreq';
 
 const USAGE =
-  'Usage: pnpm source:lemmas --edition <id> [--snapshot <file>] [--count <n>] [--letters <letters>] [--pos noun:55,adj:20,verb:20,adv:5] [--rarity 2:1,3:1,4:1,5:1] [--exclude <list file>]... [--seed <n>] [--out <file>] [--cache <dir>]';
+  'Usage: pnpm source:lemmas --edition <id> [--snapshot <file>] [--count <n>] [--letters <letters>] [--pos noun:55,adj:20,verb:20,adv:5] [--rarity 2:1,3:1,4:1,5:1] [--exclude <list file>]... [--seed <n>] [--out <file>] [--cache <dir>] [--from hrinchenko]';
 
 async function main(): Promise<number> {
   const { positionals, values } = parseArgs({
@@ -51,11 +55,17 @@ async function main(): Promise<number> {
       seed: { type: 'string' },
       out: { type: 'string' },
       cache: { type: 'string' },
+      from: { type: 'string' },
     },
   });
   const seed =
     values.seed === undefined ? Math.floor(Math.random() * 2 ** 31) : Number(values.seed);
-  if (positionals.length > 0 || values.edition === undefined || !Number.isInteger(seed)) {
+  if (
+    positionals.length > 0 ||
+    values.edition === undefined ||
+    !Number.isInteger(seed) ||
+    (values.from !== undefined && values.from !== 'hrinchenko')
+  ) {
     console.error(USAGE);
     return 2;
   }
@@ -91,9 +101,15 @@ async function main(): Promise<number> {
     download: fetchBytes,
     log,
   };
+  const hrinchenko = values.from === undefined ? undefined : cachedHrinchenko(sources.cacheDir);
+  if (values.from !== undefined && hrinchenko === undefined) {
+    console.error('Грінченко has no index yet: run `pnpm source:hrinchenko` first');
+    return 2;
+  }
   const [headwords, frequencies] = [await loadHeadwords(sources), await loadWordfreq(sources)];
   const result = sourceLemmas({
-    headwords,
+    headwords:
+      hrinchenko === undefined ? headwords : onlyHrinchenkoHeadwords(headwords, hrinchenko),
     zipf: (lemma) => zipfOf(frequencies, lemma),
     alphabet,
     existingLemmas: snapshot.snapshot.words.map(({ lemma }) => lemma),

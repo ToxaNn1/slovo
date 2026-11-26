@@ -10,11 +10,14 @@
  * run on the machine: `--cache`, else `$SLOVO_SOURCING_CACHE`, else
  * `$XDG_CACHE_HOME/slovo-sourcing` or `~/.cache/slovo-sourcing`. goroh.pp.ua
  * is the main source; sum.in.ua and the Wayback Machine are fallbacks for
- * Definitions, each tried once per run (`--sum off` skips them).
+ * Definitions, each tried once per run (`--sum off` skips them). A Lemma none
+ * of them has is drafted from Грінченко, flagged `write-fresh`, once
+ * `pnpm source:hrinchenko` has built its index.
  */
 import { parseArgs } from 'node:util';
 
 import { prepareRun, printSummary } from './cli-common';
+import { cachedHrinchenko } from './hrinchenko';
 import { sourceWords, type SumAccess } from './index';
 
 const USAGE =
@@ -53,7 +56,11 @@ async function main(): Promise<number> {
     apiUrl: process.env['SLOVO_API_URL'],
   });
   if (!run.ok) return run.exitCode;
-  return printSummary(await sourceWords({ ...run.options, lemmaList: run.list, sumAccess }));
+  // Грінченко's index, once `pnpm source:hrinchenko` has built it (ADR 0207).
+  const hrinchenko = cachedHrinchenko(run.options.cacheDir) ?? new Map();
+  return printSummary(
+    await sourceWords({ ...run.options, lemmaList: run.list, sumAccess, hrinchenko }),
+  );
 }
 
 process.exitCode = await main();
