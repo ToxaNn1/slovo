@@ -12,3 +12,12 @@
 екфразис arts-culture 5
 екзегет language-speech 4
 жаднюга witty-insults 4
+деркотіти nature-weather 5
+джеркотіти language-speech 5
+дзуменіти nature-weather 5
+дромос history-antiquity 5
+дубець household-crafts 4
+емпіреї history-antiquity 5
+єресіарх history-antiquity 5
+жучити emotions-character 4
+жовтопузик folk-names 5
