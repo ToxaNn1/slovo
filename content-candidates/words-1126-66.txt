@@ -40,7 +40,7 @@
 тираноборство history-antiquity 5
 тихомирно emotions-character 5
 тлумити emotions-character 5
-тлумно language-speech 5
+тлум language-speech 5
 товкмачити language-speech 5
 толокувати old-crafts 5
 топуз military 5
@@ -82,3 +82,18 @@
 трясовиння nature-weather 5
 турач nature-weather 5
 тюпцем language-speech 5
+тальма household-crafts 5
+тальянка arts-culture 5
+танцмейстер arts-culture 5
+темнохмарний nature-weather 5
+тонкопряха old-crafts 5
+торішняк nature-weather 5
+торочка household-crafts 4
+тридесятий folk-names 5
+тригрошовик history-antiquity 5
+трясунка folk-names 5
+туговухий human-body 5
+тугодумство witty-insults 5
+туманистий nature-weather 5
+тюхтійкуватий witty-insults 5
+тягота emotions-character 5
