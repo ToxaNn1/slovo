@@ -16,6 +16,7 @@
 панок witty-insults 4
 панчішник old-crafts 5
 паніматка history-antiquity 4
+папеса history-antiquity 5
 паплюжник witty-insults 5
 паполома household-crafts 5
 паремійник history-antiquity 5
@@ -30,6 +31,7 @@
 пахоля folk-names 5
 пашалик history-antiquity 5
 пащека chameleon-words 5
+педель history-antiquity 5
 пейзанка arts-culture 5
 первомучениця history-antiquity 5
 перворідень history-antiquity 5
@@ -46,14 +48,18 @@
 переднівок history-antiquity 5
 передніш language-speech 5
 передосінь nature-weather 5
+передсвіт nature-weather 5
 передучора language-speech 5
 перекірливий emotions-character 5
 перелесниця folk-names 5
 перелюбниця emotions-character 5
 переоповідь language-speech 5
+перепиранка language-speech 5
 переплеск nature-weather 5
 пересміх language-speech 5
 перестаркуватий emotions-character 5
+пересторожливий emotions-character 5
+перестрах emotions-character 5
 переступник emotions-character 5
 пересуд language-speech 5
 перешепт language-speech 5
@@ -155,6 +161,7 @@
 порціон military 5
 посамперед language-speech 5
 посвист language-speech 4
+посейбіч language-speech 5
 посесія history-antiquity 5
 поскляніти emotions-character 5
 послугачка old-crafts 5
@@ -163,6 +170,7 @@
 посошок chameleon-words 5
 посуш nature-weather 5
 потворище witty-insults 4
+потолока history-antiquity 5
 потопельниця folk-names 5
 потурач emotions-character 5
 потіпака witty-insults 5
@@ -177,6 +185,7 @@
 правіжка history-antiquity 5
 правік history-antiquity 5
 прадідівщина history-antiquity 5
+праотчий history-antiquity 5
 прапращурка history-antiquity 5
 прародичка history-antiquity 5
 прастарий history-antiquity 5
@@ -205,9 +214,11 @@
 прилипа witty-insults 4
 примеркти nature-weather 5
 примліти emotions-character 5
+примова language-speech 5
 принда witty-insults 5
 принука history-antiquity 5
 принцепс history-antiquity 5
+приповістка language-speech 5
 пристигти nature-weather 5
 пристрітник folk-names 5
 прителепкуватий witty-insults 5
@@ -262,6 +273,7 @@
 пустіти nature-weather 5
 пуховиця household-crafts 5
 пуцьверінок witty-insults 5
+піастр history-antiquity 5
 півдесятина history-antiquity 5
 півморок nature-weather 5
 півшепіт language-speech 4
@@ -288,4 +300,5 @@
 пілігримка history-antiquity 5
 пісноспів arts-culture 5
 пітія history-antiquity 5
+пішадрала witty-insults 5
 піґулка household-crafts 5
