@@ -23,6 +23,7 @@ import {
   type SourcingOptions,
   type SourcingResult,
 } from './index';
+import { HRINCHENKO_SOURCE } from './hrinchenko';
 import { seededRandom, editionWithSnapshot, UK_CONFIG_FILE } from './test-support';
 
 const fixturesDir = fileURLToPath(new URL('../fixtures/', import.meta.url));
@@ -480,6 +481,38 @@ describe('sourceWords', () => {
     expect(lemmaOutcome(result, 'кшпфтлеон').flags).toEqual([
       expect.objectContaining({ kind: 'no-entry' }),
     ]);
+  });
+
+  it('drafts a Lemma no explanatory dictionary has from Грінченко, flagged to be written fresh', async () => {
+    const gloss = 'ни, ж. Жердь для огорожи. Ми взяли ворину таку, як у руку завтовшки. Пирят. у.';
+    const { options } = setup({
+      lemmaList: 'кшпфтлеон science 3\n',
+      hrinchenko: new Map([
+        ['кшпфтлеон', [{ headword: 'кшпфтлеон', gloss, sigla: ['Пирят. у.'] }]],
+      ]),
+    });
+
+    const result = await sourceWords(options);
+
+    expect(readDrafts(options.outDir)).toEqual([]);
+    const [draft, ...others] = readDrafts(options.outDir, 'incomplete');
+    expect(others).toEqual([]);
+    // Its Russian gloss is a basis only: the draft has no Definition and quotes nothing.
+    const { id } = z.looseObject({ id: z.string() }).parse(draft);
+    expect(id).toMatch(/^w_/);
+    expect(draft).toEqual({
+      id,
+      lemma: 'кшпфтлеон',
+      partOfSpeech: 'noun',
+      gender: 'feminine',
+      categoryId: 'science',
+      rarity: 3,
+      sources: [HRINCHENKO_SOURCE],
+    });
+    const flags = flagsOf(result, 'кшпфтлеон');
+    expect(flags.map((flag) => flag.kind)).toEqual(['write-fresh']);
+    expect(flags[0]?.message).toContain(gloss);
+    expect(flags[0]?.message).toContain('Пирят. у.');
   });
 
   it('answers a re-run from the cache, asking again only for a page that was not found', async () => {

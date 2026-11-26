@@ -116,6 +116,19 @@ The Category is a placeholder, `?`: the writer fills in each one (and may move t
 
 `source:words` still flags a Lemma whose Definition is only a reference («див. …», «те саме, що …») as `cross-reference`; it does not follow it to the main Lemma.
 
+## Грінченко: `source:hrinchenko`
+
+Грінченко's «Словарь української мови» (1907–1909, public domain) is a second headword list and a basis for drafts (ADR 0207).
+
+```sh
+pnpm source:hrinchenko                     # once per machine: download, OCR, index
+pnpm source:lemmas --edition uk --from hrinchenko --count 200 --out words-hr.txt
+```
+
+- **The index.** `source:hrinchenko` downloads the University of Toronto scan of the 1909 printing from archive.org (two PDFs, pinned by SHA-256) into `<cache>/hrinchenko/`, reads every page by our own OCR (Poppler's `pdftoppm` and Tesseract with `ukr` and `rus`, one process per core, about two hours; each page's text is kept, so a stopped run resumes) and writes `<cache>/lemmas/hrinchenko-<pins>.tsv`, one article per line: `<headword>\t<gloss>\t<sigla>`, the gloss being the rest of the article on one line. Never committed.
+- **`source:lemmas --from hrinchenko`** keeps only the Lemmas of the headword list that Грінченко has: spelled in today's orthography, still a modern Lemma, and never an OCR misreading. Every other option works as without it.
+- **`source:words`** reads the index when it is built. A Lemma that neither goroh's explanatory dictionaries nor СУМ-11 has is drafted from Грінченко instead of flagged `no-entry`: the part of speech and a noun's gender from its label, Грінченко as the Source, no Definition. The draft goes to `incomplete/`, flagged `write-fresh` with the article and its sigla. Its Russian gloss is a basis, never quoted: the writer writes the Definition fresh and proves it in a normative dictionary; a folklore Example may be an Example lead.
+
 ## Idioms: `source:idioms`
 
 <!-- #1628 -->

@@ -55,6 +55,7 @@ export type FlagKind =
   | 'existing-entry'
   | 'cross-reference'
   | 'region-missing'
+  | 'write-fresh'
   | 'check';
 
 export interface Flag {
