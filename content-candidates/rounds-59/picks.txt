@@ -1,6 +1,5 @@
 лайдакуватий witty-insults 5
 лакейство emotions-character 5
-лакомо language-speech 5
 лащитися emotions-character 5
 ластовеня nature-weather 5
 лебедиця nature-weather 5
@@ -71,3 +70,15 @@
 ляндвірт history-antiquity 5
 ліногуз witty-insults 5
 літорея language-speech 5
+лабазник history-antiquity 5
+лакомина household-crafts 5
+ландштурм military 5
+лелітка household-crafts 5
+лжа language-speech 5
+лизоблюдство emotions-character 5
+литія history-antiquity 5
+люкарна household-crafts 5
+людолов history-antiquity 5
+ліврея household-crafts 5
+лікантропія folk-names 5
+літавиця folk-names 5
