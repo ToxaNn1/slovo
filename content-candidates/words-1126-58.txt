@@ -180,3 +180,4 @@
 кропильниця history-antiquity 5
 кольчужник military 5
 красноголосий arts-culture 5
+казеннокоштний history-antiquity 5
