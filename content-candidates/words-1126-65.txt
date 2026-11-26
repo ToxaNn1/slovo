@@ -9,7 +9,6 @@
 святенництво emotions-character 4
 святочний history-antiquity 4
 сивінь nature-weather 5
-силування emotions-character 4
 сичуг household-crafts 4
 сідельник old-crafts 3
 скаменіння science 5
@@ -21,7 +20,6 @@
 скребло old-crafts 5
 скупердя witty-insults 5
 сластьонниця old-crafts 5
-слововиверження language-speech 5
 сморідний witty-insults 4
 сновига witty-insults 5
 сокорух nature-weather 4
@@ -219,3 +217,19 @@
 стрункостанний human-body 5
 супокій emotions-character 5
 сухозлітка arts-culture 5
+свербець human-body 5
+свитина household-crafts 5
+свіжина household-crafts 4
+сидьма language-speech 5
+силопихом language-speech 5
+сірячина household-crafts 5
+скарбівниця history-antiquity 5
+скоробреха witty-insults 5
+скуфійка history-antiquity 5
+словоблуд witty-insults 5
+смоква nature-weather 5
+снівниця old-crafts 5
+спишна emotions-character 5
+ставидло technology 5
+стогоклад old-crafts 5
+сутяжище witty-insults 5
