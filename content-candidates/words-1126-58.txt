@@ -146,3 +146,15 @@
 котурновий arts-culture 5
 кужелиця old-crafts 5
 кумпанія history-antiquity 5
+калачник old-crafts 5
+каправоокий witty-insults 5
+керсет household-crafts 5
+кладовисько history-antiquity 5
+клопотальник history-antiquity 5
+книгодрукарство history-antiquity 5
+козарлюга history-antiquity 5
+колотня emotions-character 5
+крамольник history-antiquity 5
+крикнява language-speech 5
+ктиторка history-antiquity 5
+кухмістер household-crafts 5
