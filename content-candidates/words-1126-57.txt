@@ -227,3 +227,11 @@
 змилоститися emotions-character 5
 зосмілитися emotions-character 5
 зцуратися emotions-character 5
+заблагословитися nature-weather 5
+завбожіти history-antiquity 5
+заголомшити emotions-character 5
+закнязювати history-antiquity 5
+заноровитися emotions-character 5
+зачумакувати history-antiquity 5
+збезумитися emotions-character 5
+знетерпеливитися emotions-character 5
