@@ -39,3 +39,6 @@
 дибиці history-antiquity 5
 єпитимія history-antiquity 5
 жарівня household-crafts 5
+дев'ясил folk-names 5
+деісус arts-culture 5
+дешпетувати emotions-character 5
