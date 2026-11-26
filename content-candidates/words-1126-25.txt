@@ -96,3 +96,16 @@
 сторчголов language-speech 4
 стрільниця military 4
 суголос arts-culture 5
+навійник old-crafts 5
+надвечірок nature-weather 5
+нашепт language-speech 5
+начикрижити household-crafts 5
+несамохіть language-speech 4
+сакманник old-crafts 5
+саманниця household-crafts 5
+скошлатити human-body 5
+скупиндряга witty-insults 4
+слякота nature-weather 5
+спорохнявіти nature-weather 5
+стелепати human-body 5
+столочити nature-weather 5
