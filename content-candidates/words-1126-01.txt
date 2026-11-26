@@ -10,3 +10,14 @@
 бождерево folk-names 5
 борцун folk-names 5
 бринькати arts-culture 4
+абецадло language-speech 4
+авра nature-weather 4
+акче history-antiquity 4
+базлати language-speech 5
+баляндрасити language-speech 5
+беркицнути human-body 5
+бересток folk-names 4
+бильце household-crafts 5
+богдихан history-antiquity 5
+борзописець witty-insults 4
+бродні household-crafts 5
