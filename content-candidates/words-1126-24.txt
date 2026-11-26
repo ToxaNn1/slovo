@@ -33,3 +33,17 @@
 вовкун folk-names 3
 воркотуха witty-insults 5
 вспак language-speech 5
+васаг household-crafts 5
+веретище history-antiquity 5
+вжинок old-crafts 5
+вивороть nature-weather 5
+виталище language-speech 5
+витребенька emotions-character 4
+відволога nature-weather 5
+відрійок old-crafts 5
+врепіжити language-speech 5
+врунастий nature-weather 5
+всидливий emotions-character 5
+втямливий emotions-character 5
+вурдити household-crafts 5
+внадливий emotions-character 5
