@@ -43,3 +43,13 @@
 канцонета arts-culture 5
 карабеля military 5
 кужівка old-crafts 5
+басон household-crafts 5
+баталія military 3
+благозволити language-speech 5
+бюргер history-antiquity 4
+білодеревник old-crafts 5
+дуболом witty-insults 4
+календи history-antiquity 5
+комірний history-antiquity 4
+косторіз old-crafts 5
+кітвиця history-antiquity 5
