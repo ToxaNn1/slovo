@@ -53,3 +53,7 @@
 комірний history-antiquity 4
 косторіз old-crafts 5
 кітвиця history-antiquity 5
+бадан folk-names 3
+бусурманин history-antiquity 4
+косогір nature-weather 4
+крутиголова folk-names 5
