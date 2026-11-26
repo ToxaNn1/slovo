@@ -231,3 +231,14 @@
 гульфік household-crafts 5
 густозоряний nature-weather 5
 гривеник history-antiquity 5
+гаміркий language-speech 5
+гарячливий emotions-character 5
+гекзаметричний arts-culture 5
+гіркохлібний emotions-character 5
+гільдійний history-antiquity 5
+гнучкостанний human-body 5
+голопузий witty-insults 5
+грізноокий human-body 5
+громничний folk-names 5
+гудочний arts-culture 5
+густопсовий witty-insults 5
