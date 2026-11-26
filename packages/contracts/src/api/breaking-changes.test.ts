@@ -275,3 +275,315 @@ describe('the committed description of /v1', () => {
     expect(await describeApi()).toEqual(committed);
   });
 });
+
+/** A description of one operation, `POST /v1/things`. */
+function describing(operation: object) {
+  return { paths: { '/v1/things': { post: operation } } };
+}
+
+/** An operation that answers `schema` as its 200 JSON body. */
+function answering(schema: object) {
+  return describing({ responses: { 200: { content: { 'application/json': { schema } } } } });
+}
+
+/** An operation that takes `schema` as its JSON request body. */
+function taking(schema: object) {
+  return describing({ requestBody: { content: { 'application/json': { schema } } } });
+}
+
+/** An operation that takes the parameters. */
+function withParameters(...parameters: object[]) {
+  return describing({ parameters });
+}
+
+/** The query parameter `q`, a string. */
+function query(extra: object = {}) {
+  return { in: 'query', name: 'q', schema: { type: 'string' }, ...extra };
+}
+
+/** An operation that answers 304 with the header `etag`. */
+function answeringEtag(header: object) {
+  return describing({ responses: { 304: { headers: { etag: header } } } });
+}
+
+const AT = 'POST /v1/things: ';
+const STRING = { type: 'string' };
+const NUMBER = { type: 'number' };
+const objectOf = (properties: object) => ({ type: 'object', properties });
+
+describe('a change of the description', () => {
+  it('lets an input bound widen, but breaks one that narrows or is new', () => {
+    const before = taking({ ...STRING, minLength: 2, maxLength: 10 });
+
+    expect(breakingChanges(before, taking({ ...STRING, minLength: 1, maxLength: 20 }))).toEqual([]);
+    expect(breakingChanges(before, taking(STRING))).toEqual([]);
+    expect(breakingChanges(before, taking({ ...STRING, minLength: 3, maxLength: 5 }))).toEqual([
+      `${AT}request body changes its minLength from 2 to 3`,
+      `${AT}request body changes its maxLength from 10 to 5`,
+    ]);
+    expect(breakingChanges(taking(STRING), taking({ ...STRING, maxLength: 10 }))).toEqual([
+      `${AT}request body changes its maxLength from none to 10`,
+    ]);
+  });
+
+  it('lets an output bound narrow, but breaks one that widens', () => {
+    const before = answering({ ...STRING, minLength: 2, maxLength: 10 });
+
+    expect(breakingChanges(before, answering({ ...STRING, minLength: 3, maxLength: 5 }))).toEqual(
+      [],
+    );
+    expect(breakingChanges(before, answering({ ...STRING, minLength: 1, maxLength: 20 }))).toEqual([
+      `${AT}200 body changes its minLength from 2 to 1`,
+      `${AT}200 body changes its maxLength from 10 to 20`,
+    ]);
+  });
+
+  it('breaks a new input default, but not a changed output one', () => {
+    expect(breakingChanges(taking(STRING), taking({ ...STRING, default: 'a' }))).toEqual([
+      `${AT}request body changes its default from none to "a"`,
+    ]);
+    expect(
+      breakingChanges(
+        answering({ ...STRING, default: 'a' }),
+        answering({ ...STRING, default: 'b' }),
+      ),
+    ).toEqual([]);
+  });
+
+  it('breaks a list of types that grows, which only an enum may', () => {
+    expect(
+      breakingChanges(
+        taking({ type: ['string', 'null'] }),
+        taking({ type: ['string', 'null', 'number'] }),
+      ),
+    ).toEqual([
+      `${AT}request body changes its type from ["string","null"] to ["string","null","number"]`,
+    ]);
+  });
+
+  it('breaks nothing when an output was any value, or an input becomes any value', () => {
+    const union = { anyOf: [STRING, NUMBER] };
+
+    expect(breakingChanges(answering({}), answering(union))).toEqual([]);
+    expect(breakingChanges(answering({ description: 'Anything' }), answering(union))).toEqual([]);
+    expect(breakingChanges(taking(union), taking({}))).toEqual([]);
+  });
+
+  it('breaks an input union that becomes one of its variants, but not one that gains a kind', () => {
+    expect(breakingChanges(taking({ anyOf: [STRING, NUMBER] }), taking(STRING))).toEqual([
+      `${AT}request body may no longer be number`,
+    ]);
+    expect(
+      breakingChanges(
+        taking({ anyOf: [STRING, NUMBER] }),
+        taking({ anyOf: [STRING, NUMBER, { type: 'boolean' }] }),
+      ),
+    ).toEqual([]);
+    expect(
+      breakingChanges(taking({ anyOf: [{ const: 'a' }, { const: 'b' }] }), taking({ const: 'a' })),
+    ).toEqual([`${AT}request body may no longer be "b"`]);
+  });
+
+  it('reads the variants of a union that match by kind as schemas of their own', () => {
+    expect(
+      breakingChanges(
+        answering({ anyOf: [{ ...STRING, maxLength: 5 }, NUMBER] }),
+        answering({ anyOf: [{ ...STRING, maxLength: 10 }, NUMBER] }),
+      ),
+    ).toEqual([`${AT}200 body changes its maxLength from 5 to 10`]);
+  });
+
+  it('breaks a union whose variants of one kind change, which can not be told apart', () => {
+    const twins = { anyOf: [objectOf({ a: STRING }), objectOf({ b: STRING })] };
+    const others = { anyOf: [objectOf({ a: STRING }), objectOf({ c: STRING })] };
+    const distinct = { anyOf: [STRING, NUMBER] };
+
+    expect(breakingChanges(answering(twins), answering(twins))).toEqual([]);
+    expect(breakingChanges(answering(twins), answering(others))).toEqual([
+      `${AT}200 body changes its variants`,
+    ]);
+    expect(breakingChanges(answering(distinct), answering(twins))).toEqual([
+      `${AT}200 body changes its variants`,
+    ]);
+    expect(breakingChanges(answering(twins), answering(distinct))).toEqual([
+      `${AT}200 body changes its variants`,
+    ]);
+  });
+
+  it('lets an input field go from an object that takes unknown fields', () => {
+    expect(breakingChanges(taking(objectOf({ a: STRING })), taking(objectOf({})))).toEqual([]);
+  });
+
+  it('breaks an input object that becomes strict, but not an output one', () => {
+    const strict = { ...objectOf({ a: STRING }), additionalProperties: false };
+
+    expect(breakingChanges(taking(objectOf({ a: STRING })), taking(strict))).toEqual([
+      `${AT}request body no longer accepts unknown fields`,
+    ]);
+    expect(breakingChanges(answering(objectOf({ a: STRING })), answering(strict))).toEqual([]);
+  });
+
+  it('reads the values of a record and the items of a list as schemas of their own', () => {
+    const record = (values: object) => ({ type: 'object', additionalProperties: values });
+    const list = (items?: object) => ({ type: 'array', ...(items === undefined ? {} : { items }) });
+
+    expect(breakingChanges(answering(record(STRING)), answering(record(NUMBER)))).toEqual([
+      `${AT}200 body.* changes its type from "string" to "number"`,
+    ]);
+    expect(breakingChanges(answering(list(STRING)), answering(list(NUMBER)))).toEqual([
+      `${AT}200 body[] changes its type from "string" to "number"`,
+    ]);
+    expect(breakingChanges(answering(list(STRING)), answering(list()))).toEqual([
+      `${AT}200 body[] changes its type from "string" to none`,
+    ]);
+  });
+
+  it('breaks a parameter that goes, changes how it travels or narrows', () => {
+    const before = withParameters(query({ style: 'form', schema: { ...STRING, maxLength: 10 } }));
+
+    expect(breakingChanges(before, withParameters())).toEqual([
+      `${AT}query q is no longer accepted`,
+    ]);
+    expect(
+      breakingChanges(
+        before,
+        withParameters(query({ style: 'deepObject', schema: { ...STRING, maxLength: 5 } })),
+      ),
+    ).toEqual([
+      `${AT}query q changes its style from "form" to "deepObject"`,
+      `${AT}query q changes its maxLength from 10 to 5`,
+    ]);
+    expect(
+      breakingChanges(
+        before,
+        withParameters(query({ style: 'form', description: 'A query', schema: { ...STRING } })),
+      ),
+    ).toEqual([]);
+  });
+
+  it('breaks a parameter that becomes required, but not one that stays or stops being required', () => {
+    const required = withParameters(query({ required: true }));
+
+    expect(breakingChanges(withParameters(), withParameters(query()))).toEqual([]);
+    expect(breakingChanges(withParameters(), required)).toEqual([`${AT}query q is now required`]);
+    expect(breakingChanges(withParameters(query()), required)).toEqual([
+      `${AT}query q is now required`,
+    ]);
+    expect(breakingChanges(required, required)).toEqual([]);
+    expect(breakingChanges(required, withParameters(query()))).toEqual([]);
+  });
+
+  it('breaks a request body that becomes required or is no longer taken as JSON', () => {
+    const body = (requestBody: object) => describing({ requestBody });
+    const json = { 'application/json': { schema: {} } };
+
+    expect(
+      breakingChanges(body({ content: json }), body({ required: true, content: json })),
+    ).toEqual([`${AT}request body is now required`]);
+    expect(
+      breakingChanges(
+        body({ required: true, content: json }),
+        body({ required: true, content: json }),
+      ),
+    ).toEqual([]);
+    expect(breakingChanges(body({ content: json }), body({ content: {} }))).toEqual([
+      `${AT}request body is no longer accepted as application/json`,
+    ]);
+  });
+
+  it('breaks an answer header that goes, may now be missing or changes', () => {
+    const etag = answeringEtag({ required: true, schema: STRING });
+
+    expect(breakingChanges(etag, etag)).toEqual([]);
+    expect(breakingChanges(etag, describing({ responses: { 304: {} } }))).toEqual([
+      `${AT}304 header etag is gone`,
+    ]);
+    expect(breakingChanges(etag, answeringEtag({ schema: STRING }))).toEqual([
+      `${AT}304 header etag may now be missing`,
+    ]);
+    expect(breakingChanges(etag, answeringEtag({ required: true, schema: NUMBER }))).toEqual([
+      `${AT}304 header etag changes its type from "string" to "number"`,
+    ]);
+  });
+
+  it('breaks an answer that changes its media types or its successful statuses', () => {
+    const answers = (responses: object) => describing({ responses });
+
+    expect(breakingChanges(answering(STRING), answers({ 200: { content: {} } }))).toEqual([
+      `${AT}200 no longer answers application/json`,
+    ]);
+    expect(
+      breakingChanges(
+        answering(STRING),
+        answers({ 200: { content: { 'application/json': { schema: STRING }, 'text/plain': {} } } }),
+      ),
+    ).toEqual([`${AT}200 may now answer text/plain`]);
+    expect(breakingChanges(answers({ 200: {}, 304: {} }), answers({ 200: {} }))).toEqual([
+      `${AT}no longer answers 304`,
+    ]);
+    expect(breakingChanges(answers({ 200: {} }), answers({ 200: {}, 304: {} }))).toEqual([
+      `${AT}may now answer 304`,
+    ]);
+    expect(breakingChanges(answers({ 200: {} }), answers({ 200: {}, 404: {} }))).toEqual([]);
+  });
+
+  it('breaks an input default that goes, which changes what a request without the field means', () => {
+    expect(breakingChanges(taking({ ...STRING, default: 'a' }), taking(STRING))).toEqual([
+      `${AT}request body changes its default from "a" to none`,
+    ]);
+  });
+
+  it('breaks an input that took any value and now takes a type', () => {
+    expect(breakingChanges(taking({}), taking(STRING))).toEqual([
+      `${AT}request body changes its type from none to "string"`,
+    ]);
+  });
+
+  it('reads an output schema with only a default as any value', () => {
+    expect(
+      breakingChanges(answering({ default: 'a' }), answering({ anyOf: [STRING, NUMBER] })),
+    ).toEqual([]);
+  });
+
+  it('lets an output union lose a kind', () => {
+    expect(breakingChanges(answering({ anyOf: [STRING, NUMBER] }), answering(STRING))).toEqual([]);
+  });
+
+  it('lets an input object take unknown fields of any value, but breaks one that narrows them', () => {
+    const before = taking(objectOf({ a: STRING }));
+    const others = (additionalProperties: unknown) =>
+      taking({ ...objectOf({ a: STRING }), additionalProperties });
+
+    expect(breakingChanges(before, others(true))).toEqual([]);
+    expect(breakingChanges(before, others({}))).toEqual([]);
+    expect(breakingChanges(before, others(STRING))).toEqual([
+      `${AT}request body no longer accepts unknown fields`,
+    ]);
+  });
+
+  it('breaks the values of an output record that may now be any value', () => {
+    const record = (additionalProperties?: unknown) =>
+      answering({
+        type: 'object',
+        ...(additionalProperties === undefined ? {} : { additionalProperties }),
+      });
+    const change = `${AT}200 body.* changes its type from "string" to none`;
+
+    expect(breakingChanges(record(STRING), record())).toEqual([change]);
+    expect(breakingChanges(record(STRING), record(true))).toEqual([change]);
+    expect(breakingChanges(record(STRING), record(false))).toEqual([]);
+    expect(
+      breakingChanges(
+        taking({ type: 'object', additionalProperties: STRING }),
+        taking({ type: 'object' }),
+      ),
+    ).toEqual([]);
+  });
+
+  it('reads an answer header as an output: an optional one may stay so, and its schema may narrow', () => {
+    const header = (extra: object) => answeringEtag({ schema: { ...STRING, ...extra } });
+
+    expect(breakingChanges(header({}), header({}))).toEqual([]);
+    expect(breakingChanges(header({ maxLength: 10 }), header({ maxLength: 5 }))).toEqual([]);
+  });
+});
