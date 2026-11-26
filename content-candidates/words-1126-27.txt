@@ -59,3 +59,12 @@
 розглядини arts-culture 5
 унціал arts-culture 5
 утор old-crafts 5
+махлярство emotions-character 5
+метранпаж old-crafts 5
+міріада language-speech 4
+мітенка household-crafts 5
+мономахія history-antiquity 5
+мрукало witty-insults 5
+узмор'я nature-weather 4
+ундина arts-culture 5
+ухоркатися emotions-character 5
