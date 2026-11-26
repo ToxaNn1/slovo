@@ -10,6 +10,7 @@
 байгуш witty-insults 5
 байдачний history-antiquity 4
 байраччя nature-weather 5
+байронізм arts-culture 5
 бакаляр history-antiquity 5
 бакенник old-crafts 5
 бакир history-antiquity 5
@@ -75,7 +76,7 @@
 безкебетний witty-insults 5
 безкнижжя language-speech 5
 безкормиця household-crafts 5
-безкрай nature-weather 5
+безкрай nature-weather 4
 безличниця witty-insults 5
 безлюдь nature-weather 5
 безлік language-speech 5
@@ -84,6 +85,7 @@
 безмов'я nature-weather 5
 безможний emotions-character 5
 безмір'я nature-weather 5
+безодмовний language-speech 5
 безодрадно emotions-character 5
 безпам'ятько witty-insults 5
 безплотний language-speech 5
@@ -128,7 +130,7 @@
 бекешка household-crafts 5
 бекмес household-crafts 5
 белькотіти language-speech 5
-бельмес language-speech 5
+бельмес language-speech 4
 бенкетар witty-insults 5
 бервено household-crafts 5
 бережина nature-weather 5
@@ -152,6 +154,7 @@
 близити language-speech 5
 блискотати nature-weather 5
 блудниця history-antiquity 3
+блукалець emotions-character 5
 блюзнити language-speech 5
 бляхарня old-crafts 5
 блідизна human-body 5
@@ -200,6 +203,7 @@
 брязкотальце household-crafts 5
 бублейниця old-crafts 5
 бубняр arts-culture 5
+бувалець emotions-character 5
 буденщина emotions-character 4
 будительство history-antiquity 5
 будуар household-crafts 3
