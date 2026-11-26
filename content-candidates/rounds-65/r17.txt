@@ -1,0 +1,2 @@
+# Word candidates from source:lemmas: fill in each Category in place of "?" before source:words.
+# <lemma> <category> <rarity>  # part of speech, Zipf in wordfreq (uk)
