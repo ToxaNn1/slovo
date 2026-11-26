@@ -130,3 +130,17 @@
 кротовина nature-weather 5
 кудли human-body 5
 куриво arts-culture 5
+ігемон history-antiquity 5
+каверза emotions-character 4
+кагат household-crafts 5
+камуфлет military 5
+кандибобером emotions-character 5
+канитель emotions-character 4
+каноник arts-culture 5
+каперство history-antiquity 5
+кипрій nature-weather 5
+кіпоть household-crafts 5
+комизливий emotions-character 5
+крейцар history-antiquity 5
+крисатий household-crafts 5
+куртуазія arts-culture 5
