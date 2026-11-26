@@ -66,3 +66,11 @@
 злидота witty-insults 5
 знада emotions-character 5
 зубатка nature-weather 5
+забулдига witty-insults 4
+зраза household-crafts 4
+завора old-crafts 5
+загад language-speech 5
+закомара arts-culture 5
+замрячити nature-weather 5
+збороти language-speech 5
+змеркти nature-weather 5
