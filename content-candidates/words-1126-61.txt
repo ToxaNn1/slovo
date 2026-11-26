@@ -319,3 +319,16 @@
 нищитель emotions-character 5
 нахідка language-speech 5
 нагнуздати old-crafts 5
+небувальщина language-speech 5
+недолітство history-antiquity 5
+незглибимість emotions-character 5
+незцілимість human-body 5
+нездержливість emotions-character 5
+неминайкорчма witty-insults 5
+немощі human-body 5
+непогрішимість history-antiquity 5
+неправосуддя history-antiquity 5
+нестелепа witty-insults 5
+неталан emotions-character 5
+наголів'я household-crafts 5
+невтишимий emotions-character 5
