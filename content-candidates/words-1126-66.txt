@@ -1,6 +1,5 @@
 таборувати military 5
 тарабарський language-speech 5
-тарадаєчка household-crafts 5
 тарахкотілка household-crafts 5
 тачкар old-crafts 5
 твердосердо emotions-character 5
@@ -64,7 +63,6 @@
 токувати nature-weather 5
 табунник old-crafts 5
 тверджа military 5
-твердочолий emotions-character 5
 тезоіменитство history-antiquity 5
 темнощі nature-weather 5
 тильбюрі history-antiquity 5
@@ -83,7 +81,6 @@
 тальма household-crafts 5
 тальянка arts-culture 5
 танцмейстер arts-culture 5
-темнохмарний nature-weather 5
 тонкопряха old-crafts 5
 торішняк nature-weather 5
 торочка household-crafts 4
@@ -102,3 +99,9 @@
 тогодення history-antiquity 5
 трисвічник arts-culture 5
 трясихвістка folk-names 5
+таганець household-crafts 5
+таратайка household-crafts 5
+тмин folk-names 5
+тогосвітній folk-names 5
+тридоріжжя folk-names 5
+триктрак arts-culture 5
