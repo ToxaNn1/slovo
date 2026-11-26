@@ -105,3 +105,6 @@
 тогосвітній folk-names 5
 тридоріжжя folk-names 5
 триктрак arts-culture 5
+тараторка witty-insults 5
+твориво arts-culture 5
+товстосум witty-insults 5
