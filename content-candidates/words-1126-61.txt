@@ -210,3 +210,14 @@
 низькочолий witty-insults 5
 ногавиця history-antiquity 5
 нуждар history-antiquity 5
+навідруб language-speech 5
+навісноголовий witty-insults 5
+навскач language-speech 5
+наопаш household-crafts 5
+наскоруруч language-speech 5
+настогидливий emotions-character 5
+нахожий history-antiquity 5
+нехитромудрий emotions-character 5
+нещадимо language-speech 5
+нітрішечки language-speech 5
+ногатий human-body 5
