@@ -98,7 +98,8 @@ describe('what one Seen tells the subscribers', () => {
     expect(told).toEqual({ history: 1, xpLog: 1, progress: 1, badges: 1 });
   });
 
-  it('counts the Word Seen today in Progress and the Daily Goal when the write of its XP fails', async () => {
+  // Ticket #2115: the Seen and its XP are one write, so a write that fails keeps neither.
+  it('counts no Word Seen in Progress and the Daily Goal when the write of its XP fails', async () => {
     const memory = createMemoryUserStatePort(new Map());
     let failing = false;
     const opened = await run(5, {
@@ -111,11 +112,19 @@ describe('what one Seen tells the subscribers', () => {
     failing = true;
     const told = counting(opened.app);
 
+    await see(opened, 0).catch(() => undefined);
+
+    expect(opened.app.history.list).toEqual([]);
+    expect(opened.app.xpLog.state.today).toBe(0);
+    expect(opened.app.progress.state.seenToday).toBe(0);
+    expect(opened.app.xpLog.state.dailyGoal?.seen).toBe(0);
+    expect(told).toEqual({ history: 0, xpLog: 0, progress: 0, badges: 0 });
+
+    failing = false;
     await see(opened, 0);
 
-    expect(opened.app.xpLog.state.today).toBe(0);
+    expect(opened.app.xpLog.state.today).toBe(1);
     expect(opened.app.progress.state.seenToday).toBe(1);
     expect(opened.app.xpLog.state.dailyGoal?.seen).toBe(1);
-    expect(told).toMatchObject({ history: 1, xpLog: 1, progress: 1 });
   });
 });

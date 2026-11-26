@@ -5,7 +5,8 @@ import { dayNumber, parseLocalDate, todayBounds, todayKey } from '../local-date'
 import type { Clock, Random } from '../ports';
 import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
-import type { History } from '../saved/history';
+import type { EntryRows } from '../entries/entry-row';
+import type { History, HistoryEntry, Seen } from '../saved/history';
 import type { XpAction, XpAward } from '../game/game-xp';
 import type { LocalDate } from '../local-date';
 import type { Subject } from '../subject';
@@ -178,9 +179,15 @@ export interface XpLog {
    */
   crosswordSolveOn(date: string): CrosswordSolve | undefined;
   /**
+   * An Entry becoming Seen, for the write that keeps its Seen mark and its
+   * History entry: the Seen-Word XP of a Word Seen for the first time, up to
+   * the day's Daily Goal, and today's goal met once the Words Seen reach it.
+   * No state keeps the Entry Seen without them.
+   */
+  seen(seen: Pick<Seen, 'entryId' | 'seenAt'>): Promise<StagedPiece>;
+  /**
    * Calls `listener` after each change of the XP, with what it came from, and
-   * once after each change of History, with the XP it earned written or the
-   * write failed. Returns the call that stops it.
+   * once for each Entry that became Seen. Returns the call that stops it.
    */
   subscribe(listener: (change: XpLogChange) => void): () => void;
   /** The XP and the Daily Goal of a local date `YYYY-MM-DD`: a past day keeps the goal it had. */
@@ -314,12 +321,15 @@ export async function openXpLog({
   dayTurned,
   analytics,
   history,
+  rows,
   isFirstCycle,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled' | 'xp' | 'levels'>;
   userState: Pick<UserState, 'list' | 'write'>;
   /** The Entries Seen, whose Words today count toward the Daily Goal. */
-  history: Pick<History, 'list' | 'subscribe' | 'cleared'>;
+  history: Pick<History, 'list' | 'cleared'>;
+  /** The Entry rows, which tell whether an Entry becoming Seen is a Word. */
+  rows: Pick<EntryRows, 'row'>;
   /** Whether a Word Seen now may be Seen for the first time: only in the first Cycle. */
   isFirstCycle: () => boolean;
   clock: Clock;
@@ -503,20 +513,22 @@ export async function openXpLog({
   }
 
   /**
-   * The Words Seen today, those a clear took out of History included. History
-   * is newest first, so the count stops at the first Entry Seen before today;
-   * an Entry ahead of today, after the clock moved back, is not today's.
+   * The one rule of a Word Seen today, with today's bounds read once: an
+   * Entry ahead of today, after the clock moved back, is not today's.
    */
-  function seenToday(): number {
+  function wordSeenToday(): (entry: Pick<HistoryEntry, 'seenAt' | 'row'>) => boolean {
     const { start, end } = todayBounds(clock);
-    let seen = history.cleared(todayKey(clock)).words;
-    for (const { seenAt, row } of history.list) {
+    return ({ seenAt, row }) => {
       const time = seenAt.getTime();
-      if (time < start) break;
-      if (time < end && row.kind === 'word') seen += 1;
-    }
-    return seen;
+      return row.kind === 'word' && time >= start && time < end;
+    };
   }
+
+  /** The Words Seen today that History holds. */
+  const wordsSeenToday = (): HistoryEntry[] => history.list.filter(wordSeenToday());
+
+  /** The count of the Words Seen today, those a clear took out of History included. */
+  const seenToday = (): number => history.cleared(todayKey(clock)).words + wordsSeenToday().length;
 
   /**
    * What the records come to, a record at a time: `add` folds one record in,
@@ -903,10 +915,10 @@ export async function openXpLog({
     };
   }
 
-  /** The goal-met record of today, when today's Words Seen reach `goal` and today is not met yet. */
-  function metToday(goal: DailyGoal | undefined): Map<string, XpRecord> {
+  /** The goal-met record of today, when the `seen` Words Seen today reach `goal` and today is not met yet. */
+  function metToday(goal: DailyGoal | undefined, seen = seenToday()): Map<string, XpRecord> {
     const date = todayKey(clock);
-    if (goal === undefined || records.has(metId(date)) || seenToday() < goal) return new Map();
+    if (goal === undefined || records.has(metId(date)) || seen < goal) return new Map();
     return new Map([[metId(date), { kind: 'goal-met', date, at: clock.now().toISOString() }]]);
   }
 
@@ -940,31 +952,19 @@ export async function openXpLog({
   const seenWordId = (entryId: string) => `seen-word-${entryId}`;
 
   /**
-   * The Seen-Word records of the Words Seen today that `first` takes as Seen
-   * for the first time: in the first Cycle, never earned on any device, while
-   * today's Seen-Word records are fewer than `goal` in Words.
+   * The Seen-Word records of the Words Seen today, each Seen for the first
+   * time: in the first Cycle, never earned on any device, while today's
+   * Seen-Word records are fewer than `goal` in Words.
    */
-  function seenWordsToday(
+  function seenWordXp(
     goal: DailyGoal | undefined,
-    first: (entryId: string, seenAt: Date) => boolean,
+    entryIds: readonly string[],
   ): Map<string, XpRecord> {
-    const { start, end } = todayBounds(clock);
     const added = new Map<string, XpRecord>();
+    if (!seenWordOn || goal === undefined || !isFirstCycle()) return added;
     let counted = derived.seenWordsCounted;
-    for (const { entryId, seenAt, row } of history.list) {
-      if (!first(entryId, seenAt)) continue;
-      const time = seenAt.getTime();
-      if (
-        !seenWordOn ||
-        goal === undefined ||
-        row.kind !== 'word' ||
-        time < start ||
-        time >= end ||
-        !isFirstCycle() ||
-        records.has(seenWordId(entryId)) ||
-        counted >= goal
-      )
-        continue;
+    for (const entryId of entryIds) {
+      if (records.has(seenWordId(entryId)) || counted >= goal) continue;
       counted += 1;
       added.set(seenWordId(entryId), {
         kind: 'xp',
@@ -977,8 +977,30 @@ export async function openXpLog({
     return added;
   }
 
-  /** Whether the Word joined History only now: it was in it at no earlier moment. */
-  const joinedNow = (entryId: string) => !inHistory.has(entryId);
+  async function seen({ entryId, seenAt }: Pick<Seen, 'entryId' | 'seenAt'>): Promise<StagedPiece> {
+    const goal = goalOf(todayKey(clock));
+    // Without a goal a Word earns nothing and meets nothing, so its row is not read.
+    const row = goal === undefined ? undefined : await rows.row(entryId);
+    const wordToday = row !== undefined && wordSeenToday()({ seenAt, row });
+    // The Word may be in History already, Seen today in an earlier Cycle: it counts once.
+    const others = wordsSeenToday().filter((entry) => entry.entryId !== entryId).length;
+    const seenWith = history.cleared(todayKey(clock)).words + others + (wordToday ? 1 : 0);
+    const added = new Map([
+      ...seenWordXp(goal, wordToday && !inHistory.has(entryId) ? [entryId] : []),
+      ...metToday(goal, seenWith),
+    ]);
+    return {
+      changes: new Map(
+        [...added].flatMap(([id, record]) => [...xpRecords.record(id).change(record)]),
+      ),
+      commit() {
+        inHistory.add(entryId);
+        for (const [id, record] of added) keep(id, record);
+        // The Words Seen changed also when nothing was earned.
+        change();
+      },
+    };
+  }
 
   async function setDailyGoal(goal: DailyGoal | null): Promise<void> {
     if (!goalOn) return;
@@ -986,9 +1008,11 @@ export async function openXpLog({
     const date = todayKey(clock);
     const record: XpRecord = { kind: 'word-goal', date, at: at.toISOString(), goal };
     // The Words Seen today while no goal was in force earn their XP with the goal (ADR 0202).
-    const seenWithNoGoal = seenWordsToday(
+    const seenWithNoGoal = seenWordXp(
       goal ?? undefined,
-      (_, seenAt) => goalOf(date, seenAt.toISOString()) === undefined,
+      wordsSeenToday()
+        .filter(({ seenAt }) => goalOf(date, seenAt.toISOString()) === undefined)
+        .map(({ entryId }) => entryId),
     );
     await write(
       new Map([[newId(at), record], ...seenWithNoGoal, ...metToday(goal ?? undefined)]),
@@ -997,45 +1021,6 @@ export async function openXpLog({
     await analytics.track('dailyGoalChanged', { goal }).catch(() => undefined);
   }
 
-  /**
-   * Appends the Seen-Word XP of the Words Seen and meets today's goal once
-   * the Words Seen reach it; one write at a time, so each records once. A
-   * change while a write runs is taken up after it.
-   */
-  let meeting: Promise<void> | undefined;
-  let changedMeanwhile = false;
-  function meetGoal(): void {
-    if (meeting !== undefined) {
-      changedMeanwhile = true;
-      return;
-    }
-    const goal = goalOf(todayKey(clock));
-    const added = new Map([...seenWordsToday(goal, joinedNow), ...metToday(goal)]);
-    // Marked once written, so the Words of a write that fails are taken up again.
-    const taken = history.list.map(({ entryId }) => entryId);
-    const markSeen = () => {
-      for (const entryId of taken) inHistory.add(entryId);
-    };
-    if (added.size === 0) {
-      markSeen();
-      change();
-      return;
-    }
-    meeting = write(added)
-      .then(markSeen)
-      // The subscribers hear of the History change also when the write fails.
-      .catch(() => {
-        change();
-      })
-      .finally(() => {
-        meeting = undefined;
-        if (!changedMeanwhile) return;
-        changedMeanwhile = false;
-        meetGoal();
-      });
-  }
-
-  history.subscribe(meetGoal);
   dayTurned.subscribe(() => {
     change();
   });
@@ -1051,6 +1036,7 @@ export async function openXpLog({
       return derived.milestones;
     },
     award,
+    seen,
     answeredWrong,
     earn,
     open,
