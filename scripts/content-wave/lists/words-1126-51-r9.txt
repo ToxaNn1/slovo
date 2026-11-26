@@ -1,0 +1,16 @@
+# Word candidates from source:lemmas: fill in each Category in place of "?" before source:words.
+# <lemma> <category> <rarity>  # part of speech, Zipf in wordfreq (uk)
+абсцесний ? 5 # adj, Zipf 0.00
+автолісовозний ? 5 # adj, Zipf 0.00
+автолюбительський ? 5 # adj, Zipf 0.00
+агломератний ? 5 # adj, Zipf 0.00
+аглютинативний ? 5 # adj, Zipf 0.00
+аерологічний ? 5 # adj, Zipf 0.00
+акцентноритмічний ? 5 # adj, Zipf 0.00
+антизахідницький ? 5 # adj, Zipf 0.00
+антиміліційний ? 5 # adj, Zipf 0.00
+ар'єргардний ? 5 # adj, Zipf 0.00
+атмомагнітний ? 5 # adj, Zipf 0.00
+атмосфероочисний ? 5 # adj, Zipf 0.00
+аурикулярний ? 5 # adj, Zipf 0.00
+ацетилклітковинний ? 5 # adj, Zipf 0.00
