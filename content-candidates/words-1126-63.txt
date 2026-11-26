@@ -11,6 +11,7 @@
 палильня old-crafts 5
 паломниця history-antiquity 4
 пальчатка household-crafts 3
+палітурня old-crafts 5
 пам'ятливий emotions-character 5
 паморока emotions-character 5
 панегіристка arts-culture 5
@@ -21,7 +22,9 @@
 папеса history-antiquity 5
 паплюжник witty-insults 5
 паполома household-crafts 5
+пардус folk-names 5
 паремійник history-antiquity 5
+парцела history-antiquity 5
 пасемко household-crafts 4
 пасерб history-antiquity 5
 пасеїст arts-culture 5
@@ -38,6 +41,7 @@
 первомучениця history-antiquity 5
 перворідень history-antiquity 5
 первосвященник history-antiquity 4
+перебреха witty-insults 5
 перебрід nature-weather 5
 перевальцем human-body 5
 перегомін language-speech 5
@@ -94,6 +98,7 @@
 пліснявина nature-weather 4
 пліш human-body 4
 поборниця emotions-character 4
+побудка military 5
 побутописець arts-culture 5
 пов'язь human-body 4
 повелительниця history-antiquity 5
@@ -133,6 +138,7 @@
 покутник history-antiquity 5
 покіль language-speech 5
 покіст household-crafts 5
+полавочник household-crafts 5
 половіти nature-weather 5
 полонитель emotions-character 5
 полох emotions-character 5
@@ -153,6 +159,7 @@
 поножів'я history-antiquity 5
 понюх household-crafts 5
 попас old-crafts 5
+поповзень folk-names 5
 пополудень nature-weather 5
 попоночіти nature-weather 5
 попружка household-crafts 5
@@ -176,10 +183,13 @@
 потворище witty-insults 4
 потолока history-antiquity 5
 потопельниця folk-names 5
+потороччя witty-insults 5
 потурач emotions-character 5
 потіпака witty-insults 5
+похапливий emotions-character 5
 почварок witty-insults 5
 починальник emotions-character 4
+пошаноба emotions-character 5
 пошерхнути nature-weather 5
 поярок household-crafts 5
 прабатьківщина history-antiquity 3
@@ -240,6 +250,7 @@
 провинник emotions-character 5
 проводар history-antiquity 5
 провожатий history-antiquity 4
+прогріх emotions-character 5
 проділка emotions-character 5
 прозелень nature-weather 5
 прозорливиця emotions-character 5
@@ -304,6 +315,7 @@
 підсака old-crafts 5
 підсклянник household-crafts 5
 підступник emotions-character 5
+підупад emotions-character 5
 пілігримка history-antiquity 5
 пісноспів arts-culture 5
 пітія history-antiquity 5
