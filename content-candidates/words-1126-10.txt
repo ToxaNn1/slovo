@@ -99,3 +99,15 @@
 стриножити household-crafts 5
 сугорбок nature-weather 5
 сахнутися emotions-character 5
+сайдак military 5
+сикомор nature-weather 5
+скавучати nature-weather 5
+скресати nature-weather 4
+скудельниця history-antiquity 5
+смерком nature-weather 5
+спотайна language-speech 5
+спрожогу language-speech 5
+стеменно language-speech 5
+стеньга technology 5
+суріпка nature-weather 5
+сутаж household-crafts 5
