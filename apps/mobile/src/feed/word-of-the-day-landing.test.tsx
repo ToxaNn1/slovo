@@ -21,6 +21,7 @@ import { renderHookInApp } from '../shell/test-app';
 import { openOnce } from '../opening';
 import { testShell } from '../shell/test-support';
 import { useFeed } from './feed';
+import { createReaderPlace } from './reader-place';
 import { createWordOfTheDayLanding, type WordOfTheDayLanding } from './word-of-the-day-landing';
 import { activeEditionFiles } from '../edition/edition';
 
@@ -172,10 +173,11 @@ async function openFeed(clock: Clock, kept: UserStateFacts = {}) {
   const ref = { current: pager };
   const landing = createWordOfTheDayLanding();
   const shell = testShell({ composition: compositionOpening });
-  const feed = await renderHookInApp(() => useFeed(ref, { clock, landing, voice: 'oksana' }), {
-    shell,
-    Screen: TabScreen,
-  });
+  const place = createReaderPlace();
+  const feed = await renderHookInApp(
+    () => useFeed(ref, { clock, landing, place, voice: 'oksana' }),
+    { shell, Screen: TabScreen },
+  );
   await waitFor(() => {
     expect(feed.result.current.cards.length).toBeGreaterThan(1);
   });

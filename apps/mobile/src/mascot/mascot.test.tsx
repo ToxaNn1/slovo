@@ -11,7 +11,8 @@ import { fill } from '@slovo/contracts';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { renderApp } from '../shell/test-app';
 import { useSettings } from '../settings/settings';
-import { CELEBRATION_MS, MascotCelebrations, tellGoalCardOnScreen } from './mascot';
+import { readerPlace, type PlacedFeed } from '../feed/reader-place';
+import { CELEBRATION_MS, MascotCelebrations } from './mascot';
 
 /** The UA Edition as it ships, with the Daily Crossword on, so its Badges show. */
 const edition: Edition = {
@@ -203,8 +204,31 @@ beforeEach(() => {
   jest.useFakeTimers({ advanceTimers: true });
 });
 
+/** A Feed on its goal-reached card, «Ціль дня виконано!». */
+const onGoalCard: PlacedFeed = {
+  cards: [
+    {
+      kind: 'notice',
+      notice: 'goalReached',
+      goal: 3,
+      words: [],
+      day: { year: 2026, month: 10, day: 26 },
+    },
+  ],
+  position: 0,
+  show: () => Promise.resolve(),
+};
+
+/** Tells the reader's place the Feed on its goal-reached card is in sight, or out of it. */
+async function goalCardInSight(inSight: boolean) {
+  await act(async () => {
+    readerPlace.see(onGoalCard, inSight);
+    await jest.advanceTimersByTimeAsync(0);
+  });
+}
+
 afterEach(() => {
-  tellGoalCardOnScreen(false);
+  readerPlace.see(onGoalCard, false);
   jest.useRealTimers();
 });
 
@@ -296,20 +320,14 @@ describe('the Mascot’s celebrations', () => {
 
   it('drops a Streak milestone met while the Feed’s goal-reached card is on screen, which celebrates it itself', async () => {
     const composition = await renderCelebrations();
-    await act(async () => {
-      tellGoalCardOnScreen(true);
-      await jest.advanceTimersByTimeAsync(0);
-    });
+    await goalCardInSight(true);
 
     // The 5th XP makes the first Streak day (owner bug 23.11).
     await playRounds(composition, 5);
     expect(shownMascot()).toBeNull();
 
     // Dropped, not deferred: it shows neither once the card leaves.
-    await act(async () => {
-      tellGoalCardOnScreen(false);
-      await jest.advanceTimersByTimeAsync(0);
-    });
+    await goalCardInSight(false);
     expect(shownMascot()).toBeNull();
   });
 
@@ -318,24 +336,17 @@ describe('the Mascot’s celebrations', () => {
     await playRounds(composition, 5);
     expect(celebration('streakMilestone')).toHaveTextContent(mascot.streakMilestone);
 
-    await act(async () => {
-      tellGoalCardOnScreen(true);
-      await jest.advanceTimersByTimeAsync(0);
-    });
+    await goalCardInSight(true);
     expect(shownMascot()).toBeNull();
-    await act(async () => {
-      tellGoalCardOnScreen(false);
-      await jest.advanceTimersByTimeAsync(0);
-    });
+    await goalCardInSight(false);
     expect(shownMascot()).toBeNull();
   });
 
   it('still celebrates a Streak milestone met in a Game while the Feed was left on its goal-reached card', async () => {
     const composition = await renderCelebrations({ route: '/game/guess-word' });
-    await act(async () => {
-      tellGoalCardOnScreen(true);
-      await jest.advanceTimersByTimeAsync(0);
-    });
+    // The reader left the Feed on its goal-reached card for a Game: the Feed is out of sight.
+    await goalCardInSight(true);
+    await goalCardInSight(false);
 
     await playRounds(composition, 5);
 

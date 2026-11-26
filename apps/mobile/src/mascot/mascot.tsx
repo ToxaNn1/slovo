@@ -5,6 +5,7 @@ import { useEffect, useEffectEvent, useState, useSyncExternalStore } from 'react
 import { StyleSheet, View } from 'react-native';
 
 import { useComposition } from '../composition';
+import { readerPlace } from '../feed/reader-place';
 import { editionStrings, edition as shippedEdition } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
 import { useGameState } from '../game/game';
@@ -42,31 +43,16 @@ const CROSSWORD_ROUTE = '/game/crossword';
  */
 const STREAK_BREAK_ROUTE = '/settings/streak-break';
 
-/** The route of the Feed, whose goal-reached card celebrates with a Mascot of its own. */
-const FEED_ROUTE = '/feed';
-
-/** Whether the Feed's card on screen is its goal-reached card, as the Feed tells it. */
-let goalCardOnScreen = false;
-const goalCardListeners = new Set<() => void>();
-
 /**
- * Tells the celebrations whether the Feed's card on screen is its goal-reached
- * card, which celebrates the Daily Goal and the Streak with its own Mascot: a
- * Daily Goal or Streak milestone celebration is dropped while it shows there,
- * so no second Mascot covers the card (owner bug 23.11).
+ * Whether the card in front of the reader is the Feed's goal-reached card,
+ * which celebrates the Daily Goal and the Streak with its own Mascot: a Daily
+ * Goal or Streak milestone celebration is dropped while it shows, so no second
+ * Mascot covers the card (owner bug 23.11).
  */
-export function tellGoalCardOnScreen(onScreen: boolean) {
-  if (onScreen === goalCardOnScreen) return;
-  goalCardOnScreen = onScreen;
-  for (const listener of goalCardListeners) listener();
-}
-
-function subscribeGoalCard(listener: () => void) {
-  goalCardListeners.add(listener);
-  return () => {
-    goalCardListeners.delete(listener);
-  };
-}
+const goalCardInFront = () => {
+  const card = readerPlace.cardInFront();
+  return card?.kind === 'notice' && card.notice === 'goalReached';
+};
 
 /** How long a celebration keeps the Mascot on screen. */
 export const CELEBRATION_MS = 4000;
@@ -159,8 +145,7 @@ export function MascotCelebrations() {
   // One action can earn several Badges at once: each shows in turn.
   const [earned, setEarned] = useState<readonly Earned[]>([]);
   const route = useRouteOnScreen();
-  const goalCardShown =
-    useSyncExternalStore(subscribeGoalCard, () => goalCardOnScreen) && route === FEED_ROUTE;
+  const goalCardShown = useSyncExternalStore(readerPlace.subscribe, goalCardInFront);
   // Dropped, not deferred: the card celebrates it already.
   if (goalCardShown && shown !== undefined) setShown(undefined);
   // What is met while the counters are hidden is never shown later (ADR 0066).
