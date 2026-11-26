@@ -87,3 +87,12 @@
 станик household-crafts 5
 сукальня old-crafts 5
 сухоребрик witty-insults 4
+напартачити emotions-character 4
+нараяти language-speech 5
+нацупити household-crafts 4
+неборака emotions-character 3
+семизір'я folk-names 5
+скитник history-antiquity 5
+сторчголов language-speech 4
+стрільниця military 4
+суголос arts-culture 5
