@@ -259,3 +259,7 @@
 списоносець military 5
 ставленець history-antiquity 5
 стеменний language-speech 5
+скатоличений history-antiquity 5
+словоливство old-crafts 5
+спижовий arts-culture 5
+стоязикий language-speech 5
