@@ -12,3 +12,8 @@
 підпасач old-crafts 5
 приямок household-crafts 4
 пуцьвірок witty-insults 5
+перестарка witty-insults 5
+підгруздок nature-weather 5
+плоскирка nature-weather 3
+помисел emotions-character 4
+пошанівок language-speech 4
