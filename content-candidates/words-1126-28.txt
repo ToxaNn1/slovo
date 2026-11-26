@@ -14,3 +14,14 @@
 афронт emotions-character 5
 гасівка household-crafts 4
 ландкарта history-antiquity 5
+гуртівня household-crafts 4
+лаконос nature-weather 4
+летяга nature-weather 4
+лутига nature-weather 4
+лужити household-crafts 5
+трачевня old-crafts 5
+тим'ян nature-weather 4
+цикля household-crafts 5
+черсак nature-weather 4
+чугайстир arts-culture 5
+шулик household-crafts 4
