@@ -3,16 +3,19 @@
 пагуба emotions-character 5
 пажерливість emotions-character 4
 паламарювати old-crafts 5
+палахтіти nature-weather 5
 паленка household-crafts 4
 палильня old-crafts 5
 паломниця history-antiquity 4
 пальчатка household-crafts 3
+пам'ятливий emotions-character 5
 панегіристка arts-culture 5
 панок witty-insults 4
 паніматка history-antiquity 4
 паремійник history-antiquity 5
 пасемко household-crafts 4
 пасерб history-antiquity 5
+пасеїст arts-culture 5
 паскудниця witty-insults 4
 патронеса history-antiquity 4
 патякання language-speech 4
@@ -29,9 +32,11 @@
 передосінь nature-weather 5
 перекірливий emotions-character 5
 переоповідь language-speech 5
+перешепт language-speech 5
 першак household-crafts 4
 першодрукар history-antiquity 3
 першопредок history-antiquity 5
+песиголова folk-names 5
 пестливий language-speech 4
 писарчук witty-insults 3
 письмак witty-insults 5
@@ -40,6 +45,7 @@
 плавом nature-weather 4
 плебейка history-antiquity 5
 плетениця household-crafts 4
+плутня emotions-character 5
 плутяга witty-insults 5
 плюмаж military 5
 плющильня old-crafts 5
@@ -48,6 +54,7 @@
 поборниця emotions-character 4
 пов'язь human-body 4
 повесніти nature-weather 5
+повечоріти nature-weather 5
 повстина household-crafts 5
 повсякдень language-speech 4
 повісельник witty-insults 5
@@ -55,8 +62,10 @@
 поганяйло chameleon-words 4
 погребиця household-crafts 4
 погубитель emotions-character 5
+подвигнути emotions-character 5
 подвижниця history-antiquity 4
 поденщина old-crafts 5
+подивляти emotions-character 5
 подмух nature-weather 5
 подосі language-speech 5
 пожевріти nature-weather 5
@@ -70,10 +79,13 @@
 полюбовник emotions-character 4
 помазаниця history-antiquity 5
 помордас witty-insults 5
+помстник emotions-character 5
 поневольник history-antiquity 5
 понюх household-crafts 5
 попівна history-antiquity 4
 попівщина history-antiquity 4
+порохівня military 5
+порціон military 5
 посамперед language-speech 5
 посвист language-speech 4
 посесія history-antiquity 5
@@ -82,6 +94,7 @@
 послушниця history-antiquity 4
 посуш nature-weather 5
 потворище witty-insults 4
+потопельниця folk-names 5
 починальник emotions-character 4
 пошерхнути nature-weather 5
 прабатьківщина history-antiquity 3
@@ -89,6 +102,7 @@
 праведниця emotions-character 4
 правительниця history-antiquity 5
 правіжка history-antiquity 5
+прадідівщина history-antiquity 5
 прародичка history-antiquity 5
 превелебна history-antiquity 4
 превельми language-speech 5
@@ -100,6 +114,7 @@
 приворожливий emotions-character 5
 приголів'я household-crafts 5
 пригорбок nature-weather 5
+придибенція chameleon-words 5
 призвичаїти emotions-character 4
 призвук language-speech 5
 призвідець emotions-character 5
@@ -122,7 +137,9 @@
 пролаза witty-insults 5
 промишляти old-crafts 4
 промоїна nature-weather 5
+пропійця witty-insults 5
 проречистий language-speech 5
+пророкиня history-antiquity 5
 проріха household-crafts 5
 просвітник history-antiquity 3
 прослава language-speech 4
@@ -140,6 +157,7 @@
 пуховиця household-crafts 5
 півморок nature-weather 5
 півшепіт language-speech 4
+підбріхувач witty-insults 5
 підзамчя history-antiquity 5
 підкліть household-crafts 5
 підлабузниця witty-insults 5
