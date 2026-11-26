@@ -28,3 +28,10 @@
 призвідця emotions-character 5
 прошва household-crafts 5
 повивальниця old-crafts 5
+пажера witty-insults 5
+перегата old-crafts 5
+полатух nature-weather 5
+порохнява nature-weather 5
+прийшляк witty-insults 5
+прискринок household-crafts 5
+пустоб'яха witty-insults 5
