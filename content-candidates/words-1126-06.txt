@@ -46,3 +46,6 @@
 морозник folk-names 5
 мосяжник old-crafts 5
 ліхтарня technology 5
+манаття household-crafts 5
+мимря witty-insults 4
+мочарина nature-weather 5
