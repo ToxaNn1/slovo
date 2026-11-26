@@ -86,6 +86,7 @@
 безмір'я nature-weather 5
 безодрадно emotions-character 5
 безпам'ятько witty-insults 5
+безплотний language-speech 5
 безплужний history-antiquity 5
 безпопівщина history-antiquity 5
 безпораддя emotions-character 5
@@ -96,6 +97,7 @@
 безрода emotions-character 5
 безрушно language-speech 5
 безсердно emotions-character 5
+безскутешний language-speech 5
 безславити language-speech 5
 безсмак emotions-character 5
 безсрібниця emotions-character 5
