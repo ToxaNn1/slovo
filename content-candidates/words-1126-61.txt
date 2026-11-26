@@ -294,3 +294,13 @@
 недоїмка history-antiquity 4
 неправедний emotions-character 4
 народовський history-antiquity 5
+навскоси language-speech 3
+надвечори nature-weather 5
+надобіддя nature-weather 5
+напростець language-speech 5
+небуденний emotions-character 4
+невтома emotions-character 5
+недоросток witty-insults 3
+незайманка emotions-character 5
+непорочний history-antiquity 3
+нерет old-crafts 5
