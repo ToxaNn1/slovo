@@ -33,7 +33,6 @@
 едемський history-antiquity 4
 єдинородний history-antiquity 3
 єлеопомазання history-antiquity 3
-єлейно emotions-character 4
 єри language-speech 3
 єзуїтствувати emotions-character 4
 жаждивий emotions-character 5
@@ -51,7 +50,6 @@
 ільняний household-crafts 4
 іродів witty-insults 4
 їдло household-crafts 3
-їдати language-speech 5
 єдваб household-crafts 5
 єпископія history-antiquity 4
 жеботіння language-speech 5
@@ -83,3 +81,12 @@
 іржавина nature-weather 4
 їстовний household-crafts 5
 їздецтво old-crafts 5
+єдиноплемінник history-antiquity 4
+житійний history-antiquity 4
+жінота language-speech 4
+жолуддя nature-weather 4
+ігрисько history-antiquity 5
+ізабелловий nature-weather 5
+ізвечора language-speech 4
+іншовірний history-antiquity 4
+іпокрит witty-insults 5
