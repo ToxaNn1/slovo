@@ -1,4 +1,5 @@
 бабити old-crafts 5
+багатель arts-culture 5
 багновисько nature-weather 5
 багорник old-crafts 5
 багрець arts-culture 5
@@ -13,6 +14,7 @@
 бакенник old-crafts 5
 бакир history-antiquity 5
 баклажок household-crafts 5
+бакштейн old-crafts 5
 балабушка household-crafts 5
 балагула history-antiquity 5
 балагурити language-speech 5
@@ -24,10 +26,13 @@
 банкомет history-antiquity 5
 бараняр old-crafts 5
 барвити old-crafts 5
+бареж household-crafts 5
 барилко household-crafts 4
 барити language-speech 5
 баришувати history-antiquity 5
+баронство history-antiquity 5
 басаманити old-crafts 5
+басинет military 5
 басонник old-crafts 5
 бастея military 5
 бастонада history-antiquity 5
@@ -41,7 +46,9 @@
 безвислідний language-speech 5
 безвладний human-body 5
 безвстидний emotions-character 5
+безвіддя nature-weather 5
 безвідкличний language-speech 5
+безвідступний emotions-character 5
 безвік language-speech 5
 безвір'я emotions-character 4
 безгоміння nature-weather 5
@@ -49,6 +56,7 @@
 безденний nature-weather 5
 бездержав'я history-antiquity 5
 бездолець emotions-character 5
+бездомів'я emotions-character 5
 бездужний human-body 5
 бездум'я emotions-character 5
 бездіяння emotions-character 5
@@ -78,6 +86,7 @@
 безпопівщина history-antiquity 5
 безпораддя emotions-character 5
 безприданниця history-antiquity 4
+безпровиння emotions-character 5
 безпросвіття emotions-character 5
 безпуття emotions-character 5
 безрода emotions-character 5
@@ -95,8 +104,10 @@
 безтурбоття emotions-character 5
 безтямки emotions-character 5
 безуважно emotions-character 5
+безугавно language-speech 5
 безуміти emotions-character 5
 безустанний language-speech 5
+безхалупний history-antiquity 5
 безхліб'я history-antiquity 5
 безхмар'я nature-weather 5
 безхосенний language-speech 5
@@ -109,12 +120,15 @@
 бекешка household-crafts 5
 бекмес household-crafts 5
 белькотіти language-speech 5
+бельмес language-speech 5
+бенкетар witty-insults 5
 бервено household-crafts 5
 бережина nature-weather 5
 берейтор history-antiquity 5
 бесідник language-speech 5
 бечівник history-antiquity 5
 биндюжник history-antiquity 5
+бирладник history-antiquity 5
 бистрозорий human-body 5
 бистря nature-weather 5
 бительня old-crafts 5
@@ -139,6 +153,7 @@
 божничок household-crafts 5
 боклага household-crafts 5
 больверк military 5
+бонбон household-crafts 5
 бонвіванка witty-insults 5
 бондарювати old-crafts 5
 бонтон emotions-character 5
@@ -152,6 +167,7 @@
 боївкар repressed-words 5
 боїще military 5
 браговар old-crafts 5
+бражництво emotions-character 5
 брамник history-antiquity 5
 брандвахта military 5
 брандмайор history-antiquity 5
@@ -160,6 +176,7 @@
 братолюбство emotions-character 5
 братчина history-antiquity 5
 братчиця history-antiquity 5
+бревіарій history-antiquity 5
 бридувати emotions-character 5
 брижувати old-crafts 5
 брилик household-crafts 5
@@ -185,7 +202,9 @@
 булатний military 5
 бумазея household-crafts 5
 бундючитися emotions-character 5
+бургграф history-antiquity 5
 буревійний nature-weather 5
+бурима arts-culture 5
 бурлакувати history-antiquity 5
 бурмиструвати history-antiquity 5
 бурнус household-crafts 5
@@ -199,6 +218,7 @@
 біговище history-antiquity 5
 бідар history-antiquity 4
 бідарка history-antiquity 5
+бідермеєр arts-culture 5
 білильниця old-crafts 5
 білобочка folk-names 5
 білокам'яний arts-culture 4
