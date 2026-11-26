@@ -25,3 +25,7 @@
 жданики emotions-character 5
 жерделя nature-weather 5
 двиготіти nature-weather 5
+дидрахма history-antiquity 5
+дитирамб arts-culture 5
+евпатрид history-antiquity 5
+дичак nature-weather 5
