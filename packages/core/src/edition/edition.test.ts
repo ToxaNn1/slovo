@@ -2,7 +2,9 @@ import { describe, expect, expectTypeOf, it } from 'vitest';
 
 import {
   DEPENDS_ON,
+  EditionConfigSchema,
   FeatureSwitchesSchema,
+  type EditionConfig,
   featureSwitchStates,
   type FeatureSwitch,
 } from '@slovo/contracts';
@@ -187,19 +189,61 @@ describe('the Category groups of the Edition', () => {
   });
 });
 
+/** The fields of the config the Core reshapes before it reads them. */
+const reshaped = [
+  'featureSwitches',
+  'userSettingDefaults',
+  'dashboardMoods',
+  'narratorVoices',
+] as const;
+/** The fields of the config only the Language Pack build and the app config read. */
+const leftToTheBuild = [
+  'wordOfTheDayFont',
+  'widgetPalette',
+  'categories',
+  'correctionCategories',
+  'categoriesRequiringHistory',
+  'contentTargets',
+] as const;
+
+describe('the Edition the Core reads', () => {
+  const config = {
+    ...validConfig,
+    notificationSound: 'notification.wav',
+    curatedCollectionPictogram: 'shop',
+    categoryGroups: [{ name: 'All', categories: ['nature', 'speech'] }],
+    contentTargets: { minWords: 10 },
+  };
+
+  it('carries every other field of the config as parsed, an optional one it sets included', () => {
+    const notCarried = new Set<string>([...reshaped, ...leftToTheBuild]);
+    const carried = Object.entries(EditionConfigSchema.parse(config)).filter(
+      ([field]) => !notCarried.has(field),
+    );
+
+    expect(carried.map(([field]) => field)).toEqual(
+      expect.arrayContaining(['id', 'xp', 'notificationSound', 'categoryGroups']),
+    );
+    expect(loadShippedEdition(config)).toMatchObject(Object.fromEntries(carried));
+  });
+
+  it('types every field it carries as the config does', () => {
+    type Carried = Exclude<
+      keyof EditionConfig,
+      (typeof reshaped)[number] | (typeof leftToTheBuild)[number]
+    >;
+
+    expectTypeOf<Pick<EditionConfig, Carried>>().toExtend<Pick<ShippedEdition, Carried>>();
+  });
+
+  it('leaves the fields of the build out of the Edition', () => {
+    const edition = loadShippedEdition(config);
+
+    for (const field of leftToTheBuild) expect(edition).not.toHaveProperty(field);
+  });
+});
+
 describe('loadEdition', () => {
-  it('reports the Edition id, locale and whether it marks Stress', () => {
-    const edition = loadEdition(validConfig);
-
-    expect(edition.id).toBe('test');
-    expect(edition.locale).toBe('xx-XX');
-    expect(edition.languageTraits.stress.marked).toBe(true);
-  });
-
-  it('reports the display name, the watermark of its Share Cards', () => {
-    expect(loadEdition(validConfig).displayName).toBe('SLOVO Test');
-  });
-
   it('reports an Edition that does not mark Stress', () => {
     const edition = loadEdition({
       ...validConfig,
@@ -305,20 +349,6 @@ describe('loadEdition', () => {
     ]);
   });
 
-  it('reports the XP table, what each learning action earns (ADR 0066)', () => {
-    expect(loadEdition(validConfig).xp).toEqual({
-      round: 1,
-      finishedGame: 5,
-      finishedGameShare: 0.5,
-      bestResult: 5,
-      dailyCrossword: 15,
-      reviewAnswer: 1,
-      quickQuestion: 2,
-      reviewDailyCap: 10,
-      seenWord: 1,
-    });
-  });
-
   it('refuses an Edition without an XP table, a negative amount or a share above 1', () => {
     const { xp, ...withoutXp } = validConfig;
     expect(() => loadEdition(withoutXp)).toThrow(InvalidEditionConfigError);
@@ -334,16 +364,6 @@ describe('loadEdition', () => {
     );
   });
 
-  it('reports the Level curve and the Level names (ADR 0066)', () => {
-    expect(loadEdition(validConfig).levels).toEqual({
-      first: 50,
-      growth: 0.1,
-      growingUntil: 10,
-      later: 120,
-      names: ['Seed', 'Sprout'],
-    });
-  });
-
   it('refuses an Edition without a Level curve, with a Level costing nothing or with no Level name', () => {
     const { levels, ...withoutLevels } = validConfig;
     expect(() => loadEdition(withoutLevels)).toThrow(InvalidEditionConfigError);
@@ -356,10 +376,6 @@ describe('loadEdition', () => {
     expect(() => loadEdition({ ...validConfig, levels: { ...levels, names: [] } })).toThrow(
       InvalidEditionConfigError,
     );
-  });
-
-  it('reports the questionnaire: the options of the level question and «Навіщо» and what each sets', () => {
-    expect(loadEdition(validConfig).questionnaire).toEqual(validConfig.questionnaire);
   });
 
   it('refuses an Edition without a questionnaire, with no option, a repeated option id, an unknown Mix kind or a Ceiling below the default Floor', () => {
@@ -384,14 +400,6 @@ describe('loadEdition', () => {
         },
       }),
     ).toThrow(InvalidEditionConfigError);
-  });
-
-  it('reports the Badges the Edition chooses, their names and conditions, in order (ADR 0066)', () => {
-    expect(loadEdition(validConfig).badges).toEqual(validConfig.badges);
-  });
-
-  it('reports the Badge families in their order, each with its name, description, shape and tone', () => {
-    expect(loadEdition(validConfig).badgeFamilies).toEqual(validConfig.badgeFamilies);
   });
 
   it('reads a flawless Game and a run of right answers as Badge conditions', () => {
@@ -483,20 +491,12 @@ describe('loadEdition', () => {
     ).toThrow(InvalidEditionConfigError);
   });
 
-  it('reports what the Account is called, which the Edition names', () => {
-    expect(loadEdition(validConfig).accountName).toBe('Test ID');
-  });
-
   it('refuses an Edition without an Account name or with an empty one', () => {
     const { accountName: _removed, ...withoutName } = validConfig;
     expect(() => loadEdition(withoutName)).toThrow(InvalidEditionConfigError);
     expect(() => loadEdition({ ...validConfig, accountName: '' })).toThrow(
       InvalidEditionConfigError,
     );
-  });
-
-  it('reports the Mascot line of each moment', () => {
-    expect(loadEdition(validConfig).mascot).toEqual(validConfig.mascot);
   });
 
   it('refuses an Edition without Mascot lines, a moment left out or an empty line', () => {
@@ -512,13 +512,6 @@ describe('loadEdition', () => {
     );
   });
 
-  it("reports the file of the Edition's notification sound, if it has one", () => {
-    const withSound = loadEdition({ ...validConfig, notificationSound: 'notification.wav' });
-
-    expect(loadEdition(validConfig).notificationSound).toBeUndefined();
-    expect(withSound.notificationSound).toBe('notification.wav');
-  });
-
   it('reports a default of Vibration off', () => {
     const edition = loadEdition({
       ...validConfig,
@@ -528,19 +521,10 @@ describe('loadEdition', () => {
     expect(edition.userSettingDefaults.vibration).toBe(false);
   });
 
-  it('reports the Daily Goals in Words and refuses a highlighted one not among them', () => {
-    const dailyGoals = { options: [5, 15], highlighted: 15 };
-    expect(loadEdition({ ...validConfig, dailyGoals }).dailyGoals).toEqual(dailyGoals);
+  it('refuses a highlighted Daily Goal not among them', () => {
     expect(() =>
-      loadEdition({ ...validConfig, dailyGoals: { ...dailyGoals, highlighted: 10 } }),
+      loadEdition({ ...validConfig, dailyGoals: { options: [5, 15], highlighted: 10 } }),
     ).toThrow();
-  });
-
-  it('reports the Notification times «Коли нагадати?» offers, one for each bucket', () => {
-    const onboardingNotificationTimes = { morning: '08:15', midday: '12:00', evening: '21:00' };
-    expect(
-      loadEdition({ ...validConfig, onboardingNotificationTimes }).onboardingNotificationTimes,
-    ).toEqual(onboardingNotificationTimes);
   });
 
   it('refuses hand-written legal page addresses in the config', () => {
@@ -563,22 +547,8 @@ describe('loadEdition', () => {
     expect(loadEdition({ ...validConfig, originLanguages: [] }).originLanguages).toEqual([]);
   });
 
-  it('reports the letters Search reads as another', () => {
-    expect(loadEdition(validConfig).searchLetters).toEqual({ b: 'a' });
-  });
-
   it('accepts an Edition whose Search reads every letter as itself', () => {
     expect(loadEdition({ ...validConfig, searchLetters: {} }).searchLetters).toEqual({});
-  });
-
-  it('reports the moods in their order', () => {
-    expect(loadEdition(validConfig).moods.map(({ id }) => id)).toEqual([
-      'joyful',
-      'calm',
-      'sad',
-      'energetic',
-      'thoughtful',
-    ]);
   });
 
   it('declares its Narrator Voices in their order', () => {
