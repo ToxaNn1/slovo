@@ -1,0 +1,4 @@
+гарус household-crafts 4
+флінта military 3
+глаголиця language-speech 3
+шансонетка arts-culture 5
