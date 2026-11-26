@@ -11,7 +11,6 @@ import { MinimumsEditor } from './rule-editor';
 import {
   cellOf,
   cellText,
-  rulesOf,
   summaryText,
   switchRefusalText,
   targetedText,
@@ -90,16 +89,19 @@ export function SwitchesMatrix() {
   const { editions, loaded, ready, picked, pickedAnswer, answerOf, refetch } = useSwitches();
   const navigate = useNavigate();
   const [pending, setPending] = useState<Toggle>();
+  // The cells are read at the moment of the render: a schedule holds by it.
+  const now = new Date();
   const columns =
     picked === undefined ? loaded : loaded.filter(({ edition }) => edition === picked);
 
   const write = async (reason: string) => {
     if (pending === undefined) return;
     const answer = answerOf(pending.edition);
+    if (answer === undefined) return;
     await adminApi.setRules({
       editionId: pending.edition.id,
       feature: pending.feature,
-      rules: withEveryone(answer === undefined ? [] : rulesOf(answer, pending.feature), pending.on),
+      rules: withEveryone(answer, pending.feature, pending.on, new Date()),
       reason,
     });
     await refetch();
@@ -148,7 +150,7 @@ export function SwitchesMatrix() {
                   {features.map((feature) => {
                     const cells = columns.map(({ edition, answer }) => ({
                       edition,
-                      cell: cellOf(answer, feature),
+                      cell: cellOf(answer, feature, now),
                     }));
                     return (
                       <tr key={feature} className="border-b border-border last:border-0">

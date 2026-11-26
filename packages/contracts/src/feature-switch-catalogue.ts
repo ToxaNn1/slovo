@@ -591,7 +591,7 @@ export const FEATURE_SWITCHES = catalogue({
     name: 'Картка заморозок',
     line: 'У профілі видно заморожені дні, останній тиждень і врятовані дні.',
     group: 'progress',
-    dependsOn: ['xpLog'],
+    dependsOn: ['xpLog', 'streakFreezes'],
   },
   /** The Break card of the Profile while a Break runs: its dates, a 14-day strip and the next Break's date; off while `xpLog` is. */
   breakCard: {

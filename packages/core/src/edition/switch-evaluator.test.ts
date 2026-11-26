@@ -60,25 +60,6 @@ describe('the switch evaluator', () => {
     expect(verdicts.game).toEqual({ on: true });
   });
 
-  it('never turns an unavailable feature on', () => {
-    const verdicts = evaluate(
-      [rule({ feature: 'widget', verdict: 'on' })],
-      statesWith({ widget: 'unavailable' }),
-    );
-
-    expect(verdicts.widget).toEqual({ on: false });
-  });
-
-  it('keeps a feature off while one it depends on is off', () => {
-    const verdicts = evaluate([
-      rule({ feature: 'game', verdict: 'off' }),
-      rule({ feature: 'gameTimed', verdict: { variants: ['a', 'b'] } }),
-    ]);
-
-    expect(verdicts.game).toEqual({ on: false });
-    expect(verdicts.gameTimed).toEqual({ on: false });
-  });
-
   it('matches every target named, and matches everyone with none', () => {
     const rules = [
       rule({

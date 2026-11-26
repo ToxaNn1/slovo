@@ -1,9 +1,9 @@
-import type {
-  FeatureSwitch,
-  FeatureSwitchState,
-  FeatureSwitches,
-  Rule,
-  RuleTargets,
+import {
+  readSwitches,
+  rulesOf as rulesInOrder,
+  type FeatureSwitch,
+  type FeatureSwitches,
+  type Rule,
 } from '@slovo/contracts';
 import { SwitchRefusalSchema } from '@slovo/contracts/admin-api';
 
@@ -17,8 +17,9 @@ export interface EditionSwitchesAnswer {
 
 /**
  * A feature in one Edition as the matrix shows it: the Edition hasn't got it,
- * or on or off for every reader (the verdict of its first Rule that targets
- * everyone, else the Edition's state), with how many Rules target some readers.
+ * or on or off for the readers no Rule singles out (the verdict of its first
+ * Rule in force for every reader, else the Edition's state, and off while a
+ * switch it depends on is), with how many other Rules it has.
  */
 export type Cell =
   | { readonly kind: 'unavailable' }
@@ -29,30 +30,24 @@ export type Cell =
       readonly targeted: number;
     };
 
-/** Whether a Rule's targets are every reader of the Edition. */
-function targetsEveryone(targets: RuleTargets): boolean {
-  return Object.values(targets).every((target) => target === undefined);
-}
-
 /** The Rules of one feature, in the order they are tried. */
 export function rulesOf(answer: EditionSwitchesAnswer, feature: string): Rule[] {
-  return answer.rules
-    .filter((rule) => rule.feature === feature)
-    .sort((one, other) => one.order - other.order);
+  return rulesInOrder(answer.rules, feature);
 }
 
-export function cellOf(answer: EditionSwitchesAnswer, feature: FeatureSwitch): Cell {
-  const state: FeatureSwitchState = answer.states[feature];
-  if (state === 'unavailable') return { kind: 'unavailable' };
-  const rules = rulesOf(answer, feature);
-  const everyone = rules.find((rule) => targetsEveryone(rule.targets));
-  const targeted = rules.filter((rule) => !targetsEveryone(rule.targets)).length;
-  if (everyone === undefined)
-    return { kind: 'available', on: state === 'on', variants: undefined, targeted };
-  const { verdict } = everyone;
-  return typeof verdict === 'string'
-    ? { kind: 'available', on: verdict === 'on', variants: undefined, targeted }
-    : { kind: 'available', on: true, variants: verdict.variants, targeted };
+/** The cell of a feature at the moment, read as the backend and the device read its Rules. */
+export function cellOf(answer: EditionSwitchesAnswer, feature: FeatureSwitch, now: Date): Cell {
+  if (answer.states[feature] === 'unavailable') return { kind: 'unavailable' };
+  const switches = readSwitches({ ...answer, now });
+  const rest = switches.forTheRest(feature);
+  const verdict = rest.on ? rest.by?.verdict : undefined;
+  return {
+    kind: 'available',
+    on: rest.on,
+    variants: typeof verdict === 'object' ? verdict.variants : undefined,
+    targeted:
+      rulesOf(answer, feature).length - (switches.everyoneRule(feature) === undefined ? 0 : 1),
+  };
 }
 
 /** The exact state of a cell, in the admin's words. */
@@ -84,18 +79,29 @@ export function targetedText(count: number): string | undefined {
 
 /**
  * The Rules of a feature with one Rule for every reader set to the verdict,
- * in the place of the first such Rule (last when there is none): the first
- * matching Rule decides, so the Rules before it still decide for their
- * readers and those after it, which never matched, still do not.
+ * in the place of the first Rule in force for every reader at the moment
+ * (last when there is none): the first matching Rule decides, so the Rules
+ * before it still decide for their readers and those after it, which never
+ * matched, still do not.
  */
-export function withEveryone(rules: readonly Rule[], on: boolean) {
+export function withEveryone(
+  answer: EditionSwitchesAnswer,
+  feature: FeatureSwitch,
+  on: boolean,
+  now: Date,
+) {
   const everyone = {
     id: 'everyone',
     verdict: on ? ('on' as const) : ('off' as const),
     targets: {},
   };
-  const kept = rules.map(({ id, verdict, targets }) => ({ id, verdict, targets }));
-  const at = kept.findIndex((rule) => targetsEveryone(rule.targets));
+  const replaced = readSwitches({ ...answer, now }).everyoneRule(feature);
+  const kept = rulesOf(answer, feature).map(({ id, verdict, targets }) => ({
+    id,
+    verdict,
+    targets,
+  }));
+  const at = replaced === undefined ? -1 : kept.findIndex(({ id }) => id === replaced.id);
   return at === -1 ? [...kept, everyone] : [...kept.slice(0, at), everyone, ...kept.slice(at + 1)];
 }
 
