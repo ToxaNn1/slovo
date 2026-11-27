@@ -2,6 +2,7 @@ import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
 import {
   AccountEmailSchema,
+  fitsSyncRecord,
   SYNC_BATCH_SIZE,
   type CollectionLink,
   type ForceUpdateMinimums,
@@ -115,7 +116,8 @@ export interface FakeBackend {
    * The Sync procedures: each Account's records in one Edition, by the
    * backend's rules (ADR 0041): a change replaces the record kept under its
    * key only when it is later, a change time later than the clock's counts
-   * as the clock's, and every kept change takes the next sequence number,
+   * as the clock's, a push with a change over `SYNC_RECORD_LIMITS` is refused
+   * whole with the contract's 400, and every kept change takes the next sequence number,
    * one sequence for every Account, which a pull pages by. A push or pull
    * acts on the Account of its Session, without one it gets the contract's
    * 401, and deleting the Account drops its records.
@@ -415,6 +417,8 @@ export function createFakeBackend({
     sync: {
       async push({ input, context }) {
         const email = await arriveSignedIn('sync.push', context);
+        // A change over the limits of a record refuses the push whole, as the backend's 400.
+        if (!input.changes.every(fitsSyncRecord)) throw refusal('BAD_REQUEST', context);
         const kept = records.get(email) ?? new Map<string, KeptRecord>();
         records.set(email, kept);
         // Of two changes of one key, the later is kept, the first on a tie, and only then cut.

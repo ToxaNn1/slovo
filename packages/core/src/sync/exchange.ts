@@ -1,4 +1,4 @@
-import { SYNC_BATCH_SIZE } from '@slovo/contracts';
+import { fitsSyncRecord, SYNC_BATCH_SIZE } from '@slovo/contracts';
 import { z } from 'zod';
 
 import { answerOf } from '../backend';
@@ -73,7 +73,10 @@ export interface SyncExchange {
    * (`refusalOf`) stays pending and is sent no more by this exchange,
    * so until the next launch: a later sync pulls, pushes the other changes
    * and answers that refusal while a refused change waits. A record changed
-   * again is a new change. Call it once at a time.
+   * again is a new change. A change over `SYNC_RECORD_LIMITS`, which the
+   * Account would refuse with its whole batch, is never sent: it stays
+   * pending, at every launch, the other changes are pushed, and the sync
+   * answers `unexpected` while it waits. Call it once at a time.
    */
   sync(token: string): Promise<SyncResult>;
   /** Forgets which changes were refused, as when the Session ends: the next Session's Account may take them. */
@@ -388,7 +391,12 @@ export function createSyncExchange({
         more = page.more && page.cursor !== after;
       }
       const all = [...(await userState.pendingChanges())];
-      for (const batch of pushesOf(all, isRefused)) {
+      // Never sent: the backend refuses the whole push of a change over the limits (ADR 0208).
+      const over = new Set(
+        all.filter(([key, change]) => !fitsSyncRecord(changeOf(key, change))).map(([key]) => key),
+      );
+      const isOver = ([key]: Pending) => over.has(key);
+      for (const batch of pushesOf(all, (change) => isRefused(change) || isOver(change))) {
         const answer = await api.push(
           token,
           [...batch].map(([key, change]) => changeOf(key, change)),
@@ -404,6 +412,7 @@ export function createSyncExchange({
       }
       // A refused change that still waits keeps the sync refused.
       if (refusal !== undefined && all.some(isRefused)) return { ...refusal, changed };
+      if (over.size > 0) return { ok: false, reason: 'unexpected', changed };
       return { ok: true, changed };
     },
   };
