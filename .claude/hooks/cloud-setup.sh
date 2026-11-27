@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # SLOVO cloud sessions need Postgres 18 and the workspace dependencies before the first step.
-# This SessionStart hook sets both up in a cloud session (Claude Code on the web) and prints one line,
+# This SessionStart hook sets both up in a cloud session (Claude Code on the web), sets the owner's commit
+# identity (anton, the noreply email in .github/owner-email) so no brief has to, and prints one line,
 # so the setup output stays out of the model's context. The full log goes to /tmp/cloud-setup.log.
 # Locally it does nothing. It always exits 0: a failed setup is reported, never blocks the session.
 
@@ -20,6 +21,10 @@ run() {
   echo "+ $*" >>"$LOG"
   "$@" >>"$LOG" 2>&1 || fail
 }
+
+STEP="commit identity"
+run git -C "${CLAUDE_PROJECT_DIR:-.}" config user.name anton
+run git -C "${CLAUDE_PROJECT_DIR:-.}" config user.email "$(cat "${CLAUDE_PROJECT_DIR:-.}/.github/owner-email")"
 
 postgres_18_ready() {
   pg_isready -q -p 5432 >>"$LOG" 2>&1 &&
