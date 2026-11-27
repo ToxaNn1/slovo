@@ -23,8 +23,11 @@ export type RuleName =
   | 'curated-collection-appeared'
   | 'curated-collection-pictogram'
   | 'crossword-day-entry'
+  /** An edit of a Crossword day keeps its date, the day's id. */
+  | 'crossword-day-date'
   | 'crossword-days-gap'
   | 'crossword-days-repeat'
+  /** A Crossword day on or before the Edition's day is published and never changes. */
   | 'crossword-days-immutable'
   | 'illustration-png'
   | 'illustration-size'

@@ -413,6 +413,14 @@ describe('the content write API', () => {
     await expect(
       agent.admin.content.edit({ ...write, id: first.date, recordVersion: 1, fields: first }),
     ).rejects.toMatchObject(refused([{ rule: 'crossword-days-immutable', field: 'date' }]));
+    await expect(
+      agent.admin.content.edit({
+        ...write,
+        id: last.date,
+        recordVersion: 2,
+        fields: { ...last, date: dateAfter(last.date, 1) },
+      }),
+    ).rejects.toMatchObject(refused([{ rule: 'crossword-day-date', field: 'date' }]));
     // The day after the last, with the words of the last: they come back within 20 days.
     const next = { ...last, date: dateAfter(last.date, 1) };
     await expect(agent.admin.content.create({ ...write, fields: next })).rejects.toMatchObject(
