@@ -299,5 +299,7 @@ describe('the Words that can fill the crossing Daily Crossword', () => {
       return word(`w_${lemma}`);
     });
     expect(generated(many)).toEqual({ kind: 'no-fill' });
-  });
+    // The search runs past its whole budget: well under a second, but several
+    // times slower under mutation testing's instrumented code.
+  }, 30_000);
 });
