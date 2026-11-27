@@ -222,6 +222,21 @@ describe('the Account', () => {
     expect(account.state).toMatchObject({ status: 'signed-in' });
   });
 
+  it('says the code is spent after its last wrong try, and only a new code signs in', async () => {
+    const { account, time } = await setup();
+    await account.requestCode('anna@mail.com');
+    for (let tries = 0; tries < 5; tries++) await account.verifyCode('999999');
+    expect(account.state).toMatchObject({ status: 'code-sent', problem: 'code-spent' });
+
+    await account.verifyCode('100001');
+    expect(account.state).toMatchObject({ status: 'code-sent', problem: 'code-spent' });
+
+    time.advance(60_000);
+    await account.resendCode();
+    await account.verifyCode('100002');
+    expect(account.state).toMatchObject({ status: 'signed-in' });
+  });
+
   it('says there were too many requests when the backend holds the request back', async () => {
     const { account, api } = await setup();
     api.failNext('too-many-requests');

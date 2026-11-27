@@ -74,6 +74,25 @@ describe('a client of the API', () => {
     expect(error).toHaveProperty('retryAfter', 30);
   });
 
+  it("throws a contract's other 429 code as it is, such as a spent Sign-in code", async () => {
+    const serve = serveApi({
+      account: {
+        verifyCode: () => {
+          throw refusal('CODE_SPENT');
+        },
+      },
+    });
+    const api = createApiClient({ url: 'http://backend.test', fetch: serve });
+
+    const error = await api.account.verifyCode({ email: 'anna@mail.com', code: '100001' }).then(
+      () => undefined,
+      (refused: unknown) => refused,
+    );
+
+    expect(error).not.toBeInstanceOf(TooManyRequestsError);
+    expect(error).toMatchObject({ code: 'CODE_SPENT', status: 429, defined: true });
+  });
+
   it('throws TOO_MANY_REQUESTS on a 429 that is no answer of the contract, as a proxy gives', async () => {
     const error = await refusalOf(answeringWith(429, '<html>busy</html>'));
 
