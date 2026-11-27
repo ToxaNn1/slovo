@@ -538,6 +538,40 @@ describe('the Entries', () => {
   });
 
   describe('links', () => {
+    it('name the live Words that link the Entries: by a Correction or as a Synonym Row’s member', async () => {
+      const member = (text: string, wordId?: string) => ({ text, stress: [0], wordId });
+      const linkingRow = (id: string, retired = false): SynonymRow => ({
+        ...synonymRow(id, retired),
+        members: [
+          member('плейн', 'w_plain'),
+          member('ґон', 'w_gone'),
+          member('нема', 'w_missing'),
+          member('сам'),
+        ],
+      });
+      const entries = createEntries({
+        content: createMemoryContentPort({
+          categories,
+          words,
+          corrections,
+          idioms,
+          synonymRows: [linkingRow('r_link'), linkingRow('r_gone', true)],
+          tips,
+        }),
+        edition: editionWith(true),
+        choices: EVERYTHING_IN,
+      });
+
+      expect(await entries.wordsLinking(['r_link'])).toEqual(new Set(['w_plain']));
+      expect(await entries.wordsLinking(['c_always'])).toEqual(
+        new Set(['w_always', 'w_talkative']),
+      );
+      expect(await entries.wordsLinking(['r_gone', 'w_plain', 'i_lazy', 'x_missing'])).toEqual(
+        new Set(),
+      );
+      expect(await entries.wordsLinking([])).toEqual(new Set());
+    });
+
     it('lead from a Word to its live Corrections in its order, past Retired and missing ones', async () => {
       expect(ids(await open().linkedCorrections(talkative))).toEqual(['c_chatty', 'c_always']);
     });
