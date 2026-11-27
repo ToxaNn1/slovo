@@ -190,6 +190,17 @@ describe('Analytics', () => {
     expect(stops()).toBe(1);
   });
 
+  it('tracks and stops without a fault when the app has no Analytics port', async () => {
+    const edition = testEdition({ isFeatureEnabled: (feature) => feature === 'analytics' });
+    const userState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
+    const analytics = createAnalytics({ edition, userState });
+
+    await expect(analytics.track('screenViewed', { screen: 'feed' })).resolves.toBeUndefined();
+    expect(() => {
+      analytics.stop();
+    }).not.toThrow();
+  });
+
   it('sends nothing while the Edition switches Analytics off', async () => {
     const { app, events } = await run({ on: ['knowledge'] });
 

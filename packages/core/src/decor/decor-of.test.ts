@@ -112,4 +112,19 @@ describe('decorOf', () => {
 
     expect(shown).toEqual(loadDecor(plain));
   });
+
+  it('loads the motifs of an Edition with a motif for every Season, with no Holidays when it lists none', () => {
+    const loaded = loadSeasonalMotifs({ categories, seasons });
+
+    expect(loaded?.holidays).toEqual([]);
+    expect(
+      decorOf({
+        decor,
+        motifs: loaded,
+        date: on('2026-08-24'),
+        edition: switchedOn,
+        settings: seasonalOn,
+      }).mascotAccessory,
+    ).toEqual(accessory(22));
+  });
 });

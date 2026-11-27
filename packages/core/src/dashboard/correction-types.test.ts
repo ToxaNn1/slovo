@@ -178,3 +178,22 @@ describe('The Correction Types', () => {
     });
   });
 });
+
+describe('Marking a Correction worked through', () => {
+  it('changes nothing for an unknown id, a Retired Correction or a Word', async () => {
+    const { app, records } = await run();
+    let told = 0;
+    app.correctionTypes.subscribe(() => (told += 1));
+    const { tiles } = app.correctionTypes;
+
+    await app.correctionTypes.reveal('c_unknown');
+    await app.correctionTypes.reveal('c_gone');
+    await app.correctionTypes.reveal('w_one');
+
+    expect(
+      [...records.keys()].filter((key) => key.startsWith('correctionsWorkedThrough.')),
+    ).toEqual([]);
+    expect(app.correctionTypes.tiles).toBe(tiles);
+    expect(told).toBe(0);
+  });
+});

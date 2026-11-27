@@ -209,6 +209,22 @@ describe('the Rarity Test result', () => {
     expect((await app.rarityTest.apply(await answer(app, [5], [4])))?.top).toBe(4);
   });
 
+  it('counts no rarity the reader was not asked about as known', async () => {
+    const app = await open();
+    const asked = (await answer(app)).filter(({ rarity }) => rarity <= 3);
+
+    expect((await app.rarityTest.apply(asked))?.top).toBe(3);
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 3 });
+  });
+
+  it('sets nothing for no answers at all', async () => {
+    const app = await open();
+    await app.rarityRange.set({ from: 2, to: 4 });
+
+    expect(await app.rarityTest.apply([])).toBeUndefined();
+    expect(app.rarityRange.state).toEqual({ from: 2, to: 4 });
+  });
+
   it('says whether the Rarity Range changed', async () => {
     const app = await open();
     await app.rarityRange.set({ from: 2, to: 4 });

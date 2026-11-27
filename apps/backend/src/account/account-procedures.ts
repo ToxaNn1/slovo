@@ -54,7 +54,7 @@ export function accountProcedures(accounts: Accounts) {
           throw errors.TOO_MANY_REQUESTS();
         // A spent code passes with no time, so the answer has no Retry-After.
         case 'too-many-tries':
-          throw errors.TOO_MANY_REQUESTS();
+          throw errors.CODE_SPENT();
       }
     }),
 

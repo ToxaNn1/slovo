@@ -365,6 +365,14 @@ describe('an unhide', () => {
     expect(records).toEqual(kept);
   });
 
+  it('changes nothing for a Category in the Mix while another one is Hidden', async () => {
+    const app = await run();
+    await app.hide({ kind: 'category', categoryId: 'crafts' });
+
+    expect(await app.unhide({ kind: 'category', categoryId: 'speech' })).toBeUndefined();
+    expect(app.mix.state.hiddenCategories).toEqual([crafts]);
+  });
+
   it.each(MIX_KINDS)(
     'puts the kind %s as a whole back in the Mix, and its undo takes it out again',
     async (entryKind) => {

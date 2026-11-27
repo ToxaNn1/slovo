@@ -1668,6 +1668,7 @@ describe('the 0.7 account and email strings groups', () => {
     'invalid-email',
     'wrong-code',
     'code-expired',
+    'code-spent',
     'too-many-requests',
     'refused',
     'unexpected',

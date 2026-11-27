@@ -21,6 +21,8 @@ describe('relativeTimeOf', () => {
     expect(ago(MINUTE)).toEqual({ kind: 'minutes', minutes: 1 });
     expect(ago(5 * MINUTE + 20 * 1000)).toEqual({ kind: 'minutes', minutes: 5 });
     expect(ago(29 * MINUTE)).toEqual({ kind: 'minutes', minutes: 29 });
+    expect(ago(59 * MINUTE)).toEqual({ kind: 'minutes', minutes: 59 });
+    expect(ago(60 * MINUTE)).toEqual({ kind: 'today', hour: 8, minute: 30 });
   });
 
   it('treats an instant ahead of the clock as now', () => {

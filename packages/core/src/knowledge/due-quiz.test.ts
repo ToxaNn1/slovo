@@ -174,4 +174,59 @@ describe('the Due Quiz', () => {
     expect(await app.dueQuiz.answer(question, question.right)).toBeUndefined();
     expect(app.knowledge.state.shown.get('w_n1')).toBe('unknown');
   });
+
+  it('takes no Hidden Word as a Distractor', async () => {
+    const content = [word('w_a'), word('w_b'), word('w_c')];
+    const records = new Map<string, string>();
+    await learning(records, ['w_a'], content);
+    const app = await run({ records, on: '2026-05-02', content });
+
+    await app.hiddenEntries.hide('w_c');
+
+    expect(await app.dueQuiz.questions()).toEqual([]);
+  });
+
+  it('leaves out a due Word that is no longer eligible, outside the Rarity Range', async () => {
+    const content = [
+      word('w_a', { rarity: 3 }),
+      word('w_b', { rarity: 4 }),
+      word('w_c', { rarity: 4 }),
+      word('w_d', { rarity: 4 }),
+    ];
+    const records = new Map<string, string>();
+    await learning(records, ['w_a', 'w_b'], content);
+    const switches: readonly FeatureSwitch[] = ['knowledge', 'dueQuiz', 'rarityCeiling'];
+    const app = await run({ records, on: '2026-05-02', content, switches });
+
+    await app.rarityRange.set({ from: 4, to: 5 });
+
+    expect((await app.dueQuiz.questions()).map(({ wordId }) => wordId)).toEqual(['w_b']);
+  });
+
+  it('orders a Word’s meanings afresh on another local day', async () => {
+    const records = new Map<string, string>();
+    await learning(records, ['w_n1']);
+    const days = ['2026-05-02', '2026-05-03', '2026-05-04', '2026-05-05', '2026-05-06'];
+    const asked = new Set<string>();
+    for (const on of days) {
+      const [question] = await (await run({ records, on })).dueQuiz.questions();
+      asked.add(JSON.stringify(question));
+    }
+
+    expect(asked.size).toBeGreaterThan(1);
+  });
+
+  it('takes the first meaning as an answer, and no option that is negative or not whole', async () => {
+    const records = new Map<string, string>();
+    await learning(records, ['w_n1']);
+    const app = await run({ records, on: '2026-05-02' });
+    const [question] = await app.dueQuiz.questions();
+    if (question === undefined) throw new Error('no question');
+
+    expect(await app.dueQuiz.answer(question, -1)).toBeUndefined();
+    expect(await app.dueQuiz.answer(question, 0.5)).toBeUndefined();
+    expect(app.knowledge.state.due).toContain('w_n1');
+
+    expect(await app.dueQuiz.answer(question, 0)).toBe(question.right === 0 ? 'known' : 'unknown');
+  });
 });

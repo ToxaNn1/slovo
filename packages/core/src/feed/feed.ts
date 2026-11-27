@@ -111,7 +111,7 @@ export interface Feed {
   openLinkedCorrection(position: number, correctionId: string): Promise<number | undefined>;
   /**
    * Keeps the option the reader picked on the Quick Question at `position`
-   * and resolves whether it is right; its card then carries the option.
+   * and resolves whether it is right; its card then carries the answer, judged.
    * Nothing when no Quick Question not answered yet is there.
    */
   answerQuickQuestion(position: number, option: number): Promise<boolean | undefined>;
@@ -561,12 +561,12 @@ export async function openFeed({
   ): Promise<boolean | undefined> {
     const card = session.cards[position];
     if (quickQuestion === undefined || card?.kind !== 'quick-question') return undefined;
-    if (card.answered !== undefined) return undefined;
-    const right = await quickQuestion.answer(card, option);
-    const answered: FeedCard = { ...card, answered: option };
+    const asked = await quickQuestion.answer(card, option);
+    if (asked?.answer === undefined) return undefined;
+    const answered: FeedCard = { ...card, answer: asked.answer };
     session.renew((each) => (each === card ? answered : each));
     subscribers.tell();
-    return right;
+    return asked.answer.right;
   }
 
   async function answerYesterday(

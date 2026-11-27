@@ -3,7 +3,14 @@ import { describe, expect, it } from 'vitest';
 
 import { openComposition } from '../index';
 import { createFakeBackend, createMemoryContentPort } from '../testing';
-import { fakeClock, randomOf, testEdition, testSchedule, word } from '../test-support';
+import {
+  fakeClock,
+  randomOf,
+  steppingRandom,
+  testEdition,
+  testSchedule,
+  word,
+} from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** Long enough for every wait between the tries of one request. */
@@ -32,8 +39,14 @@ const content = createMemoryContentPort({
 async function device({
   off = [],
   withBackend = true,
+  withSchedule = true,
+  random = randomOf(0.5),
 }: {
+  /** What the composition draws ids and jitter by. */
+  random?: ReturnType<typeof randomOf>;
   off?: FeatureSwitch[];
+  /** Whether the composition has a schedule to wait between tries by. */
+  withSchedule?: boolean;
   /** Whether the composition has the backend's Collection Links, as the app always has. */
   withBackend?: boolean;
 } = {}) {
@@ -47,8 +60,8 @@ async function device({
     edition: testEdition({ id: 'uk', isFeatureEnabled }),
     userState: await openUserState({ port: createMemoryUserStatePort() }),
     clock: time.clock,
-    random: randomOf(0.5),
-    schedule: timers.schedule,
+    random,
+    ...(withSchedule ? { schedule: timers.schedule } : {}),
     ...(withBackend ? { backend: api.backend } : {}),
   });
   const sharing = app.collectionSharing;
@@ -128,6 +141,35 @@ describe('sharing a Collection by a Collection Link', () => {
 
     expect(await app.share(big)).toEqual({ ok: false, reason: 'too-many-entries' });
     expect(app.api.calls).toHaveLength(0);
+  });
+
+  it('shares the Collection asked for, by its own name, among several', async () => {
+    const app = await device({ random: steppingRandom() });
+    const autumn = await app.collection('Осінь', ['w_kvasha']);
+    const spring = await app.collection('Весна', ['w_buzok']);
+
+    const springAnswer = await app.share(spring);
+    const autumnAnswer = await app.share(autumn);
+
+    expect(springAnswer.ok && springAnswer.message).toMatch(/«Весна»/);
+    expect(autumnAnswer.ok && autumnAnswer.message).toMatch(/«Осінь»/);
+    expect(app.api.collectionLinks.made.map(({ name }) => name)).toEqual(['Весна', 'Осінь']);
+  });
+
+  it('shares a Collection of exactly as many Entries as a link holds', async () => {
+    const app = await device();
+    const full = await app.collection('Повна', manyIds.slice(1));
+
+    expect(await app.share(full)).toMatchObject({ ok: true });
+  });
+
+  it('tries once, with no tries again, in a composition without a schedule', async () => {
+    const app = await device({ withSchedule: false });
+    const autumn = await app.collection('Осінь', ['w_kvasha']);
+    app.api.failNext('server-error');
+
+    expect(await app.share(autumn)).toEqual({ ok: false, reason: 'failed' });
+    expect(app.api.calls).toHaveLength(1);
   });
 
   it('tries again by the one rule after a server error', async () => {

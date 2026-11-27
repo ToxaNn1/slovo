@@ -86,6 +86,7 @@ export {
   type TextRange,
 } from './game/game-mode';
 export { buildGameReview } from './game/game-review';
+export { type QuickQuestionAnswer, type QuickQuestionRound } from './game/quick-question';
 export { GAME_ROUNDS } from './game/round-plan';
 export { type SearchResults } from './search/search';
 export { createGameHaptics, LIFE_LOST_DELAY, type GameHaptics } from './game/game-haptics';

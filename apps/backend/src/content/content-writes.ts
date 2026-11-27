@@ -1,8 +1,7 @@
 import {
   ID_PREFIX,
-  checkRecord,
+  checkWrite,
   contentSetOf,
-  parseRecord,
   recordFileOf,
   recordIdOf,
   type AuthoredRecord,
@@ -139,7 +138,7 @@ function datedRefusal(
   const file = recordFileOf(kind, change.op === 'edit' ? change.id : String(date));
   if (change.op === 'edit' && date !== change.id) {
     return {
-      rule: 'crossword-days-immutable',
+      rule: 'crossword-day-date',
       file,
       field: 'date',
       message: `A day keeps its date: ${change.id}`,
@@ -154,22 +153,6 @@ function datedRefusal(
     };
   }
   return undefined;
-}
-
-/**
- * The fields of a save with a Curated Collection's publish date: one given
- * none is published on the Edition's today.
- */
-function withPublishDate(
-  kind: RecordKind,
-  fields: Readonly<Record<string, unknown>>,
-  now: Date,
-): Readonly<Record<string, unknown>> {
-  if (kind !== 'curatedCollection') return fields;
-  const publishedOn = fields['publishedOn'];
-  return publishedOn === undefined || publishedOn === ''
-    ? { ...fields, publishedOn: editionDateOf(now) }
-    : fields;
 }
 
 /**
@@ -444,16 +427,28 @@ export function createContentWrites({
             ? String(change.op === 'create' ? change.fields['date'] : '')
             : await newId(tx, editionId, kind));
         const fields =
-          change.op === 'retire'
-            ? { ...current?.fields, retired: true }
-            : kind === 'crosswordDay'
-              ? change.fields
-              : { ...withPublishDate(kind, change.fields, now), id };
-        const parsed = parseRecord(kind, recordFileOf(kind, id), fields);
+          change.op === 'retire' ? { ...current?.fields, retired: true } : change.fields;
+        const fieldsOf = <T>(rows: readonly { readonly fields: T }[]) =>
+          rows.map((row) => row.fields);
+        const set = contentSetOf({
+          word: fieldsOf(records.word),
+          correction: fieldsOf(records.correction),
+          idiom: fieldsOf(records.idiom),
+          synonymRow: fieldsOf(records.synonymRow),
+          tip: fieldsOf(records.tip),
+          curatedCollection: fieldsOf(records.curatedCollection),
+          crosswordDay: fieldsOf(records.crosswordDay),
+        });
+        const checked = checkWrite(
+          edition.config,
+          set,
+          { kind, id, fields },
+          { today: now, editionDate: editionDateOf(now) },
+        );
         // A new id is registered by now: a refusal rolls it back with the rest.
-        if (!parsed.ok)
-          throw new Refused({ ok: false, reason: 'refused', refusals: parsed.refusals });
-        const { record } = parsed;
+        if (!checked.parsed)
+          throw new Refused({ ok: false, reason: 'refused', refusals: [...checked.refusals] });
+        const { record } = checked;
         const recordVersion = (current?.recordVersion ?? 0) + 1;
         const published = contentVersion + 1;
         // The rules of the record's kind refuse first: a refusal by the content
@@ -473,22 +468,8 @@ export function createContentWrites({
         );
         if (!saved.ok)
           throw new Refused({ ok: false, reason: 'refused', refusals: [saved.refusal] });
-        const fieldsOf = <T>(rows: readonly { readonly fields: T }[]) =>
-          rows.map((row) => row.fields);
-        const set = contentSetOf({
-          word: fieldsOf(records.word),
-          correction: fieldsOf(records.correction),
-          idiom: fieldsOf(records.idiom),
-          synonymRow: fieldsOf(records.synonymRow),
-          tip: fieldsOf(records.tip),
-          curatedCollection: fieldsOf(records.curatedCollection),
-          crosswordDay: fieldsOf(records.crosswordDay),
-        });
-        const refusals = checkRecord(edition.config, set, record, {
-          today: now,
-          editionDate: editionDateOf(now),
-        });
-        if (refusals.length > 0) throw new Refused({ ok: false, reason: 'refused', refusals });
+        if (checked.refusals.length > 0)
+          throw new Refused({ ok: false, reason: 'refused', refusals: [...checked.refusals] });
 
         await publishContentVersion(tx, editionId, published, now);
         await tx.insert(actionLog).values({

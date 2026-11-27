@@ -17,9 +17,10 @@ import type {
   GivenAnswer,
   Haptics,
   PlayedRound,
+  QuickQuestionAnswer,
+  QuickQuestionRound as AskedRound,
   RoundAnswer,
   RoundBlank,
-  RoundContent,
 } from '@slovo/core';
 import {
   coreTokens,
@@ -1616,6 +1617,50 @@ describe('QuickQuestionRound', () => {
     retired: false,
   };
 
+  /** A Quick Question's Round over the Tip as the Core gives it before the pick. */
+  const askedOf = (asked: Tip, definition?: string): AskedRound => ({
+    form: 'pick',
+    prompt: asked.gameQuestion.prompt,
+    highlight: undefined,
+    gap: undefined,
+    labelKind: 'tip',
+    definition,
+    options: OPTIONS.map((text) => ({ text, stressedVowels: [] })),
+    nonStandardForm: asked.nonStandardForm,
+  });
+
+  /** The pick of `option` as the Core judges it. */
+  const judged = (option: number): QuickQuestionAnswer => ({
+    form: 'pick',
+    chosen: option,
+    correct: CORRECT,
+    right: option === CORRECT,
+    sheet: { answer: { text: OPTIONS[CORRECT], stressedVowels: [] }, example: undefined },
+    entry: tip,
+  });
+
+  /** The Quick Question over the Tip in a Feed whose Core judges a pick as `judged` does. */
+  function Feed({ tick }: { tick: number }) {
+    const [answer, setAnswer] = useState<QuickQuestionAnswer>();
+    return (
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+        <GestureHandlerRootView testID={`feed-${String(tick)}`}>
+          <HapticsProvider haptics={haptics}>
+            <QuickQuestionRound
+              title="Quick question"
+              round={askedOf(tip)}
+              label="Definition"
+              answer={answer}
+              onAnswer={(option) => {
+                setAnswer(judged(option));
+              }}
+            />
+          </HapticsProvider>
+        </GestureHandlerRootView>
+      </EditionProvider>
+    );
+  }
+
   const renderTip = (
     asked: Tip,
     { definition, given = strings }: { definition?: string; given?: typeof strings } = {},
@@ -1626,21 +1671,9 @@ describe('QuickQuestionRound', () => {
           <HapticsProvider haptics={haptics}>
             <QuickQuestionRound
               title="Quick question"
-              round={{
-                form: 'pick',
-                prompt: asked.gameQuestion.prompt,
-                labelKind: 'tip',
-                options: OPTIONS.map((text) => ({ text, stressedVowels: [] })),
-                correct: CORRECT,
-                sheet: {
-                  answer: { text: OPTIONS[CORRECT], stressedVowels: [] },
-                  example: undefined,
-                },
-                ...(definition === undefined ? {} : { definition }),
-              }}
-              entry={asked}
+              round={askedOf(asked, definition)}
               label="Definition"
-              answered={undefined}
+              answer={undefined}
               onAnswer={jest.fn()}
             />
           </HapticsProvider>
@@ -1718,33 +1751,6 @@ describe('QuickQuestionRound', () => {
   it('announces an answer once though the Feed draws the card again while its sheet is open', async () => {
     const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility').mockReturnValue();
     announce.mockClear();
-    const round: Extract<RoundContent, { readonly form: 'pick' }> = {
-      form: 'pick',
-      prompt: tip.gameQuestion.prompt,
-      labelKind: 'tip',
-      options: OPTIONS.map((text) => ({ text, stressedVowels: [] })),
-      correct: CORRECT,
-      sheet: { answer: { text: OPTIONS[CORRECT], stressedVowels: [] }, example: undefined },
-    };
-    function Feed({ tick }: { tick: number }) {
-      const [answered, setAnswered] = useState<number>();
-      return (
-        <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-          <GestureHandlerRootView testID={`feed-${String(tick)}`}>
-            <HapticsProvider haptics={haptics}>
-              <QuickQuestionRound
-                title="Quick question"
-                round={round}
-                entry={tip}
-                label="Definition"
-                answered={answered}
-                onAnswer={setAnswered}
-              />
-            </HapticsProvider>
-          </GestureHandlerRootView>
-        </EditionProvider>
-      );
-    }
     const view = await render(<Feed tick={0} />);
     await fireEvent.press(screen.getByRole('button', { name: 'candid' }));
     await view.rerender(<Feed tick={1} />);
@@ -1752,6 +1758,46 @@ describe('QuickQuestionRound', () => {
 
     expect(announce.mock.calls.filter(([said]) => said.startsWith('Spot on!'))).toHaveLength(1);
     announce.mockRestore();
+  });
+
+  it.each([
+    ['candid', success, warning],
+    ['brittle', warning, success],
+  ])(
+    'plays the haptic of the answer to «%s» as the Core judged it, once',
+    async (option, played, silent) => {
+      played.mockClear();
+      silent.mockClear();
+      const view = await render(<Feed tick={0} />);
+      await fireEvent.press(screen.getByRole('button', { name: option }));
+      await view.rerender(<Feed tick={1} />);
+
+      expect(played).toHaveBeenCalledTimes(1);
+      expect(silent).not.toHaveBeenCalled();
+    },
+  );
+
+  it('plays no haptic for an answer the card was drawn with, from an earlier visit', async () => {
+    success.mockClear();
+    warning.mockClear();
+    await render(
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+        <GestureHandlerRootView>
+          <HapticsProvider haptics={haptics}>
+            <QuickQuestionRound
+              title="Quick question"
+              round={askedOf(tip)}
+              label="Definition"
+              answer={judged(CORRECT)}
+              onAnswer={jest.fn()}
+            />
+          </HapticsProvider>
+        </GestureHandlerRootView>
+      </EditionProvider>,
+    );
+
+    expect(success).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('game-answer-card-title')).not.toBeOnTheScreen();
   });
 
   it('shows no «instead» line for a Tip with no non-standard form', async () => {
@@ -1767,20 +1813,9 @@ describe('QuickQuestionRound', () => {
           <HapticsProvider haptics={haptics}>
             <QuickQuestionRound
               title="Quick question"
-              round={{
-                form: 'pick',
-                prompt: 'candid',
-                labelKind: 'meaning',
-                options: OPTIONS.map((text) => ({ text, stressedVowels: [] })),
-                correct: CORRECT,
-                sheet: {
-                  answer: { text: OPTIONS[CORRECT], stressedVowels: [] },
-                  example: undefined,
-                },
-              }}
-              entry={tip}
+              round={{ ...askedOf(tip), prompt: 'candid', labelKind: 'meaning' }}
               label="Quick question"
-              answered={undefined}
+              answer={undefined}
               onAnswer={jest.fn()}
             />
           </HapticsProvider>

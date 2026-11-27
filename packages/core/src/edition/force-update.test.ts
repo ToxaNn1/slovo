@@ -34,4 +34,18 @@ describe('forceUpdateOf', () => {
     expect(forceUpdateOf(minimums, ios('test'))).toBe('none');
     expect(forceUpdateOf({ ios: { hard: 'soon' } }, ios('1.0.0'))).toBe('none');
   });
+
+  it('compares the parts a shorter version lacks as zeros', () => {
+    expect(forceUpdateOf({ ios: { hard: '1.2.1' } }, ios('1.2'))).toBe('blocking');
+    expect(forceUpdateOf({ ios: { hard: '1.2.0' } }, ios('1.2'))).toBe('none');
+    expect(forceUpdateOf({ ios: { hard: '20.0.0' } }, ios('10.0.0'))).toBe('blocking');
+  });
+
+  it('asks nothing of a version with more than numbers and dots, the app’s or a minimum', () => {
+    const hard = { ios: { hard: '2.0.0' } };
+    expect(forceUpdateOf(hard, ios('v1.0.0'))).toBe('none');
+    expect(forceUpdateOf(hard, ios('1.0.0-beta'))).toBe('none');
+    expect(forceUpdateOf({ ios: { hard: '2.0.0-rc' } }, ios('1.0.0'))).toBe('none');
+    expect(forceUpdateOf({ ios: { soft: 'v2.0.0' } }, ios('1.0.0'))).toBe('none');
+  });
 });

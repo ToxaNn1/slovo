@@ -232,4 +232,34 @@ describe('the switch evaluator', () => {
     expect(evaluate(until, statesWith(), dev).tips).toEqual({ on: true });
     expect(evaluate(any, statesWith(), dev).tips).toEqual({ on: false });
   });
+
+  it('reads an app version with anything around its numbers and dots as unreadable', () => {
+    const range = [rule({ feature: 'tips', targets: { appVersion: { from: '1.0.0' } } })];
+
+    expect(evaluate(range, statesWith(), facts({ appVersion: 'v1.2.0' })).tips).toEqual({
+      on: true,
+    });
+    expect(evaluate(range, statesWith(), facts({ appVersion: '1.2.0-dev' })).tips).toEqual({
+      on: true,
+    });
+    expect(evaluate(range, statesWith(), facts({ appVersion: '12.0.0' })).tips).toEqual({
+      on: false,
+    });
+  });
+
+  it('reaches no one at a share of 0 and every one at 100', () => {
+    const ids = Array.from({ length: 2000 }, (_, i) => `install-${String(i)}`);
+    const reached = (share: number) =>
+      ids.filter(
+        (installId) =>
+          !evaluate(
+            [rule({ id: 'rollout', feature: 'tips', targets: { share } })],
+            statesWith(),
+            facts({ installId }),
+          ).tips.on,
+      ).length;
+
+    expect(reached(0)).toBe(0);
+    expect(reached(100)).toBe(ids.length);
+  });
 });

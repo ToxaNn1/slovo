@@ -113,6 +113,18 @@ describe('the Correction card', () => {
     });
   });
 
+  it('gives a standard example sentence with no marks as plain text, all of it', async () => {
+    const card = await build(
+      correction({ examplePair: { nonStandard: 'Так кажуть.', standard: 'Так кажуть краще.' } }),
+    );
+
+    expect(card.examplePair).toEqual({
+      nonStandard: 'Так кажуть.',
+      standard: 'Так кажуть краще.',
+      standardSegments: [{ kind: 'text', text: 'Так кажуть краще.' }],
+    });
+  });
+
   it('puts the first standard equivalent first and the others after it, in their order', async () => {
     const card = await build(
       correction({ standardEquivalents: ['протягом року', 'упродовж року', 'цілий рік'] }),

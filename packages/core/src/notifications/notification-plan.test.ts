@@ -2,7 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { Correction, FeatureSwitch, Word } from '@slovo/contracts';
 
-import { openComposition, type Clock, type Composition, type PlannedNotification } from '../index';
+import {
+  openComposition,
+  type Clock,
+  type Composition,
+  type PlannedNotification,
+  type Random,
+} from '../index';
 import { NOTIFICATION_BODY_LENGTH } from './notification-text';
 import {
   createFakeNotificationScheduler,
@@ -19,7 +25,7 @@ import {
   word,
   wordIdOf,
 } from '../test-support';
-import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { createMemoryUserStatePort, openUserState, type UserState } from '../user-state/user-state';
 
 /** The instant these tests start at. */
 const start = '2026-10-14T08:00:00+03:00';
@@ -44,6 +50,7 @@ async function run({
   politePause = false,
   titles = ['{word}'],
   editionId = 'test',
+  random = { next: () => 0.25 },
 }: {
   words?: readonly Word[];
   corrections?: readonly Correction[];
@@ -61,12 +68,14 @@ async function run({
   titles?: readonly string[];
   /** The id of the Edition the app runs as. */
   editionId?: string;
+  random?: Random;
 } = {}): Promise<{
   app: Composition;
   scheduler: FakeNotificationScheduler;
   records: Map<string, string>;
   /** How many reads of the pack the app made so far. */
   reads: () => number;
+  userState: UserState;
 }> {
   const { content, reads } = countingReads(
     createMemoryContentPort({
@@ -78,6 +87,7 @@ async function run({
       corrections,
     }),
   );
+  const userState = await openUserState({ port: createMemoryUserStatePort(records) });
   const app = await openComposition({
     content,
     edition: testEdition({
@@ -90,12 +100,12 @@ async function run({
       },
       notificationSound: notificationSound ?? undefined,
     }),
-    userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+    userState,
     clock,
-    random: { next: () => 0.25 },
+    random,
     scheduling: { scheduler, ellipsis: '…', titles, farewell, streakWarning, goalNotMet },
   });
-  return { app, scheduler, records, reads };
+  return { app, scheduler, records, reads, userState };
 }
 
 /** The Edition's farewell, the last notification of the polite pause. */
@@ -1201,6 +1211,22 @@ describe('the evening notification', () => {
     });
   });
 
+  it("moves the Streak warning from today's evening to tomorrow's once today reaches 5 XP", async () => {
+    const records = new Map([...activeOn(sevenDays), xpOn('2026-10-14', 4)]);
+    const { app, scheduler, userState } = await run({ records, switchedOff: ['streakFreezes'] });
+    expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(streakWarning);
+    expect(eveningOf(planOf(scheduler), '2026-10-15')).toBeUndefined();
+
+    const award = app.xpLog.award({ source: 'quick-question' });
+    await userState.write(award.changes);
+    award.commit();
+
+    await vi.waitFor(() => {
+      expect(eveningOf(planOf(scheduler), '2026-10-14')).toBeUndefined();
+    });
+    expect(eveningOf(planOf(scheduler), '2026-10-15')).toBe(streakWarning);
+  });
+
   it('plans again on a later change after the device failed to take the plan an XP change made, with nothing rejected unhandled', async () => {
     const fake = createFakeNotificationScheduler();
     let failing = false;
@@ -1377,5 +1403,155 @@ describe('the plan made again', () => {
     const used = planOf(two.scheduler).map((n) => templateOf(titleOf(n)));
     expect(used.slice(0, 4)).toEqual(['А', 'Б', 'А', 'Б']);
     expect(used.slice(1).every((template, index) => template !== used[index])).toBe(true);
+  });
+});
+
+describe('the slots of the plan', () => {
+  it('starts at the next time ahead, keeps time order and ends after 14 days of times', async () => {
+    const { scheduler } = await run({
+      records: new Map([goalSet]),
+      clock: fakeClock('2026-10-14T10:00:00+03:00').clock,
+    });
+
+    const slots = slotsOf(planOf(scheduler));
+    expect(slots).toHaveLength(28);
+    expect(slots[0]).toBe('2026-10-14T19:00');
+    expect(slots.at(-1)).toBe('2026-10-28T09:00');
+    expect([...slots].sort()).toEqual(slots);
+  });
+
+  it.each([false, true])(
+    'plans nothing today once its last time is due this minute (polite pause %s)',
+    async (politePause) => {
+      const { scheduler } = await run({
+        records: new Map([goalSet]),
+        clock: fakeClock('2026-10-14T19:00:30+03:00').clock,
+        politePause,
+      });
+
+      expect(planOf(scheduler).filter(({ date }) => date === '2026-10-14')).toEqual([]);
+    },
+  );
+});
+
+describe('the title templates of the plan', () => {
+  /** The records of one 10:00 Notification time and the stored title templates. */
+  const withTitles = (stored: object) =>
+    new Map([
+      ['notifications.times', JSON.stringify(['10:00'])],
+      ['notifications.titles', JSON.stringify(stored)],
+    ]);
+
+  it('draws among every template when the last one that came is no longer in the list', async () => {
+    const { scheduler } = await run({
+      records: withTitles({ last: 10, planned: {} }),
+      titles,
+      random: { next: () => 0.95 },
+    });
+
+    expect(templateOf(titleOf(planOf(scheduler)[0]))).toBe('Шаблон 9');
+  });
+
+  it('keeps the template of a notification planned again, unless it repeats the one before or is gone', async () => {
+    const { scheduler } = await run({
+      records: withTitles({
+        planned: { '2026-10-14T10:00': 7, '2026-10-15T10:00': 7, '2026-10-16T10:00': 10 },
+      }),
+      titles,
+    });
+
+    const used = planOf(scheduler).map((notification) => templateOf(titleOf(notification)));
+    expect(used.slice(0, 4)).toEqual(['Шаблон 7', 'Шаблон 2', 'Шаблон 3', 'Шаблон 2']);
+  });
+
+  it('never repeats the template of the latest notification that has come, one due this minute too', async () => {
+    const { scheduler } = await run({
+      records: withTitles({
+        last: 7,
+        planned: {
+          '2026-10-13T09:00': 4,
+          '2026-10-14T09:00': 2,
+          '2026-10-12T09:00': 6,
+          '2026-10-14T19:00': 5,
+        },
+      }),
+      clock: fakeClock('2026-10-14T09:00:30+03:00').clock,
+      titles,
+    });
+
+    // 0.25 of the 9 templates other than the second is the third, past the second: the fourth.
+    expect(templateOf(titleOf(planOf(scheduler)[0]))).toBe('Шаблон 3');
+  });
+});
+
+describe('the Words of the plan', () => {
+  it('gives the Words in the order of the Feed', async () => {
+    const { app, scheduler } = await run();
+    const planned = planOf(scheduler).map(wordIdOf);
+
+    for (let position = 0; position < 6; position += 1) await app.feed.show(position);
+
+    expect(app.feed.cards.slice(0, 6).map((card) => card.entryId)).toEqual(planned.slice(0, 6));
+  });
+
+  it("gives this morning's notification today's Word of the Day, not the Word stored for it", async () => {
+    const time = fakeClock('2026-10-14T20:00:00+03:00');
+    const records = new Map<string, string>();
+    const { scheduler: first } = await run({ records, clock: time.clock });
+    const stored = wordAt(planOf(first), '2026-10-15T09:00');
+    const chosen = wordAt(planOf(first), '2026-10-16T09:00');
+
+    time.set('2026-10-15T08:00:00+03:00');
+    const { app, scheduler } = await run({
+      records: new Map([
+        ...records,
+        ['feed.wordOfTheDay', JSON.stringify({ entryId: chosen, date: '2026-10-15' })],
+      ]),
+      clock: time.clock,
+    });
+
+    expect(wordsOfTheDayIn(app).get('2026-10-15')).toBe(chosen);
+    expect(stored).not.toBe(chosen);
+    expect(wordAt(planOf(scheduler), '2026-10-15T09:00')).toBe(chosen);
+  });
+
+  it('gives a new time only Words after the furthest planned, none of the plan before', async () => {
+    const time = fakeClock(start);
+    const { app, scheduler } = await run({ clock: time.clock });
+    const before = planOf(scheduler).map(wordIdOf);
+
+    time.set('2026-10-14T09:30:00+03:00');
+    await app.notifications.keepTime('word', '07:00');
+
+    const after = planOf(scheduler).map(wordIdOf);
+    expect(after).toHaveLength(14);
+    expect(after.filter((wordId) => before.includes(wordId))).toEqual([]);
+  });
+});
+
+describe('the evening notification around a Break and the XP log', () => {
+  it('keeps the evenings before a Break that starts tomorrow, as a device ahead in time synced it', async () => {
+    const records = new Map([goalSet, breakFrom('2026-10-15', 3)]);
+    const { scheduler } = await run({ records });
+
+    const plan = planOf(scheduler);
+    expect(eveningOf(plan, '2026-10-14')).toBe(goalNotMet);
+    for (const date of datesFrom('2026-10-15', 3)) expect(eveningOf(plan, date)).toBeUndefined();
+    expect(eveningOf(plan, '2026-10-18')).toBe(goalNotMet);
+  });
+
+  it('never warns of the Streak with the XP log off', async () => {
+    const records = new Map([...activeOn(sevenDays), xpOn('2026-10-14', 4)]);
+    const { scheduler } = await run({ records, switchedOff: ['streakFreezes', 'xpLog'] });
+
+    expect(planOf(scheduler).filter(({ kind }) => kind === 'evening')).toEqual([]);
+  });
+});
+
+describe('the next morning notification of an empty Cycle', () => {
+  it('is nothing when the Cycle has no Word for it', async () => {
+    const { app } = await run({ words: [] });
+
+    expect(await app.notifications.nextMorning()).toBeUndefined();
   });
 });

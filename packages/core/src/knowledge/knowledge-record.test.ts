@@ -31,6 +31,10 @@ describe('the interval rule of a Knowledge Mark', () => {
     expect(isLearned(record)).toBe(false);
   });
 
+  it('takes an Entry with no record as not Learned', () => {
+    expect(isLearned(undefined)).toBe(false);
+  });
+
   it('makes an Entry Known with no earlier mark Learned at once', () => {
     const record = answerKnowledge(undefined, 'known', monday);
 

@@ -131,7 +131,7 @@ describe('a wrong Sign-in code', () => {
     });
   });
 
-  it('spends the code after 5 tries, so even the right code is then TOO_MANY_REQUESTS', async () => {
+  it('spends the code after 5 tries, so even the right code is then CODE_SPENT', async () => {
     const { client, mailer } = testApp();
     const email = newEmail();
     await client.account.requestCode({ email, editionId: 'uk' });
@@ -143,11 +143,11 @@ describe('a wrong Sign-in code', () => {
     }
 
     await expect(client.account.verifyCode({ email, code: otherThan(code) })).rejects.toMatchObject(
-      { code: 'TOO_MANY_REQUESTS', status: 429, defined: true },
+      { code: 'CODE_SPENT', status: 429, defined: true },
     );
     for (let more = 0; more < 2; more++) {
       await expect(client.account.verifyCode({ email, code })).rejects.toMatchObject({
-        code: 'TOO_MANY_REQUESTS',
+        code: 'CODE_SPENT',
       });
     }
   });
@@ -219,6 +219,14 @@ describe('a Sign-in code', () => {
     await expect(
       client.account.verifyCode({ email: newEmail(), code: '123456' }),
     ).rejects.toMatchObject({ code: 'CODE_EXPIRED' });
+  });
+
+  it('is BAD_REQUEST for an email that is not an email', async () => {
+    const { client } = testApp();
+
+    await expect(
+      client.account.verifyCode({ email: 'not an email', code: '123456' }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST', status: 400 });
   });
 
   it('works once: the code that signed in signs nothing in again', async () => {

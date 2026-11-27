@@ -13,8 +13,9 @@ import { z } from 'zod';
 
 import {
   checkContentSet,
-  checkRecord,
   checksumOf,
+  checkWrite,
+  checkWrites,
   contentSetOf,
   dateAfter,
   parseRecord,
@@ -303,9 +304,16 @@ describe('parseRecord', () => {
   });
 });
 
-describe('checkRecord', () => {
+describe('checkWrite', () => {
   const current = fixtureSet();
-  const save = (json: Json) => checkRecord(config, current, parsed(json), { today });
+  const dates = { today, editionDate: '2026-11-08' };
+  const writeOf = (json: Json) => {
+    const id = String(json['id']);
+    return { kind: kindOf(id), id, fields: json };
+  };
+  const refusalsOf = (set: ContentSet, json: Json) =>
+    checkWrite(config, set, writeOf(json), dates).refusals;
+  const save = (json: Json) => refusalsOf(current, json);
 
   it('passes a valid edit of a record of the set', () => {
     expect(save(record('w_fx0002', { primaryDefinition: 'Який дуже любить говорити.' }))).toEqual(
@@ -315,7 +323,7 @@ describe('checkRecord', () => {
 
   it('refuses a duplicate live Lemma', () => {
     expect(save(record('w_fx0002', { id: 'w_fx0009' }))).toEqual([
-      expect.objectContaining({ rule: 'unique-lemma', file: 'w_fx0009.json', entryId: 'w_fx0009' }),
+      expect.objectContaining({ rule: 'unique-lemma', file: 'word/w_fx0009', entryId: 'w_fx0009' }),
     ]);
   });
 
@@ -359,18 +367,15 @@ describe('checkRecord', () => {
       cc_fx0001: { retired: true },
       cc_fx0002: { retired: true },
     });
-    const retire = parsed(record('w_fx0003', { retired: true }));
-    expect(checkRecord(config, retiredCollections, retire, { today })).toEqual([]);
+    expect(refusalsOf(retiredCollections, record('w_fx0003', { retired: true }))).toEqual([]);
   });
 
   it('refuses a bring-back of a Curated Collection naming a Retired Entry', () => {
     const retiredCollection = fixtureSet({
       cc_fx0001: { entryIds: ['w_fx0001', 'c_fx0003'], retired: true },
     });
-    const bringBack = parsed(
-      record('cc_fx0001', { entryIds: ['w_fx0001', 'c_fx0003'], retired: false }),
-    );
-    expect(checkRecord(config, retiredCollection, bringBack, { today })).toEqual([
+    const bringBack = record('cc_fx0001', { entryIds: ['w_fx0001', 'c_fx0003'], retired: false });
+    expect(refusalsOf(retiredCollection, bringBack)).toEqual([
       expect.objectContaining({
         rule: 'curated-collection-entry',
         entryId: 'cc_fx0001',
@@ -381,8 +386,40 @@ describe('checkRecord', () => {
 
   it('keeps refusals the set already had out of a save', () => {
     const broken = fixtureSet({ w_fx0003: { categoryId: 'unknown' } });
-    const edit = parsed(record('w_fx0002', { primaryDefinition: 'Який дуже любить говорити.' }));
-    expect(checkRecord(config, broken, edit, { today })).toEqual([]);
+    const edit = record('w_fx0002', { primaryDefinition: 'Який дуже любить говорити.' });
+    expect(refusalsOf(broken, edit)).toEqual([]);
+  });
+
+  it("publishes a Curated Collection given no date on the Edition's day", () => {
+    const { publishedOn: _publishedOn, ...undated } = record('cc_fx0002');
+    expect(checkWrite(config, current, writeOf(undated), dates)).toMatchObject({
+      parsed: true,
+      record: { entry: { publishedOn: '2026-11-08' } },
+      refusals: [],
+    });
+  });
+});
+
+describe('checkWrites', () => {
+  it('checks each write against the set with the writes before it that passed', () => {
+    const seed = record('w_fx0002');
+    const word = { ...seed, id: 'w_fx0010', lemma: `${String(seed['lemma'])}ок` };
+    const writes = [
+      { kind: 'word' as const, id: 'w_fx0010', fields: word },
+      { kind: 'word' as const, id: 'w_fx0011', fields: { ...word, id: 'w_fx0011', stress: [0] } },
+      { kind: 'word' as const, id: 'w_fx0012', fields: { ...word, id: 'w_fx0012' } },
+    ];
+
+    const checked = checkWrites(config, fixtureSet(), writes, {
+      today,
+      editionDate: '2026-11-08',
+    });
+
+    expect(checked.map(({ write, checked: { refusals } }) => [write.id, refusals])).toEqual([
+      ['w_fx0010', []],
+      ['w_fx0011', expect.arrayContaining([expect.objectContaining({ rule: 'stress' })])],
+      ['w_fx0012', [expect.objectContaining({ rule: 'unique-lemma', entryId: 'w_fx0012' })]],
+    ]);
   });
 });
 
@@ -880,9 +917,17 @@ describe('the crossword days', () => {
   });
 });
 
-describe('checkRecord of every kind', () => {
+describe('checkWrite of every kind', () => {
   const current = fixtureSet();
-  const save = (json: Json, set = current) => checkRecord(config, set, parsed(json), { today });
+  const save = (json: Json, set = current) => {
+    const id = String(json['id']);
+    return checkWrite(
+      config,
+      set,
+      { kind: kindOf(id), id, fields: json },
+      { today, editionDate: '2026-11-08' },
+    ).refusals;
+  };
 
   it.each(['c_fx0002', 'i_fx0001', 'r_fx0001', 't_fx0001'])('passes a valid save of %s', (id) => {
     expect(save(record(id))).toEqual([]);
@@ -927,63 +972,69 @@ describe('checkRecord of every kind', () => {
   describe('a Crossword day', () => {
     const days = [day('2026-11-10', ['w_fx0002']), day('2026-11-11', ['w_fx0003'])];
     const set = fixtureSet({}, [], { crosswordDays: days });
-    const saveDay = (saved: CrosswordDay, options: { editionDate?: string } = {}) =>
-      checkRecord(
+    // A saved day is parsed first, so it lies on a valid grid: the given words
+    // on a frame of four, the rest filled with Corrections no day here holds.
+    const frame = (date: string, entryIds: readonly string[]): CrosswordDay => ({
+      date,
+      words: [...entryIds, 'c_fx0003', 'c_fx0004', 'c_fx0005'].slice(0, 4).map((entryId, i) => ({
+        entryId,
+        answer: 'ааааа',
+        clue: 'Підказка.',
+        row: i === 1 ? 4 : 0,
+        column: i === 3 ? 4 : 0,
+        direction: i < 2 ? 'across' : 'down',
+      })),
+    });
+    const writeDay = (into: ContentSet, saved: CrosswordDay, editionDate = '2026-11-08') =>
+      checkWrite(
         config,
-        set,
-        { kind: 'crosswordDay', file: 'd.json', entry: saved },
-        {
-          today: new Date(Date.UTC(2026, 10, 8, 23)),
-          ...options,
-        },
-      );
-    const refusal = (rule: RuleName, field: string, message: string) => ({
+        into,
+        { kind: 'crosswordDay', id: saved.date, fields: saved },
+        { today: new Date(Date.UTC(2026, 10, 8, 23)), editionDate },
+      ).refusals;
+    const saveDay = (saved: CrosswordDay, editionDate?: string) =>
+      writeDay(set, saved, editionDate);
+    const refusal = (rule: RuleName, date: string, field: string, message: string) => ({
       rule,
-      file: 'd.json',
+      file: `crosswordDay/${date}`,
       field,
       message,
     });
 
     it('passes a day after the last, and an edit of a day to come', () => {
-      expect(saveDay(day('2026-11-12', ['c_fx0001']))).toEqual([]);
-      expect(saveDay(day('2026-11-11', ['w_fx0003', 'c_fx0001']))).toEqual([]);
+      expect(saveDay(frame('2026-11-12', ['c_fx0001']))).toEqual([]);
+      expect(saveDay(frame('2026-11-11', ['w_fx0003', 'c_fx0001']))).toEqual([]);
     });
 
-    it("refuses a day on or before today, the UTC date when the Edition's is not given", () => {
-      expect(saveDay(day('2026-11-08', ['c_fx0001']))).toEqual([
+    it("refuses a day on or before the Edition's date, whatever the UTC date", () => {
+      expect(saveDay(frame('2026-11-08', ['c_fx0001']))).toEqual([
         refusal(
           'crossword-days-immutable',
+          '2026-11-08',
           'date',
           'The day of 2026-11-08 is published: a day on or before today never changes',
         ),
       ]);
-      expect(
-        rules(saveDay(day('2026-11-09', ['c_fx0001']), { editionDate: '2026-11-09' })),
-      ).toEqual(['crossword-days-immutable']);
+      expect(rules(saveDay(frame('2026-11-09', ['c_fx0001']), '2026-11-09'))).toEqual([
+        'crossword-days-immutable',
+      ]);
     });
 
     it('names the day a gap expects on either side', () => {
-      expect(saveDay(day('2026-11-13', ['c_fx0001']))).toEqual([
+      expect(saveDay(frame('2026-11-13', ['c_fx0001']))).toEqual([
         refusal(
           'crossword-days-gap',
+          '2026-11-13',
           'date',
           'Expected 2026-11-12, the day after the one before: the days run without a gap',
         ),
       ]);
-      expect(saveDay(day('2026-11-09', ['c_fx0001']), { editionDate: '2026-11-08' })).toEqual([]);
+      expect(saveDay(frame('2026-11-09', ['c_fx0001']), '2026-11-08')).toEqual([]);
       const later = fixtureSet({}, [], { crosswordDays: [day('2026-11-12', ['w_fx0002'])] });
-      expect(
-        checkRecord(
-          config,
-          later,
-          { kind: 'crosswordDay', file: 'd.json', entry: day('2026-11-10', ['c_fx0001']) },
-          {
-            today: new Date(Date.UTC(2026, 10, 8)),
-          },
-        ),
-      ).toEqual([
+      expect(writeDay(later, frame('2026-11-10', ['c_fx0001']))).toEqual([
         refusal(
           'crossword-days-gap',
+          '2026-11-10',
           'date',
           'Expected 2026-11-11, the day before the one after: the days run without a gap',
         ),
@@ -991,14 +1042,16 @@ describe('checkRecord of every kind', () => {
     });
 
     it('names an unknown word and a word within 20 days of another day of it', () => {
-      expect(saveDay(day('2026-11-12', ['w_zzzzzz', 'w_fx0003', 'c_fx0001']))).toEqual([
+      expect(saveDay(frame('2026-11-12', ['w_zzzzzz', 'w_fx0003', 'c_fx0001']))).toEqual([
         refusal(
           'crossword-day-entry',
+          '2026-11-12',
           'words.0.entryId',
           'No Word or Correction w_zzzzzz in the Edition',
         ),
         refusal(
           'crossword-days-repeat',
+          '2026-11-12',
           'words.1.entryId',
           'w_fx0003 is also in the day of 2026-11-11: a word comes back only 20 days or more apart',
         ),
@@ -1014,27 +1067,13 @@ describe('checkRecord of every kind', () => {
         day('2026-12-01', ['c_fx0002']),
       ];
       const farSet = fixtureSet({}, [], { crosswordDays: far });
-      const saved = day('2026-11-30', ['w_fx0002', 'w_fx0003']);
-      const result = checkRecord(
-        config,
-        farSet,
-        { kind: 'crosswordDay', file: 'd.json', entry: saved },
-        {
-          today: new Date(Date.UTC(2026, 10, 8)),
-        },
-      );
+      const saved = frame('2026-11-30', ['w_fx0002', 'w_fx0003']);
+      const result = writeDay(farSet, saved);
       expect(result.map(({ field, message }) => [field, message.slice(0, 41)])).toEqual([
         ['words.1.entryId', 'w_fx0003 is also in the day of 2026-11-11'],
       ]);
-      const back = day('2026-11-11', ['c_fx0001', 'c_fx0002']);
-      const resultBack = checkRecord(
-        config,
-        farSet,
-        { kind: 'crosswordDay', file: 'd.json', entry: back },
-        {
-          today: new Date(Date.UTC(2026, 10, 8)),
-        },
-      );
+      const back = frame('2026-11-11', ['c_fx0001', 'c_fx0002']);
+      const resultBack = writeDay(farSet, back);
       expect(resultBack.map(({ field, message }) => [field, message.slice(0, 41)])).toEqual([
         ['words.0.entryId', 'c_fx0001 is also in the day of 2026-11-30'],
       ]);
@@ -1106,9 +1145,11 @@ describe('parseRecord without an id to name', () => {
 
   it('names no field for the record itself, and the dotted path for a nested one', () => {
     const whole = parseRecord('word', 'x.json', null);
-    expect(whole.ok ? [] : whole.refusals.map(({ message: _, ...located }) => located)).toEqual([
-      { rule: 'schema', file: 'x.json' },
-    ]);
+    expect(
+      whole.ok
+        ? []
+        : whole.refusals.map(({ rule, file, entryId, field }) => ({ rule, file, entryId, field })),
+    ).toEqual([{ rule: 'schema', file: 'x.json' }]);
     const result = parseRecord('word', 'x.json', record('w_fx0002', { sources: [{ title: 1 }] }));
     expect(result.ok ? [] : result.refusals.map(({ field }) => field)).toEqual(['sources.0.title']);
   });

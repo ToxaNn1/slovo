@@ -77,10 +77,15 @@ function device({
   rows = {},
   off = [],
   needsNewRecording = [],
+  mediaBase = BASE,
+  failFirst = false,
 }: {
   rows?: Pick<Partial<Patch>, 'recordings' | 'illustrations'>;
   off?: MediaSwitch[];
   needsNewRecording?: string[];
+  mediaBase?: string;
+  /** Whether the first download fails, as offline, and the later ones are served. */
+  failFirst?: boolean;
 } = {}) {
   const held = {
     recordings: [...starterRows.recordings, ...(rows.recordings ?? [])],
@@ -89,7 +94,7 @@ function device({
   const store = createMemoryContentStore({
     contentVersion: 2,
     etag: '"uk.2.p3"',
-    mediaBase: BASE,
+    mediaBase,
     needsNewRecording,
     media: held,
   });
@@ -103,10 +108,17 @@ function device({
   for (const row of held.illustrations)
     fetcher.serve(`${BASE}/illustrations/${row.wordId}.${row.hash}.png`, row.size);
   const time = fakeClock();
+  let failing = failFirst;
   const media = createMedia({
     store,
     cache,
-    fetcher,
+    fetcher: {
+      download(url) {
+        if (!failing) return fetcher.download(url);
+        failing = false;
+        return Promise.reject(new Error('offline'));
+      },
+    },
     starter,
     clock: time.clock,
     defaultVoice: 'oksana',
@@ -417,5 +429,109 @@ describe('a Patch applied', () => {
       illustration: { kind: 'remote', url: `${BASE}/illustrations/w1.${hashOf('e')}.png` },
     });
     expect(await cache.files()).toEqual([]);
+  });
+});
+
+describe('the media, more rules', () => {
+  const w1Recording = `${BASE}/recordings/oksana/plain/w1.${hashOf('a')}.mp3`;
+
+  it('joins the Media Store base and a path with one slash, however many the base ends with', async () => {
+    const { media } = device({
+      rows: { recordings: [recording('w1', hashOf('a'))] },
+      mediaBase: `${BASE}//`,
+    });
+
+    expect((await media.ofWord('w1', 'oksana')).recording).toEqual({
+      kind: 'remote',
+      url: w1Recording,
+    });
+  });
+
+  it('prefetches the Illustration of a Word that has no Recording', async () => {
+    const { media, fetcher } = device({
+      rows: { illustrations: [illustration('w1', hashOf('b'))] },
+    });
+
+    await media.prefetch(['w1'], 'oksana');
+
+    expect(fetcher.asked).toEqual([`${BASE}/illustrations/w1.${hashOf('b')}.png`]);
+  });
+
+  it('downloads none of the files the Starter Media bundles, on a prefetch or on a tap', async () => {
+    const { media, fetcher } = device();
+
+    await media.prefetch(['starter'], 'oksana');
+    const tapped = await media.downloadRecording('starter', 'oksana');
+
+    expect(fetcher.asked).toEqual([]);
+    expect(tapped.kind).toBe('bundled');
+  });
+
+  it('downloads no Recording on a tap once it is cached', async () => {
+    const { media, fetcher } = device({ rows: { recordings: [recording('w1', hashOf('a'))] } });
+    await media.prefetch(['w1'], 'oksana');
+
+    const tapped = await media.downloadRecording('w1', 'oksana');
+
+    expect(fetcher.asked).toEqual([w1Recording]);
+    expect(tapped.kind).toBe('cached');
+  });
+
+  it('tries a failed download again on the next prefetch', async () => {
+    const { media } = device({
+      rows: { recordings: [recording('w1', hashOf('a'))] },
+      failFirst: true,
+    });
+
+    await media.prefetch(['w1'], 'oksana');
+    expect((await media.ofWord('w1', 'oksana')).recording.kind).toBe('remote');
+    await media.prefetch(['w1'], 'oksana');
+
+    expect((await media.ofWord('w1', 'oksana')).recording.kind).toBe('cached');
+  });
+
+  it(`keeps files of exactly ${String(MEDIA_CACHE_LIMIT / MB)} MB in all`, async () => {
+    const size = MEDIA_CACHE_LIMIT / 2;
+    const { media } = device({
+      rows: {
+        recordings: [
+          recording('w1', hashOf('a'), { size }),
+          recording('w2', hashOf('b'), { size }),
+        ],
+      },
+    });
+
+    await media.prefetch(['w1', 'w2'], 'oksana');
+
+    expect((await media.ofWord('w1', 'oksana')).recording.kind).toBe('cached');
+    expect((await media.ofWord('w2', 'oksana')).recording.kind).toBe('cached');
+  });
+
+  it('marks nothing used for a Word without the file', async () => {
+    const { media } = device();
+
+    await expect(media.used('none', 'illustration', 'oksana')).resolves.toBeUndefined();
+  });
+
+  it('evicts no file of a row a Patch keeps', async () => {
+    const { media, store } = device({
+      rows: {
+        recordings: [recording('w1', hashOf('a'))],
+        illustrations: [illustration('w1', hashOf('b'))],
+      },
+    });
+    await media.prefetch(['w1'], 'oksana');
+    const patch = patchOf(2, {
+      recordings: [recording('w1', hashOf('a'))],
+      illustrations: [illustration('w1', hashOf('b'))],
+    });
+    await store.apply(patch, '"uk.3.p3"');
+
+    await media.patchApplied(patch);
+
+    expect(await media.ofWord('w1', 'oksana')).toMatchObject({
+      recording: { kind: 'cached' },
+      illustration: { kind: 'cached' },
+    });
   });
 });
