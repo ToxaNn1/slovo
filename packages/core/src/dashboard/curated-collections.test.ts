@@ -506,3 +506,59 @@ describe('A refresh whose read fails', () => {
     });
   });
 });
+
+describe('A Curated Collection by its publication date', () => {
+  it('opens a screen and takes «+ Додати» from the day it is published, not before', async () => {
+    const { app } = await run();
+
+    expect(await app.curatedCollections.screen('cc_today')).toMatchObject({
+      collection: { id: 'cc_today' },
+    });
+    expect(await app.curatedCollections.screen('cc_tomorrow')).toBeUndefined();
+    expect(await app.curatedCollections.add('cc_tomorrow')).toBeUndefined();
+    expect(app.collections.list).toEqual([]);
+  });
+});
+
+describe('A Curated Collection and its Entries', () => {
+  it('skips an Entry the Language Pack does not have', async () => {
+    const { app } = await run({
+      curatedCollections: [
+        { ...collection('cc_some', '2026-11-01'), entryIds: ['w_one', 'w_missing', 'w_two'] },
+      ],
+    });
+
+    const screen = await app.curatedCollections.screen('cc_some');
+
+    expect(screen?.entries.map(({ entryId }) => entryId)).toEqual(['w_one', 'w_two']);
+  });
+
+  it('tells its subscribers when an Entry is hidden, and nothing with `curatedCollections` off', async () => {
+    const cases: [FeatureSwitch[], number][] = [
+      [['wordOfTheDay', 'curatedCollections'], 1],
+      [['wordOfTheDay'], 0],
+    ];
+    for (const [on, expected] of cases) {
+      const { app } = await run({ on });
+      let told = 0;
+      app.curatedCollections.subscribe(() => (told += 1));
+
+      await app.hiddenEntries.hide('w_one');
+      await settle();
+
+      expect(told).toBe(expected);
+    }
+  });
+
+  it('copies it again once the copy is deleted', async () => {
+    const { app } = await run();
+    const first = await app.curatedCollections.add('cc_today');
+    await app.collections.delete(first?.id ?? '');
+    await settle();
+
+    const second = await app.curatedCollections.add('cc_today');
+
+    expect(second?.source).toBe('cc_today');
+    expect(app.collections.list.map(({ source }) => source)).toEqual(['cc_today']);
+  });
+});

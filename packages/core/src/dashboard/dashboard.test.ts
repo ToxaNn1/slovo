@@ -1,5 +1,5 @@
 import type { CuratedCollection } from '@slovo/contracts';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   openComposition,
@@ -355,5 +355,62 @@ describe('«SLOVO пропонує» on the Dashboard', () => {
 
     expect(block?.cards.map(({ collection: { id } }) => id)).toEqual(['cc_00']);
     expect(block?.published).toBe(1);
+  });
+});
+
+describe('The Dashboard follows what a reader sees', () => {
+  it('shows the new Mood when the reader changes the chosen one', async () => {
+    const { app } = await run({ on: ['mood'] });
+    const moodOf = () => {
+      const block = app.dashboard.blocks.find((it) => it.kind === 'mood');
+      return block?.kind === 'mood' && block.check.state === 'chosen' ? block.check.mood.id : '';
+    };
+    await app.mood.choose('calm');
+    await vi.waitFor(() => {
+      expect(moodOf()).toBe('calm');
+    });
+
+    await app.mood.choose('joyful');
+
+    await vi.waitFor(() => {
+      expect(moodOf()).toBe('joyful');
+    });
+  });
+
+  it('moves «Попередні слова» on when the day turns, with the Word of the Day off', async () => {
+    const time = fakeClock('2026-11-04T23:59:00+02:00');
+    const { app } = await run({
+      on: ['wordOfTheDayArchive', 'previousWords'],
+      clock: time.clock,
+      records: archived({
+        '2026-11-01': 'w_one',
+        '2026-11-02': 'w_two',
+        '2026-11-03': 'w_three',
+        '2026-11-04': 'w_four',
+      }),
+    });
+    const daysOf = () =>
+      previousWordsOf(app.dashboard.blocks)?.days.map(({ row }) => row.entryId) ?? [];
+    expect(daysOf()).toEqual(['w_three', 'w_two', 'w_one']);
+
+    time.advance(2 * 60 * 1000);
+    await app.resume();
+
+    expect(daysOf()).toEqual(['w_four', 'w_three', 'w_two']);
+  });
+});
+
+describe('The Dashboard when nothing a reader sees changes', () => {
+  it('keeps the same blocks and tells no one when the Word of the Day is revealed again', async () => {
+    const { app } = await run();
+    await app.dashboard.reveal();
+    const { blocks } = app.dashboard;
+    let told = 0;
+    app.dashboard.subscribe(() => (told += 1));
+
+    await app.dashboard.reveal();
+
+    expect(app.dashboard.blocks).toBe(blocks);
+    expect(told).toBe(0);
   });
 });
