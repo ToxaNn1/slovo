@@ -18,6 +18,8 @@ const AccountProblemsSchema = z.strictObject({
   'wrong-code': PluralSchema,
   /** The code ran out of time or was replaced by a newer one. */
   'code-expired': TextSchema,
+  /** Every try of the code is spent; only a new code signs in. */
+  'code-spent': TextSchema,
   /** Too many requests, for this email or from this network. */
   'too-many-requests': TextSchema,
   /** The backend refused the Google or Apple sign-in: the token didn't check, or Google hasn't verified the email (ADR 0047). */

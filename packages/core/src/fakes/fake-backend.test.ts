@@ -62,7 +62,7 @@ describe('the fake backend’s Sync', () => {
 });
 
 describe('the fake backend’s Sign-in code', () => {
-  it('answers 429 on the fifth wrong try, and to every try after it until a new code', async () => {
+  it('answers CODE_SPENT on the fifth wrong try, and to every try after it until a new code', async () => {
     const fake = createFakeBackend();
     const email = 'anna@mail.com';
     await fake.backend.account.requestCode({ email, editionId: 'uk' });
@@ -74,10 +74,11 @@ describe('the fake backend’s Sign-in code', () => {
       ).rejects.toMatchObject({ code: 'WRONG_CODE', data: { triesLeft } });
     }
     await expect(fake.backend.account.verifyCode({ email, code: '999999' })).rejects.toMatchObject({
-      code: 'TOO_MANY_REQUESTS',
+      code: 'CODE_SPENT',
+      status: 429,
     });
     await expect(fake.backend.account.verifyCode({ email, code })).rejects.toMatchObject({
-      code: 'TOO_MANY_REQUESTS',
+      code: 'CODE_SPENT',
     });
 
     await fake.backend.account.requestCode({ email, editionId: 'uk' });

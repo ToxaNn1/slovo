@@ -83,11 +83,16 @@ function secondsOf(header: string | readonly string[] | undefined): number | und
   return typeof value === 'string' && /^\d+$/.test(value) ? Number(value) : undefined;
 }
 
+/** Whether a body is a contract error other than `TOO_MANY_REQUESTS`, such as `CODE_SPENT`. */
+function isOtherCode(body: unknown): boolean {
+  return isORPCErrorJson(body) && body.defined && body.code !== 'TOO_MANY_REQUESTS';
+}
+
 /**
- * What a call throws on a 429, whatever its body: the contract's
- * `TOO_MANY_REQUESTS`, with the seconds of the answer's `Retry-After`, which
- * the backend sets on every limit; none when the answer has no
- * such header or it says anything else.
+ * What a call throws on a 429 that is no other code of the contract: the
+ * contract's `TOO_MANY_REQUESTS`, with the seconds of the answer's
+ * `Retry-After`, which the backend sets on every limit; none when the answer
+ * has no such header or it says anything else.
  */
 export class TooManyRequestsError extends ORPCError<'TOO_MANY_REQUESTS', unknown> {
   readonly retryAfter: number | undefined;
@@ -119,7 +124,7 @@ export function createApiClient({ url, fetch, headers = {} }: ApiClientOptions):
           ? headers
           : { ...headers, authorization: `Bearer ${context.token}` },
       customErrorResponseBodyDecoder: (body, response) =>
-        response.status === 429
+        response.status === 429 && !isOtherCode(body)
           ? new TooManyRequestsError(body, secondsOf(response.headers['retry-after']))
           : undefined,
     }),

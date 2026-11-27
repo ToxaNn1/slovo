@@ -425,6 +425,31 @@
                           "const": true
                         },
                         "code": {
+                          "const": "CODE_SPENT"
+                        },
+                        "status": {
+                          "const": 429
+                        },
+                        "message": {
+                          "type": "string",
+                          "default": "The code is spent"
+                        },
+                        "data": {}
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "defined": {
+                          "const": true
+                        },
+                        "code": {
                           "const": "TOO_MANY_REQUESTS"
                         },
                         "status": {

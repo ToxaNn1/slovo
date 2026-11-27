@@ -363,10 +363,10 @@ export function createFakeBackend({
         if (live === undefined) throw errors.CODE_EXPIRED();
         // A spent code stays spent, even for the right code, until a new one is sent;
         // it passes with no time, so the answer has no Retry-After.
-        if (live.triesLeft === 0) throw errors.TOO_MANY_REQUESTS();
+        if (live.triesLeft === 0) throw errors.CODE_SPENT();
         if (live.code !== input.code) {
           live.triesLeft -= 1;
-          if (live.triesLeft === 0) throw errors.TOO_MANY_REQUESTS();
+          if (live.triesLeft === 0) throw errors.CODE_SPENT();
           throw errors.WRONG_CODE({ data: { triesLeft: live.triesLeft } });
         }
         codes.delete(email);
