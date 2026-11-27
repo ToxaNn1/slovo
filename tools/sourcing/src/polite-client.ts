@@ -24,7 +24,10 @@ export interface FetchResponse {
  * What a cache file holds; the address it came from rides along but is not
  * read back. A 404 an older run cached is a miss.
  */
-const CachedResponseSchema = z.object({ status: z.literal(200), body: z.string() });
+const CachedResponseSchema = z.object({
+  status: z.union([z.literal(200), z.literal(404)]),
+  body: z.string(),
+});
 
 /** The network port. Rejects when the host can't be reached or doesn't answer in time. */
 export type Fetch = (url: string, options: { timeoutMs: number }) => Promise<FetchResponse>;
@@ -55,6 +58,11 @@ export interface GetOptions {
    * rate limit) takes the host out for the rest of the run.
    */
   readonly fallback?: boolean;
+  /**
+   * Keeps a 404 on disk too, so a later run takes it as the answer; only a
+   * caller that passes this reads a kept 404 back.
+   */
+  readonly keepNotFound?: boolean;
 }
 
 /** Raised for a host taken out of the run; nothing is sent to it. */
@@ -64,10 +72,11 @@ export class HostUnreachableError extends Error {}
 export const POLITE_INTERVAL_MS = 2000;
 
 /**
- * Only a page is cached: a 404 may be a page the site adds later or a passing
- * fault, so a re-run asks again.
+ * A page is cached; a 404 only for a caller that keeps them, as it may be a
+ * page the site adds later or a passing fault.
  */
 const CACHEABLE_STATUS = 200;
+const NOT_FOUND_STATUS = 404;
 /** Answers that mean "slow down"; goroh answers a fresh client, such as a CI run, a 403 first. */
 const BACK_OFF_STATUSES = new Set([403, 429, 503]);
 const TIMEOUT_MS = 20_000;
@@ -100,15 +109,15 @@ export class PoliteClient {
 
   /** The page for `url` already on disk, if any; nothing is fetched. */
   cached(url: string): FetchResponse | undefined {
-    return this.readCache(this.cacheFile(url));
+    return this.readCache(this.cacheFile(url), false);
   }
 
   async get(
     url: string,
-    { accept = () => true, fallback = false }: GetOptions = {},
+    { accept = () => true, fallback = false, keepNotFound = false }: GetOptions = {},
   ): Promise<FetchResponse> {
     const cacheFile = this.cacheFile(url);
-    const cachedBefore = this.readCache(cacheFile);
+    const cachedBefore = this.readCache(cacheFile, keepNotFound);
     if (cachedBefore !== undefined) {
       this.stats.cached += 1;
       return cachedBefore;
@@ -122,7 +131,7 @@ export class PoliteClient {
 
       await this.waitTurn(host);
       // A parallel run may have fetched the page while this one waited its turn.
-      const cachedMeanwhile = this.readCache(cacheFile);
+      const cachedMeanwhile = this.readCache(cacheFile, keepNotFound);
       if (cachedMeanwhile !== undefined) {
         this.stats.cached += 1;
         return cachedMeanwhile;
@@ -134,6 +143,10 @@ export class PoliteClient {
           timeoutMs: fallback ? FALLBACK_TIMEOUT_MS : TIMEOUT_MS,
         });
         if (response.status === CACHEABLE_STATUS && accept(response.body)) {
+          this.writeCache(cacheFile, url, response);
+          return response;
+        }
+        if (keepNotFound && response.status === NOT_FOUND_STATUS) {
           this.writeCache(cacheFile, url, response);
           return response;
         }
@@ -162,7 +175,7 @@ export class PoliteClient {
   }
 
   /** The cached answer, or `undefined` when there is none or the file is corrupt (a miss). */
-  private readCache(cacheFile: string): FetchResponse | undefined {
+  private readCache(cacheFile: string, keepNotFound: boolean): FetchResponse | undefined {
     if (!existsSync(cacheFile)) return undefined;
     let json: unknown;
     try {
@@ -172,6 +185,7 @@ export class PoliteClient {
     }
     const cached = CachedResponseSchema.safeParse(json);
     if (!cached.success) return undefined;
+    if (cached.data.status === NOT_FOUND_STATUS && !keepNotFound) return undefined;
     return cached.data;
   }
 

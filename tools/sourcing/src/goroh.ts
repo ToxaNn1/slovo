@@ -9,7 +9,7 @@ import { HTMLElement, NodeType, parse, type Node } from 'node-html-parser';
 import { LANGUAGE_MODEL } from '@slovo/content-rules';
 
 import type { DictionaryArticle } from './article';
-import type { PoliteClient } from './polite-client';
+import type { GetOptions, PoliteClient } from './polite-client';
 import { citedAs, SOURCE_LANGUAGE, squeeze, unstressed } from './text';
 
 const SITE = 'https://goroh.pp.ua/';
@@ -27,9 +27,11 @@ export async function fetchGoroh(
   client: PoliteClient,
   section: GorohSection,
   lemma: string,
+  options: GetOptions = {},
 ): Promise<string | undefined> {
   const response = await client.get(
     `${SITE}${encodeURIComponent(section)}/${encodeURIComponent(lemma)}`,
+    options,
   );
   return response.status === 200 ? response.body : undefined;
 }

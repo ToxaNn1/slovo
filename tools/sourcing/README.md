@@ -36,7 +36,7 @@ pnpm source:words path/to/lemmas.txt --edition uk
 
 Every run on the machine shares one cache: `--cache`, else `$SLOVO_SOURCING_CACHE`, else `$XDG_CACHE_HOME/slovo-sourcing`, else `~/.cache/slovo-sourcing`. Through it, parallel runs (one per worktree, say) are polite together:
 
-- a page is fetched once, by whichever run asks first, and read from disk by every other run, now and later; any other answer, a 404 included, is asked again on the next run;
+- a page is fetched once, by whichever run asks first, and read from disk by every other run, now and later; any other answer, a 404 included, is asked again on the next run, except the ЕСУМ 404s of `source:lemmas`, which are kept, so a rerun of a large pick does not ask goroh again;
 - each host gets at most one request every 2 seconds across all runs, booked in a schedule file under `hosts/` behind a lock;
 - on HTTP 429 or 503, or a failed connection, goroh gets a rest of 5, 10, 20 and then 40 seconds, which every run honours, before the Lemma is reported as `fetch-failed`. Each back-off is printed, and the totals are in the report.
 
@@ -141,7 +141,7 @@ pnpm source:hrinchenko                     # once per machine: download, OCR, in
 pnpm source:lemmas --edition uk --from hrinchenko --count 200 --out words-hr.txt
 ```
 
-- **The index.** `source:hrinchenko` downloads the University of Toronto scan of the 1909 printing from archive.org (two PDFs, pinned by SHA-256) into `<cache>/hrinchenko/`, reads every page by our own OCR (Poppler's `pdftoppm` and Tesseract with `ukr` and `rus`, one process per core, about two hours; each page's text is kept, so a stopped run resumes) and writes `<cache>/lemmas/hrinchenko-<pins>.tsv`, one article per line: `<headword>\t<gloss>\t<sigla>`, the gloss being the rest of the article on one line. Never committed.
+- **The index.** `source:hrinchenko` downloads the University of Toronto scan of the 1909 printing from archive.org (two PDFs, pinned by SHA-256) into `<cache>/hrinchenko/`, reads every page by our own OCR (Poppler's `pdftoppm` and Tesseract with `ukr` and `rus`, one process per core, about two hours; each page's text is kept, so a stopped run resumes) and writes `<cache>/lemmas/hrinchenko-v<parser>-<pins>.tsv` (a parser change builds a new index from the kept OCR text, in minutes), one article per line: `<headword>\t<gloss>\t<sigla>`, the gloss being the rest of the article on one line. Tesseract reads the bold Б that opens an article as В; the parser gives the Б back to every В article before the point in the volume where the Б readings stop, as the dictionary is in alphabetical order. Never committed.
 - **`source:lemmas --from hrinchenko`** keeps only the Lemmas of the headword list that Грінченко has: spelled in today's orthography, still a modern Lemma, and never an OCR misreading. Every other option works as without it.
 - **`source:words`** reads the index when it is built. A Lemma that neither goroh's explanatory dictionaries nor СУМ-11 has is drafted from Грінченко instead of flagged `no-entry`: the part of speech and a noun's gender from its label, Грінченко as the Source, no Definition. The draft goes to `incomplete/`, flagged `write-fresh` with the article and its sigla. Its Russian gloss is a basis, never quoted: the writer writes the Definition fresh and proves it in a normative dictionary; a folklore Example may be an Example lead.
 
