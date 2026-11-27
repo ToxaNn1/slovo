@@ -67,11 +67,13 @@ export function FieldRow({
     );
   if (isLeaf(control)) {
     const hint =
-      control.type !== 'publish-date'
-        ? undefined
-        : fixed
-          ? 'Добірка вже з’явилася: дату не змінити'
-          : 'Порожньо — одразу';
+      control.type === 'long-text' && control.limit !== undefined
+        ? `${String(Array.from(typeof props.value === 'string' ? props.value : '').length)} / ${String(control.limit)} знаків`
+        : control.type !== 'publish-date'
+          ? undefined
+          : fixed
+            ? 'Добірка вже з’явилася: дату не змінити'
+            : 'Порожньо — одразу';
     const described = [hint === undefined ? undefined : `${id}-hint`, describedBy]
       .filter((part) => part !== undefined)
       .join(' ');

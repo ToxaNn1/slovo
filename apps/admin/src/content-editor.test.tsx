@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 
 import { CONTENT_KINDS } from './components/content-editor/kinds';
-import { FIXTURES, WORD_FIELDS } from './mock/fixtures';
+import { FIXTURES, LONG_WORD, WORD_FIELDS } from './mock/fixtures';
 import { override, type Refusal, refusal } from './mock/handlers';
 import { server } from './mock/server';
 import { Admin } from './router';
@@ -220,6 +220,59 @@ test('the Word form has no JSON: vowels, labelled choices, rows with + and ×, r
     rarity: 5,
     categoryId: 'old-crafts',
   });
+});
+
+test('the Short Definition sits after the primary Definition with its character count; an empty one is left out', async () => {
+  const long = { ...WORD_FIELDS, ...LONG_WORD };
+  server.use(
+    override('content.record', () => ({ fields: long, recordVersion: 1, retired: false })),
+  );
+  const bodies = edits(() => FIXTURES.content.edit);
+  const user = await openWord();
+
+  const labels = [...document.querySelectorAll('label')].map((label) => label.textContent);
+  expect(labels.indexOf('Коротке тлумачення')).toBe(labels.indexOf('Основне тлумачення') + 1);
+  const short = screen.getByLabelText('Коротке тлумачення');
+  expect(short).toHaveProperty('value', LONG_WORD.shortDefinition);
+  expect(screen.getByText('21 / 80 знаків')).toBeDefined();
+
+  await user.type(short, ' ґ');
+  expect(screen.getByText('23 / 80 знаків')).toBeDefined();
+  await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+  await screen.findByText('Опубліковано, версія контенту 2');
+  expect(bodies[0]?.['fields']).toMatchObject({
+    shortDefinition: `${LONG_WORD.shortDefinition} ґ`,
+  });
+
+  await user.clear(short);
+  expect(screen.getByText('0 / 80 знаків')).toBeDefined();
+  await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+  await waitFor(() => {
+    expect(bodies).toHaveLength(2);
+  });
+  expect(bodies[1]?.['fields']).not.toHaveProperty('shortDefinition');
+});
+
+test('a Short Definition the content rules refuse shows the rule at its field', async () => {
+  const message = 'Holds 81 characters: a Short Definition holds 80 or fewer';
+  edits(() =>
+    refusal(422, {
+      defined: true,
+      code: 'REFUSED',
+      status: 422,
+      message: 'The record breaks a content rule',
+      data: { refusals: [{ rule: 'short-definition', field: 'shortDefinition', message }] },
+    }),
+  );
+  const user = await openWord();
+  const short = screen.getByLabelText('Коротке тлумачення');
+  expect(screen.getByText('0 / 80 знаків')).toBeDefined();
+  await user.type(short, 'к'.repeat(81));
+  expect(screen.getByText('81 / 80 знаків')).toBeDefined();
+
+  await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+  expect(await screen.findByText(/short-definition/)).toBeDefined();
+  expect(short.getAttribute('aria-invalid')).toBe('true');
 });
 
 test('a new Lemma drops the Stress positions that no longer fall on a vowel', async () => {
