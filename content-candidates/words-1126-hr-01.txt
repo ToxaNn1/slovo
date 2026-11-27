@@ -1,0 +1,16 @@
+авдитор history-antiquity 5
+агел folk-names 5
+адукат history-antiquity 5
+антипко folk-names 5
+анциболот folk-names 5
+арідник folk-names 5
+безсилок witty-insults 5
+вабний emotions-character 4
+вандрівник history-antiquity 5
+варстат old-crafts 5
+варунок history-antiquity 5
+вахмайстер military 5
+вашець language-speech 5
+верцадло household-crafts 5
+вибанітувати history-antiquity 5
+вивірка folk-names 3
