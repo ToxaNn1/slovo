@@ -51,4 +51,23 @@ describe('a Word', () => {
       ['gender', 'Required for a noun'],
     ]);
   });
+
+  it('takes a Short Definition and reads a Word without one as before', () => {
+    const short = 'Той, хто пасе худобу.';
+    expect(WordSchema.parse({ ...noun, shortDefinition: short }).shortDefinition).toBe(short);
+    expect(WordOutputSchema.parse({ ...noun, shortDefinition: short }).shortDefinition).toBe(short);
+    expect('shortDefinition' in WordSchema.parse(noun)).toBe(false);
+    expect(issuesOf({ ...noun, shortDefinition: ' ' })?.map(([path]) => path)).toEqual([
+      'shortDefinition',
+    ]);
+  });
+
+  it('reads as an output a Word with a field a later build adds, as the build before the Short Definition reads one with it', () => {
+    const later = { ...noun, fieldOfALaterBuild: 'Той, хто пасе худобу.' };
+    expect(issuesOf(later, WordOutputSchema)).toBeUndefined();
+    expect(issuesOf(later)?.map(([path]) => path)).toEqual(['']);
+    expect(WordOutputSchema.parse(later)).toMatchObject({
+      primaryDefinition: noun.primaryDefinition,
+    });
+  });
 });

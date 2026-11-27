@@ -231,6 +231,7 @@ export {
   type Rarity,
   RegisterSchema,
   renderStress,
+  SHORT_DEFINITION_MAX_LENGTH,
   STRESS_MARK,
   WordIdSchema,
   WordSchema,
