@@ -105,3 +105,21 @@ describe('the notification text of a Tip', () => {
     expect(body).toBe(`Так: ${'дуже '.repeat(14)}дуже…`);
   });
 });
+
+describe('the cut of a long notification body', () => {
+  /** The Edition's words with the standard form read bare, so the body is the form alone. */
+  const bare = { ellipsis: '…', tipStandardForm: '{form}' };
+  const bodyOf = (standardForm: string) => notificationText(tip({ standardForm }), bare).body;
+
+  it('keeps a body of exactly 80 characters whole', () => {
+    expect(bodyOf('а'.repeat(80))).toBe('а'.repeat(80));
+  });
+
+  it('cuts one long word to 80 characters, the ellipsis included', () => {
+    expect(bodyOf('а'.repeat(100))).toBe(`${'а'.repeat(79)}…`);
+  });
+
+  it('cuts one long word after a leading space by characters, not at that space', () => {
+    expect(bodyOf(` ${'а'.repeat(100)}`)).toBe(` ${'а'.repeat(78)}…`);
+  });
+});
