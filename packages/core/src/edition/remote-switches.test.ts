@@ -493,4 +493,65 @@ describe('the remote Feature Switches', () => {
       expect(fake.switches.asked).toHaveLength(3);
     });
   });
+
+  it('holds a Rule’s schedule by the backend’s clock, at once and on the next launch', async () => {
+    const device = fakeClock('2026-11-08T12:00:00Z');
+    const backendTime = fakeClock('2026-11-08T13:00:00Z');
+    const fake = createFakeBackend({ clock: backendTime.clock });
+    fake.switches.setRules([
+      {
+        id: 'later',
+        feature: 'game',
+        verdict: 'off',
+        targets: { schedule: { from: '2026-11-08T12:30:00Z' } },
+      },
+    ]);
+    const records = new Map<string, string>();
+    const launch = async () =>
+      openRemoteSwitches({
+        edition: editionWithout(),
+        states: switchStatesOf(editionWithout()),
+        facts: readerFacts,
+        backend: fake.backend,
+        userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+        schedule: immediateSchedule().schedule,
+        random: randomOf(0.5),
+        clock: device.clock,
+      });
+
+    const switches = await launch();
+    await switches.ask();
+
+    expect(switches.edition.isFeatureEnabled('game')).toBe(false);
+    expect((await launch()).edition.isFeatureEnabled('game')).toBe(false);
+  });
+
+  it('tells no one when a new answer brings the minimums the app keeps', async () => {
+    const app = device();
+    app.backend.switches.setMinimums({ ios: { soft: '1.2.0' } });
+    const switches = await app.launch();
+    await switches.ask();
+    let told = 0;
+    switches.subscribe(() => {
+      told += 1;
+    });
+
+    app.backend.switches.setRules([
+      { id: 'nobody', feature: 'search', verdict: 'off', targets: { share: 0 } },
+    ]);
+
+    await expect(switches.ask()).resolves.toBe(false);
+    expect(told).toBe(0);
+    expect(switches.minimums).toEqual({ ios: { soft: '1.2.0' } });
+    expect(switches.edition.isFeatureEnabled('game')).toBe(true);
+  });
+
+  it('give no minimums and the reader’s own verdicts before any answer', async () => {
+    const switches = await device(editionWithout('corrections')).launch();
+
+    expect(switches.minimums).toEqual({});
+    expect(switches.verdicts.corrections).toEqual({ on: false });
+    expect(switches.verdicts.game).toEqual({ on: true });
+    expect(switches.installId).toBe(readerFacts().installId);
+  });
 });
