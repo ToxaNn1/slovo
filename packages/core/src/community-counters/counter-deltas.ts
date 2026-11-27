@@ -2,6 +2,7 @@ import type { Edition } from '../edition/edition';
 import { createInTurn } from '../in-turn';
 import type { KnowledgeMark } from '../knowledge/knowledge-record';
 import type { CounterChange, CounterDelta, CounterEvent, UserStateChanges } from '../ports';
+import { sharesStatistics, type StatisticsConsent } from '../statistics/statistics-consent';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -118,9 +119,12 @@ export function openCommunityCounters({
   edition,
   userState,
   inTurn,
+  consent,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   userState: UserState;
+  /** The Statistics consent of this device (ADR 0210); without it, no one is asked. */
+  consent?: StatisticsConsent | undefined;
   /** The counters' turn of the user state (`countersTurnOf`). */
   inTurn: ReturnType<typeof createInTurn>;
 }): CommunityCounters {
@@ -132,7 +136,7 @@ export function openCommunityCounters({
     next: (counted: Counted) => Counted,
   ): Promise<UserStateChanges> {
     if (!edition.isFeatureEnabled('communityCounters')) return new Map();
-    if ((await userState.read(userStateRecords.shareCounters)) === false) return new Map();
+    if (!(await sharesStatistics(userState, consent))) return new Map();
     const counted = (await userState.read(countersCounted.record(entryId))) ?? nothingCounted;
     const is = next(counted);
     const delta: CounterDelta = {

@@ -21,6 +21,11 @@ import { todayKey } from '../local-date';
 import type { Backend, Clock } from '../ports';
 import type { XpLog } from '../progress/xp-log';
 import {
+  sharesStatistics,
+  statisticsConsentPending,
+  type StatisticsConsent,
+} from '../statistics/statistics-consent';
+import {
   applyAnswer,
   dailyGoalAsked,
   type QuestionnaireOption,
@@ -55,6 +60,11 @@ interface StepPlace {
  */
 export type OnboardingStep =
   | (StepPlace & { readonly kind: 'welcome' })
+  /**
+   * The Statistics consent (ADR 0210): two equal choices, to allow the
+   * anonymous statistics or not. Only a reader to ask who has not chosen gets it.
+   */
+  | (StepPlace & { readonly kind: 'statisticsConsent' })
   /** Today's Word of the Day, the reader's first Word, with its Pronunciation on the card. */
   | (StepPlace & { readonly kind: 'firstWord'; readonly word: WordCardModel })
   /** «ГОЛОС», where the shell lets the reader choose the Narrator Voice; going on keeps it as it is. */
@@ -89,7 +99,7 @@ export type OnboardingState =
   | { readonly status: 'finished'; readonly finishedAt: Date };
 
 /**
- * The onboarding: the welcome, the first Word, «ГОЛОС», «ГРАЙ!», «Рівень» (whose
+ * The onboarding: the welcome, the Statistics consent for a reader to ask, the first Word, «ГОЛОС», «ГРАЙ!», «Рівень» (whose
  * «Не знаю» opens the Rarity Test) and «Навіщо», the Daily Goal, «Коли
  * нагадати?», then the Feed; and whether the reader finished
  * it, which is also when they skipped it. It opens on launch until then, at
@@ -140,6 +150,15 @@ export interface Onboarding {
    */
   chooseNotificationTime(time: string | undefined): Promise<void>;
   /**
+   * Answers the Statistics consent and goes on: sets «Ділитися анонімною
+   * статистикою» to the reader's choice, on or off, which «Конфіденційність»
+   * changes later. Nothing is sent before it, and not allowing sends nothing,
+   * the switch-off unit neither (ADR 0163, 0210). Going on or finishing
+   * without it keeps the switch off and never asks again. Another step on
+   * screen does nothing.
+   */
+  chooseStatistics(share: boolean): Promise<void>;
+  /**
    * Finishes the onboarding as of now, for the skip on every step: what is
    * not answered keeps its default. Closing the app before this leaves the
    * onboarding unfinished.
@@ -168,6 +187,7 @@ export async function openOnboarding({
   analytics,
   backend,
   notifications,
+  consent,
 }: {
   edition: Pick<
     Edition,
@@ -187,6 +207,8 @@ export async function openOnboarding({
   analytics: Pick<Analytics, 'track'>;
   backend: Pick<Backend, 'counters'> | undefined;
   notifications: Pick<Notifications, 'chooseOnboardingTime'>;
+  /** The Statistics consent of this device (ADR 0210); without it, no one is asked. */
+  consent?: StatisticsConsent | undefined;
 }): Promise<Onboarding> {
   const subscribers = createSubscribers();
   const finished = await userState.read(onboardingFinished);
@@ -200,9 +222,11 @@ export async function openOnboarding({
   const wordId = wordOfTheDay.chosen()?.wordId;
   const word = wordId === undefined ? undefined : await entries.get(wordId);
   const firstWord = word?.kind === 'word' ? await buildWordCard({ word, entries }) : undefined;
+  const asksConsent = await statisticsConsentPending(userState, consent);
   const steps = STEPS.filter((kind) => {
     const feature = STEP_SWITCH[kind];
     return (
+      (kind !== 'statisticsConsent' || asksConsent) &&
       (kind !== 'firstWord' || firstWord !== undefined) &&
       (feature === undefined || edition.isFeatureEnabled(feature))
     );
@@ -212,7 +236,12 @@ export async function openOnboarding({
     const place = { number: index + 1, total: steps.length };
     const kind = steps[index];
     if (kind === undefined) return undefined;
-    if (kind === 'welcome' || kind === 'voiceStep' || kind === 'playStep')
+    if (
+      kind === 'welcome' ||
+      kind === 'statisticsConsent' ||
+      kind === 'voiceStep' ||
+      kind === 'playStep'
+    )
       return { kind, ...place };
     if (kind === 'firstWord' && firstWord !== undefined) return { kind, ...place, word: firstWord };
     if (kind === 'dailyGoal') {
@@ -307,7 +336,7 @@ export async function openOnboarding({
 
   /** Counts the answer on the backend with no reader id while the reader shares; a failure is lost. */
   async function count(question: CountedQuestion, answer: string): Promise<void> {
-    if (backend === undefined || (await userState.read(shareCounters)) === false) return;
+    if (backend === undefined || !(await sharesStatistics(userState, consent))) return;
     void backend.counters
       .questionnaire({ editionId: edition.id, question, answer })
       .catch(() => undefined);
@@ -354,6 +383,12 @@ export async function openOnboarding({
         if (kind !== 'notificationTime') return;
         await notifications.chooseOnboardingTime(time);
         await count(kind, bucketOf(time));
+        await goOn(kind);
+      }),
+    chooseStatistics: (share) =>
+      endStep(async ({ kind }) => {
+        if (kind !== 'statisticsConsent') return;
+        await userState.write(shareCounters.change(share));
         await goOn(kind);
       }),
     finish: () =>

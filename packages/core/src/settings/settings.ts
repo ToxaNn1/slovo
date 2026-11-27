@@ -4,6 +4,7 @@ import type { Analytics } from '../analytics/analytics';
 import { countersTurnOf, forgetUnsentCounters } from '../community-counters/counter-deltas';
 import type { Edition } from '../edition/edition';
 import type { Backend } from '../ports';
+import { sharesStatistics, type StatisticsConsent } from '../statistics/statistics-consent';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -29,7 +30,8 @@ export interface UserSettings {
   /**
    * Whether «Ділитися анонімною статистикою» is on: this device counts and
    * sends its Community Counters. Turning it off forgets what
-   * waits to be sent.
+   * waits to be sent. A reader the Statistics consent asks has it off until
+   * they choose (ADR 0210).
    */
   readonly shareCounters: boolean;
   /**
@@ -87,6 +89,7 @@ export function createSettings({
   defaults,
   analytics,
   statisticsOff,
+  consent,
 }: {
   userState: UserState;
   defaults: SettingsDefaults;
@@ -102,13 +105,19 @@ export function createSettings({
     readonly edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
     readonly backend: Pick<Backend, 'counters'>;
   };
+  /**
+   * The Statistics consent of this device (ADR 0210): «Ділитися анонімною
+   * статистикою» is off for a reader to ask until they choose. Without it, no
+   * one is asked.
+   */
+  consent?: StatisticsConsent | undefined;
 }): Settings {
   const all: UserSettings = {
     ...defaults,
     noCounters: false,
     selfCheck: false,
     seasonalDecor: true,
-    shareCounters: true,
+    shareCounters: consent?.asks() !== true,
     sounds: true,
     reduceMotion: false,
   };
@@ -122,7 +131,7 @@ export function createSettings({
       noCounters: (await userState.read(userStateRecords.noCounters)) ?? all.noCounters,
       selfCheck: (await userState.read(userStateRecords.selfCheck)) ?? all.selfCheck,
       seasonalDecor: (await userState.read(userStateRecords.seasonalDecor)) ?? all.seasonalDecor,
-      shareCounters: (await userState.read(userStateRecords.shareCounters)) ?? all.shareCounters,
+      shareCounters: await sharesStatistics(userState, consent),
       reduceMotion: (await userState.read(userStateRecords.reduceMotion)) ?? all.reduceMotion,
       narratorVoice: (await userState.read(userStateRecords.narratorVoice)) ?? all.narratorVoice,
     };

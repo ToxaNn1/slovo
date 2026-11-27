@@ -12,6 +12,7 @@ import type { Edition } from '../edition/edition';
 import type { RemoteSwitches } from '../edition/remote-switches';
 import type { NotificationKind } from '../ports';
 import type { LaterQuestion } from '../feed-notice';
+import { sharedBy, type StatisticsConsent } from '../statistics/statistics-consent';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -205,7 +206,7 @@ function readerOf(edition: string, { installId, verdicts }: AnalyticsSwitches): 
 /**
  * The one gate of Analytics (ADR 0068): an event reaches the port only while
  * the Edition's `analytics` Feature Switch is on and the reader shares their
- * anonymous statistics, both read at each event, and the event's own switch
+ * anonymous statistics (`sharedBy`), both read at each event, and the event's own switch
  * of `EVENT_SWITCHES` is on; otherwise nothing is sent,
  * so neither the Install id nor a Variant leaves the device. The Variants are
  * read at each event, so a Rule's change shows on the next one.
@@ -239,10 +240,13 @@ export function createAnalytics({
   edition,
   userState,
   sink,
+  consent,
 }: {
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
   userState: Pick<UserState, 'read'>;
   sink?: AnalyticsSink | undefined;
+  /** The Statistics consent of this device (ADR 0210); without it, no one is asked. */
+  consent?: StatisticsConsent | undefined;
 }): Analytics {
   return {
     async track(event, properties) {
@@ -250,7 +254,8 @@ export function createAnalytics({
       if (!edition.isFeatureEnabled('analytics')) return;
       const eventSwitch = EVENT_SWITCHES[event];
       if (eventSwitch !== undefined && !edition.isFeatureEnabled(eventSwitch)) return;
-      if ((await userState.read(userStateRecords.shareCounters)) === false) return;
+      // Read here, in one turn, so an event reaches the port as soon as before the consent.
+      if (!sharedBy(await userState.read(userStateRecords.shareCounters), consent)) return;
       sink.port.track(event, properties, readerOf(edition.id, sink.switches));
     },
     stop: () => {

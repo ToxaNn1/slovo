@@ -146,6 +146,7 @@ export { openRemoteSwitches, type ReaderFacts } from './edition/remote-switches'
 export { evaluateSwitches } from './edition/switch-evaluator';
 export { forceUpdateOf, type ForceUpdate, type ForceUpdateFacts } from './edition/force-update';
 export { readInstallId } from './edition/install-id';
+export { statisticsConsentFor, type StatisticsConsent } from './statistics/statistics-consent';
 export {
   colorSchemeFor,
   createSettings,

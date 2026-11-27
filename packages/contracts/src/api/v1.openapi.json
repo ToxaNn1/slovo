@@ -9632,6 +9632,14 @@
                             "unavailable"
                           ],
                           "type": "string"
+                        },
+                        "statisticsConsent": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -9769,7 +9777,8 @@
                         "dataExport",
                         "readerName",
                         "widgetPreviews",
-                        "statisticsOffCounter"
+                        "statisticsOffCounter",
+                        "statisticsConsent"
                       ]
                     },
                     "rules": {
@@ -11440,6 +11449,14 @@
                             "unavailable"
                           ],
                           "type": "string"
+                        },
+                        "statisticsConsent": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -11577,7 +11594,8 @@
                         "dataExport",
                         "readerName",
                         "widgetPreviews",
-                        "statisticsOffCounter"
+                        "statisticsOffCounter",
+                        "statisticsConsent"
                       ]
                     },
                     "rules": {
@@ -13172,6 +13190,14 @@
                             "unavailable"
                           ],
                           "type": "string"
+                        },
+                        "statisticsConsent": {
+                          "enum": [
+                            "on",
+                            "off",
+                            "unavailable"
+                          ],
+                          "type": "string"
                         }
                       },
                       "required": [
@@ -13309,7 +13335,8 @@
                         "dataExport",
                         "readerName",
                         "widgetPreviews",
-                        "statisticsOffCounter"
+                        "statisticsOffCounter",
+                        "statisticsConsent"
                       ]
                     },
                     "rules": {
