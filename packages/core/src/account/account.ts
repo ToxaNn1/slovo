@@ -36,6 +36,7 @@ export type AccountProblem =
   | 'invalid-email'
   | 'wrong-code'
   | 'code-expired'
+  | 'code-spent'
   | 'too-many-requests'
   | 'refused'
   | 'unexpected';
@@ -78,7 +79,7 @@ export type AccountState =
       /** The tries the code has left, known once the server answered a wrong code. */
       readonly triesLeft: number | undefined;
       readonly inFlight: 'resendCode' | 'verifyCode' | undefined;
-      readonly problem: RequestProblem | 'wrong-code' | 'code-expired' | undefined;
+      readonly problem: RequestProblem | 'wrong-code' | 'code-expired' | 'code-spent' | undefined;
     }
   | {
       readonly status: 'signed-in';
