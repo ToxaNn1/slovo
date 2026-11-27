@@ -719,7 +719,10 @@ describe('Sync and the end of a Session', () => {
     const before = await device();
     const { token } = await signInByCode(before.server, 'oleh@mail.com');
     await before.server.backend.sync.push(
-      { editionId: 'uk', changes: [{ key: 'favorites.w_old', value: FIRST_INSTANT, changedAt: 1 }] },
+      {
+        editionId: 'uk',
+        changes: [{ key: 'favorites.w_old', value: FIRST_INSTANT, changedAt: 1 }],
+      },
       { context: { token } },
     );
     await before.addFavorite('w_one');

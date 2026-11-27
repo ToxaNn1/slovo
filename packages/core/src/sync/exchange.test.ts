@@ -49,11 +49,11 @@ function account(start = '2026-10-18T09:00:00.000Z') {
       clock: time.clock,
     });
     const sync = createSyncExchange({ userState, backend, editionId: 'uk' });
-    const { token } = await signInByCode(server);
+    const { token, email } = await signInByCode(server);
     return {
       records,
       userState,
-      sync: () => sync.sync(token),
+      sync: () => sync.sync(token, email),
       forgetRefused: () => {
         sync.forgetRefused();
       },
