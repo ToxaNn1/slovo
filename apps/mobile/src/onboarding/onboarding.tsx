@@ -184,8 +184,9 @@ function FirstWord({
       mascot={mascot}
       onSkip={onSkip}
       footer={<Button testID="onboarding-next" label={strings.firstWord.next} onPress={onNext} />}
-      // The sample card is the Feed's tabbed card in its fixed frame, which scrolls inside itself.
-      framed
+      // «ТРИМАЙ!» over the whole screen gives way to the Feed's tabbed card in its fixed frame,
+      // which scrolls inside itself.
+      intro
     >
       <View style={stepStyles.heading}>
         <Title>{strings.firstWord.title}</Title>

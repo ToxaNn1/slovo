@@ -216,6 +216,14 @@ export const onboardingLayout = {
   /** The room under a step's buttons to the screen's bottom edge, the home indicator in it. */
   bottom: 40,
   goalTile: { height: 78, gap: 10, radius: 16, lineGap: 2 },
+  /**
+   * «ТРИМАЙ!», the first Word's step, opens on a red top over the whole
+   * screen: the shout word flies in, holds `hold` ms, then the red gives way
+   * upward in `giveWay` ms to a band that keeps «Пропустити», cut by a wedge
+   * `cut` points deep, and the card rises after its edge into the room the
+   * Feed gives a card.
+   */
+  intro: { hold: 400, giveWay: 500, cut: 24 },
 } as const;
 
 /** The Rarity Test's bars and result (board 11, screens 92–93). */
