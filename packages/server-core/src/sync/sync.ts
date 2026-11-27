@@ -1,4 +1,4 @@
-import { SYNC_BATCH_SIZE } from '@slovo/contracts';
+import { fitsSyncRecord, SYNC_BATCH_SIZE } from '@slovo/contracts';
 
 import type { Session } from '../account/accounts';
 import type { EditionRegistry, NotServing } from '../edition/edition-registry';
@@ -7,13 +7,10 @@ import { countRequest, type TooManyRequests } from '../rate-limit';
 
 /**
  * The limits of Sync (spec #378), so one Account or a broken device can't
- * fill the database or flood the backend.
+ * fill the database or flood the backend. Those of one record are the
+ * contracts' `SYNC_RECORD_LIMITS`, which the device reads too (ADR 0208).
  */
 const SYNC_LIMITS = {
-  /** The most characters of a record's key, each code point one. */
-  keyLength: 200,
-  /** The most bytes of a record's value as compact JSON in UTF-8: 8 KB. */
-  valueBytes: 8 * 1024,
   /** The most records an Account keeps in an Edition, a tombstone not one (ADR 0205). */
   recordsPerEdition: 20_000,
   /**
@@ -101,24 +98,6 @@ function servingSync(editions: EditionRegistry, editionId: string) {
   return editions.serving(editionId, 'sync');
 }
 
-/**
- * How many bytes the text takes in UTF-8. A JSON text has no lone
- * surrogate, so each code point is one character.
- */
-function utf8Bytes(text: string): number {
-  let bytes = 0;
-  for (const character of text) {
-    const codePoint = character.codePointAt(0) ?? 0;
-    bytes += codePoint < 0x80 ? 1 : codePoint < 0x800 ? 2 : codePoint < 0x10000 ? 3 : 4;
-  }
-  return bytes;
-}
-
-/** Whether the change's key and value are within their limits. */
-const fits = ({ key, value }: SyncChange) =>
-  Array.from(key).length <= SYNC_LIMITS.keyLength &&
-  utf8Bytes(JSON.stringify(value)) <= SYNC_LIMITS.valueBytes;
-
 /** The change of each key that wins, in the order the keys first came: the later, the first on a tie. */
 function latestOfEachKey(changes: readonly SyncChange[]): SyncChange[] {
   const byKey = new Map<string, SyncChange>();
@@ -158,7 +137,7 @@ export function createSync({
     async push(session, editionId, changes) {
       const admitted = await admit(session, editionId);
       if (!admitted.ok) return admitted;
-      if (!changes.every(fits)) return tooLarge;
+      if (!changes.every(fitsSyncRecord)) return tooLarge;
       const now = clock.now().getTime();
       // The device's own times pick the change of each key, before the cut.
       const kept: RecordChange[] = latestOfEachKey(changes).map(({ key, value, changedAt }) => ({
