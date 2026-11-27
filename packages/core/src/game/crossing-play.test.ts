@@ -5,8 +5,10 @@ import type { CrossingDirection, CrossingPuzzle, CrossingWord } from './crossing
 import {
   crossingCellKey,
   crossingGridOf,
+  filledLetters,
   isCrossingSolved,
   playCrossing,
+  solvedIds,
   startCrossingPlay,
   type CrossingAction,
   type CrossingOutcome,
@@ -133,6 +135,17 @@ describe('the crossing Daily Crossword play', () => {
     ).toMatchObject({ current: COW });
   });
 
+  it('starts from the progress of a solved puzzle with the first Word current', () => {
+    const state = startCrossingPlay(puzzle, {
+      filled: {},
+      solved: ['w_cat', 'w_cow', 'w_ant', 'w_toe'],
+      hinted: false,
+      seconds: 0,
+    });
+    expect(isCrossingSolved(state)).toBe(true);
+    expect(state.current).toBe(CAT);
+  });
+
   describe('select', () => {
     it('picks the Word through the cell', () => {
       expect(play(startCrossingPlay(puzzle), select(1, 1)).current).toBe(ANT);
@@ -144,6 +157,11 @@ describe('the crossing Daily Crossword play', () => {
       expect(first.current).toBe(COW);
       expect(play(first, select(0, 0)).current).toBe(CAT);
       expect(play(startCrossingPlay(puzzle), select(0, 1)).current).toBe(ANT);
+    });
+
+    it('drops the trace on a second tap that switches direction', () => {
+      const state = play(startCrossingPlay(puzzle), select(0, 0), { type: 'extend', tile: 0 });
+      expect(play(state, select(0, 0))).toMatchObject({ current: CAT, trace: [] });
     });
 
     it('keeps the Word on a tap on its own cell with no crossing, and ignores a block', () => {
@@ -191,6 +209,9 @@ describe('the crossing Daily Crossword play', () => {
       expect(play(state, { type: 'extend', tile: 3 }, { type: 'extend', tile: 0 }).trace).toEqual([
         0, 1, 3,
       ]);
+      expect(play(state, { type: 'extend', tile: 2 }, { type: 'extend', tile: 1 }).trace).toEqual([
+        0, 1,
+      ]);
       expect(play(state, { type: 'extend', tile: 4 })).toEqual(state);
       expect(play(state, { type: 'extend', tile: -1 })).toEqual(state);
     });
@@ -205,6 +226,8 @@ describe('the crossing Daily Crossword play', () => {
       expect(
         play(state, { type: 'stepBack' }, { type: 'stepBack' }, { type: 'stepBack' }).trace,
       ).toEqual([]);
+      const untraced = startCrossingPlay(puzzle);
+      expect(play(untraced, { type: 'stepBack' })).toBe(untraced);
     });
 
     it('takes no trace on a solved Word', () => {
@@ -350,6 +373,18 @@ describe('the crossing Daily Crossword play', () => {
         expect(play(state, action)).toBe(state);
       }
     });
+  });
+});
+
+describe('the progress of a play', () => {
+  it('lists the letters the reader filled by cell key, not the pre-filled or empty cells', () => {
+    expect(filledLetters(startCrossingPlay(puzzle))).toEqual({});
+    expect(filledLetters(solved(CAT))).toEqual({ '0,0': 'c', '0,1': 'a' });
+  });
+
+  it('lists the ids of the Words solved, in the puzzle order', () => {
+    expect(solvedIds(puzzle, startCrossingPlay(puzzle))).toEqual([]);
+    expect(solvedIds(puzzle, solved(TOE, COW))).toEqual(['w_cow', 'w_toe']);
   });
 });
 
