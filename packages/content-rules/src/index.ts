@@ -1,10 +1,14 @@
 export {
   checkContentSet,
-  checkRecord,
+  checkWrite,
+  checkWrites,
   contentSetOf,
   recordFileOf,
+  type CheckedWrite,
   type ContentRecords,
   type ContentSet,
+  type RecordWrite,
+  type WriteDates,
 } from './check';
 export { checksumOf } from './checksum';
 export { wordKey } from './entries';

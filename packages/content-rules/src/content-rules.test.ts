@@ -11,7 +11,8 @@ import { z } from 'zod';
 
 import {
   checkContentSet,
-  checkRecord,
+  checkWrite,
+  checkWrites,
   parseRecord,
   type AuthoredRecord,
   type ContentSet,
@@ -296,9 +297,16 @@ describe('parseRecord', () => {
   });
 });
 
-describe('checkRecord', () => {
+describe('checkWrite', () => {
   const current = fixtureSet();
-  const save = (json: Json) => checkRecord(config, current, parsed(json), { today });
+  const dates = { today, editionDate: '2026-11-08' };
+  const writeOf = (json: Json) => {
+    const id = String(json['id']);
+    return { kind: kindOf(id), id, fields: json };
+  };
+  const refusalsOf = (set: ContentSet, json: Json) =>
+    checkWrite(config, set, writeOf(json), dates).refusals;
+  const save = (json: Json) => refusalsOf(current, json);
 
   it('passes a valid edit of a record of the set', () => {
     expect(save(record('w_fx0002', { primaryDefinition: 'Який дуже любить говорити.' }))).toEqual(
@@ -308,7 +316,7 @@ describe('checkRecord', () => {
 
   it('refuses a duplicate live Lemma', () => {
     expect(save(record('w_fx0002', { id: 'w_fx0009' }))).toEqual([
-      expect.objectContaining({ rule: 'unique-lemma', file: 'w_fx0009.json', entryId: 'w_fx0009' }),
+      expect.objectContaining({ rule: 'unique-lemma', file: 'word/w_fx0009', entryId: 'w_fx0009' }),
     ]);
   });
 
@@ -352,18 +360,15 @@ describe('checkRecord', () => {
       cc_fx0001: { retired: true },
       cc_fx0002: { retired: true },
     });
-    const retire = parsed(record('w_fx0003', { retired: true }));
-    expect(checkRecord(config, retiredCollections, retire, { today })).toEqual([]);
+    expect(refusalsOf(retiredCollections, record('w_fx0003', { retired: true }))).toEqual([]);
   });
 
   it('refuses a bring-back of a Curated Collection naming a Retired Entry', () => {
     const retiredCollection = fixtureSet({
       cc_fx0001: { entryIds: ['w_fx0001', 'c_fx0003'], retired: true },
     });
-    const bringBack = parsed(
-      record('cc_fx0001', { entryIds: ['w_fx0001', 'c_fx0003'], retired: false }),
-    );
-    expect(checkRecord(config, retiredCollection, bringBack, { today })).toEqual([
+    const bringBack = record('cc_fx0001', { entryIds: ['w_fx0001', 'c_fx0003'], retired: false });
+    expect(refusalsOf(retiredCollection, bringBack)).toEqual([
       expect.objectContaining({
         rule: 'curated-collection-entry',
         entryId: 'cc_fx0001',
@@ -374,8 +379,40 @@ describe('checkRecord', () => {
 
   it('keeps refusals the set already had out of a save', () => {
     const broken = fixtureSet({ w_fx0003: { categoryId: 'unknown' } });
-    const edit = parsed(record('w_fx0002', { primaryDefinition: 'Який дуже любить говорити.' }));
-    expect(checkRecord(config, broken, edit, { today })).toEqual([]);
+    const edit = record('w_fx0002', { primaryDefinition: 'Який дуже любить говорити.' });
+    expect(refusalsOf(broken, edit)).toEqual([]);
+  });
+
+  it("publishes a Curated Collection given no date on the Edition's day", () => {
+    const { publishedOn: _publishedOn, ...undated } = record('cc_fx0002');
+    expect(checkWrite(config, current, writeOf(undated), dates)).toMatchObject({
+      parsed: true,
+      record: { entry: { publishedOn: '2026-11-08' } },
+      refusals: [],
+    });
+  });
+});
+
+describe('checkWrites', () => {
+  it('checks each write against the set with the writes before it that passed', () => {
+    const seed = record('w_fx0002');
+    const word = { ...seed, id: 'w_fx0010', lemma: `${String(seed['lemma'])}ок` };
+    const writes = [
+      { kind: 'word' as const, id: 'w_fx0010', fields: word },
+      { kind: 'word' as const, id: 'w_fx0011', fields: { ...word, id: 'w_fx0011', stress: [0] } },
+      { kind: 'word' as const, id: 'w_fx0012', fields: { ...word, id: 'w_fx0012' } },
+    ];
+
+    const checked = checkWrites(config, fixtureSet(), writes, {
+      today,
+      editionDate: '2026-11-08',
+    });
+
+    expect(checked.map(({ write, checked: { refusals } }) => [write.id, refusals])).toEqual([
+      ['w_fx0010', []],
+      ['w_fx0011', expect.arrayContaining([expect.objectContaining({ rule: 'stress' })])],
+      ['w_fx0012', [expect.objectContaining({ rule: 'unique-lemma', entryId: 'w_fx0012' })]],
+    ]);
   });
 });
 

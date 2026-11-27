@@ -330,7 +330,9 @@ describe('pnpm content against the content write API', () => {
     const collections = input('collections.json', [{ ...collectionFields, name: 'Нова добірка' }]);
     /** Each `<item>: REFUSED <rule>` the run printed, in order. */
     const refusedOf = (stderr: string) =>
-      [...stderr.matchAll(/^(\S+): REFUSED ([a-z-]+)/gm)].map(([, at, rule]) => `${at} ${rule}`);
+      [...stderr.matchAll(/^(\S+): REFUSED ([a-z-]+)/gm)].map(
+        ([, at, rule]) => `${String(at)} ${String(rule)}`,
+      );
 
     const runs = [];
     for (const [kind, path] of [
