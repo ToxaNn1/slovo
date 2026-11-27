@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import { createSettings, openComposition, type Composition, type Edition } from '@slovo/core';
+import {
+  createSettings,
+  openComposition,
+  statisticsConsentFor,
+  type Composition,
+  type Edition,
+  type StatisticsConsent,
+} from '@slovo/core';
 import { createMemoryContentPort, seedUserState, loadEdition } from '@slovo/core/testing';
 import * as Speech from 'expo-speech';
 import { renderApp } from '../shell/test-app';
@@ -43,8 +50,11 @@ function word(id: string, lemma: string): Word {
 let composition: Composition;
 let readerState: Awaited<ReturnType<typeof seedUserState>>;
 
-/** Draws the onboarding of a new reader over the Edition given, on 2026-10-28 in Kyiv. */
-async function renderOnboarding(shipped: Edition = loadEdition(activeEditionFiles.config)) {
+/** Draws the onboarding of a new reader over the Edition given, on 2026-10-28 in Kyiv, with the phone's Statistics consent. */
+async function renderOnboarding(
+  shipped: Edition = loadEdition(activeEditionFiles.config),
+  consent?: StatisticsConsent,
+) {
   const userState = await seedUserState({}, { clock });
   readerState = userState;
   composition = await openComposition({
@@ -60,6 +70,7 @@ async function renderOnboarding(shipped: Edition = loadEdition(activeEditionFile
     userState,
     clock,
     random: { next: () => 0 },
+    consent,
   });
   const shell = testShell({
     userState: opened(userState),
@@ -282,5 +293,76 @@ describe('the onboarding', () => {
 
     expect(screen.queryByText(strings.level.title)).toBeNull();
     expect(screen.getByText(strings.dailyGoal.title)).toBeTruthy();
+  });
+});
+
+// Ticket #2082; ADR 0210: a reader of the EEA is asked, any other one is told.
+describe('the Statistics consent', () => {
+  const shipped = loadEdition(activeEditionFiles.config);
+  const consentOn: Edition = {
+    ...shipped,
+    isFeatureEnabled: (feature) =>
+      feature === 'statisticsConsent' || shipped.isFeatureEnabled(feature),
+  };
+  /** Draws the onboarding of a new reader on a phone of `region`, none where the locale names none. */
+  const onPhoneOf = (region: string | undefined) =>
+    renderOnboarding(consentOn, statisticsConsentFor(consentOn, region));
+  const shares = async () =>
+    (await createSettings({ userState: readerState, defaults: shipped.userSettingDefaults }).read())
+      .shareCounters;
+
+  it('tells a reader outside the EEA on the welcome that the statistics are on, and asks nothing', async () => {
+    await onPhoneOf('UA');
+    expect(screen.getByTestId('onboarding-statistics-line')).toHaveTextContent(
+      strings.welcome.statistics,
+    );
+
+    await press('onboarding-start');
+
+    expect(screen.queryByText(strings.statisticsConsent.title)).toBeNull();
+    expect(screen.getByText(strings.firstWord.title)).toBeTruthy();
+  });
+
+  it('asks a reader of the EEA after the welcome, with two equal choices and no going on without one', async () => {
+    await onPhoneOf('DE');
+    expect(screen.queryByTestId('onboarding-statistics-line')).toBeNull();
+
+    await press('onboarding-start');
+
+    expect(screen.getByRole('header', { name: strings.statisticsConsent.title })).toBeTruthy();
+    expect(screen.getByText(strings.statisticsConsent.subtitle)).toBeTruthy();
+    const allow = screen.getByRole('button', { name: strings.statisticsConsent.allow });
+    const deny = screen.getByRole('button', { name: strings.statisticsConsent.deny });
+    expect(allow.props['style']).toBeDefined();
+    expect(allow.props['style']).toEqual(deny.props['style']);
+    expect(screen.queryByTestId('onboarding-next')).toBeNull();
+    expect(screen.queryByTestId('onboarding-later')).toBeNull();
+  });
+
+  it('turns the statistics on when the reader allows, and goes on', async () => {
+    await onPhoneOf('DE');
+    await press('onboarding-start');
+
+    await press('onboarding-statistics-allow');
+
+    expect(await shares()).toBe(true);
+    expect(screen.getByText(strings.firstWord.title)).toBeTruthy();
+  });
+
+  it('keeps the statistics off when the reader does not allow, and goes on', async () => {
+    await onPhoneOf('DE');
+    await press('onboarding-start');
+
+    await press('onboarding-statistics-deny');
+
+    expect(await shares()).toBe(false);
+    expect(screen.getByText(strings.firstWord.title)).toBeTruthy();
+  });
+
+  it('asks a reader whose phone names no region', async () => {
+    await onPhoneOf(undefined);
+    await press('onboarding-start');
+
+    expect(screen.getByText(strings.statisticsConsent.title)).toBeTruthy();
   });
 });
