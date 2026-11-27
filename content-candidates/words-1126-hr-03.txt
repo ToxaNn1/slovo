@@ -19,3 +19,12 @@
 зарібник history-antiquity 5
 зармуток emotions-character 5
 застолітній history-antiquity 5
+зашлюбити history-antiquity 5
+збан household-crafts 5
+збуй history-antiquity 5
+звідци language-speech 5
+звіздяний nature-weather 5
+зводитель emotions-character 5
+землеписний science 5
+зимарка household-crafts 5
+златоглавий arts-culture 4
