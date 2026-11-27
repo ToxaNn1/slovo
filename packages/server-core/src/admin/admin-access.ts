@@ -1,6 +1,8 @@
-import type { Action, ActionEntry, Actor, Clock, Json, Random } from '../ports';
+import type { ActionKey } from '@slovo/contracts';
 
-export type { Action, ActionEntry, Actor } from '../ports';
+import type { Action, ActionEntry, Actor, Clock, Json, LoggedAction, Random } from '../ports';
+
+export type { Action, ActionEntry, Actor, LoggedAction } from '../ports';
 
 /** The role of an Admin user: Власник does everything, Адмін everything but Безпека (ADR 0088). */
 export type AdminRole = 'owner' | 'admin';
@@ -110,7 +112,7 @@ export interface AdminStore {
   /** The name of the Агент whose token is not revoked and hashes to `tokenHash`. */
   agentNamed(tokenHash: string): Promise<string | undefined>;
   /** Appends a row to the Action log: the one write path of the log. */
-  appendAction(action: Action): Promise<void>;
+  appendAction(action: LoggedAction): Promise<void>;
   /** The 500 newest rows of the Action log, newest first, of the Edition when one is given. */
   actions(editionId?: string): Promise<readonly Action[]>;
   /** One page of the Action log, newest first, of the Edition when one is given, and the count of every row. */
@@ -202,7 +204,7 @@ export function createAdminAccess({
   hash: (token: string) => string;
 }): AdminAccess {
   const log = (entry: ActionEntry) => store.appendAction({ ...entry, at: clock.now() });
-  const logBy = ({ who, reason }: AccessWrite, what: string, before: Json, after: Json) =>
+  const logBy = ({ who, reason }: AccessWrite, what: ActionKey, before: Json, after: Json) =>
     log({ who, what, before, after, reason, editionId: null, batchId: null });
   const normal = (email: string) => email.trim().toLowerCase();
   const isWriter = (who: Actor, email: string) => who.kind === 'admin-user' && who.email === email;

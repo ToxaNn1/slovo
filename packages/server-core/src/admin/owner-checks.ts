@@ -103,7 +103,11 @@ export function createOwnerChecks({
   clock: Clock;
   admin: Pick<AdminAccess, 'log'>;
 }): OwnerChecks {
-  const logAdded = (what: string, who: Actor, check: OwnerCheck) =>
+  const logAdded = (
+    what: 'owner-check.add' | 'owner-check.import',
+    who: Actor,
+    check: OwnerCheck,
+  ) =>
     admin.log({
       who,
       what,

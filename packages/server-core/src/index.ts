@@ -132,6 +132,7 @@ export {
   type Action,
   type ActionEntry,
   type Actor,
+  type LoggedAction,
   type AccessResult,
   type AccessWrite,
   type AddAgentResult,

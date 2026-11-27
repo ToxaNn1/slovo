@@ -1,3 +1,4 @@
+import type { ActionKey } from '@slovo/contracts';
 import {
   SERVICE_BLOCK,
   SERVICE_MONEY_FIELDS,
@@ -52,7 +53,7 @@ export function createServiceMoneyBook({
   clock: Clock;
   admin: Pick<AdminAccess, 'log'>;
 }): ServiceMoneyBook {
-  const logBy = ({ who, reason }: AccessWrite, what: string, before: Json, after: Json) =>
+  const logBy = ({ who, reason }: AccessWrite, what: ActionKey, before: Json, after: Json) =>
     admin.log({ who, what, before, after, reason, editionId: null, batchId: null });
 
   return {
