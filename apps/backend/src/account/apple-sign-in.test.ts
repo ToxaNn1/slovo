@@ -170,6 +170,17 @@ describe('an Apple identity token', () => {
     });
   });
 
+  it('whose email is not an email is INVALID_TOKEN, and makes no Account', async () => {
+    const backend = signingIn();
+    const email = 'not an email';
+    const idToken = backend.apple.token({ email });
+
+    expect(await refusalOf(idToken, backend, email)).toMatchObject({
+      code: 'INVALID_TOKEN',
+      status: 401,
+    });
+  });
+
   it('that Apple did not sign is INVALID_TOKEN, and makes no Account', async () => {
     const backend = signingIn();
     const email = newEmail();

@@ -710,6 +710,10 @@ describe('counters.communityWord', () => {
     await expect(
       client.counters.questionnaire({ editionId: 'qwho', question: 'who', answer: 'studying' }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
+    // Not even an answer another question takes.
+    await expect(
+      client.counters.questionnaire({ editionId: 'qwho', question: 'who', answer: 'none' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
     await expect(answersOf(database, 'qwho', 'who')).resolves.toEqual([]);
     await expect(answersOf(database, 'qwho')).resolves.toEqual([]);
   });

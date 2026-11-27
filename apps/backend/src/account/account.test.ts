@@ -221,6 +221,14 @@ describe('a Sign-in code', () => {
     ).rejects.toMatchObject({ code: 'CODE_EXPIRED' });
   });
 
+  it('is BAD_REQUEST for an email that is not an email', async () => {
+    const { client } = testApp();
+
+    await expect(
+      client.account.verifyCode({ email: 'not an email', code: '123456' }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST', status: 400 });
+  });
+
   it('works once: the code that signed in signs nothing in again', async () => {
     const { client, mailer } = testApp();
     const email = newEmail();

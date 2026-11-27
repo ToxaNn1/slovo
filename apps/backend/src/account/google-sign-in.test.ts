@@ -216,6 +216,17 @@ describe('a Google identity token', () => {
     });
   });
 
+  it('whose email is not an email is INVALID_TOKEN, and makes no Account', async () => {
+    const backend = signingIn();
+    const email = 'not an email';
+    const idToken = backend.google.token({ email });
+
+    expect(await refusalOf(idToken, backend, email)).toMatchObject({
+      code: 'INVALID_TOKEN',
+      status: 401,
+    });
+  });
+
   it('that is empty or too long is BAD_REQUEST', async () => {
     const { request } = signingIn();
     const post = (idToken: string) =>
