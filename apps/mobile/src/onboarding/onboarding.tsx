@@ -106,6 +106,9 @@ export function Onboarding() {
     );
   } else if (step.kind === 'rarityTest') {
     shown = <RarityTestStep step={step} mascot={mascot} onSkip={skip} />;
+  } else if (step.kind === 'statisticsConsent') {
+    // The step's screen comes with the second part of ticket #2082; the switch ships off until then.
+    shown = null;
   } else {
     shown = (
       <Question
@@ -134,6 +137,7 @@ export function Onboarding() {
 /** The Mascot's state on each step, as the design poses it. */
 const mascotState: Readonly<Record<Step['kind'], MascotState>> = {
   welcome: 'shouts',
+  statisticsConsent: 'waits',
   firstWord: 'happy',
   voiceStep: 'waits',
   playStep: 'happy',

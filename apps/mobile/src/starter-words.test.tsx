@@ -83,6 +83,7 @@ describe('the composition of a new phone', () => {
         random: { next: () => 0.5 },
         userState: await seedUserState({}, { clock }),
         edition,
+        consent: { asks: () => false },
       }),
       account: undefined,
     }).opened();

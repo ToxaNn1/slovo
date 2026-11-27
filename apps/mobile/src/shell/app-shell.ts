@@ -5,6 +5,7 @@ import {
   openSync,
   evaluateSwitches,
   readInstallId,
+  statisticsConsentFor,
   systemRandom,
   type Account,
   type AnalyticsSink,
@@ -88,6 +89,9 @@ function over<S, T>(
  * shipped answer on purpose; each opens only while it is on in effect by the
  * Rules the device kept, and never waits for the backend (ADR 0203).
  */
+/** The phone's region setting as the JavaScript locale names it (ADR 0089), or none. */
+const phoneRegion = (): string | undefined => getLocales().at(0)?.regionCode ?? undefined;
+
 export function createShell(
   editionId: string,
   sources: DeviceSources = deviceSources(editionId),
@@ -107,7 +111,7 @@ export function createShell(
     (id: string): (() => ReaderFacts) =>
     () => ({
       ...deviceFacts,
-      region: getLocales().at(0)?.regionCode ?? undefined,
+      region: phoneRegion(),
       signedIn: openAccount?.state.status === 'signed-in',
       installId: id,
     });
@@ -202,6 +206,8 @@ export function createShell(
     // The opening that failed under it has logged why.
     { onError: () => undefined },
   );
+  // The same region the Rules read; none counts as the EEA (ADR 0210).
+  const consent = statisticsConsentFor(editionInEffect, phoneRegion());
   const ports = openOnce<DevicePorts>(
     async () => {
       // Without the Install id there are no Analytics.
@@ -210,6 +216,7 @@ export function createShell(
         ...sources,
         userState: await userState.opened(),
         edition: editionInEffect,
+        consent,
         ...(sink === undefined ? {} : { analytics: sink }),
       };
     },
@@ -245,6 +252,7 @@ export function createShell(
       edition: editionInEffect,
       analytics,
       backend: sources.backend,
+      consent,
     }),
     remoteSwitches,
     languagePack,

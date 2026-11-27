@@ -1,10 +1,12 @@
 ---
-summary: Analytics go through one Core port behind the one privacy switch; questionnaire counters carry no reader id (amended by 0089: the anonymous id is the Install id; amended by 0135: one switch, one screen «Конфіденційність»; amended by 0163: switching off sends one anonymous unit).
+summary: Analytics go through one Core port behind the one privacy switch; questionnaire counters carry no reader id (amended by 0089: the anonymous id is the Install id; amended by 0135: one switch, one screen «Конфіденційність»; amended by 0163: switching off sends one anonymous unit; amended by 0210: a reader in the EEA is asked first).
 ---
 
 # Analytics go through one port; questionnaire counters carry no reader id
 
 The owner must measure D1/D7/D30 retention and goal completion and learn who the readers are, with no one identifiable. The earlier rule allowed only anonymous Community Counters and named Analytics among the things to avoid; spec #1358 adds Analytics with the reader's consent.
+
+**Amended by ADR 0210.** The switch is on by default only outside the EEA: a reader whose phone's region is in the EEA or unknown is asked in the onboarding, and nothing is sent before they choose.
 
 **Amended by ADR 0163.** Switching the privacy switch off sends one anonymous unit at that moment and nothing after.
 
