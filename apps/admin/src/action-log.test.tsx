@@ -211,3 +211,45 @@ test('the log lists a page of rows, the total, and the next page of the Edition 
   expect(asked.at(-1)).toContain('page=2');
   expect(asked.at(-1)).toContain('editionId=uk');
 });
+
+test('the actions on Services and their entries read as sentences, never as «Інша дія»', async () => {
+  const entry = (fields: readonly string[] = []) => ({
+    service: 'Railway',
+    entry: '0b8c1d6e-7a35-4f0e-9b1a-2c3d4e5f6a7b',
+    type: 'token',
+    fields: [...fields],
+  });
+  const rows = await logOf(
+    row('service.add', null, {
+      name: 'Sentry',
+      kind: 'metered',
+      plan: 'Team',
+      monthlyPriceUsdCents: 2600,
+      billingDay: 5,
+    }),
+    row(
+      'service.money.edit',
+      { name: 'Sentry', plan: 'Team', monthlyPriceUsdCents: 2600 },
+      { name: 'Sentry', plan: 'Business', monthlyPriceUsdCents: 8000 },
+    ),
+    row('service.entry.add', null, entry(['type', 'label', 'note', 'value'])),
+    row('service.entry.edit', null, entry(['label', 'value'])),
+    row('service.entry.delete', null, entry()),
+    row('service.entry.reveal', null, { service: 'Railway', entry: 'e-1', type: 'password' }),
+    row('service.entry.copy', null, { service: 'Railway', entry: 'e-1', type: 'login' }),
+  );
+
+  expect(rows).toEqual([
+    ['Додано сервіс', '—', 'Sentry · тариф Team · $26 на місяць · списання 5-го числа'],
+    [
+      'Змінено тариф і ціну сервісу',
+      'Sentry · тариф Team · $26 на місяць',
+      'Sentry · тариф Business · $80 на місяць',
+    ],
+    ['Додано запис сервісу', '—', 'Railway · Токен / API-ключ'],
+    ['Змінено запис сервісу', '—', 'Railway · Токен / API-ключ · змінено: назва, значення'],
+    ['Видалено запис сервісу', '—', 'Railway · Токен / API-ключ'],
+    ['Показано значення запису сервісу', '—', 'Railway · Пароль'],
+    ['Скопійовано значення запису сервісу', '—', 'Railway · Логін'],
+  ]);
+});
