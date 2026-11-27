@@ -514,7 +514,13 @@ export function createContentWrites({
       id,
       batchId,
       reason,
-    }: { editionId: string; kind: RecordKind; id: string; batchId: string; reason: string },
+    }: {
+      editionId: string;
+      kind: Exclude<RecordKind, 'crosswordDay'>;
+      id: string;
+      batchId: string;
+      reason: string;
+    },
   ): Promise<{ ok: true } | WriteRefusal> {
     if (editions.find(editionId) === undefined) return { ok: false, reason: 'not-found' };
     return db.transaction(async (tx): Promise<{ ok: true } | WriteRefusal> => {

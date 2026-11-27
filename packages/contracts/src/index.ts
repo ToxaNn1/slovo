@@ -289,6 +289,20 @@ export {
   type FeatureSwitchGroup,
   type FeatureSwitchRecord,
 } from './feature-switch-catalogue';
+export {
+  ACTION_SHAPES,
+  CONTENT_ACTION_OPS,
+  CONTENT_RECORD_KINDS,
+  ContentActionSideSchema,
+  contentActionOf,
+  isNamedActionKey,
+  type ActionKey,
+  type ActionSide,
+  type ContentActionKey,
+  type ContentActionOp,
+  type ContentRecordKind,
+  type NamedActionKey,
+} from './action-log-catalogue';
 export { ContentTargetsSchema, type ContentTargets } from './content-targets';
 export {
   IllustrationRowSchema,

@@ -136,7 +136,7 @@ export function createServiceEntries({
 
   const log = (
     { who, reason }: AccessWrite,
-    what: string,
+    what: 'service.entry.add' | 'service.entry.edit' | 'service.entry.delete',
     entry: StoredServiceEntry,
     service: string,
     fields: readonly string[],

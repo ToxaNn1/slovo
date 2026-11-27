@@ -201,7 +201,7 @@ export function createEditionRegistry({
     editionId: string,
     feature: FeatureSwitch,
     rules: readonly RuleInput[],
-    what: string,
+    what: 'switches.rules.set' | 'switches.kill',
     { who, reason }: WriteBy,
   ) {
     const before = rulesOf(await switchStore.rules(editionId), feature);

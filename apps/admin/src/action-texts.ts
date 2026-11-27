@@ -1,5 +1,15 @@
-import type { AlertThresholdKey } from '@slovo/contracts/admin-api';
-import { z } from 'zod';
+import {
+  ACTION_SHAPES,
+  ContentActionSideSchema,
+  contentActionOf,
+  isNamedActionKey,
+  type ActionSide,
+  type ContentActionOp,
+  type ContentRecordKind,
+  type NamedActionKey,
+} from '@slovo/contracts';
+import { ServiceEntryTypeSchema, type AlertThresholdKey } from '@slovo/contracts/admin-api';
+import type { z } from 'zod';
 
 import {
   CONTENT_KINDS,
@@ -7,6 +17,8 @@ import {
   shownOf,
   type EditorField,
 } from './components/content-editor/kinds';
+import { usd } from './components/services/service-currency';
+import { ENTRY_TYPE_LABELS } from './components/services/service-entries';
 import { SWITCH_TEXTS } from './switches/switch-texts';
 
 /**
@@ -30,18 +42,19 @@ export const THRESHOLD_LABELS: Readonly<Record<AlertThresholdKey, string>> = {
 };
 
 /** A content kind in a sentence: its name as the object of a verb, and its gender for the adjective. */
-const KIND_WORDS: Readonly<Record<string, { readonly name: string; readonly feminine: boolean }>> =
-  {
-    word: { name: 'Слово', feminine: false },
-    correction: { name: 'Виправлення', feminine: false },
-    idiom: { name: 'Ідіому', feminine: true },
-    synonymRow: { name: 'Синонімічний ряд', feminine: false },
-    tip: { name: 'Пораду', feminine: true },
-    curatedCollection: { name: 'Добірку', feminine: true },
-    crosswordDay: { name: 'Кросворд дня', feminine: false },
-  };
+const KIND_WORDS: Readonly<
+  Record<ContentRecordKind, { readonly name: string; readonly feminine: boolean }>
+> = {
+  word: { name: 'Слово', feminine: false },
+  correction: { name: 'Виправлення', feminine: false },
+  idiom: { name: 'Ідіому', feminine: true },
+  synonymRow: { name: 'Синонімічний ряд', feminine: false },
+  tip: { name: 'Пораду', feminine: true },
+  curatedCollection: { name: 'Добірку', feminine: true },
+  crosswordDay: { name: 'Кросворд дня', feminine: false },
+};
 
-const CONTENT_OPS: Readonly<Record<string, (feminine: boolean) => string>> = {
+const CONTENT_OPS: Readonly<Record<ContentActionOp, (feminine: boolean) => string>> = {
   create: () => 'додано',
   edit: () => 'змінено',
   retire: () => 'виведено',
@@ -50,79 +63,15 @@ const CONTENT_OPS: Readonly<Record<string, (feminine: boolean) => string>> = {
   allVoices: () => 'передано на запис у всіх голосах',
 };
 
-const WHATS: Readonly<Record<string, string>> = {
-  'content.batch.review': 'Пачку переглянуто',
-  'content.batch.rollback': 'Пачку відкочено',
-  'content.flag.accept': 'Позначку прийнято',
-  'content.flag.reject': 'Позначку відхилено',
-  'report.resolve': 'Повідомлення про помилку вирішено',
-  'account.delete': 'Обліковий запис читача видалено',
-  'admin.owner.add': 'Додано Власника',
-  'admin.user.invite': 'Запрошено людину в адмінку',
-  'admin.user.role': 'Змінено роль',
-  'admin.user.remove': 'Прибрано доступ до адмінки',
-  'admin.agent.add': 'Видано токен Агента',
-  'admin.agent.revoke': 'Відкликано токен Агента',
-  'owner-check.add': 'Додано перевірку власника',
-  'owner-check.import': 'Перевірку власника перенесено з файлу',
-  'owner-check.tick': 'Перевірку власника відмічено',
-  'alert-threshold.set': 'Змінено поріг сповіщення',
-  'switches.rules.set': 'Змінено правила перемикача',
-  'switches.minimum.set': 'Змінено мінімальну версію застосунку',
-  'switches.kill': 'Функцію вимкнено для всіх (аварійно)',
-};
-
-/** The content kind and operation of a `content.<kind>.<op>` key. */
-function contentKeyOf(what: string): { kind: string; op: string } | undefined {
-  const [area, kind, op, ...rest] = what.split('.');
-  if (area !== 'content' || kind === undefined || op === undefined || rest.length > 0) {
-    return undefined;
-  }
-  return KIND_WORDS[kind] === undefined ? undefined : { kind, op };
+/** What the Власник reads of a named key: its sentence, and each side of its rows. */
+interface NamedText<Key extends NamedActionKey> {
+  readonly what: string;
+  /**
+   * A side of a row, parsed by the key's shape, given the row's other side;
+   * none: as plain text. A method, so a key's text reads as any key's.
+   */
+  side?(value: ActionSide<Key>, other: unknown): string;
 }
-
-/** A row's `what` as a sentence; a key it doesn't know reads as «Інша дія: …». */
-export function whatOf(what: string): string {
-  const known = WHATS[what];
-  if (known !== undefined) return known;
-  const content = contentKeyOf(what);
-  const words = content === undefined ? undefined : KIND_WORDS[content.kind];
-  const op = content === undefined ? undefined : CONTENT_OPS[content.op];
-  if (words !== undefined && op !== undefined) return `${words.name} ${op(words.feminine)}`;
-  return `Інша дія: ${what}`;
-}
-
-// The shapes the backend writes; loose, so a field added later never hides a row.
-const RecordSnapshot = z.object({
-  recordVersion: z.number(),
-  fields: z.record(z.string(), z.unknown()),
-});
-const RecordRef = z.object({ id: z.string(), recordVersion: z.number().optional() });
-const Person = z.object({ email: z.string(), role: z.enum(['owner', 'admin']).optional() });
-const Agent = z.object({ name: z.string(), revoked: z.boolean().optional() });
-const Threshold = z.object({ key: z.string(), value: z.number().optional() });
-const Minimum = z.object({
-  platform: z.string(),
-  minimum: z.object({ soft: z.string().optional(), hard: z.string().optional() }).optional(),
-});
-const Rules = z.array(
-  z.object({
-    feature: z.string(),
-    verdict: z.union([z.enum(['on', 'off']), z.object({ variants: z.array(z.string()) })]),
-    targets: z.record(z.string(), z.unknown()).optional(),
-  }),
-);
-type Rule = z.infer<typeof Rules>[number];
-const Rollback = z.object({
-  retired: z.array(z.string()),
-  restored: z.array(z.string()),
-  skipped: z.array(z.string()),
-});
-const FlagRef = z.object({ flagId: z.union([z.number(), z.string()]) });
-const Report = z.object({ entryId: z.string(), type: z.string(), comment: z.string().optional() });
-const Account = z.object({ email: z.string(), createdAt: z.string() });
-const OwnerCheck = z.object({ text: z.string() });
-const Tick = z.object({ ticked: z.boolean() });
 
 const MISTAKE_TYPES: Readonly<Record<string, string>> = {
   typo: 'одрук',
@@ -167,6 +116,8 @@ function plain(value: unknown): string {
 const switchName = (feature: string) =>
   Object.entries(SWITCH_TEXTS).find(([name]) => name === feature)?.[1].name ?? feature;
 
+type Rule = ActionSide<'switches.rules.set'>[number];
+
 const verdictOf = ({ verdict }: Rule) =>
   verdict === 'on'
     ? 'увімкнено'
@@ -210,12 +161,12 @@ export function titleOf(
   return text === '—' ? undefined : short(text);
 }
 
+type ContentSide = z.output<typeof ContentActionSideSchema>;
+/** A record as a content write keeps it. */
+type Snapshot = Extract<ContentSide, { readonly fields: unknown }>;
+
 /** A record before or after a write: its version and what names it, or the fields an edit changed. */
-function snapshotText(
-  kind: string,
-  snapshot: z.infer<typeof RecordSnapshot>,
-  other: z.infer<typeof RecordSnapshot> | undefined,
-): string {
+function snapshotText(kind: string, snapshot: Snapshot, other: Snapshot | undefined): string {
   const version = `версія ${String(snapshot.recordVersion)}`;
   if (other === undefined) {
     const title = titleOf(kind, snapshot.fields);
@@ -240,7 +191,7 @@ function snapshotText(
 }
 
 /** A record named by its id: a Crossword day by its date, any other by its id. */
-function refText(kind: string, ref: z.infer<typeof RecordRef>): string {
+function refText(kind: string, ref: Exclude<ContentSide, Snapshot>): string {
   const date = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ref.id);
   const named =
     kind === 'crosswordDay' && date !== null
@@ -251,98 +202,150 @@ function refText(kind: string, ref: z.infer<typeof RecordRef>): string {
 
 /** A side of a content write; an edit's Стало lists the fields it changed from its Було. */
 function contentSide(what: string, value: unknown, before: unknown): string | undefined {
-  const content = contentKeyOf(what);
+  const content = contentActionOf(what);
   if (content === undefined) return undefined;
-  const snapshot = RecordSnapshot.safeParse(value);
-  if (snapshot.success) {
-    const was = RecordSnapshot.safeParse(before);
-    const compared = content.op === 'edit' && was.success ? was.data : undefined;
-    return snapshotText(content.kind, snapshot.data, compared);
-  }
-  const ref = RecordRef.safeParse(value);
-  return ref.success ? refText(content.kind, ref.data) : undefined;
+  const side = ContentActionSideSchema.safeParse(value);
+  if (!side.success) return undefined;
+  if (!('fields' in side.data)) return refText(content.kind, side.data);
+  const was = ContentActionSideSchema.safeParse(before);
+  const compared =
+    content.op === 'edit' && was.success && 'fields' in was.data ? was.data : undefined;
+  return snapshotText(content.kind, side.data, compared);
 }
 
-/** One side of a row of any other key, parsed by the shape its key writes. */
-function otherSide(what: string, value: unknown, other: unknown): string | undefined {
-  switch (what) {
-    case 'admin.owner.add':
-    case 'admin.user.invite':
-    case 'admin.user.role':
-    case 'admin.user.remove': {
-      const person = Person.safeParse(value);
-      if (!person.success) return undefined;
-      const { email, role } = person.data;
-      return role === undefined ? email : `${email} · ${ROLE_LABELS[role]}`;
-    }
-    case 'admin.agent.add':
-    case 'admin.agent.revoke': {
-      const agent = Agent.safeParse(value);
-      if (!agent.success) return undefined;
-      return `Агент ${agent.data.name}${agent.data.revoked === true ? ' · відкликано' : ''}`;
-    }
-    case 'alert-threshold.set': {
-      const threshold = Threshold.safeParse(value);
-      if (!threshold.success) return undefined;
-      const { key, value: set } = threshold.data;
+/** A Person as the Власник reads them: the email, and the role when the row holds it. */
+const personText = ({ email, role }: ActionSide<'admin.user.role'>) =>
+  role === undefined ? email : `${email} · ${ROLE_LABELS[role]}`;
+
+const agentText = ({ name, revoked }: ActionSide<'admin.agent.add'>) =>
+  `Агент ${name}${revoked === true ? ' · відкликано' : ''}`;
+
+const ownerCheckText = (check: ActionSide<'owner-check.add'>) =>
+  'text' in check ? `«${short(check.text)}»` : check.ticked ? 'відмічено' : 'не відмічено';
+
+const flagText = ({ flagId }: ActionSide<'content.flag.accept'>) => `позначка №${String(flagId)}`;
+
+/** The Rules a row holds, named by their feature, or by the other side's when it holds none. */
+const rulesSide = (rules: ActionSide<'switches.rules.set'>, other: unknown) => {
+  const sibling = ACTION_SHAPES['switches.rules.set'].safeParse(other);
+  return rulesText(rules, sibling.success ? sibling.data[0]?.feature : undefined);
+};
+
+/** A Service and the money fields the row holds: its plan, its monthly price, its billing day. */
+const serviceText = ({ name, plan, monthlyPriceUsdCents, billingDay }: ActionSide<'service.add'>) =>
+  [
+    name,
+    plan === undefined ? undefined : `тариф ${plan ?? 'не задано'}`,
+    monthlyPriceUsdCents === undefined
+      ? undefined
+      : monthlyPriceUsdCents === null
+        ? 'ціну не задано'
+        : `${usd(monthlyPriceUsdCents)} на місяць`,
+    billingDay === undefined
+      ? undefined
+      : billingDay === null
+        ? 'день списання не задано'
+        : `списання ${String(billingDay)}-го числа`,
+  ]
+    .filter((part) => part !== undefined)
+    .join(' · ');
+
+/** The fields of a Service entry an edit changed, as its form names them. */
+const ENTRY_FIELDS: Readonly<Record<string, string>> = {
+  type: 'тип',
+  label: 'назва',
+  note: 'де використовується',
+  value: 'значення',
+};
+
+/** A Service entry by its Service and type. */
+const entryText = ({ service, type }: ActionSide<'service.entry.add'>) => {
+  const known = ServiceEntryTypeSchema.safeParse(type);
+  return `${service} · ${known.success ? ENTRY_TYPE_LABELS[known.data] : type}`;
+};
+
+/** Every named key's sentence and sides: a key of the catalogue without a line here fails typecheck. */
+const NAMED_TEXTS: { readonly [Key in NamedActionKey]: NamedText<Key> } = {
+  'content.batch.review': { what: 'Пачку переглянуто' },
+  'content.batch.rollback': {
+    what: 'Пачку відкочено',
+    // The batch rolled back: its id says nothing to the Власник.
+    side: (rollback) =>
+      'retired' in rollback
+        ? `виведено: ${String(rollback.retired.length)} · повернуто: ${String(rollback.restored.length)} · пропущено: ${String(rollback.skipped.length)}`
+        : '—',
+  },
+  'content.flag.accept': { what: 'Позначку прийнято', side: flagText },
+  'content.flag.reject': { what: 'Позначку відхилено', side: flagText },
+  'report.resolve': {
+    what: 'Повідомлення про помилку вирішено',
+    side: ({ entryId, type, comment }) =>
+      `Запис ${entryId} · ${MISTAKE_TYPES[type] ?? type}${comment === undefined || comment === '' ? '' : ` · «${short(comment)}»`}`,
+  },
+  'account.delete': {
+    what: 'Обліковий запис читача видалено',
+    side: ({ email, createdAt }) => `${email}, створено ${day(createdAt)}`,
+  },
+  'admin.owner.add': { what: 'Додано Власника', side: personText },
+  'admin.user.invite': { what: 'Запрошено людину в адмінку', side: personText },
+  'admin.user.role': { what: 'Змінено роль', side: personText },
+  'admin.user.remove': { what: 'Прибрано доступ до адмінки', side: personText },
+  'admin.agent.add': { what: 'Видано токен Агента', side: agentText },
+  'admin.agent.revoke': { what: 'Відкликано токен Агента', side: agentText },
+  'owner-check.add': { what: 'Додано перевірку власника', side: ownerCheckText },
+  'owner-check.import': { what: 'Перевірку власника перенесено з файлу', side: ownerCheckText },
+  'owner-check.tick': { what: 'Перевірку власника відмічено', side: ownerCheckText },
+  'alert-threshold.set': {
+    what: 'Змінено поріг сповіщення',
+    side: ({ key, value }) => {
       const label = Object.entries(THRESHOLD_LABELS).find(([name]) => name === key)?.[1] ?? key;
-      return `${label}: ${set === undefined ? 'за замовчуванням' : number(set)}`;
-    }
-    case 'switches.minimum.set': {
-      const minimum = Minimum.safeParse(value);
-      if (!minimum.success) return undefined;
-      const { platform, minimum: set } = minimum.data;
+      return `${label}: ${value === undefined ? 'за замовчуванням' : number(value)}`;
+    },
+  },
+  'switches.rules.set': { what: 'Змінено правила перемикача', side: rulesSide },
+  'switches.kill': { what: 'Функцію вимкнено для всіх (аварійно)', side: rulesSide },
+  'switches.minimum.set': {
+    what: 'Змінено мінімальну версію застосунку',
+    side: ({ platform, minimum }) => {
       const limits = [
-        set?.soft === undefined ? undefined : `просити оновити нижче ${set.soft}`,
-        set?.hard === undefined ? undefined : `не пускати нижче ${set.hard}`,
+        minimum?.soft === undefined ? undefined : `просити оновити нижче ${minimum.soft}`,
+        minimum?.hard === undefined ? undefined : `не пускати нижче ${minimum.hard}`,
       ].filter((limit) => limit !== undefined);
       return `${PLATFORMS[platform] ?? platform}: ${limits.length === 0 ? 'не задано' : limits.join(', ')}`;
-    }
-    case 'switches.rules.set':
-    case 'switches.kill': {
-      const rules = Rules.safeParse(value);
-      if (!rules.success) return undefined;
-      const sibling = Rules.safeParse(other);
-      return rulesText(rules.data, sibling.success ? sibling.data[0]?.feature : undefined);
-    }
-    case 'content.batch.rollback': {
-      const rollback = Rollback.safeParse(value);
-      if (rollback.success) {
-        const { retired, restored, skipped } = rollback.data;
-        return `виведено: ${String(retired.length)} · повернуто: ${String(restored.length)} · пропущено: ${String(skipped.length)}`;
-      }
-      // The batch rolled back: its id says nothing to the Власник.
-      return z.object({ batchId: z.string() }).safeParse(value).success ? '—' : undefined;
-    }
-    case 'content.flag.accept':
-    case 'content.flag.reject': {
-      const flag = FlagRef.safeParse(value);
-      return flag.success ? `позначка №${String(flag.data.flagId)}` : undefined;
-    }
-    case 'report.resolve': {
-      const report = Report.safeParse(value);
-      if (!report.success) return undefined;
-      const { entryId, type, comment } = report.data;
-      const kind = MISTAKE_TYPES[type] ?? type;
-      return `Запис ${entryId} · ${kind}${comment === undefined || comment === '' ? '' : ` · «${short(comment)}»`}`;
-    }
-    case 'account.delete': {
-      const account = Account.safeParse(value);
-      return account.success
-        ? `${account.data.email}, створено ${day(account.data.createdAt)}`
-        : undefined;
-    }
-    case 'owner-check.add':
-    case 'owner-check.import':
-    case 'owner-check.tick': {
-      const check = OwnerCheck.safeParse(value);
-      if (check.success) return `«${short(check.data.text)}»`;
-      const tick = Tick.safeParse(value);
-      return tick.success ? (tick.data.ticked ? 'відмічено' : 'не відмічено') : undefined;
-    }
-    default:
-      return undefined;
-  }
+    },
+  },
+  'service.add': { what: 'Додано сервіс', side: serviceText },
+  'service.money.edit': { what: 'Змінено тариф і ціну сервісу', side: serviceText },
+  'service.entry.add': { what: 'Додано запис сервісу', side: entryText },
+  'service.entry.edit': {
+    what: 'Змінено запис сервісу',
+    side: (entry) => {
+      const fields = (entry.fields ?? []).map((field) => ENTRY_FIELDS[field] ?? field);
+      return fields.length === 0
+        ? entryText(entry)
+        : `${entryText(entry)} · змінено: ${fields.join(', ')}`;
+    },
+  },
+  'service.entry.delete': { what: 'Видалено запис сервісу', side: entryText },
+  'service.entry.reveal': { what: 'Показано значення запису сервісу', side: entryText },
+  'service.entry.copy': { what: 'Скопійовано значення запису сервісу', side: entryText },
+};
+
+/** A row's `what` as a sentence; a key it doesn't know reads as «Інша дія: …». */
+export function whatOf(what: string): string {
+  if (isNamedActionKey(what)) return NAMED_TEXTS[what].what;
+  const content = contentActionOf(what);
+  if (content === undefined) return `Інша дія: ${what}`;
+  const words = KIND_WORDS[content.kind];
+  return `${words.name} ${CONTENT_OPS[content.op](words.feminine)}`;
+}
+
+/** One side of a row of any key besides the content records', parsed by the shape its key writes. */
+function otherSide(what: string, value: unknown, other: unknown): string | undefined {
+  if (!isNamedActionKey(what)) return undefined;
+  const text: NamedText<NamedActionKey> = NAMED_TEXTS[what];
+  const parsed = ACTION_SHAPES[what].safeParse(value);
+  return parsed.success ? text.side?.(parsed.data, other) : undefined;
 }
 
 /** One side of a row as plain text; «—» when there is nothing. */

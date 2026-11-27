@@ -4,7 +4,7 @@ import {
   type Refusal,
   recordIdOf,
 } from '@slovo/content-rules';
-import type { Word } from '@slovo/contracts';
+import type { ContentActionKey, Word } from '@slovo/contracts';
 import { collectionAppearance, editionDayStart, type Json } from '@slovo/server-core';
 import { and, eq, isNull, notInArray, sql } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
@@ -409,7 +409,7 @@ export function writeLogged(
   op: WriteOp,
   before: LoggedRecord | undefined,
   after: LoggedRecord,
-): { what: string; before: Json; after: Json } {
+): { what: ContentActionKey; before: Json; after: Json } {
   return {
     what: `content.${kind}.${op}`,
     before:

@@ -180,7 +180,7 @@ describe('the Action log', () => {
     const backend = await freshBackend();
     const entry = {
       who: { kind: 'agent', name: 'claude-content' },
-      what: 'content.entry.edit',
+      what: 'content.word.edit',
       before: { gloss: 'old' },
       after: { gloss: 'new' },
       reason: 'a typo',

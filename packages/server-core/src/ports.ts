@@ -4,6 +4,7 @@
  * so a test gives its own.
  */
 import type {
+  ActionKey,
   CollectionLink,
   CountedQuestion,
   CounterEvent,
@@ -159,7 +160,7 @@ export interface Authenticator {
    * email, and appends the Action of an owner admin's deletion to the Action
    * log (ADR 0088), all at once.
    */
-  delete(account: AccountRecord, logged?: Action): Promise<void>;
+  delete(account: AccountRecord, logged?: LoggedAction): Promise<void>;
   /**
    * The Account of the email, normalised already, with the Google and Apple
    * sign-in methods recorded for it; none when the email has no Account.
@@ -617,8 +618,8 @@ export type Actor =
 /** What a change brings to the Action log; the log adds when. */
 export interface ActionEntry {
   readonly who: Actor;
-  /** What changed, such as `admin.owner.add` or `content.entry.edit`. */
-  readonly what: string;
+  /** What changed, a key of the Action log catalogue such as `admin.owner.add` or `content.word.edit`. */
+  readonly what: ActionKey;
   readonly before: Json;
   readonly after: Json;
   readonly reason: string | null;
@@ -627,7 +628,15 @@ export interface ActionEntry {
   readonly batchId: string | null;
 }
 
-/** One row of the Action log, kept forever and never edited. */
-export interface Action extends ActionEntry {
+/** A row a change appends to the Action log, kept forever and never edited. */
+export interface LoggedAction extends ActionEntry {
   readonly at: Date;
+}
+
+/**
+ * One row of the Action log as read. Its `what` is a text: a row kept from
+ * before may hold a key the catalogue no longer has.
+ */
+export interface Action extends Omit<LoggedAction, 'what'> {
+  readonly what: string;
 }

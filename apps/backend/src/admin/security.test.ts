@@ -267,7 +267,7 @@ describe('the Action log', () => {
     passTime(1000);
     await backend.store.appendAction({
       who: { kind: 'agent', name: 'claude-content' },
-      what: 'content.entry.edit',
+      what: 'content.word.edit',
       before: { gloss: 'old' },
       after: { gloss: 'new' },
       reason: 'a typo',
@@ -281,7 +281,7 @@ describe('the Action log', () => {
     expect(actions).toMatchObject([
       {
         who: { kind: 'agent', name: 'claude-content' },
-        what: 'content.entry.edit',
+        what: 'content.word.edit',
         before: { gloss: 'old' },
         after: { gloss: 'new' },
         editionId: 'logged',

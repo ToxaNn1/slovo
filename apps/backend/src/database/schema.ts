@@ -5,6 +5,7 @@
  * with the tickets that need them.
  */
 import type {
+  ActionKey,
   Correction,
   CrosswordDay,
   CuratedCollection,
@@ -685,7 +686,11 @@ export const actionLog = pgTable(
     /** Who: an Admin user, an Агент or a server command. */
     who: jsonb('who').$type<Actor>().notNull(),
     at: time('at'),
-    what: text('what').notNull(),
+    /**
+     * A key of the Action log catalogue as written; a row kept from before may
+     * hold a key it no longer has, so a read takes it as a text.
+     */
+    what: text('what').$type<ActionKey>().notNull(),
     before: jsonb('before').$type<Json>(),
     after: jsonb('after').$type<Json>(),
     reason: text('reason'),

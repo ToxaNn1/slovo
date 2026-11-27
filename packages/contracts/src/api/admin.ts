@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { CONTENT_RECORD_KINDS } from '../action-log-catalogue';
 import { ContentTargetsSchema } from '../content-targets';
 import { CorrectionTypeSchema } from '../correction';
 import {
@@ -255,15 +256,7 @@ const SwitchesOfEditionSchema = z.object({
 });
 
 /** The kinds of record the content write API writes. */
-const ContentRecordKindSchema = z.enum([
-  'word',
-  'correction',
-  'idiom',
-  'synonymRow',
-  'tip',
-  'curatedCollection',
-  'crosswordDay',
-]);
+const ContentRecordKindSchema = z.enum(CONTENT_RECORD_KINDS);
 
 /**
  * The kinds of record a flag names. A Crossword day takes no flag, so the
@@ -1169,6 +1162,7 @@ export const adminContract = {
               z.object({ kind: z.literal('agent'), name: z.string() }),
               z.object({ kind: z.literal('command'), command: z.string() }),
             ]),
+            /** An `ActionKey` of the catalogue, or a key a row kept from before still holds. */
             what: z.string(),
             before: z.json(),
             after: z.json(),
