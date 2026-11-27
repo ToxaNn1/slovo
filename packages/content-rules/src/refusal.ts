@@ -18,6 +18,7 @@ export type RuleName =
   | 'word-correction'
   | 'category-history'
   | 'word-origin'
+  | 'short-definition'
   | 'synonym-row-word'
   | 'curated-collection-entry'
   | 'curated-collection-appeared'

@@ -327,6 +327,57 @@ describe('checkWrite', () => {
     ]);
   });
 
+  describe('a Short Definition', () => {
+    // 91 characters, over the 80 a Short Definition is written for.
+    const long =
+      'Який любить багато говорити, часто без потреби й не зважаючи на те, чи його хтось слухає.';
+    const messagesOf = (changes: Json) =>
+      save(record('w_fx0002', { primaryDefinition: long, ...changes })).map(
+        ({ rule, field, message }) => [rule, field, message],
+      );
+    const refusal = (message: string) => ['short-definition', 'shortDefinition', message];
+
+    it('passes on a Word whose primary Definition is over 80 characters, and is not demanded of one', () => {
+      expect(messagesOf({ shortDefinition: 'Який любить багато говорити.' })).toEqual([]);
+      expect(messagesOf({})).toEqual([]);
+    });
+
+    it('refuses one over 80 characters, and takes one of exactly 80', () => {
+      expect(messagesOf({ shortDefinition: 'я'.repeat(80) })).toEqual([]);
+      expect(messagesOf({ shortDefinition: 'я'.repeat(81) })).toEqual([
+        refusal('Holds 81 characters: a Short Definition holds 80 or fewer'),
+      ]);
+    });
+
+    it('refuses the text of the primary Definition, however its case, Stress marks and spaces are written', () => {
+      const primary = `Який  любить ${'дуже '.repeat(11)}та говори\u0301ти.`;
+      expect(
+        messagesOf({
+          primaryDefinition: primary,
+          shortDefinition: `ЯКИЙ любить ${'дуже '.repeat(11)}та говорити.`,
+        }),
+      ).toEqual([refusal('Same text as the primary Definition: word it anew, shorter')]);
+    });
+
+    it("refuses one that holds the Word's own Lemma by the Edition's text comparison", () => {
+      expect(messagesOf({ shortDefinition: 'Не мовчазний, а Балаку\u0301чий.' })).toEqual([
+        refusal('Holds the Lemma "балакучий", which gives the answer away'),
+      ]);
+    });
+
+    it('refuses one on a Word whose primary Definition is 80 characters or fewer', () => {
+      expect(
+        save(record('w_fx0002', { shortDefinition: 'Який любить говорити.' })).map(
+          ({ rule, field, message }) => [rule, field, message],
+        ),
+      ).toEqual([
+        refusal(
+          'Not allowed: the primary Definition holds 28 characters, and only one over 80 has a Short Definition',
+        ),
+      ]);
+    });
+  });
+
   it('refuses a Stress off a vowel', () => {
     expect(save(record('w_fx0002', { stress: [0] }))).toEqual([
       expect.objectContaining({ rule: 'stress', entryId: 'w_fx0002', field: 'stress.0' }),
