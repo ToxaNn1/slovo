@@ -184,6 +184,61 @@ describe('the Yesterday quiz', () => {
     ).toBeUndefined();
   });
 
+  // ADR 0211: where several Definitions share a screen, a Word shows its Short Definition.
+  it('shows the Short Definition of a Word that has one, right or Distractor, the primary Definition of the others, and keeps the primary Definition on the card', async () => {
+    const asked = { ...yesterdays, shortDefinition: 'Yesterday’s, in short.' };
+    const short = { ...noun, shortDefinition: 'A noun, in short.' };
+    const plain = word('w_11');
+
+    const page = await pageOf(await run(records({ recap: false }), monday, [asked, short, plain]));
+    if (page?.notice !== 'yesterday') throw new Error('No Yesterday');
+
+    expect(page.quiz.meanings[page.quiz.right]).toBe('Yesterday’s, in short.');
+    expect([...page.quiz.meanings].sort()).toEqual(
+      ['Yesterday’s, in short.', 'A noun, in short.', plain.primaryDefinition].sort(),
+    );
+    expect(page.word.primaryDefinition).toBe(yesterdays.primaryDefinition);
+  });
+
+  it('shows the primary Definition of a Word without a Short Definition among the Short Definitions of the others', async () => {
+    const content = [
+      yesterdays,
+      { ...noun, shortDefinition: 'A noun, in short.' },
+      word('w_11', { shortDefinition: 'Another noun, in short.' }),
+    ];
+
+    const quiz = await quizOf(await run(records(), monday, content));
+
+    expect(quiz?.meanings[quiz.right]).toBe(yesterdays.primaryDefinition);
+    expect([...(quiz?.meanings ?? [])].sort()).toEqual(
+      [yesterdays.primaryDefinition, 'A noun, in short.', 'Another noun, in short.'].sort(),
+    );
+  });
+
+  it('never gives two meanings alike by the text shown, nor the Short Definition of a Word that means the same', async () => {
+    const asked = { ...yesterdays, shortDefinition: 'Short a.' };
+    const content = [
+      asked,
+      // Shows the asked Word's shown text, as its Short or its primary Definition.
+      word('w_07', { shortDefinition: 'SHORT  a.' }),
+      word('w_08', { primaryDefinition: 'short a.' }),
+      // Means what the asked Word means, whatever it shows.
+      { ...sameMeaning, shortDefinition: 'A twin.' },
+      word('w_09', { shortDefinition: yesterdays.primaryDefinition.toUpperCase() }),
+      // Two Words that show one text.
+      word('w_12', { shortDefinition: 'Short f.' }),
+      word('w_13', { shortDefinition: 'short  F.' }),
+      noun,
+    ];
+
+    const quiz = await quizOf(await run(records(), monday, content));
+
+    expect(quiz?.meanings[quiz.right]).toBe('Short a.');
+    expect(
+      quiz?.meanings.map((meaning) => meaning.toLowerCase().replaceAll(/\s+/g, ' ')).sort(),
+    ).toEqual(['short a.', 'short f.', noun.primaryDefinition.toLowerCase()]);
+  });
+
   it('makes the quiz again once a read of the Words failed', async () => {
     let failing = true;
     const app = await run(records({ recap: false }), monday, words, (memory) => ({

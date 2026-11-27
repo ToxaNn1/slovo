@@ -23,9 +23,10 @@ import { userStateRecords } from '../user-state-schema';
 export type FirstWeekDay = 1 | 2 | 3 | 4 | 5 | 6 | 7;
 
 /**
- * The Yesterday quiz: three distinct meanings, the Word's own
- * primary Definition and two of other Words, in the order the card shows
- * them; `answered` is the meaning the reader picked, once they did.
+ * The Yesterday quiz: three distinct meanings, the Word's own and two of
+ * other Words, each its Short Definition or else its primary Definition
+ * (ADR 0211), in the order the card shows them; `answered` is the meaning the
+ * reader picked, once they did. The card keeps the primary Definition.
  */
 export interface YesterdayQuiz extends MeaningQuiz {
   readonly answered?: number;

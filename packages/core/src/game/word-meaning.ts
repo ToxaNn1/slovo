@@ -1,5 +1,6 @@
 import type { Word } from '@slovo/contracts';
 
+import { definitionAmongSeveral } from '../entries/definition-among-several';
 import type { Random } from '../ports';
 import { shuffled } from '../shuffled';
 import type { TextComparison } from '../text/text-comparison';
@@ -10,13 +11,6 @@ import { areSynonyms, definitionOfEntry, distractorOrder } from './guess-word';
 export const WORD_MEANING_ID = 'word-meaning';
 
 const optionOf = (text: string): RoundOption => ({ text, stressedVowels: [] });
-
-/**
- * The Definition a Word shows as an option of the Word Meaning question: its
- * Short Definition, or its primary Definition when it has none (ADR 0211).
- */
-const definitionAmongSeveral = (word: Word): string =>
-  word.shortDefinition ?? word.primaryDefinition;
 
 /**
  * Whether the Word Meaning question may ask the Word: not when the Definition

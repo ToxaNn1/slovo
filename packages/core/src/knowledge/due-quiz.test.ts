@@ -229,4 +229,52 @@ describe('the Due Quiz', () => {
 
     expect(await app.dueQuiz.answer(question, 0)).toBe(question.right === 0 ? 'known' : 'unknown');
   });
+
+  // ADR 0211: where several Definitions share a screen, a Word shows its Short Definition.
+  it('shows the Short Definition of a Word that has one, right or Distractor, and the primary Definition of the others', async () => {
+    const content = [
+      word('w_a', { shortDefinition: 'A, in short.' }),
+      word('w_b'),
+      word('w_c', { shortDefinition: 'C, in short.' }),
+    ];
+    const records = new Map<string, string>();
+    await learning(records, ['w_a', 'w_b'], content);
+    const app = await run({ records, on: '2026-05-02', content });
+
+    const questions = await app.dueQuiz.questions();
+
+    const shown = ['A, in short.', 'The meaning of b.', 'C, in short.'];
+    expect(questions.map(({ wordId, meanings, right }) => [wordId, meanings[right]])).toEqual([
+      ['w_a', 'A, in short.'],
+      ['w_b', 'The meaning of b.'],
+    ]);
+    for (const { meanings } of questions) expect([...meanings].sort()).toEqual([...shown].sort());
+  });
+
+  it('never gives two meanings alike by the text shown, nor the Short Definition of a Word that means the same', async () => {
+    const asked = word('w_a', { shortDefinition: 'Short a.' });
+    const content = [
+      asked,
+      // Shows the asked Word's shown text, as its Short or its primary Definition.
+      word('w_b', { shortDefinition: 'SHORT  a.' }),
+      word('w_c', { primaryDefinition: 'short a.' }),
+      // Means what the asked Word means, whatever it shows.
+      word('w_d', { primaryDefinition: asked.primaryDefinition, shortDefinition: 'A twin.' }),
+      word('w_e', { shortDefinition: asked.primaryDefinition.toUpperCase() }),
+      // Two Words that show one text.
+      word('w_f', { shortDefinition: 'Short f.' }),
+      word('w_g', { shortDefinition: 'short  F.' }),
+      word('w_h'),
+    ];
+    const records = new Map<string, string>();
+    await learning(records, ['w_a'], content);
+    const app = await run({ records, on: '2026-05-02', content });
+
+    const [question] = await app.dueQuiz.questions();
+
+    expect(question?.meanings[question.right]).toBe('Short a.');
+    expect(
+      question?.meanings.map((meaning) => meaning.toLowerCase().replaceAll(/\s+/g, ' ')).sort(),
+    ).toEqual(['short a.', 'short f.', 'the meaning of h.']);
+  });
 });
