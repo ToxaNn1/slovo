@@ -68,6 +68,14 @@ describe('Recent queries of Search', () => {
     expect(await recent.list()).toEqual(['Сумирний']);
   });
 
+  it('saves no query that is only spaces', async () => {
+    const { recent } = await open();
+
+    await recent.resultOpened('   ');
+
+    expect(await recent.list()).toEqual([]);
+  });
+
   it('empties the queries on «Очистити»', async () => {
     const { recent } = await open();
     await recent.resultOpened('сум');

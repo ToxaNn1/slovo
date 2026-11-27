@@ -287,6 +287,31 @@ describe('a Collection Link', () => {
     expect(app.collections.list).toEqual([]);
   });
 
+  it('says there is no connection after one try in a composition without a schedule', async () => {
+    const { app, api, share } = await reader();
+    const id = await share(link('Осінь', ['w_one']));
+    api.online = false;
+
+    expect(await app.collectionLinkCopy.preview(id)).toEqual({ ok: false, reason: 'offline' });
+    // The author's share, then the reader's one try.
+    expect(api.calls).toHaveLength(2);
+  });
+
+  it('is not available in a composition without the backend', async () => {
+    const app = await openComposition({
+      content,
+      edition: testEdition({ isFeatureEnabled: (feature) => feature !== 'knowledge' }),
+      userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+      clock: fakeClock().clock,
+      random: steppingRandom(),
+    });
+
+    expect(await app.collectionLinkCopy.preview(UNKNOWN_ID)).toEqual({
+      ok: false,
+      reason: 'unavailable',
+    });
+  });
+
   it('opens once a server error passes on a try again', async () => {
     const time = fakeClock();
     const timers = testSchedule(time);

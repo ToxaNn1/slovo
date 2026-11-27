@@ -751,3 +751,30 @@ describe('settings: the switch-off unit of anonymous statistics (ADR 0163)', () 
     expect(server.calls).not.toContain('counters.statisticsOff');
   });
 });
+
+describe('settings: sharing the anonymous statistics', () => {
+  it('keeps the unsent Community Counter changes and the Analytics port while another setting changes', async () => {
+    const unsent = userStateRecords.countersUnsent.record('w_000');
+    const records = new Map([[unsent.key, '{"known":1,"unknown":0,"saved":0}']]);
+    const userState = await openUserState({ port: createMemoryUserStatePort(records) });
+    let stopped = 0;
+    const settings = createSettings({
+      userState,
+      defaults,
+      analytics: {
+        track: () => Promise.resolve(),
+        stop: () => {
+          stopped += 1;
+        },
+      },
+    });
+
+    await settings.update({ theme: 'dark' });
+    expect(await userState.read(unsent)).toEqual({ known: 1, unknown: 0, saved: 0 });
+    expect(stopped).toBe(0);
+
+    await settings.update({ shareCounters: false });
+    expect(await userState.read(unsent)).toBeUndefined();
+    expect(stopped).toBe(1);
+  });
+});
