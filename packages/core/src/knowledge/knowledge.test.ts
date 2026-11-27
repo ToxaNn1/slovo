@@ -354,6 +354,7 @@ describe('Knowledge Marks', () => {
       due: [],
       shown: new Map(),
     });
+    expect((await run({ records, on: ['corrections'] })).knowledge.weak()).toEqual([]);
   });
 
   it('changes nothing in memory when keeping a mark fails', async () => {
@@ -545,5 +546,105 @@ describe('Confirmed Entries', () => {
 
     const on = await run({ records, pack, clock: time.clock });
     expect(confirmedOf(on)).toEqual({ total: 1, byRarity: { 1: 0, 2: 1, 3: 0, 4: 0, 5: 0 } });
+  });
+});
+
+describe('the Knowledge state as it follows a change', () => {
+  it('stays the same object and tells no one when hiding an Entry changes nothing in it', async () => {
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ clock: time.clock });
+    await app.knowledge.tap('w_one', 'unknown');
+    await app.knowledge.tap('w_two', 'known');
+    await app.knowledge.confirm('c_one');
+    time.advance(DAY);
+    await app.resume();
+    const before = app.knowledge.state;
+    expect(before.due).toEqual(['w_one']);
+    expect(learningOf(app)).toEqual([['w_one', 0]]);
+    let told = 0;
+    app.knowledge.subscribe(() => {
+      told += 1;
+    });
+
+    await app.hiddenEntries.hide('w_three');
+
+    expect(app.knowledge.state).toBe(before);
+    expect(told).toBe(0);
+  });
+
+  it('counts the days until a Review down with each new local day, before it is due', async () => {
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ clock: time.clock });
+    await app.knowledge.tap('w_one', 'unknown');
+    time.advance(DAY);
+    await app.resume();
+    await app.knowledge.answer('w_one', 'known');
+    expect(learningOf(app)).toEqual([['w_one', 3]]);
+
+    time.advance(DAY);
+    await app.resume();
+
+    expect(learningOf(app)).toEqual([['w_one', 2]]);
+  });
+
+  it('leaves the later Review out of the «Вчу» list once its Entry is hidden', async () => {
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ clock: time.clock });
+    await app.knowledge.tap('w_one', 'unknown');
+    await app.knowledge.tap('w_two', 'unknown');
+    time.advance(DAY);
+    await app.resume();
+    await app.knowledge.answer('w_two', 'known');
+    expect(learningOf(app)).toEqual([
+      ['w_one', 0],
+      ['w_two', 3],
+    ]);
+
+    await app.hiddenEntries.hide('w_two');
+
+    expect(learningOf(app)).toEqual([['w_one', 0]]);
+  });
+
+  it('changes and removes the mark of an Entry no longer in the Language Pack, counting it as no kind', async () => {
+    const records = new Map<string, string>();
+    const before = createMemoryContentPort({ words: [word('w_one'), word('w_gone')] });
+    const first = await run({ records, pack: before });
+    await first.knowledge.tap('w_one', 'known');
+    await first.knowledge.tap('w_gone', 'known');
+    const app = await run({ records });
+    expect(app.knowledge.state.known).toEqual(knownCounts({ word: 1 }));
+
+    await app.knowledge.tap('w_gone', 'unknown');
+    expect(app.knowledge.state.shown.get('w_gone')).toBe('unknown');
+
+    await app.knowledge.tap('w_gone', 'unknown');
+    expect(app.knowledge.state.shown.get('w_gone')).toBeUndefined();
+    expect(app.knowledge.state.shown.get('w_one')).toBe('known');
+  });
+});
+
+describe('the confirmed Entries after an instant', () => {
+  it('counts the Entries confirmed strictly after it, and none the Language Pack lacks', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const app = await run({ records, clock: time.clock });
+    await app.knowledge.confirm('w_one');
+    time.advance(HOUR);
+    await app.knowledge.confirm('w_two');
+    await app.knowledge.confirm('w_missing');
+
+    expect(app.knowledge.state.confirmed.total).toBe(2);
+    expect(app.knowledge.confirmedAfter('2026-10-19T08:00:00.000Z')).toBe(2);
+    expect(app.knowledge.confirmedAfter('2026-10-19T09:00:00.000Z')).toBe(1);
+    expect(app.knowledge.confirmedAfter('2026-10-19T10:00:00.000Z')).toBe(0);
+  });
+
+  it('counts none with the confirmedEntries Feature Switch off', async () => {
+    const records = new Map<string, string>();
+    await (await run({ records })).knowledge.confirm('w_one');
+
+    const off = await run({ records, on: ['knowledge'] });
+
+    expect(off.knowledge.confirmedAfter('2026-10-19T08:00:00.000Z')).toBe(0);
   });
 });

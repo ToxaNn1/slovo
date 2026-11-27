@@ -205,6 +205,12 @@ describe('a text found in another', () => {
     expect(ua.find('кіт', '')).toBeUndefined();
   });
 
+  it('finds nothing that begins or ends inside the lower case of one character', () => {
+    // «İ» is «i» and a combining dot above in lower case: neither half alone is found.
+    expect(ua.find('İx', 'i')).toBeUndefined();
+    expect(ua.find('İs', '\u0307s')).toBeUndefined();
+  });
+
   it('folds case with the Edition’s locale, a lower case longer than its capital too', () => {
     const tr = createTextComparison({
       languageTraits: { apostrophes: [], sortLocale: 'tr' },
