@@ -42,6 +42,7 @@ import {
   optionsOf,
   pickPlayed,
   seededRandom,
+  settle,
   testEdition,
   analyticsInto,
 } from '../test-support';
@@ -356,6 +357,35 @@ describe('the Game and Analytics', () => {
     ]);
   });
 
+  it('sends a Game lost with its last Life as lost', async () => {
+    const { port, events } = fakePort();
+    const app = await run({
+      on: ['rarityCeiling', 'knowledge', 'analytics', 'analyticsGames'],
+      analytics: port,
+    });
+
+    await playGame(app, [1, 2, 3]);
+
+    expect(events.at(-1)).toEqual([
+      'gameFinished',
+      { mode: 'guess-word', durationSeconds: 0, right: 0, played: 3, status: 'lost' },
+    ]);
+  });
+
+  it('sends no Game started for a mode that cannot start', async () => {
+    const { port, events } = fakePort();
+    const app = await run({
+      on: ['rarityCeiling', 'knowledge', 'analytics', 'analyticsGames'],
+      analytics: port,
+      gameModes: [{ ...lemmaMode, buildRound: () => undefined }],
+    });
+
+    await app.game.start('test-lemma');
+
+    expect(app.game.state.current).toBeUndefined();
+    expect(events).toEqual([]);
+  });
+
   it('sends nothing of a Game while sharing is off', async () => {
     const { port, events } = fakePort();
     const records = new Map<string, string>();
@@ -479,6 +509,18 @@ describe('the Game Modes on offer', () => {
     await app.hide({ kind: 'entry', entryId: 'w_nnoun02' });
     await app.hide({ kind: 'entry', entryId: 'w_nnoun03' });
     expect(app.game.state.modes).not.toBe(before);
+  });
+
+  it('keeps the same offers, their Best results included, while hiding a Word leaves them unchanged', async () => {
+    const app = await run({
+      records: userStateRecords.gameBest.record('guess-word').change(12) as Map<string, string>,
+    });
+    const before = app.game.state.modes;
+    expect(before).toMatchObject([{ best: { result: 12, of: 15 } }]);
+
+    await app.hide({ kind: 'entry', entryId: 'w_nnoun01' });
+
+    expect(app.game.state.modes).toBe(before);
   });
 });
 
@@ -1830,6 +1872,7 @@ describe('the Best result per mode', () => {
     const app = await run({ records });
 
     expect(app.game.state.bestResults).toEqual({});
+    expect(Object.keys(app.game.state.bestResults)).toEqual([]);
     expect(app.progress.state.bestResult).toBeUndefined();
     expect([...records.keys()].filter((key) => key.startsWith(gameBest.prefix))).toEqual([]);
   });
@@ -2028,6 +2071,7 @@ describe('the Best result per mode', () => {
       canStart: true,
       best: { result: 2 },
     });
+    expect(app.game.state.modes[1]?.best).not.toHaveProperty('of');
     expect(app.game.state.modes[0]).toMatchObject({ best: { result: 12, of: 15 } });
   });
 
@@ -2093,6 +2137,64 @@ describe('the Best result per mode', () => {
 
     expect(app.game.state.bestResults).toEqual({});
     expect(app.progress.state.bestResult).toBeUndefined();
+  });
+
+  describe('after a Progress reset', () => {
+    const on = ['rarityCeiling', 'knowledge', 'xpLog', 'progressReset'] as const;
+    const lemmaOffer = { modeId: 'test-lemma', entryKind: 'word', group: 'new', canStart: true };
+
+    it('is none for every mode on offer until a Game after it, which keeps its own', async () => {
+      const records = new Map<string, string>();
+      const time = fakeClock('2026-10-11T09:00:00+03:00');
+      const app = await run({ records, time: time.clock, on, gameModes: [lemmaMode] });
+      await playGame(app, [3, 4, 5]);
+      expect(app.game.state.modes[0]).toMatchObject({ best: { result: 2, of: 15 } });
+
+      time.advance(60_000);
+      await app.xpLog.reset();
+      await settle();
+
+      expect(Object.keys(app.game.state.bestResults)).toEqual([]);
+      expect(app.game.state.modes).toEqual([
+        { modeId: 'guess-word', entryKind: 'word', group: 'lead', canStart: true },
+        lemmaOffer,
+      ]);
+      expect(app.game.state.modes[0]).not.toHaveProperty('best');
+
+      time.advance(60_000);
+      await playGame(app, [6, 7, 8]);
+
+      expect(app.game.state.bestResults).toEqual({ 'guess-word': 5 });
+      expect(app.game.state.modes).toEqual([
+        {
+          modeId: 'guess-word',
+          entryKind: 'word',
+          group: 'lead',
+          canStart: true,
+          best: { result: 5, of: 15 },
+        },
+        lemmaOffer,
+      ]);
+      const bestKeys = [...records.keys()].filter((key) =>
+        key.startsWith(gameBest.record('guess-word').key),
+      );
+      expect(bestKeys).toEqual([guessWordBest.key, expect.stringMatching(/~./)]);
+    });
+
+    it('changes nothing on the Game for an XP change that is no reset', async () => {
+      const app = await run({ on, gameModes: [lemmaMode] });
+      await app.game.start('guess-word');
+      let changes = 0;
+      app.game.subscribe(() => {
+        changes += 1;
+      });
+
+      void app.game.answer(rightAnswerTo(current(app).round));
+      await settle();
+
+      expect(current(app)).toMatchObject({ status: 'answered', answered: { kind: 'right' } });
+      expect(changes).toBe(1);
+    });
   });
 });
 
@@ -2584,6 +2686,22 @@ describe('a failed planning of the offers', () => {
     expect(new Set(plannedAtRead)).toEqual(new Set([true]));
     expect(app.game.state.modes).toEqual(ready);
     expect(current(app)).toMatchObject({ modeId: 'guess-word', status: 'playing' });
+  });
+
+  it('starts no second planning on a return to the foreground while a try waits to run again', async () => {
+    const later = handSchedule();
+    const app = await run({
+      pack: failingPack(() => true),
+      planned: false,
+      schedule: later.schedule,
+    });
+    await app.game.next();
+    expect(later.delays).toEqual([1_000]);
+
+    await app.resume();
+    await app.game.next();
+
+    expect(later.delays).toEqual([1_000]);
   });
 
   it('tries nothing again when the first planning succeeds, nor on a return to the foreground', async () => {
