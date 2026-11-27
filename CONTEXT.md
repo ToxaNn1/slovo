@@ -172,6 +172,10 @@ _Avoid_: Accent
 The explanation of one meaning of a Word or an Idiom, written in the Edition's language. A Word or an Idiom has one primary Definition and may have more.
 _Avoid_: Description, meaning, explanation
 
+**Short Definition**:
+An optional second wording of a Word's primary Definition, 80 characters or fewer, written only for a Word whose primary Definition is over 80. The Word Meaning question shows it in place of the primary Definition; the card, «Пари», the sheet and every other screen keep the primary Definition. It never holds the Word's own Lemma.
+_Avoid_: Brief definition, summary, gloss
+
 **Example**:
 A sentence showing a Word or an Idiom in use.
 _Avoid_: Usage, sample
@@ -418,7 +422,7 @@ A Feed slot that shows one Round over an Eligible Entry: a Round of an enabled G
 _Avoid_: Pop quiz, Feed Game
 
 **Word Meaning question**:
-A round type of the Quick Question, not a Game Mode: the Lemma of a Word that is an Eligible Entry («„{word}“ — це…») and four Definitions shown whole, its primary Definition among them. The Distractors are primary Definitions of other such Words, of the same part of speech first. A Word whose Definition holds its Lemma is never asked. It has its own Feature Switch.
+A round type of the Quick Question, not a Game Mode: the Lemma of a Word that is an Eligible Entry («„{word}“ — це…») and four Definitions shown whole, its own among them. Each Word shows its Short Definition, or its primary Definition when it has none, as the right option and as a Distractor alike; the Distractors are of other such Words, of the same part of speech first. A Word whose shown Definition holds its Lemma is never asked. The sheet shows the primary Definition. It has its own Feature Switch.
 _Avoid_: Definition mode, meaning Game
 
 **Questionnaire**:
