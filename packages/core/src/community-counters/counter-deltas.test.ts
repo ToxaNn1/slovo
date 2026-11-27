@@ -126,6 +126,16 @@ describe('Community Counter deltas from Knowledge Marks', () => {
     expect(await unsentOf(app)).toEqual([]);
   });
 
+  it('keeps no counted record of an Entry whose mark was set and removed again', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+
+    await app.knowledge.tap('w_one', 'known');
+    await app.knowledge.tap('w_one', 'known');
+
+    expect(records.has(userStateRecords.countersCounted.record('w_one').key)).toBe(false);
+  });
+
   it('keeps the changes not yet sent for the next launch', async () => {
     const records = new Map<string, string>();
     await (await run({ records })).knowledge.tap('w_one', 'known');

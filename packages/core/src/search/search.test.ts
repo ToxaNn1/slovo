@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { FeatureSwitch } from '@slovo/contracts';
 
-import { createSearch } from './search';
+import { createSearch, withNoResultEvent, type Search, type SearchResults } from './search';
 import { createTextComparison } from '../text/text-comparison';
 import { createMemoryContentPort } from '../testing';
 import { correction, idiom, synonymRow, tip, word } from '../test-support';
@@ -390,5 +390,111 @@ describe('Search by meaning («За значенням»)', () => {
       'сумирний',
     ]);
     expect(await byMeaningOf(await searchOver(pack, { off: ['search'] }), 'тих')).toEqual([]);
+  });
+});
+
+describe('Search over the words of a text', () => {
+  it('reads an apostrophe as part of the word, so no word starts after it', async () => {
+    // The plain apostrophe first, as an Edition may list it: it is no letter.
+    const plain = {
+      ...edition(),
+      languageTraits: { apostrophes: ["'", 'ʼ'], sortLocale: 'uk' },
+    };
+    const search = createSearch({
+      content: createMemoryContentPort({ words: [word('w_five', { lemma: "п'ятірня" })] }),
+      edition: plain,
+      comparison: createTextComparison(plain),
+      userState: await openUserState({ port: createMemoryUserStatePort() }),
+    });
+
+    expect(await lemmasOf(search, 'ятір')).toEqual([]);
+    expect(await lemmasOf(search, "п'ят")).toEqual(["п'ятірня"]);
+  });
+
+  it('reads the Language Pack again after a read that failed', async () => {
+    const memory = createMemoryContentPort({ words: [word('w_quiet', { lemma: 'сумирний' })] });
+    let failures = 1;
+    const search = createSearch({
+      content: {
+        listIds: (kind) => memory.listIds(kind),
+        getEntries: (ids) => memory.getEntries(ids),
+        listWords: () => {
+          if (failures === 0) return memory.listWords();
+          failures -= 1;
+          return Promise.reject(new Error('offline'));
+        },
+      },
+      edition: edition(),
+      comparison: createTextComparison(edition()),
+      userState: await openUserState({ port: createMemoryUserStatePort() }),
+    });
+
+    await expect(search.search('сум')).rejects.toThrow('offline');
+    expect(await lemmasOf(search, 'сум')).toEqual(['сумирний']);
+  });
+});
+
+describe('The searchNoResult event', () => {
+  const NONE: SearchResults = {
+    words: [],
+    corrections: [],
+    idioms: [],
+    synonymRows: [],
+    tips: [],
+    byMeaning: [],
+  };
+  const pack = {
+    word: word('w_quiet', { lemma: 'сумирний' }),
+    correction: correction('c_take'),
+    idiom: idiom('i_crow'),
+    synonymRow: synonymRow('s_brave'),
+    tip: tip('t_ba'),
+  };
+
+  function trackedOver(results: SearchResults, answers = true) {
+    const events: unknown[] = [];
+    const inner: Search = {
+      answers: () => answers,
+      answersByMeaning: () => answers,
+      search: () => Promise.resolve(results),
+    };
+    const search = withNoResultEvent(inner, {
+      track: (event, properties) => {
+        events.push([event, properties]);
+        return Promise.resolve();
+      },
+    });
+    return { search, events };
+  }
+
+  it('goes with the length of the query without the spaces at its ends', async () => {
+    const { search, events } = trackedOver(NONE);
+
+    await search.search('  ябз ');
+
+    expect(events).toEqual([['searchNoResult', { queryLength: 3 }]]);
+  });
+
+  it('goes for no query Search does not answer', async () => {
+    const { search, events } = trackedOver(NONE, false);
+
+    await search.search('я');
+
+    expect(events).toEqual([]);
+  });
+
+  it.each([
+    ['a Word and a Correction', { words: [pack.word], corrections: [pack.correction] }],
+    ['a Word and an Idiom', { words: [pack.word], idioms: [pack.idiom] }],
+    ['a Word and a Synonym Row', { words: [pack.word], synonymRows: [pack.synonymRow] }],
+    ['a Word and a Tip', { words: [pack.word], tips: [pack.tip] }],
+    ['a Word and a match by meaning', { words: [pack.word], byMeaning: [pack.word] }],
+    ['a Correction and an Idiom', { corrections: [pack.correction], idioms: [pack.idiom] }],
+  ])('goes for no query that finds %s', async (_, found) => {
+    const { search, events } = trackedOver({ ...NONE, ...found });
+
+    await search.search('сум');
+
+    expect(events).toEqual([]);
   });
 });

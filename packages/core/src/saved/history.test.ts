@@ -330,6 +330,21 @@ describe('History', () => {
       ]);
     });
 
+    it('keeps the counts of the day a week before today, the oldest the weekly recap reads', async () => {
+      const seenAt = (at: string) => JSON.stringify({ seenAt: at, wordOfTheDay: false });
+      const records = new Map([
+        // 2026-10-04 in Kyiv, a week before 2026-10-11.
+        ['history.w_one', seenAt('2026-10-04T09:00:00.000Z')],
+        ['historyCleared.2026-10-04', JSON.stringify({ entries: 2, words: 1 })],
+      ]);
+      const time = fakeClock('2026-10-11T12:00:00+03:00');
+      const app = await run({ records, clock: time.clock });
+
+      await app.history.clear();
+
+      expect(app.history.cleared('2026-10-04')).toEqual({ entries: 3, words: 2 });
+    });
+
     it('deletes every History record at once and nothing else', async () => {
       const records = new Map<string, string>();
       const time = fakeClock();

@@ -290,6 +290,54 @@ describe('The Mood check-in', () => {
     expect(await app.mood.daysByMood()).toEqual(new Map([['joyful', 2]]));
   });
 
+  it('asks on a day whose saved Mood the Edition does not have, and counts that day for no Mood', async () => {
+    const records = new Map([
+      ['mood.2026-11-03', JSON.stringify({ date: '2026-11-03', choice: 'gloomy' })],
+      ['mood.2026-11-04', JSON.stringify({ date: '2026-11-04', choice: 'gloomy' })],
+    ]);
+
+    const { app } = await run({ records });
+
+    expect(app.mood.today).toEqual({ state: 'asking' });
+    expect(await app.mood.daysByMood()).toEqual(new Map());
+  });
+
+  it('reads no saved Mood with `mood` off', async () => {
+    const records = new Map([
+      ['mood.2026-11-04', JSON.stringify({ date: '2026-11-04', choice: 'calm' })],
+    ]);
+
+    const { app } = await run({ records, on: ['wordOfTheDay'] });
+
+    expect(app.mood.today).toEqual({ state: 'asking' });
+    expect(app.mood.feedParameters().inBand).toBeUndefined();
+  });
+
+  it('tells no one when the same Mood is chosen again', async () => {
+    const { app } = await run();
+    await app.mood.choose('calm');
+    let told = 0;
+    app.mood.subscribe(() => (told += 1));
+
+    await app.mood.choose('calm');
+
+    expect(told).toBe(0);
+  });
+
+  it('tells the subscribers when the day turns over a chosen Mood', async () => {
+    const time = fakeClock('2026-11-04T23:59:00+02:00');
+    const { app } = await run({ clock: time.clock });
+    await app.mood.choose('calm');
+    let told = 0;
+    app.mood.subscribe(() => (told += 1));
+
+    time.advance(2 * 60 * 1000);
+    await app.resume();
+    await settle();
+
+    expect(told).toBe(1);
+  });
+
   it('ignores a choice of a Mood the Edition has but the Dashboard hides', async () => {
     const { app, events } = await run({ dashboardMoods: MOODS.slice(0, 3) });
 

@@ -173,6 +173,20 @@ describe('the notification explainer', () => {
     ]);
   });
 
+  it('comes again on a second run of its day while the reader has not seen it, the re-ask too', async () => {
+    const records = new Map([onboarded]);
+    const unseen = async (date: string) => {
+      const app = await run({ records, date });
+      await app.feed.show(0);
+      return app.feed.cards.some((card) => card.kind === 'notice');
+    };
+
+    expect(await unseen('2026-10-13')).toBe(true);
+    expect(await askIn(await run({ records, date: '2026-10-13' }))).toBe('notificationExplainer');
+    expect(await unseen('2026-10-20')).toBe(true);
+    expect(await askIn(await run({ records, date: '2026-10-20' }))).toBe('notificationReask');
+  });
+
   it('asks no more once the reader answered the device', async () => {
     const records = new Map([onboarded]);
     const app = await run({ records, date: '2026-10-13', answer: 'denied' });

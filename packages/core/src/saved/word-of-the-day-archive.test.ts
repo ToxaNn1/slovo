@@ -310,6 +310,22 @@ describe('The Word of the Day archive list', () => {
     expect(told).toBe(0);
   });
 
+  it('keeps its list and tells nothing when a day turns within the year', async () => {
+    const time = fakeClock('2026-10-26T09:00:00+03:00');
+    const { app } = await run({ clock: time.clock, records: kept({ '2026-10-25': 'w_one' }) });
+    const { list } = app.wordOfTheDayArchive;
+    let told = 0;
+    app.wordOfTheDayArchive.subscribe(() => {
+      told += 1;
+    });
+
+    time.advance(24 * 60 * 60 * 1000);
+    await app.resume();
+
+    expect(app.wordOfTheDayArchive.list).toBe(list);
+    expect(told).toBe(0);
+  });
+
   it('gives the dates of the year before their year once the first day of a year comes', async () => {
     const time = fakeClock('2026-12-31T09:00:00+02:00');
     const { app } = await run({

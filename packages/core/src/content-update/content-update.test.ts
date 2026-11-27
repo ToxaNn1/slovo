@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createContentUpdate } from '../index';
 import { CONTENT_UPDATE_EVERY } from './content-update';
+import type { Backend, ContentStore } from '../ports';
 import { createFakeBackend, createMemoryContentStore } from '../testing';
 import { fakeClock, randomOf, testSchedule } from '../test-support';
 
@@ -186,6 +187,62 @@ describe('checking for a Patch', () => {
 
     expect(media.recordings).toEqual([live]);
     expect(media.mediaBase).toBe('https://media.slovo.test');
+  });
+
+  it('sends no If-None-Match header before any Patch was applied', async () => {
+    const contentApi = createFakeBackend();
+    const inputs: Parameters<Backend['content']['patch']>[0][] = [];
+    const backend: Backend = {
+      ...contentApi.backend,
+      content: {
+        ...contentApi.backend.content,
+        patch: (input) => {
+          inputs.push(input);
+          return contentApi.backend.content.patch(input);
+        },
+      },
+    };
+    const time = fakeClock();
+    const contentUpdate = createContentUpdate({
+      backend,
+      edition: { id: 'uk' },
+      store: createMemoryContentStore({ contentVersion: 4 }),
+      random: randomOf(0.5),
+      schedule: testSchedule(time).schedule,
+      readableFormats: [PATCH_FORMAT],
+    });
+
+    await contentUpdate.checkForUpdate();
+
+    expect(inputs).toHaveLength(1);
+    expect(inputs[0]).not.toHaveProperty('headers');
+  });
+
+  it('hands the store nothing when the backend answers in a format the app does not read', async () => {
+    const contentApi = createFakeBackend();
+    contentApi.content.publishPatch({ ...patchOf(4), patchFormat: PATCH_FORMAT + 1 });
+    const memory = createMemoryContentStore({ contentVersion: 4 });
+    let applying = 0;
+    const store: ContentStore = {
+      ...memory,
+      apply: (patch, etag) => {
+        applying += 1;
+        return memory.apply(patch, etag);
+      },
+    };
+    const time = fakeClock();
+    const contentUpdate = createContentUpdate({
+      backend: contentApi.backend,
+      edition: { id: 'uk' },
+      store,
+      random: randomOf(0.5),
+      schedule: testSchedule(time).schedule,
+      readableFormats: [PATCH_FORMAT],
+    });
+
+    await contentUpdate.checkForUpdate();
+
+    expect(applying).toBe(0);
   });
 
   it('joins a check under way', async () => {

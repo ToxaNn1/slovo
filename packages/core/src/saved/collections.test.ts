@@ -941,3 +941,78 @@ describe('Collections', () => {
     });
   });
 });
+
+describe('Collections, more rules', () => {
+  it('gives a Collection the reader made no source, not even an empty one', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+
+    const made = await create(app, 'Mine');
+    const reopened = await run({ records });
+
+    for (const collection of [made, reopened.collections.list[0]]) {
+      expect(collection).toStrictEqual({
+        id: made.id,
+        name: 'Mine',
+        createdAt: new Date('2026-10-11T09:00:00+03:00'),
+        count: 0,
+        newestLemmas: [],
+      });
+    }
+  });
+
+  it('keeps the source of a copy through a rename and a reopen', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+    const copy = await app.collections.createCopy('Copy', ['w_one'], 'cc_source');
+
+    const renamed = await app.collections.rename(copy.id, 'Renamed');
+
+    expect(renamed?.ok === true && renamed.collection.source).toBe('cc_source');
+    const reopened = await run({ records });
+    expect(reopened.collections.list[0]).toMatchObject({ name: 'Renamed', source: 'cc_source' });
+  });
+
+  it('makes the id of "k_" and eight characters the random port draws', async () => {
+    const made = await create(await run({ random: { next: () => 0.25 } }), 'Seeded');
+
+    expect(made.id).toBe('k_99999999');
+  });
+
+  it('tries five ids at most before it gives up', async () => {
+    let draws = 0;
+    // From the second Collection on: the first one's id five times, then a free one.
+    const random = { next: () => ((draws += 1) <= 8 * 5 ? 0.25 : 0.9) };
+    const app = await run({ random });
+    await create(app, 'First');
+    draws = 0;
+
+    await expect(app.collections.create('Second')).rejects.toThrow(/id/);
+    expect(namesOf(app)).toEqual(['First']);
+  });
+
+  it('trims the name of a copy', async () => {
+    const app = await run();
+
+    const copy = await app.collections.createCopy('  Copy  ', ['w_one']);
+
+    expect(copy.name).toBe('Copy');
+  });
+
+  it('drops the spaces a cut leaves before the number of a copy whose name is taken', async () => {
+    const app = await run();
+    const long = `${'a'.repeat(35)} bbbb`;
+    await create(app, long);
+
+    const copy = await app.collections.createCopy(long, ['w_one']);
+
+    expect(copy.name).toBe(`${'a'.repeat(35)} (2)`);
+  });
+
+  it('takes an Entry out of a Collection that does not exist as nothing', async () => {
+    const app = await run();
+
+    await expect(app.collections.remove('k_gone', 'w_one')).resolves.toBeUndefined();
+    expect(app.collections.list).toEqual([]);
+  });
+});

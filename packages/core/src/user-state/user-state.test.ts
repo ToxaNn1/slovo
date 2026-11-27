@@ -39,6 +39,23 @@ describe('openUserState', () => {
     },
   );
 
+  it('reads a schema version of two digits and runs only the migrations after it', async () => {
+    const ran: number[] = [];
+    const migrations: UserStateMigration[] = Array.from({ length: 11 }, (_, index) => ({
+      version: index + 1,
+      migrate: () => {
+        ran.push(index + 1);
+        return Promise.resolve(new Map());
+      },
+    }));
+    const records = new Map([['schema.version', '10']]);
+
+    await openUserState({ port: createMemoryUserStatePort(records), migrations });
+
+    expect(ran).toEqual([11]);
+    expect(records.get('schema.version')).toBe('11');
+  });
+
   it('rejects migrations that skip a version', async () => {
     const migrate = () => Promise.resolve(new Map());
 

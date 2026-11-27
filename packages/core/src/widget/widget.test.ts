@@ -746,7 +746,7 @@ describe('the goal ring and the lock-screen widget in the Widget Snapshot', () =
     const records = earned();
     records.delete('xp.word-goal');
 
-    expect((await snapshotOf(await run({ records, on: ring }))).goalRing).toBeUndefined();
+    expect(await snapshotOf(await run({ records, on: ring }))).not.toHaveProperty('goalRing');
   });
 
   it('leaves the Streak out while statistics are off', async () => {
