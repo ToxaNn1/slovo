@@ -196,19 +196,55 @@ describe('the day change', () => {
     expect(planOf(scheduler)).toEqual([]);
   });
 
+  it('makes no plan again and turns no day when a notification opens a Word on a day turned to', async () => {
+    const time = fakeClock('2026-10-14T08:00:00+03:00');
+    let plans = 0;
+    const fake = createFakeNotificationScheduler();
+    const scheduler: FakeNotificationScheduler = {
+      ...fake,
+      get plan() {
+        return fake.plan;
+      },
+      replacePlan(plan) {
+        plans += 1;
+        return fake.replacePlan(plan);
+      },
+    };
+    const { app } = await run({ clock: time.clock, scheduler });
+    // A Word no notification carries, so Seeing it calls for no plan either.
+    const reserved = new Set(planOf(scheduler).map(wordIdOf));
+    const opened = words.map(({ id }) => id).find((id) => !reserved.has(id));
+    if (opened === undefined) throw new Error('Every Word is Reserved');
+    const knowledge = app.knowledge.state;
+    plans = 0;
+
+    time.set('2026-10-14T09:05:00+03:00');
+    const card = await app.openedFromNotification(opened);
+
+    // The app's return comes after the tap, in turn with the rest of it.
+    await app.resume();
+
+    expect(card?.entryId).toBe(opened);
+    // Only the return makes the plan again.
+    expect(plans).toBe(1);
+    expect(app.knowledge.state).toBe(knowledge);
+  });
+
   it("keeps a new day's morning Word when a plan is made before the composition turns to the day", async () => {
     const time = fakeClock('2026-10-14T20:00:00+03:00');
     const { app, scheduler } = await run({ clock: time.clock });
-    const morning = wordAt(planOf(scheduler), '2026-10-15T09:00');
+    // The morning Word of the day after next, not the first unseen Word the
+    // day would take without it.
+    const morning = wordAt(planOf(scheduler), '2026-10-16T09:00');
 
-    // The app stays in the foreground into the next morning, with no report
-    // yet, such as across a time-zone change; then a time change plans again.
-    time.set('2026-10-15T10:00:00+03:00');
+    // The app stays in the foreground into the morning after next, with no
+    // report yet, such as across a time-zone change; then a time change plans again.
+    time.set('2026-10-16T10:00:00+03:00');
     await app.notifications.keepTime('reminder', '21:00');
     await app.resume();
     await app.feed.show(0);
 
-    expect(cardsOf(app).at(-1)).toBe(`${morning}@15`);
+    expect(cardsOf(app).at(-1)).toBe(`${morning}@16`);
   });
 
   it("gives the card of a Word opened from a notification on a new day without waiting for the day's plan", async () => {

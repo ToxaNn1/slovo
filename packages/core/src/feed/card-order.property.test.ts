@@ -275,3 +275,32 @@ describe("the Feed's card order, in a Mood's rarity band", () => {
     );
   });
 });
+
+describe("the Feed's Review slot, by example", () => {
+  /** The Entry of the 3rd card, a Review slot, after `shown` with `due` Words due. */
+  const thirdCard = (shown: readonly string[], due: readonly string[]) =>
+    nextEntryId({
+      session: sessionOf(shown.map((entryId) => ({ kind: 'word', entryId }))),
+      unseen: { ...none, words: ['w_new'] },
+      due: { ...none, words: due },
+      weights: NORMAL_KIND_WEIGHTS,
+      wordInBand: undefined,
+    });
+
+  it.each([
+    {
+      case: 'the due Word not shown in this session before one shown',
+      shown: ['w_a', 'w_x'],
+      due: ['w_a', 'w_b'],
+      next: 'w_b',
+    },
+    {
+      case: 'a new Word when the only due Word is the last card',
+      shown: ['w_x', 'w_a'],
+      due: ['w_a'],
+      next: 'w_new',
+    },
+  ])('goes to $case', ({ shown, due, next }) => {
+    expect(thirdCard(shown, due)).toBe(next);
+  });
+});
