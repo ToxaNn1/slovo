@@ -326,6 +326,110 @@ describe('sending the Community Counters', () => {
     expect(phone.api.counters.sent).toHaveLength(1);
   });
 
+  it('adds what the backend counted to the numbers read, never below zero', async () => {
+    const phone = await device();
+    const { countersRead } = userStateRecords;
+    const readAt = '2026-10-28T08:00:00.000Z';
+    await phone.app.knowledge.tap('w_001', 'known');
+    await phone.foreground();
+    phone.sending.background();
+    await phone.userState.write(
+      new Map([
+        ...countersRead.record('w_000').change({ readAt, known: 5, unknown: 3, saved: 2 }),
+        ...countersRead.record('w_001').change({ readAt, known: 0, unknown: 4, saved: 0 }),
+      ]),
+    );
+    await phone.app.knowledge.tap('w_000', 'known');
+    await phone.app.favorites.add('w_000');
+    await phone.app.knowledge.tap('w_001', 'unknown');
+
+    await phone.foreground();
+
+    expect(await phone.userState.read(countersRead.record('w_000'))).toEqual({
+      readAt,
+      known: 6,
+      unknown: 3,
+      saved: 3,
+    });
+    expect(await phone.userState.read(countersRead.record('w_001'))).toEqual({
+      readAt,
+      known: 0,
+      unknown: 5,
+      saved: 0,
+    });
+    expect(await phone.userState.read(countersRead.record('w_002'))).toBeUndefined();
+  });
+
+  it('sends again once Retry-After has passed to the millisecond', async () => {
+    const phone = await device();
+    await phone.app.knowledge.tap('w_000', 'known');
+    phone.api.failNext({ reason: 'too-many-requests', retryAfter: 60 });
+    const sendNow = async () => {
+      phone.sending.foreground();
+      await phone.advance(0);
+      phone.sending.background();
+    };
+
+    await sendNow();
+    await phone.advance(MINUTE - 1);
+    await sendNow();
+    expect(phone.api.calls).toHaveLength(1);
+
+    await phone.advance(1);
+    await sendNow();
+    expect(phone.api.counters.sent).toEqual([
+      [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
+    ]);
+  });
+
+  it('a refused batch drops only its own Entries, and keeps a change counted meanwhile', async () => {
+    const phone = await device();
+    await phone.app.knowledge.tap('w_000', 'known');
+    phone.api.failNext('unexpected');
+    const release = phone.api.hold();
+
+    phone.sending.foreground();
+    await phone.advance(0);
+    await phone.app.knowledge.tap('w_001', 'unknown');
+    release();
+    await phone.advance(ALL_TRIES);
+
+    expect(phone.api.counters.sent).toEqual([
+      [{ entryId: 'w_001', known: 0, unknown: 1, saved: 0 }],
+    ]);
+    expect(await phone.unsent()).toEqual([]);
+  });
+
+  it('sends one request at a time, and a send asked for during one runs once more after it', async () => {
+    const phone = await device();
+    await phone.app.knowledge.tap('w_000', 'known');
+    phone.api.failNext('not-found');
+    const release = phone.api.hold();
+
+    phone.sending.foreground();
+    await phone.advance(0);
+    phone.sending.foreground();
+    await phone.advance(0);
+    expect(phone.api.calls).toHaveLength(1);
+
+    release();
+    await phone.advance(0);
+    expect(phone.api.calls).toHaveLength(2);
+    expect(phone.api.counters.sent).toEqual([
+      [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
+    ]);
+  });
+
+  it('going to the background before ever coming to the foreground sends nothing', async () => {
+    const phone = await device();
+    await phone.app.knowledge.tap('w_000', 'known');
+
+    phone.sending.background();
+    await phone.advance(60 * MINUTE);
+
+    expect(phone.api.calls).toHaveLength(0);
+  });
+
   it('sends nothing with the communityCounters Feature Switch off, and keeps what waits', async () => {
     const phone = await device();
     await phone.app.knowledge.tap('w_000', 'known');
@@ -396,6 +500,53 @@ describe('sharing the Community Counters', () => {
       [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
       [{ entryId: 'w_000', known: -1, unknown: 0, saved: 0 }],
     ]);
+  });
+
+  it('turned off, keeps a sent mark counted when only a Favorite of the Entry waited', async () => {
+    const phone = await device();
+    await phone.app.knowledge.tap('w_000', 'known');
+    await phone.app.knowledge.tap('w_001', 'unknown');
+    await phone.foreground();
+    await phone.app.favorites.add('w_000');
+    await phone.app.favorites.add('w_001');
+
+    await phone.settings.update({ shareCounters: false });
+    await phone.settings.update({ shareCounters: true });
+    await phone.app.knowledge.tap('w_000', 'known');
+    await phone.app.knowledge.tap('w_001', 'unknown');
+    await phone.foreground();
+
+    expect(phone.api.counters.sent.at(-1)).toEqual([
+      { entryId: 'w_000', known: -1, unknown: 0, saved: 0 },
+      { entryId: 'w_001', known: 0, unknown: -1, saved: 0 },
+    ]);
+  });
+
+  it('turned off, keeps a sent Favorite counted when only a mark of the Entry waited', async () => {
+    const phone = await device();
+    await phone.app.favorites.add('w_000');
+    await phone.foreground();
+    await phone.app.knowledge.tap('w_000', 'known');
+
+    await phone.settings.update({ shareCounters: false });
+    await phone.settings.update({ shareCounters: true });
+    await phone.app.favorites.remove('w_000');
+    await phone.foreground();
+
+    expect(phone.api.counters.sent.at(-1)).toEqual([
+      { entryId: 'w_000', known: 0, unknown: 0, saved: -1 },
+    ]);
+  });
+
+  it('turned off, keeps no counted record of an Entry it never sent', async () => {
+    const phone = await device();
+    await phone.app.knowledge.tap('w_000', 'known');
+
+    await phone.settings.update({ shareCounters: false });
+
+    expect(
+      await phone.userState.read(userStateRecords.countersCounted.record('w_000')),
+    ).toBeUndefined();
   });
 
   it('turned off while a mark is being counted, leaves nothing waiting', async () => {

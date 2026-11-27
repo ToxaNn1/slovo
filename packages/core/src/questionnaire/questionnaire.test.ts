@@ -5,7 +5,7 @@ import type { Category, FeatureSwitch } from '@slovo/contracts';
 import { openComposition, type AnalyticsPort, type Composition, type FeedCard } from '../index';
 import { createMemoryContentPort } from '../testing';
 import type { UserState } from '../user-state/user-state';
-import { fakeClock, randomOf, testEdition, word, analyticsInto } from '../test-support';
+import { fakeClock, randomOf, settle, testEdition, word, analyticsInto } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -39,16 +39,19 @@ async function run({
   on,
   off = [],
   events = [],
+  tracked = ['laterQuestionAnswered'],
 }: {
   records: Map<string, string>;
   on: string;
   off?: readonly FeatureSwitch[];
   events?: unknown[][];
+  /** The events kept in `events`. */
+  tracked?: readonly string[];
 }): Promise<Composition & { userState: UserState }> {
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
   const analytics: AnalyticsPort = {
     track: (event, properties) => {
-      if (event === 'laterQuestionAnswered') events.push([event, properties]);
+      if (tracked.includes(event)) events.push([event, properties]);
     },
     stop: () => undefined,
   };
@@ -271,6 +274,104 @@ describe('The later questions', () => {
 
     expect(app.xpLog.state.dailyGoal).toBeNull();
     expect(await laterQuestionsIn(await run({ records, on: '2026-11-02' }))).toEqual([]);
+  });
+
+  it('skips the interests while their feature is off, and still asks the rest', async () => {
+    const records = await existingReader();
+
+    const asked = [];
+    for (const on of ['02', '03', '04']) {
+      const app = await run({ records, on: `2026-11-${on}`, off: ['interestsQuestion'] });
+      asked.push(await laterQuestionsIn(app));
+      if (on === '03') await app.questionnaire.answer('selfRating', 'few');
+    }
+
+    expect(asked).toEqual([['wordGoalChoice'], ['selfRating'], ['mixReview']]);
+  });
+
+  it('offers no Rarity Test the self-rating asked for once the Rarity Test is off', async () => {
+    const records = await existingReader();
+    for (const on of ['02', '03'])
+      await laterQuestionsIn(await run({ records, on: `2026-11-${on}` }));
+    const app = await run({ records, on: '2026-11-04' });
+    expect(await laterQuestionsIn(app)).toEqual(['selfRating']);
+    await app.questionnaire.answer('selfRating', 'many');
+
+    const off = await run({ records, on: '2026-11-05', off: ['rarityTest'] });
+
+    expect(await laterQuestionsIn(off)).toEqual(['mixReview']);
+  });
+
+  it("drops the day's question when its feature goes off that day", async () => {
+    const records = await existingReader();
+    expect(await laterQuestionsIn(await run({ records, on: '2026-11-02' }))).toEqual([
+      'wordGoalChoice',
+    ]);
+
+    const later = await run({ records, on: '2026-11-02', off: ['dailyGoal'] });
+
+    expect(await laterQuestionsIn(later)).toEqual([]);
+  });
+
+  it('refuses a self-rating that is none of its options', async () => {
+    const records = await existingReader();
+    const app = await run({ records, on: '2026-11-02' });
+
+    expect(await app.questionnaire.answer('selfRating', 'lots')).toBe(false);
+    expect(await app.questionnaire.answers()).toEqual({});
+  });
+
+  it('offers the why and self-rating options by id and label alone', async () => {
+    const app = await run({ records: await existingReader(), on: '2026-11-02' });
+
+    expect(app.questionnaire.options.why).toEqual([
+      { id: 'write-correctly', label: 'Write correctly' },
+      { id: 'play', label: 'Play' },
+    ]);
+    expect(app.questionnaire.options.selfRating).toEqual([
+      { id: 'few', label: 'Few' },
+      { id: 'many', label: 'Many' },
+    ]);
+  });
+
+  it('a why answer sets only the kind weights it names', async () => {
+    const app = await run({ records: await existingReader(), on: '2026-11-02' });
+    await app.mix.setKindWeight('tip', 'more');
+
+    await app.questionnaire.answer('why', 'play');
+
+    expect(app.mix.state.kindWeights).toEqual({
+      correction: 'normal',
+      idiom: 'more',
+      synonymRow: 'more',
+      tip: 'more',
+    });
+  });
+
+  it('shows again a Category chosen among the interests after it was left out', async () => {
+    const records = await newReader('2026-11-01');
+    const app = await run({ records, on: '2026-11-02' });
+    await app.questionnaire.chooseInterests(['people']);
+
+    await app.questionnaire.chooseInterests(['nature', 'people']);
+
+    expect(app.mix.state.categoryIds).toEqual(['nature', 'people']);
+    expect(app.mix.state.hiddenCategories.map(({ id }) => id)).toEqual(['things']);
+  });
+
+  it('emits questionnaireAnswered for a level or why answer, and answers no later question with it', async () => {
+    const events: unknown[][] = [];
+    const tracked = ['questionnaireAnswered', 'laterQuestionAnswered'];
+    const app = await run({ records: await existingReader(), on: '2026-11-02', events, tracked });
+
+    await app.questionnaire.answer('level', 'good');
+    await app.questionnaire.answer('why', 'play');
+    await settle();
+
+    expect(events).toEqual([
+      ['questionnaireAnswered', { question: 'level', answer: 'good' }],
+      ['questionnaireAnswered', { question: 'why', answer: 'play' }],
+    ]);
   });
 
   it('emits laterQuestionAnswered for each answer, and none while sharing is off', async () => {
