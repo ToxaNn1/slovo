@@ -60,7 +60,7 @@ export type Example = z.infer<typeof ExampleSchema>;
 
 /**
  * The most characters a Short Definition holds, and the length of a primary
- * Definition above which a Word may carry one (ADR 0210).
+ * Definition above which a Word may carry one (ADR 0211).
  */
 export const SHORT_DEFINITION_MAX_LENGTH = 80;
 
@@ -146,7 +146,7 @@ const wordRules = (
  *
  * `shortDefinition` is the Word's Short Definition, a second wording of its
  * primary Definition for screens where several Definitions share the screen;
- * the content rules hold its length and what it may say (ADR 0210).
+ * the content rules hold its length and what it may say (ADR 0211).
  *
  * `region` names where a dialect Word is said, a short text in the Edition's
  * language; only a Word with the dialectal register label carries one.

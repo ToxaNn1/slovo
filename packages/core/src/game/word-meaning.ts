@@ -13,7 +13,7 @@ const optionOf = (text: string): RoundOption => ({ text, stressedVowels: [] });
 
 /**
  * The Definition a Word shows as an option of the Word Meaning question: its
- * Short Definition, or its primary Definition when it has none (ADR 0210).
+ * Short Definition, or its primary Definition when it has none (ADR 0211).
  */
 const definitionAmongSeveral = (word: Word): string =>
   word.shortDefinition ?? word.primaryDefinition;
@@ -32,7 +32,7 @@ export const asksWordMeaning = (word: Word, comparison: TextComparison): boolean
  * Lemma, asked by its meaning (`labelKind` `meaning`), and four Definitions,
  * whole, its own among them. Each Word shows its Short Definition, or its
  * primary Definition when it has none, as the right option and as a
- * Distractor alike (ADR 0210). The three Distractors are of other Eligible
+ * Distractor alike (ADR 0211). The three Distractors are of other Eligible
  * Words, of the same part of speech first and of any other when those are too
  * few, never a Word whose primary Definition or shown text is one of this
  * Word's own Definitions, nor a homonym's nor a synonym's, whichever of the

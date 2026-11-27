@@ -638,7 +638,7 @@ export type PackOpening =
  * Opens a compiled Language Pack for the running app, with the metadata it
  * read. It refuses a pack of another pack format than the one this app reads,
  * a pack of that format built before the Word's Short Definition column, which
- * a Patch could not be applied to (ADR 0210),
+ * a Patch could not be applied to (ADR 0211),
  * and when the native app, the JavaScript bundle and the pack are not all of
  * one Edition, e.g. a development client built for one Edition that Metro
  * serves another to. It throws when the pack's metadata is broken.

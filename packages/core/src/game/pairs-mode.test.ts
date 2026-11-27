@@ -321,7 +321,7 @@ describe('the grids of «Пари»', () => {
     expect(places.some((place) => place >= 4)).toBe(true);
   });
 
-  it('keeps the primary Definition of a Word that has a Short Definition (ADR 0210)', async () => {
+  it('keeps the primary Definition of a Word that has a Short Definition (ADR 0211)', async () => {
     const short = words.map((entry) => ({
       ...entry,
       shortDefinition: `${entry.lemma}, in short.`,

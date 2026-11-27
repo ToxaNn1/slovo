@@ -59,7 +59,7 @@ CREATE TABLE words (
   retired INTEGER NOT NULL,
   -- 1 when the Word's text changed since its Recordings; no app reads it yet.
   needs_new_recording INTEGER NOT NULL DEFAULT 0,
-  -- The Word's Short Definition (ADR 0210); a build before it never reads the column.
+  -- The Word's Short Definition (ADR 0211); a build before it never reads the column.
   short_definition TEXT
 ) WITHOUT ROWID;
 
@@ -335,7 +335,7 @@ CREATE TABLE media_illustrations (
  * format 14 adds the Curated Collection's `pictogram` column, and later the
  * Word's `short_definition` column, which a build before it never reads, so
  * the format stays; `openPack` refuses a pack of format 14 without the column
- * (ADR 0210).
+ * (ADR 0211).
  */
 export const PACK_FORMAT = 14;
 
