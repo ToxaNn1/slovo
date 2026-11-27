@@ -8,3 +8,14 @@
 загуба emotions-character 5
 задиркуватий emotions-character 4
 задушниця history-antiquity 5
+залубниці household-crafts 5
+зам'ятня history-antiquity 5
+замакітритися human-body 5
+замандюритися emotions-character 5
+замітливий emotions-character 5
+замурза witty-insults 4
+заневидніти nature-weather 5
+занидіти emotions-character 5
+зарібник history-antiquity 5
+зармуток emotions-character 5
+застолітній history-antiquity 5
