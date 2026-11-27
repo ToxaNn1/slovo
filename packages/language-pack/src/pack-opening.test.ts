@@ -146,6 +146,17 @@ describe('openPack', () => {
     });
   });
 
+  it('refuses a pack built before the Short Definition, whose Words have no column for it', async () => {
+    const file = builtPack();
+    editMetadata(file, 'ALTER TABLE words DROP COLUMN short_definition');
+
+    expect(await open(file, { bundle: 'fixture', native: 'fixture' })).toEqual({
+      ok: false,
+      reason:
+        'The Language Pack was built before the Short Definition: its Words have no short_definition column. Rebuild the Language Pack.',
+    });
+  });
+
   it.each(['edition_id', 'content_version', 'pack_format'])(
     'fails on a pack whose metadata has no %s',
     async (key) => {
