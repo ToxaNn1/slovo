@@ -171,10 +171,11 @@ export async function loadHrinchenko(
   for (const scan of scans) {
     const pdf = await cachedScan(options, scan);
     options.log(`Reading ${scan.id} by OCR (once; about an hour a volume)`);
-    for (const page of await options.readPages(pdf)) {
-      for (const { headword, gloss, sigla } of parseHrinchenkoPage(page)) {
-        lines.push(`${headword}\t${gloss}\t${sigla.join('; ')}\n`);
-      }
+    const articles = withBoldBeRestored(
+      (await options.readPages(pdf)).flatMap(parseHrinchenkoPage),
+    );
+    for (const { headword, gloss, sigla } of articles) {
+      lines.push(`${headword}\t${gloss}\t${sigla.join('; ')}\n`);
     }
   }
   const tsv = lines.join('');
@@ -182,10 +183,52 @@ export async function loadHrinchenko(
   return readIndex(tsv);
 }
 
-/** `<cache>/lemmas/hrinchenko-<pins>.tsv`: a new pin builds a new index. */
+/**
+ * Tesseract reads the bold Б that opens an article as В; only a few Б
+ * articles keep their Б. The dictionary is in alphabetical order, so every
+ * article read with В up to the end of the Б section is a Б article. The last
+ * Б reading is found as the split of the volume's Б and В articles that a Б
+ * reading pushes later and a В reading pulls earlier, by this weight; the Б
+ * section then runs on to the first ва- article, where В opens.
+ * В reads Б rarely (a few in thousands), Б keeps its Б in about one article
+ * in twenty, so any weight well between the two finds the same split.
+ */
+const VE_READING_WEIGHT = 0.02;
+
+/** A volume's articles, with the Б that OCR read as В given back. */
+function withBoldBeRestored(articles: readonly HrinchenkoArticle[]): HrinchenkoArticle[] {
+  let score = 0;
+  let best = 0;
+  let end = 0;
+  articles.forEach(({ headword }, at) => {
+    if (headword.startsWith('б')) score += 1;
+    else if (headword.startsWith('в')) score -= VE_READING_WEIGHT;
+    else return;
+    if (score > best) [best, end] = [score, at + 1];
+  });
+  // The Б articles after the last Б reading run up to where В opens, at ва-.
+  if (end > 0) {
+    const opening = articles.findIndex(
+      (article, at) => at >= end && article.headword.startsWith('ва'),
+    );
+    end = opening === -1 ? articles.length : opening;
+  }
+  return articles.map((article, at) =>
+    at < end && article.headword.startsWith('в')
+      ? { ...article, headword: `б${article.headword.slice(1)}` }
+      : article,
+  );
+}
+
+/**
+ * `<cache>/lemmas/hrinchenko-v<parser>-<pins>.tsv`: a new pin or a parser
+ * change builds a new index, from the OCR text kept in the cache.
+ */
+const INDEX_VERSION = 2;
+
 function indexPath(cacheDir: string, scans: readonly HrinchenkoScan[]): string {
   const pins = scans.map((scan) => scan.sha256.slice(0, 12)).join('-');
-  return join(cacheDir, 'lemmas', `hrinchenko-${pins}.tsv`);
+  return join(cacheDir, 'lemmas', `hrinchenko-v${String(INDEX_VERSION)}-${pins}.tsv`);
 }
 
 /** The scan's PDF in the cache, downloaded and checked once. */

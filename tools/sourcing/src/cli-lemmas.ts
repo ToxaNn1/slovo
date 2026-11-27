@@ -123,7 +123,8 @@ async function main(): Promise<number> {
   );
   const inEsum = async (lemma: string) => {
     try {
-      const page = await fetchGoroh(client, 'Етимологія', lemma);
+      // A 404 is kept, so a re-run of a large pick does not ask ЕСУМ again.
+      const page = await fetchGoroh(client, 'Етимологія', lemma, { keepNotFound: true });
       return page !== undefined && esumArticles(page, lemma).entries.length > 0;
     } catch (error) {
       if (!(error instanceof HostUnreachableError)) throw error;

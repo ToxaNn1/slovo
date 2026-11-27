@@ -40,6 +40,36 @@ describe('PoliteClient', () => {
     expect(asked).toEqual([URL, URL]);
   });
 
+  it('keeps a 404 when asked to, so a later run does not ask again', async () => {
+    const { client, asked } = clientAnswering(
+      { status: 404, body: 'Not found' },
+      { status: 200, body: 'Слово.' },
+    );
+
+    expect(await client().get(URL, { keepNotFound: true })).toEqual({
+      status: 404,
+      body: 'Not found',
+    });
+    expect(await client().get(URL, { keepNotFound: true })).toEqual({
+      status: 404,
+      body: 'Not found',
+    });
+    expect(asked).toEqual([URL]);
+  });
+
+  it('asks again for a kept 404 when the caller does not keep them', async () => {
+    const { client, asked } = clientAnswering(
+      { status: 404, body: 'Not found' },
+      { status: 200, body: 'Слово.' },
+    );
+
+    await client().get(URL, { keepNotFound: true });
+
+    expect(client().cached(URL)).toBeUndefined();
+    expect(await client().get(URL)).toEqual({ status: 200, body: 'Слово.' });
+    expect(asked).toEqual([URL, URL]);
+  });
+
   it('reads a page from the cache once it has been fetched', async () => {
     const { client, asked } = clientAnswering({ status: 200, body: 'Слово.' });
 

@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { existsSync, mkdtempSync, readdirSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -102,6 +102,14 @@ describe('onlyHrinchenkoHeadwords', () => {
   });
 });
 
+/** The end of the Б section and the start of В, with the bold Б of most articles read as В. */
+const BE_PAGES = [
+  'Бабисько, ка, с. Ув. отъ баба.\n\nВабити, блю, биш, гл. Быть повивальной бабкой.\n\nБабка, ки, ж. Бабушка.\n',
+  'Валакливий, а, е. Разговорчивый.\n\nБалакун, на, м. Говорунъ.\n\nВуян, на, м. Буянъ.\n',
+];
+const VE_PAGE =
+  'В.\n\nВабити, блю, биш, гл. Манить.\n\nВада, ди, ж. Недостатокъ.\n\nВаги, ваг, мн. Весы.\n';
+
 describe('loadHrinchenko', () => {
   const pdf = new TextEncoder().encode('%PDF a scan');
   const scan: HrinchenkoScan = {
@@ -143,8 +151,45 @@ describe('loadHrinchenko', () => {
     expect(downloads).toEqual([scan.url]);
     expect(readings).toHaveLength(1);
     expect(readdirSync(join(cacheDir, 'lemmas'))).toEqual([
-      `hrinchenko-${scan.sha256.slice(0, 12)}.tsv`,
+      `hrinchenko-v2-${scan.sha256.slice(0, 12)}.tsv`,
     ]);
+  });
+
+  it('gives back the Б that OCR read as В, up to where the dictionary reaches В', async () => {
+    const { options } = setup();
+
+    const index = await loadHrinchenko(
+      { ...options, readPages: () => Promise.resolve([...BE_PAGES, VE_PAGE]) },
+      [scan],
+    );
+
+    expect([...index.keys()]).toEqual([
+      'бабисько',
+      'бабити',
+      'бабка',
+      'балакливий',
+      'балакун',
+      'буян',
+      'вабити',
+      'вада',
+      'ваги',
+    ]);
+    expect(index.get('бабити')?.[0]?.gloss).toBe('блю, биш, гл. Быть повивальной бабкой.');
+    expect(index.get('вабити')?.[0]?.gloss).toBe('блю, биш, гл. Манить.');
+  });
+
+  it('builds the index again over one an earlier parser left in the cache', async () => {
+    const { cacheDir, readings, options } = setup();
+    mkdirSync(join(cacheDir, 'lemmas'));
+    writeFileSync(
+      join(cacheDir, 'lemmas', `hrinchenko-${scan.sha256.slice(0, 12)}.tsv`),
+      'вабити\tблю, гл. Быть повивальной бабкой.\t\n',
+    );
+
+    const index = await loadHrinchenko(options, [scan]);
+
+    expect(readings).toHaveLength(1);
+    expect(index.has('ворина')).toBe(true);
   });
 
   it('refuses a scan whose SHA-256 is not the pinned one, and keeps nothing of it', async () => {
