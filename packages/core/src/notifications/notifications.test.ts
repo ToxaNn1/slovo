@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { openComposition, type Composition } from '../index';
-import { createMemoryContentPort } from '../testing';
-import { testEdition } from '../test-support';
+import { openComposition, type Composition, type NotificationPermission } from '../index';
+import { createFakeNotificationScheduler, createMemoryContentPort } from '../testing';
+import { analyticsInto, testEdition } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const defaultTimes = ['09:00', '19:00'];
@@ -223,6 +223,16 @@ describe('the Notification times', () => {
     expect(notifications.state.times).toEqual({ kind: 'on', word: '20:30', reminder: undefined });
   });
 
+  it('refuse an onboarding time that is not a local time `HH:MM`, and keep the times', async () => {
+    const records = new Map<string, string>();
+    const { notifications } = await run({ records });
+
+    await expect(notifications.chooseOnboardingTime('9am')).rejects.toThrow();
+
+    expect(notifications.state.times).toEqual({ kind: 'on', word: '09:00', reminder: '19:00' });
+    expect(records.has('notifications.times')).toBe(false);
+  });
+
   it('switch off after «Без нагадувань» on the onboarding, never falling back to the defaults', async () => {
     const records = new Map<string, string>();
     const { notifications } = await run({ records });
@@ -231,5 +241,62 @@ describe('the Notification times', () => {
 
     expect(notifications.state.times).toEqual({ kind: 'off' });
     expect((await run({ records })).notifications.state.times).toEqual({ kind: 'off' });
+  });
+});
+
+describe('the notification permission', () => {
+  /** One app run over a fake device that reports `permission` and answers an ask with `answer`. */
+  async function runAsking(
+    permission: NotificationPermission,
+    answer: 'allowed' | 'denied' = 'allowed',
+  ) {
+    const events: { event: string; properties: unknown }[] = [];
+    const app = await openComposition({
+      content: createMemoryContentPort(),
+      edition: testEdition({
+        isFeatureEnabled: () => true,
+        userSettingDefaults: { notificationTimes: defaultTimes },
+      }),
+      userState: await openUserState({ port: createMemoryUserStatePort() }),
+      clock: { now: () => new Date('2026-10-14T08:00:00+03:00'), timeZone: () => 'Europe/Kyiv' },
+      random: { next: () => 0.25 },
+      analytics: analyticsInto({
+        track: (event, properties) => {
+          if (event === 'notificationPermissionAnswered') events.push({ event, properties });
+        },
+        stop: () => undefined,
+      }),
+      scheduling: {
+        scheduler: createFakeNotificationScheduler({ permission, answer }),
+        ellipsis: '…',
+        titles: ['{word}'],
+        farewell: 'Пауза',
+        streakWarning: 'Серія',
+        goalNotMet: 'Ціль',
+      },
+    });
+    return { app, events };
+  }
+
+  it.each([
+    ['allowed', true],
+    ['denied', false],
+  ] as const)(
+    'tracks the answer once the reader answers the device: %s',
+    async (answer, granted) => {
+      const { app, events } = await runAsking('not-asked', answer);
+
+      expect(await app.notifications.askPermission()).toBe(answer);
+      expect(events).toEqual([
+        { event: 'notificationPermissionAnswered', properties: { granted } },
+      ]);
+    },
+  );
+
+  it('tracks nothing when the device was answered already', async () => {
+    const { app, events } = await runAsking('denied');
+
+    expect(await app.notifications.askPermission()).toBe('denied');
+    expect(events).toEqual([]);
   });
 });

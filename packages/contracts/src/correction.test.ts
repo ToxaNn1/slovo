@@ -69,4 +69,26 @@ describe('parsing a standard example sentence', () => {
     expect(parsed.kind).toBe('broken');
     expect(parsed.kind === 'broken' && parsed.problem).toMatch(/\*\*/);
   });
+
+  it('reads a sentence that opens or ends with its standard form', () => {
+    expect(parseStandardExample('**Беремо участь**')).toEqual({
+      kind: 'marked',
+      segments: [{ kind: 'standardForm', text: 'Беремо участь' }],
+    });
+  });
+
+  it('names the problem of a broken sentence', () => {
+    const problemOf = (text: string) => {
+      const parsed = parseStandardExample(text);
+      return parsed.kind === 'broken' ? parsed.problem : undefined;
+    };
+
+    expect(problemOf('Ми **  ** беремо участь.')).toBe(
+      'Put the standard form between the ** marks',
+    );
+    expect(problemOf('Ми ** беремо** участь.')).toBe('Put no space just inside a ** mark');
+    expect(problemOf('Ми **беремо****участь**.')).toBe(
+      'Join two ** marks with nothing between them into one',
+    );
+  });
 });

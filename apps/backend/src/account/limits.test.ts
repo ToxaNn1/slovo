@@ -326,7 +326,7 @@ describe('the code checks from one IP address', () => {
 });
 
 describe('a spent Sign-in code', () => {
-  it('is TOO_MANY_REQUESTS without Retry-After: only a new code signs in, however long one waits', async () => {
+  it('is CODE_SPENT, a 429 without Retry-After: only a new code signs in, however long one waits', async () => {
     const { client, verifyCode, mailer } = limitedApp();
     const email = newEmail();
     await client.account.requestCode({ email, editionId: 'uk' });
@@ -338,8 +338,8 @@ describe('a spent Sign-in code', () => {
 
     expect(await refusal(await verifyCode(email))).toEqual({
       status: 429,
-      code: 'TOO_MANY_REQUESTS',
-      message: 'Too many requests',
+      code: 'CODE_SPENT',
+      message: 'The code is spent',
       retryAfter: null,
     });
   });

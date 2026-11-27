@@ -178,6 +178,13 @@ describe('The Spotlight Snapshot', () => {
     ]);
   });
 
+  it('indexes an Entry the reader keeps in Favorites alone', async () => {
+    const app = await run();
+    await app.favorites.add('w_sumyrnyi');
+
+    expect(entryIdsOf(await snapshotOf(app))).toEqual(['w_sumyrnyi']);
+  });
+
   it('leaves out Hidden and Retired Entries, though the reader keeps them and the archive has them', async () => {
     const app = await run({ records: withArchive({ '2026-10-26': 'w_old' }) });
     const kept = await collection(app, 'Kept');

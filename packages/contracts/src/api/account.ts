@@ -75,9 +75,12 @@ export const accountContract = {
       /** No code is waiting for the email: it ran out of time, or none was sent. */
       CODE_EXPIRED: { status: 400, message: 'The code has expired' },
       /**
-       * Over the limit of checks per IP, with `Retry-After` in seconds; or every
-       * try of the code is spent, without it, and only a new code signs in.
+       * Every try of the code is spent, and only a new code signs in. A 429
+       * with no `Retry-After`, so a build that knows no such code reads it as
+       * `TOO_MANY_REQUESTS`.
        */
+      CODE_SPENT: { status: 429, message: 'The code is spent' },
+      /** Over the limit of checks per IP, with `Retry-After` in seconds. */
       TOO_MANY_REQUESTS: { message: 'Too many requests' },
     })
     .input(z.strictObject({ email: TypedEmailSchema, code: SignInCodeSchema }))

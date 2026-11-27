@@ -92,6 +92,18 @@ describe('the problem line of the Account screen', () => {
     expect(problemOf(account)).toBe('Код не підходить. Лишилась 1 спроба.');
   });
 
+  it('asks for a new code once every try is spent, and waits only over the limit', async () => {
+    const { account, api } = await open();
+    await account.requestCode('anna@mail.com');
+
+    for (let tries = 0; tries < 5; tries++) await account.verifyCode('999999');
+    expect(problemOf(account)).toBe('Цей код уже не діє. Попроси новий.');
+    api.failNext({ reason: 'too-many-requests', retryAfter: 60 });
+    await account.verifyCode('999999');
+
+    expect(problemOf(account)).toBe('Забагато спроб. Спробуй трохи пізніше.');
+  });
+
   it('says a code ran out, and leaves no connection to the offline plate', async () => {
     const { account, api } = await open();
     await account.requestCode('anna@mail.com');

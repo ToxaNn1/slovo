@@ -1,4 +1,4 @@
-import { SYNC_BATCH_SIZE } from '@slovo/contracts';
+import { fitsSyncRecord, SYNC_BATCH_SIZE } from '@slovo/contracts';
 import { z } from 'zod';
 
 import { answerOf } from '../backend';
@@ -49,8 +49,10 @@ export const refusalOf = (reason: SyncApiFailure['reason']): SyncRefusal | undef
  */
 export interface SyncExchange {
   /**
-   * Syncs once with the Account of the Session, a pull, then a push. Without
-   * a cursor it first follows the first-sign-in rule: every synced record
+   * Syncs once with the Account of the Session, named by its email, a pull,
+   * then a push. A cursor kept for another Account is forgotten first, whoever
+   * was open when the Session changed; one that names no Account, as an older
+   * app kept it, is taken as this Account's. Without a cursor it first follows the first-sign-in rule: every synced record
    * with no pending change gets one with change time 0, so the Account's
    * value wins where it has one and gets the device's where it has none. The
    * pull applies every page after the cursor, each in one write with its
@@ -73,9 +75,12 @@ export interface SyncExchange {
    * (`refusalOf`) stays pending and is sent no more by this exchange,
    * so until the next launch: a later sync pulls, pushes the other changes
    * and answers that refusal while a refused change waits. A record changed
-   * again is a new change. Call it once at a time.
+   * again is a new change. A change over `SYNC_RECORD_LIMITS`, which the
+   * Account would refuse with its whole batch, is never sent: it stays
+   * pending, at every launch, the other changes are pushed, and the sync
+   * answers `unexpected` while it waits. Call it once at a time.
    */
-  sync(token: string): Promise<SyncResult>;
+  sync(token: string, account: string): Promise<SyncResult>;
   /** Forgets which changes were refused, as when the Session ends: the next Session's Account may take them. */
   forgetRefused(): void;
 }
@@ -83,7 +88,7 @@ export interface SyncExchange {
 /** Every record of the user state, by key, as the JSON it keeps. */
 const everyRecord = declareRecords('', z.json());
 
-const { history, syncCursor, syncPending } = userStateRecords;
+const { history, syncCursor, syncCursorAccount, syncPending } = userStateRecords;
 const { xpLog, xpDays } = progressRecords;
 
 /** The time of every first-sign-in change, older than any change. */
@@ -289,22 +294,29 @@ export function createSyncExchange({
   }
 
   /**
-   * Applies one page of the pull, with its cursor, in one write, trimming
+   * Applies one page of the pull, with its cursor and the Account it is kept
+   * for, in one write, trimming
    * History on the last; whether it changed a record. It reads only the
    * page's own keys, so a page costs its size, not the whole user state's.
    */
-  async function apply({
-    records,
-    cursor,
-    more,
-  }: {
-    records: readonly RecordChange[];
-    cursor: number;
-    more: boolean;
-  }): Promise<boolean> {
+  async function apply(
+    {
+      records,
+      cursor,
+      more,
+    }: {
+      records: readonly RecordChange[];
+      cursor: number;
+      more: boolean;
+    },
+    account: string,
+  ): Promise<boolean> {
     let changed = false;
     await userState.merge(async () => {
-      const untracked = new Map<string, string | undefined>(syncCursor.change(cursor));
+      const untracked = new Map<string, string | undefined>([
+        ...syncCursor.change(cursor),
+        ...syncCursorAccount.change(account),
+      ]);
       const tracked = new Map<string, string | undefined>();
       // Read at once: the turn holds every other change back while the page is read.
       const read = await Promise.all(
@@ -376,19 +388,31 @@ export function createSyncExchange({
       refused.clear();
       refusal = undefined;
     },
-    async sync(token) {
+    async sync(token, account) {
+      const keptFor = await userState.read(syncCursorAccount);
+      if (keptFor !== undefined && keptFor !== account) {
+        // Another Account's place says nothing of this one's records.
+        await userState.write(
+          new Map([...syncCursor.change(undefined), ...syncCursorAccount.change(undefined)]),
+        );
+      }
       if ((await userState.cursor()) === undefined) await joinAccount();
       let changed = false;
       for (let more = true; more;) {
         const after = await userState.cursor();
         const page = await api.pull(token, after);
         if (!page.ok) return { ...page, changed };
-        if (await apply(page)) changed = true;
+        if (await apply(page, account)) changed = true;
         // A page that leaves the cursor where it was is the last, whatever it says: asking again would never end.
         more = page.more && page.cursor !== after;
       }
       const all = [...(await userState.pendingChanges())];
-      for (const batch of pushesOf(all, isRefused)) {
+      // Never sent: the backend refuses the whole push of a change over the limits (ADR 0208).
+      const over = new Set(
+        all.filter(([key, change]) => !fitsSyncRecord(changeOf(key, change))).map(([key]) => key),
+      );
+      const isOver = ([key]: Pending) => over.has(key);
+      for (const batch of pushesOf(all, (change) => isRefused(change) || isOver(change))) {
         const answer = await api.push(
           token,
           [...batch].map(([key, change]) => changeOf(key, change)),
@@ -404,6 +428,7 @@ export function createSyncExchange({
       }
       // A refused change that still waits keeps the sync refused.
       if (refusal !== undefined && all.some(isRefused)) return { ...refusal, changed };
+      if (over.size > 0) return { ok: false, reason: 'unexpected', changed };
       return { ok: true, changed };
     },
   };

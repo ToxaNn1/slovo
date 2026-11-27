@@ -67,19 +67,20 @@ async function run({
     track: (event, properties) => void events.push([event, properties]),
     stop: () => undefined,
   };
+  const userState = await openUserState({ port: createMemoryUserStatePort(records) });
   const app = await openComposition({
     content,
     edition: testEdition({
       isFeatureEnabled: (feature) => ALL_ON.includes(feature) && !off.includes(feature),
       badges,
     }),
-    userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+    userState,
     clock: fakeClock(`${TODAY}T09:00:00+03:00`).clock,
     random: seededRandom(7),
     analytics: analyticsInto(port),
   });
   await Promise.resolve();
-  return app;
+  return Object.assign(app, { userState });
 }
 
 describe('the progress Share Cards', () => {
@@ -118,10 +119,71 @@ describe('the progress Share Cards', () => {
     expect(app.progressShareCards.state).toBe(app.progressShareCards.state);
   });
 
+  it('offers the cards a change of today brings and tells each change once', async () => {
+    // 48 XP up to today; a Quick Question's 2 XP reach Level 1 today.
+    const app = await run({ xps: [xp('2026-10-12', 30), xp('2026-10-13', 10), xp(TODAY, 8)] });
+    const before = app.progressShareCards.state;
+    expect(before.some((card) => 'level' in card)).toBe(false);
+    let told = 0;
+    app.progressShareCards.subscribe(() => {
+      told += 1;
+    });
+    const earn = async () => {
+      const award = app.xpLog.award({ source: 'quick-question' });
+      await app.userState.write(award.changes);
+      award.commit();
+    };
+
+    await earn();
+    const cards = app.progressShareCards.state;
+    expect(cards[0]).toMatchObject({ level: { level: 1 }, date: TODAY });
+    expect(cards.slice(1)).toEqual(before);
+    expect(told).toBe(1);
+
+    await earn();
+    expect(app.progressShareCards.state).toBe(cards);
+    expect(told).toBe(1);
+  });
+
+  it('offers the new Level when a second one is reached the same day', async () => {
+    const app = await run({ xps: [xp('2026-10-12', 30), xp('2026-10-13', 10), xp(TODAY, 10)] });
+    const before = app.progressShareCards.state;
+    expect(before[0]).toMatchObject({ level: { level: 1 } });
+    let told = 0;
+    app.progressShareCards.subscribe(() => {
+      told += 1;
+    });
+
+    for (let tries = 0; tries < 200 && (app.xpLog.state.level?.level ?? 0) < 2; tries += 1) {
+      const award = app.xpLog.award({ source: 'quick-question' });
+      await app.userState.write(award.changes);
+      award.commit();
+    }
+
+    const after = app.progressShareCards.state;
+    expect(after).toHaveLength(before.length);
+    expect(after[0]).toMatchObject({ level: { level: 2 }, date: TODAY });
+    expect(told).toBe(1);
+  });
+
+  it('offers no Badge earned before today', async () => {
+    const app = await run({
+      xps: [
+        xp('2026-10-11', 5),
+        xp('2026-10-12', 5),
+        xp('2026-10-13', 5),
+        { kind: 'badge', date: '2026-10-13', at: at('2026-10-13'), badge: 'streak-3' },
+      ],
+    });
+    expect(app.progressShareCards.state.some((card) => 'badge' in card)).toBe(false);
+  });
+
   it('offers none with its Feature Switch or the XP log off', async () => {
     const xps = [xp('2026-10-12', 30), xp('2026-10-13', 10), xp(TODAY, 10)];
     expect((await run({ xps, off: ['progressShareCards'] })).progressShareCards.state).toEqual([]);
     expect((await run({ xps, off: ['xpLog'] })).progressShareCards.state).toEqual([]);
+    const withoutLevels = (await run({ xps, off: ['levels'] })).progressShareCards.state;
+    expect(withoutLevels.some((card) => 'level' in card)).toBe(false);
   });
 });
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { EntryTextSchema } from './shared';
+import { EntryTextSchema, RarityRangeSchema } from './shared';
 
 describe('an Entry text', () => {
   it('accepts text with no space at either end', () => {
@@ -24,4 +24,17 @@ describe('an Entry text', () => {
       expect(result.error?.issues[0]?.message).toMatch(/space/i);
     },
   );
+});
+
+describe('a Rarity Range', () => {
+  it('takes a range from a rarity to one at least as high', () => {
+    expect(RarityRangeSchema.safeParse({ from: 2, to: 4 }).success).toBe(true);
+    expect(RarityRangeSchema.safeParse({ from: 3, to: 3 }).success).toBe(true);
+  });
+
+  it('refuses a range that ends below its start', () => {
+    expect(RarityRangeSchema.safeParse({ from: 4, to: 2 }).error?.issues[0]?.message).toBe(
+      'Expected from to be at most to',
+    );
+  });
 });

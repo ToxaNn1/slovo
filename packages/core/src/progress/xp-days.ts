@@ -1,3 +1,4 @@
+import { SYNC_RECORD_LIMITS, utf8Bytes } from '@slovo/contracts';
 import { z } from 'zod';
 
 import { dayNumber, parseLocalDate } from '../local-date';
@@ -12,22 +13,12 @@ const FOLD_AFTER_DAYS = 30;
 
 /**
  * The most bytes of an XP day as the JSON it is kept as, in UTF-8: under the
- * 8 KB a record of Sync may take, with room for the day's own fields.
+ * most a record of Sync may take, with 1 KB of room for the day's own fields.
  */
-const XP_DAY_BYTES = 7 * 1024;
+const XP_DAY_BYTES = SYNC_RECORD_LIMITS.valueBytes - 1024;
 
 /** The most records one launch folds, whole days at a time, so the first fold of a long log is no single huge write. */
 const FOLDED_AT_MOST = 2000;
-
-/** How many bytes the text takes in UTF-8. */
-function utf8Bytes(text: string): number {
-  let bytes = 0;
-  for (const character of text) {
-    const codePoint = character.codePointAt(0) ?? 0;
-    bytes += codePoint < 0x80 ? 1 : codePoint < 0x800 ? 2 : codePoint < 0x10000 ? 3 : 4;
-  }
-  return bytes;
-}
 
 /** The FNV-1a hash of the text, 32 bits in base 36: the same ids give the same hash on every device. */
 function hashOf(text: string): string {

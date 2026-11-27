@@ -2333,6 +2333,20 @@ describe('the Quick Question in the Feed', () => {
     throw new Error('No Quick Question');
   }
 
+  /**
+   * The right option of the first Quick Question of `feedOf()`, which its card
+   * keeps out until the pick: told by a twin Feed answering it.
+   */
+  async function rightOfFirst(): Promise<number> {
+    const twin = await feedOf();
+    const { position } = await untilQuestion(twin);
+    await twin.answerQuickQuestion(position, 0);
+    const card = twin.cards[position];
+    if (card?.kind !== 'quick-question' || card.answer === undefined)
+      throw new Error('Not answered');
+    return card.answer.correct;
+  }
+
   /** The kinds of the cards, a Feed Notice by its own. */
   const kindsOf = (cards: readonly FeedCard[]) =>
     cards.map((card) => (card.kind === 'notice' ? card.notice : card.kind));
@@ -2367,8 +2381,12 @@ describe('the Quick Question in the Feed', () => {
     const asked = [];
     for (let seed = 1; seed <= 30; seed++) {
       const feed = await feedOf({ of: words.slice(0, 7), random: seededRandom(seed) });
-      const { card, position } = await untilQuestion(feed);
-      asked.push(card.entry.id === feed.cards[position - 1]?.entryId);
+      const { position } = await untilQuestion(feed);
+      await feed.answerQuickQuestion(position, 0);
+      const card = feed.cards[position];
+      if (card?.kind !== 'quick-question' || card.answer === undefined)
+        throw new Error('Not answered');
+      asked.push(card.answer.entry.id === feed.cards[position - 1]?.entryId);
     }
 
     expect(asked).not.toContain(true);
@@ -2385,17 +2403,18 @@ describe('the Quick Question in the Feed', () => {
   });
 
   it('answered, keeps the option on its card, every other card as it was, and tells the subscribers', async () => {
+    const correct = await rightOfFirst();
     const feed = await feedOf();
-    const { card, position } = await untilQuestion(feed);
+    const { position } = await untilQuestion(feed);
     const before = feed.cards;
     const told: (readonly FeedCard[])[] = [];
     feed.subscribe(() => told.push(feed.cards));
 
-    expect(await feed.answerQuickQuestion(position, card.round.correct)).toBe(true);
+    expect(await feed.answerQuickQuestion(position, correct)).toBe(true);
 
     expect(feed.cards[position]).toMatchObject({
       kind: 'quick-question',
-      answered: card.round.correct,
+      answer: { chosen: correct, correct, right: true },
     });
     feed.cards.forEach((each, at) => {
       if (at !== position) expect(each).toBe(before[at]);

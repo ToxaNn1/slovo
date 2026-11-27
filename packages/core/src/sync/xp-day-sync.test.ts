@@ -43,11 +43,11 @@ function account(start = '2026-09-02T09:00:00.000Z') {
       clock: time.clock,
     });
     const exchange = createSyncExchange({ userState, backend, editionId: 'uk' });
-    const { token } = await signInByCode(server);
+    const { token, email } = await signInByCode(server);
     return {
       records,
       userState,
-      sync: () => exchange.sync(token),
+      sync: () => exchange.sync(token, email),
       /** Opens the composition as a launch does, which folds the days past 30, and answers its XP. */
       async launch() {
         const { xpLog } = await openComposition({
@@ -262,4 +262,58 @@ describe('a push of Sync', () => {
     expect(pushes).toHaveLength(2);
     expect(pushes[0]?.[0]).toMatchObject({ key: 'favorites.w_01', value: null });
   });
+});
+
+/** A device whose every push is kept, as the keys it sent with whether each is a tombstone. */
+async function capturing(
+  { server, device }: ReturnType<typeof account>,
+  records: Map<string, string>,
+) {
+  const pushes: { key: string; deleted: boolean }[][] = [];
+  const phone = await device(records, {
+    sync: {
+      pull: (input, options) => server.backend.sync.pull(input, options),
+      push: (input, options) => {
+        pushes.push(input.changes.map(({ key, value }) => ({ key, deleted: value === null })));
+        return server.backend.sync.push(input, options);
+      },
+    },
+  });
+  return { phone, pushes };
+}
+
+describe('the pushes of a folded XP day', () => {
+  it.each([
+    [496, 'fits the push after the other deletions, so it goes in it'],
+    [498, 'does not fit the push after the other deletions, so it goes whole in the next'],
+  ])(
+    'keep an XP day with the deletions of its records in one push: after %i deletions, the day of 4 changes %s',
+    async (others) => {
+      const setup = account();
+      const records = rounds();
+      for (let index = 0; index < others; index++) {
+        records.set(`favorites.w_${String(index)}`, '"2026-09-01T09:00:00.000Z"');
+      }
+      const { phone, pushes } = await capturing(setup, records);
+      await phone.sync();
+      setup.time.set('2026-10-14T09:00:00.000Z');
+      await phone.userState.write(
+        new Map(
+          Array.from({ length: others }, (_, index): [string, undefined] => [
+            `favorites.w_${String(index)}`,
+            undefined,
+          ]),
+        ),
+      );
+      await phone.launch();
+      pushes.length = 0;
+
+      await phone.sync();
+
+      const withDay = pushes.findIndex((push) => push.some(({ key }) => key.startsWith('xpDay.')));
+      expect(withDay).toBe(others + 4 <= 500 ? 0 : 1);
+      const keys = pushes[withDay]?.map(({ key }) => key) ?? [];
+      expect(keys).toEqual(expect.arrayContaining(['xp.round-a', 'xp.round-b', 'xp.round-c']));
+    },
+  );
 });

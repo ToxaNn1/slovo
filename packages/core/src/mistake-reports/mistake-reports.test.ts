@@ -113,6 +113,14 @@ describe('reporting a mistake online', () => {
     expect(app.api.reports.received.map(({ appVersion }) => appVersion)).toEqual(['0.9.0']);
   });
 
+  it('sends a milestone version of several digits a part, such as 10.12, in three parts', async () => {
+    const app = await device({ appVersion: '10.12' });
+
+    await app.report();
+
+    expect(app.api.reports.received.map(({ appVersion }) => appVersion)).toEqual(['10.12.0']);
+  });
+
   it('takes a sent report off the queue, so it is never sent again', async () => {
     const app = await device();
     await app.report();
@@ -242,6 +250,21 @@ describe('reporting a mistake offline', () => {
     await app.advance(1);
     app.reports.foreground();
     await app.advance(3 * ALL_TRIES);
+
+    expect(app.api.calls).toHaveLength(12);
+  });
+
+  it('drains only once more after several returns that came during a drain', async () => {
+    const app = await device();
+    app.api.online = false;
+    await app.report(typoIn('first'));
+
+    app.reports.foreground();
+    await app.advance(1);
+    app.reports.foreground();
+    app.reports.foreground();
+    app.reports.foreground();
+    await app.advance(5 * ALL_TRIES);
 
     expect(app.api.calls).toHaveLength(12);
   });

@@ -16,7 +16,7 @@ import {
   createFakeBackend,
   createFakeGoogleSignInSheet,
 } from '../testing';
-import { fakeClock, randomOf, analyticsInto } from '../test-support';
+import { fakeClock, randomOf, analyticsInto, settle } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -218,6 +218,21 @@ describe('the Account', () => {
     time.advance(60_000);
     await account.resendCode();
     expect(account.state).toMatchObject({ problem: undefined });
+    await account.verifyCode('100002');
+    expect(account.state).toMatchObject({ status: 'signed-in' });
+  });
+
+  it('says the code is spent after its last wrong try, and only a new code signs in', async () => {
+    const { account, time } = await setup();
+    await account.requestCode('anna@mail.com');
+    for (let tries = 0; tries < 5; tries++) await account.verifyCode('999999');
+    expect(account.state).toMatchObject({ status: 'code-sent', problem: 'code-spent' });
+
+    await account.verifyCode('100001');
+    expect(account.state).toMatchObject({ status: 'code-sent', problem: 'code-spent' });
+
+    time.advance(60_000);
+    await account.resendCode();
     await account.verifyCode('100002');
     expect(account.state).toMatchObject({ status: 'signed-in' });
   });
@@ -1347,5 +1362,217 @@ describe('the Account and Analytics', () => {
 
     expect(account.state).toMatchObject({ status: 'signed-in' });
     expect(events).toEqual([]);
+  });
+});
+
+describe('the Account guards each action by its status', () => {
+  it('sends nothing for a new email once a code is sent or while signed in', async () => {
+    const { account, api } = await setup();
+    await account.requestCode('anna@mail.com');
+    const sent = account.state;
+
+    await account.requestCode('bob@mail.com');
+    expect(account.state).toBe(sent);
+    expect(api.calls).toEqual(['account.requestCode']);
+
+    await account.verifyCode('100001');
+    const signedInState = account.state;
+    await account.requestCode('bob@mail.com');
+    expect(account.state).toBe(signedInState);
+    expect(api.calls).toEqual(['account.requestCode', 'account.verifyCode']);
+  });
+
+  it('leaves a Sign-in code in flight as it is when an empty email is typed meanwhile', async () => {
+    const { account, api } = await setup();
+    const release = api.hold();
+
+    const sending = account.requestCode('anna@mail.com');
+    await account.requestCode('');
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: 'requestCode',
+      problem: undefined,
+    });
+    release();
+    await sending;
+  });
+
+  it('resends, verifies and goes back to the email only once a code is sent', async () => {
+    const { account, api, time } = await setup();
+    time.advance(60_000);
+    const out = account.state;
+
+    await account.resendCode();
+    await account.verifyCode('100001');
+    account.changeEmail();
+
+    expect(api.calls).toEqual([]);
+    expect(account.state).toBe(out);
+
+    await account.requestCode('anna@mail.com');
+    await account.verifyCode('100001');
+    const inState = account.state;
+    time.advance(60_000);
+
+    await account.resendCode();
+    await account.verifyCode('100001');
+    account.changeEmail();
+
+    expect(api.calls).toEqual(['account.requestCode', 'account.verifyCode']);
+    expect(account.state).toBe(inState);
+  });
+
+  it('keeps the problem shown when signed out and the email is changed', async () => {
+    const { account } = await setup();
+    await account.requestCode('not an email');
+    const refused = account.state;
+
+    account.changeEmail();
+
+    expect(account.state).toBe(refused);
+    expect(account.state).toMatchObject({ problem: 'invalid-email' });
+  });
+
+  it('does not go back to the email while the code is being checked', async () => {
+    const { account, api } = await setup();
+    await account.requestCode('anna@mail.com');
+    const release = api.hold();
+
+    const verifying = account.verifyCode('100001');
+    account.changeEmail();
+    expect(account.state).toMatchObject({ status: 'code-sent', inFlight: 'verifyCode' });
+    release();
+    await verifying;
+
+    expect(account.state).toMatchObject({ status: 'signed-in' });
+  });
+
+  it('signs out, signs out everywhere, deletes and checks nothing while signed out', async () => {
+    const { account, api, sessions } = await setup();
+    const out = account.state;
+
+    await account.signOut();
+    await account.signOutEverywhere();
+    await account.delete();
+    await account.refresh();
+
+    expect(api.calls).toEqual([]);
+    expect(account.state).toBe(out);
+    expect(await sessions.untold()).toEqual([]);
+  });
+});
+
+describe('the Account and the sign-outs it keeps', () => {
+  it('opens and tells nothing when the kept sign-outs fail to be read', async () => {
+    const sessions: SessionStore = {
+      ...createMemorySessionStore(),
+      untold: () => Promise.reject(new Error('cannot read the sign-outs')),
+    };
+    const { account, api } = await setup({ sessions });
+
+    await account.refresh();
+
+    expect(account.state).toMatchObject({ status: 'signed-out' });
+    expect(api.calls).toEqual([]);
+  });
+
+  it('tells the server of a Session once, even when it was signed out before already', async () => {
+    const sessions = createMemorySessionStore(anna);
+    await sessions.keepUntold([anna.token]);
+    const { account, api } = await setup({ sessions });
+
+    await account.signOut();
+    await account.refresh();
+
+    expect(api.calls.filter((call) => call === 'account.signOut')).toHaveLength(1);
+    expect(await sessions.untold()).toEqual([]);
+  });
+
+  it('tells the server of a sign-out no more once it says the Session has ended already', async () => {
+    const { account, api, sessions } = await signedIn();
+    api.account.endSessions();
+
+    await account.signOut();
+    await account.refresh();
+
+    expect(api.calls.filter((call) => call === 'account.signOut')).toHaveLength(1);
+    expect(await sessions.untold()).toEqual([]);
+  });
+
+  it('tells the server nothing on a fresh install that kept no Session', async () => {
+    const { open, api, sessions } = await setup();
+
+    const account = await open(await openUserState({ port: createMemoryUserStatePort() }));
+    await settle();
+
+    expect(account.state).toMatchObject({ status: 'signed-out' });
+    expect(api.calls).toEqual([]);
+    expect(await sessions.untold()).toEqual([]);
+  });
+});
+
+describe('the Account and answers that come after the Session ended', () => {
+  it('stays signed out when deleting fails after a sign-out on the way', async () => {
+    const { account, api } = await signedIn();
+    api.failNext({ reason: 'unexpected', procedure: 'account.delete' });
+    const release = api.hold();
+
+    const deleting = account.delete();
+    await account.signOut();
+    release();
+    await deleting;
+
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
+  });
+
+  it('keeps a new Session when the check of an old one finds it ended', async () => {
+    const { account, api, time } = await signedIn();
+    time.advance(60 * 60_000);
+    const release = api.hold();
+
+    const checking = account.refresh();
+    await account.signOut();
+    await account.requestCode(anna.email);
+    await account.verifyCode('100002');
+    expect(account.state).toMatchObject({ status: 'signed-in' });
+    release();
+    await checking;
+
+    expect(account.state).toMatchObject({ status: 'signed-in', email: 'anna@mail.com' });
+  });
+
+  it('keeps the Session when the check is held back as too many requests', async () => {
+    const { account, api, time } = await signedIn();
+    time.advance(60 * 60_000);
+    api.failNext('too-many-requests');
+
+    await account.refresh();
+
+    expect(api.calls).toContain('account.me');
+    expect(account.state).toEqual({
+      status: 'signed-in',
+      email: 'anna@mail.com',
+      inFlight: undefined,
+      problem: undefined,
+    });
+  });
+});
+
+describe('the Account when a sheet fails', () => {
+  it('shows nothing in flight and no problem when the Google sheet throws', async () => {
+    const { account, googleSheet } = await setup();
+    vi.spyOn(googleSheet, 'signIn').mockRejectedValueOnce(new Error('the sheet broke'));
+
+    await expect(account.signInWithGoogle()).rejects.toThrow('the sheet broke');
+
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
   });
 });

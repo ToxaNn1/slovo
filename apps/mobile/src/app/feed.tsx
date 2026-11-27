@@ -189,7 +189,9 @@ function FeedScreen() {
 /** The key of a card's page, by the Entry, Feed Notice or Quick Question it shows. */
 function pageKey(card: FeedCard): string {
   if (card.kind === 'notice') return `notice-${card.notice}`;
-  if (card.kind === 'quick-question') return `quick-question-${card.entry.id}`;
+  // By what it asks, which a Quick Question holds before the pick, its Entry kept out with the right option.
+  if (card.kind === 'quick-question')
+    return `quick-question-${[card.round.prompt, ...card.round.options.map(({ text }) => text)].join('|')}`;
   return card.entryId ?? card.kind;
 }
 
@@ -225,13 +227,12 @@ const FeedPage = memo(function FeedPage({
         <QuickQuestionRound
           title={feedStrings.quickQuestion}
           round={card.round}
-          entry={card.entry}
           label={
             card.source.kind === 'game-mode'
               ? gameModeStrings(editionStrings.game.modes, card.source.modeId).roundLabel
               : feedStrings.quickQuestion
           }
-          answered={card.answered}
+          answer={card.answer}
           onAnswer={(option) => {
             onAnswerQuickQuestion(position, option);
           }}

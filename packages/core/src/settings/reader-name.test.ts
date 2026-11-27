@@ -59,6 +59,16 @@ describe('the reader name', () => {
     await name.change('Остап');
     expect(told).toEqual(['Остап']);
   });
+
+  it('tells a listener nothing once it unsubscribes', async () => {
+    const { name } = await opened();
+    const told: (string | undefined)[] = [];
+    const unsubscribe = name.subscribe(() => told.push(name.state));
+    await name.change('Остап');
+    unsubscribe();
+    await name.change('Тарас');
+    expect(told).toEqual(['Остап']);
+  });
 });
 
 // Never sent with Analytics, Community Counters or the Questionnaire counters.

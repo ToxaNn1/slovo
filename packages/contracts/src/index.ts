@@ -214,7 +214,7 @@ export {
   type MistakeReport,
   type MistakeType,
 } from './mistake-report';
-export { SYNC_BATCH_SIZE } from './sync';
+export { fitsSyncRecord, SYNC_BATCH_SIZE, SYNC_RECORD_LIMITS, utf8Bytes } from './sync';
 export {
   ID_PREFIX,
   RarityRangeSchema,

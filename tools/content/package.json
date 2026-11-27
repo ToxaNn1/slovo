@@ -14,6 +14,7 @@
     "@slovo/content-rules": "workspace:*",
     "@slovo/contracts": "workspace:*",
     "@slovo/language-pack": "workspace:*",
+    "@slovo/server-core": "workspace:*",
     "@slovo/sourcing": "workspace:*"
   },
   "devDependencies": {

@@ -81,6 +81,24 @@ async function firstQuestion(app: App) {
   return { card, position };
 }
 
+/** The Quick Question at `position` answered with `option`: the answer as its card now holds it. */
+async function answerOf(app: App, position: number, option: number) {
+  await app.feed.answerQuickQuestion(position, option);
+  const card = app.feed.cards[position];
+  if (card?.kind !== 'quick-question' || card.answer === undefined) throw new Error('Not answered');
+  return card.answer;
+}
+
+/**
+ * The right option of the first Quick Question of an app run over `options`,
+ * which the card keeps out until the pick: told by the same run answering it.
+ */
+async function rightOfFirst(options?: Parameters<typeof run>[0]): Promise<number> {
+  const { app } = await run(options);
+  const { position } = await firstQuestion(app);
+  return (await answerOf(app, position, 0)).correct;
+}
+
 describe('the Quick Question frequency', () => {
   it('takes every 10th card by default', async () => {
     const { app } = await run();
@@ -144,11 +162,33 @@ describe('the Quick Question frequency', () => {
 describe('a Quick Question answered', () => {
   it('asks one pick Round of an Eligible Entry', async () => {
     const { app } = await run();
+    const { card, position } = await firstQuestion(app);
+
+    expect(card.round.form).toBe('pick');
+    const answer = await answerOf(app, position, 0);
+    expect(words.map(({ id }) => id)).toContain(answer.entry.id);
+    expect(card.round.options[answer.correct]).toBeDefined();
+  });
+
+  it('keeps the right option, its sheet and its Entry out of the card until the pick', async () => {
+    const { app } = await run();
     const { card } = await firstQuestion(app);
 
-    expect(words.map(({ id }) => id)).toContain(card.entry.id);
-    expect(card.round.form).toBe('pick');
-    expect(card.round.options[card.round.correct]).toBeDefined();
+    expect(card.answer).toBeUndefined();
+    expect(card).not.toHaveProperty('entry');
+    expect(card.round).not.toHaveProperty('correct');
+    expect(card.round).not.toHaveProperty('sheet');
+  });
+
+  it('holds the answer judged by its Answer Form once picked', async () => {
+    const { app } = await run();
+    const { position } = await firstQuestion(app);
+    const correct = await rightOfFirst();
+
+    const answer = await answerOf(app, position, correct);
+
+    expect(answer).toMatchObject({ form: 'pick', chosen: correct, correct, right: true });
+    expect(answer.sheet.answer).toBeDefined();
   });
 
   it('says it came from the Game Mode whose Round it asks', async () => {
@@ -160,14 +200,14 @@ describe('a Quick Question answered', () => {
 
   it('right earns 2 XP and confirms its Entry', async () => {
     const { app, events } = await run();
-    const { card, position } = await firstQuestion(app);
+    const { position } = await firstQuestion(app);
+    const correct = await rightOfFirst();
 
-    const right = await app.feed.answerQuickQuestion(position, card.round.correct);
+    const right = await app.feed.answerQuickQuestion(position, correct);
 
     expect(right).toBe(true);
     expect(app.xpLog.state).toMatchObject({ total: 2, today: 2 });
     expect(app.knowledge.state.confirmed.total).toBe(1);
-    expect(app.feed.cards[position]).toMatchObject({ answered: card.round.correct });
     expect(events).toContainEqual([
       'quickQuestionAnswered',
       { right: true, mode: 'guess-word', entryKind: 'word', rarity: 3, categoryId: 'test' },
@@ -177,12 +217,12 @@ describe('a Quick Question answered', () => {
   it('wrong marks its Entry Unknown and earns nothing', async () => {
     const { app, events } = await run();
     const { card, position } = await firstQuestion(app);
-    const wrong = (card.round.correct + 1) % card.round.options.length;
+    const wrong = ((await rightOfFirst()) + 1) % card.round.options.length;
 
-    const right = await app.feed.answerQuickQuestion(position, wrong);
+    const answer = await answerOf(app, position, wrong);
 
-    expect(right).toBe(false);
-    expect(app.knowledge.state.shown.get(card.entry.id)).toBe('unknown');
+    expect(answer.right).toBe(false);
+    expect(app.knowledge.state.shown.get(answer.entry.id)).toBe('unknown');
     expect(app.xpLog.state).toMatchObject({ total: 0, today: 0 });
     expect(app.knowledge.state.confirmed.total).toBe(0);
     expect(events).toContainEqual([
@@ -193,20 +233,22 @@ describe('a Quick Question answered', () => {
 
   it('is answered once: a second answer changes nothing', async () => {
     const { app } = await run();
-    const { card, position } = await firstQuestion(app);
-    await app.feed.answerQuickQuestion(position, card.round.correct);
+    const { position } = await firstQuestion(app);
+    const correct = await rightOfFirst();
+    await app.feed.answerQuickQuestion(position, correct);
 
-    expect(await app.feed.answerQuickQuestion(position, card.round.correct)).toBeUndefined();
+    expect(await app.feed.answerQuickQuestion(position, correct)).toBeUndefined();
     expect(app.xpLog.state).toMatchObject({ total: 2, today: 2 });
   });
 
   it('is answered once by two taps at once: the second changes nothing', async () => {
     const { app } = await run();
-    const { card, position } = await firstQuestion(app);
+    const { position } = await firstQuestion(app);
+    const correct = await rightOfFirst();
 
     const answers = await Promise.all([
-      app.feed.answerQuickQuestion(position, card.round.correct),
-      app.feed.answerQuickQuestion(position, card.round.correct),
+      app.feed.answerQuickQuestion(position, correct),
+      app.feed.answerQuickQuestion(position, correct),
     ]);
 
     expect(answers).toEqual([true, undefined]);
@@ -258,17 +300,27 @@ const selfNamed = (index: number, overrides: Partial<Word> = {}): Word =>
 
 const meantWords = Array.from({ length: 14 }, (_, index) => meant(index));
 
-/** The Quick Questions among the Feed's first `count` cards, one in every six. */
+/**
+ * The Quick Questions among the Feed's first `count` cards, one in every six,
+ * each with the answer to its first option, which tells the Entry it asks.
+ */
 async function questionsOf(app: App, count: number) {
   await app.mix.setQuickQuestionEvery(6);
-  return (await cardsOf(app, count)).flatMap((card) =>
-    card.kind === 'quick-question' ? [card] : [],
+  const places = (await cardsOf(app, count)).flatMap((card, place) =>
+    card.kind === 'quick-question' ? [place] : [],
   );
+  const questions = [];
+  for (const place of places) {
+    const answer = await answerOf(app, place, 0);
+    const card = app.feed.cards[place];
+    if (card?.kind === 'quick-question') questions.push({ ...card, entry: answer.entry });
+  }
+  return questions;
 }
 
 type Question = Awaited<ReturnType<typeof questionsOf>>[number];
 
-const textsOf = (card: Question) => card.round.options.map(({ text }) => text);
+const textsOf = (card: Pick<Question, 'round'>) => card.round.options.map(({ text }) => text);
 
 const sourceIdOf = ({ source }: Question) =>
   source.kind === 'game-mode' ? source.modeId : source.kind;
@@ -277,23 +329,26 @@ describe('the Word Meaning question', () => {
   it("asks an Eligible Word by its Lemma and offers four Definitions, the Word's own the right one", async () => {
     const { app } = await run({ on: WORD_MEANING_ONLY, of: meantWords });
 
-    const { card } = await firstQuestion(app);
+    const { card, position } = await firstQuestion(app);
 
-    const asked = meantWords.find(({ id }) => id === card.entry.id);
+    const answer = await answerOf(app, position, 0);
+    const asked = meantWords.find(({ id }) => id === answer.entry.id);
     expect(asked).toBeDefined();
     expect(card.source).toEqual({ kind: 'word-meaning' });
     expect(card.round).toMatchObject({ form: 'pick', prompt: asked?.lemma, labelKind: 'meaning' });
     expect(card.round.options).toHaveLength(4);
-    expect(card.round.options[card.round.correct]?.text).toBe(asked?.primaryDefinition);
+    expect(card.round.options[answer.correct]?.text).toBe(asked?.primaryDefinition);
     for (const { stressedVowels } of card.round.options) expect(stressedVowels).toEqual([]);
-    expect(card.round.sheet.answer).toEqual({ text: asked?.primaryDefinition, stressedVowels: [] });
+    expect(answer.sheet.answer).toEqual({ text: asked?.primaryDefinition, stressedVowels: [] });
   });
 
-  it('takes an option the Round lacks as a wrong answer that marks nothing', async () => {
+  it('judges no option the Round lacks and marks nothing', async () => {
     const { app } = await run({ on: WORD_MEANING_ONLY, of: meantWords });
     const { position } = await firstQuestion(app);
 
-    expect(await app.feed.answerQuickQuestion(position, 9)).toBe(false);
+    expect(await app.feed.answerQuickQuestion(position, 9)).toBeUndefined();
+    const card = app.feed.cards[position];
+    expect(card?.kind === 'quick-question' ? card.answer : 'not a question').toBeUndefined();
     expect(app.knowledge.state.shown.size).toBe(0);
   });
 
@@ -448,14 +503,14 @@ describe('the Word Meaning question', () => {
 
   it('right earns 2 XP and confirms its Word', async () => {
     const { app, events } = await run({ on: WORD_MEANING_ONLY, of: meantWords });
-    const { card, position } = await firstQuestion(app);
+    const { position } = await firstQuestion(app);
+    const correct = await rightOfFirst({ on: WORD_MEANING_ONLY, of: meantWords });
 
-    const right = await app.feed.answerQuickQuestion(position, card.round.correct);
+    const right = await app.feed.answerQuickQuestion(position, correct);
 
     expect(right).toBe(true);
     expect(app.xpLog.state).toMatchObject({ total: 2, today: 2 });
     expect(app.knowledge.state.confirmed.total).toBe(1);
-    expect(app.feed.cards[position]).toMatchObject({ answered: card.round.correct });
     expect(events).toContainEqual([
       'quickQuestionAnswered',
       { right: true, mode: 'word-meaning', entryKind: 'word', rarity: 3, categoryId: 'test' },
@@ -465,12 +520,13 @@ describe('the Word Meaning question', () => {
   it('wrong marks its Word Unknown and earns nothing', async () => {
     const { app, events } = await run({ on: WORD_MEANING_ONLY, of: meantWords });
     const { card, position } = await firstQuestion(app);
-    const wrong = (card.round.correct + 1) % card.round.options.length;
+    const correct = await rightOfFirst({ on: WORD_MEANING_ONLY, of: meantWords });
+    const wrong = (correct + 1) % card.round.options.length;
 
-    const right = await app.feed.answerQuickQuestion(position, wrong);
+    const answer = await answerOf(app, position, wrong);
 
-    expect(right).toBe(false);
-    expect(app.knowledge.state.shown.get(card.entry.id)).toBe('unknown');
+    expect(answer.right).toBe(false);
+    expect(app.knowledge.state.shown.get(answer.entry.id)).toBe('unknown');
     expect(app.xpLog.state).toMatchObject({ total: 0, today: 0 });
     expect(app.knowledge.state.confirmed.total).toBe(0);
     expect(events).toContainEqual([
@@ -500,10 +556,7 @@ describe('a Quick Question of a Game Mode that cannot ask every Entry', () => {
       clock: time.clock,
       random: seededRandom(7),
     });
-    await app.mix.setQuickQuestionEvery(6);
-
-    const cards = await cardsOf(app, 30);
-    const asked = cards.flatMap((card) => (card.kind === 'quick-question' ? [card] : []));
+    const asked = await questionsOf(app, 30);
 
     expect(asked.map(({ entry }) => entry.id).every((id) => ['w_03', 'w_10'].includes(id))).toBe(
       true,
@@ -527,11 +580,8 @@ describe('a Quick Question prompt', () => {
 
   it('is never longer than 140 characters: a longer Entry is not asked', async () => {
     const { app } = await run({ of: overLong(['w_05']) });
-    await app.mix.setQuickQuestionEvery(6);
 
-    const asked = (await cardsOf(app, 24)).flatMap((card) =>
-      card.kind === 'quick-question' ? [card] : [],
-    );
+    const asked = await questionsOf(app, 24);
 
     expect(asked.length).toBeGreaterThan(0);
     for (const card of asked) {
@@ -545,11 +595,8 @@ describe('a Quick Question prompt', () => {
       each.id === 'w_05' ? { ...each, primaryDefinition: `${'x'.repeat(139)}.` } : each,
     );
     const { app } = await run({ of: exact });
-    await app.mix.setQuickQuestionEvery(6);
 
-    const asked = (await cardsOf(app, 24)).flatMap((card) =>
-      card.kind === 'quick-question' ? [card] : [],
-    );
+    const asked = await questionsOf(app, 24);
 
     expect(asked.length).toBeGreaterThan(0);
     for (const card of asked) {
@@ -574,11 +621,12 @@ describe('a Quick Question after a card', () => {
     await app.mix.setQuickQuestionEvery(6);
 
     const cards = await cardsOf(app, 150);
-    const asked = cards.flatMap((card, place) =>
-      card.kind === 'quick-question' ? [{ card, before: cards[place - 1] }] : [],
-    );
+    const places = cards.flatMap((card, place) => (card.kind === 'quick-question' ? [place] : []));
 
-    expect(asked.length).toBeGreaterThan(20);
-    for (const { card, before } of asked) expect(card.entry.id).not.toBe(before?.entryId);
+    expect(places.length).toBeGreaterThan(20);
+    for (const place of places) {
+      const { entry } = await answerOf(app, place, 0);
+      expect(entry.id).not.toBe(cards[place - 1]?.entryId);
+    }
   });
 });

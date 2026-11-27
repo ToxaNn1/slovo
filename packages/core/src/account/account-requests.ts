@@ -68,7 +68,7 @@ export function accountRequests(backend: Pick<Backend, 'account'>, editionId: st
     ): Promise<
       | { readonly ok: true; readonly token: string; readonly email: string }
       | { readonly ok: false; readonly reason: 'wrong-code'; readonly triesLeft: number }
-      | { readonly ok: false; readonly reason: 'code-expired' }
+      | { readonly ok: false; readonly reason: 'code-expired' | 'code-spent' }
       | AccountApiFailure
     > {
       const answer = await answerOf(account.verifyCode({ email, code }), (error) => {
@@ -76,6 +76,7 @@ export function accountRequests(backend: Pick<Backend, 'account'>, editionId: st
           return { ok: false, reason: 'wrong-code', triesLeft: error.data.triesLeft } as const;
         }
         if (error.code === 'CODE_EXPIRED') return { ok: false, reason: 'code-expired' } as const;
+        if (error.code === 'CODE_SPENT') return { ok: false, reason: 'code-spent' } as const;
         return undefined;
       });
       if (!answer.ok) return answer;

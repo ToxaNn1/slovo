@@ -11,7 +11,7 @@ import {
 import { SYNC_AFTER_WRITE } from './sync';
 import { switchedOn } from '../edition/edition';
 import { fakeClock, randomOf, testSchedule } from '../test-support';
-import { signInByCode } from '../fakes/fake-backend';
+import { signInByCode, type FakeBackend } from '../fakes/fake-backend';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { trackChanges } from '../user-state/tracked-user-state';
 import { userStateRecords } from '../user-state-schema';
@@ -19,6 +19,8 @@ import { userStateRecords } from '../user-state-schema';
 const { favorites, syncCursor, syncSyncedAt, theme } = userStateRecords;
 
 const HOUR = 60 * 60_000;
+/** When a Favorite another device kept was added. */
+const FIRST_INSTANT = '2026-10-01T09:00:00.000Z';
 /** The cursor the fake backend answers the first pull with. */
 const CURSOR_AFTER_FIRST_PULL = 0;
 
@@ -29,10 +31,25 @@ const CURSOR_AFTER_FIRST_PULL = 0;
 async function device({
   signedIn = true,
   off = [],
-}: { signedIn?: boolean; off?: FeatureSwitch[] } = {}) {
+  left = [],
+  refuses = () => false,
+  email = 'anna@mail.com',
+  kept,
+}: {
+  signedIn?: boolean;
+  off?: FeatureSwitch[];
+  /** Records an earlier run left on the device. */
+  left?: [string, string][];
+  /** Which writes the device's store refuses from the launch on. */
+  refuses?: (changes: UserStateChanges) => boolean;
+  /** The email of the Account the device is signed into. */
+  email?: string;
+  /** What a launch before left: its backend, and the user state as it stood then. */
+  kept?: { server: FakeBackend; records: ReadonlyMap<string, string> };
+} = {}) {
   const time = fakeClock('2026-10-18T09:00:00.000Z');
   const timers = testSchedule(time);
-  const server = createFakeBackend({ clock: time.clock });
+  const server = kept?.server ?? createFakeBackend({ clock: time.clock });
   /** Whether the backend can be reached by Sync; without it every Sync request gets no answer, and counts. */
   const network = { up: true, unanswered: 0 };
   const unanswered = (): Promise<never> => {
@@ -44,16 +61,22 @@ async function device({
   const pulledAfter: (number | undefined)[] = [];
   const googleSheet = createFakeGoogleSignInSheet();
   const appleSheet = createFakeAppleSignInSheet();
-  const records = new Map<string, string>();
-  /** Which writes the device's store refuses: none, unless the test says. */
-  const disk = { refuses: (_changes: UserStateChanges) => false };
+  const records = new Map<string, string>([...(kept?.records ?? []), ...left]);
+  /** Which writes the device's store refuses, none unless the test says, and what each waits for first. */
+  const disk = {
+    refuses,
+    waits: (_changes: UserStateChanges): Promise<unknown> => Promise.resolve(),
+  };
   const memory = createMemoryUserStatePort(records);
   const userState = trackChanges({
     userState: await openUserState({
       port: {
         ...memory,
-        write: (changes) =>
-          disk.refuses(changes) ? Promise.reject(new Error('disk full')) : memory.write(changes),
+        write: async (changes) => {
+          await disk.waits(changes);
+          if (disk.refuses(changes)) throw new Error('disk full');
+          await memory.write(changes);
+        },
       },
     }),
     clock: time.clock,
@@ -66,7 +89,7 @@ async function device({
     googleSheet,
     appleSheet,
     userState,
-    sessions: createMemorySessionStore(signedIn ? await signInByCode(server) : undefined),
+    sessions: createMemorySessionStore(signedIn ? await signInByCode(server, email) : undefined),
     clock: time.clock,
     schedule: timers.schedule,
     random: randomOf(0.5),
@@ -280,19 +303,36 @@ describe('Sync syncs', () => {
 });
 
 describe('Sync syncs nothing', () => {
-  it('without a Session', async () => {
+  it('without a Session, and tells its subscribers nothing', async () => {
     const { sync, addFavorite, advance, syncs } = await device({ signedIn: false });
+    let told = 0;
+    sync.subscribe(() => {
+      told += 1;
+    });
     sync.foreground();
     await addFavorite('w_one');
     await advance(HOUR);
 
     expect(syncs()).toBe(0);
+    expect(told).toBe(0);
     expect(sync.state).toEqual({
       syncedAt: undefined,
       running: false,
       offline: false,
       refused: undefined,
     });
+  });
+
+  it('when the Account changes without a sign-in or a sign-out', async () => {
+    const { sync, account, advance, syncs } = await device();
+    sync.foreground();
+    await advance(0);
+    expect(syncs()).toBe(1);
+
+    await account.delete();
+    await advance(HOUR);
+
+    expect(syncs()).toBe(1);
   });
 
   it.each(['sync', 'account'] as const)('with `%s` off, read each time', async (feature) => {
@@ -311,6 +351,19 @@ describe('Sync syncs nothing', () => {
     await addFavorite('w_one');
     await advance(HOUR);
     expect(syncs()).toBe(1);
+  });
+});
+
+describe('Sync pulls', () => {
+  it('each next sync after the cursor the last one kept', async () => {
+    const { sync, advance, pulledAfter } = await device();
+    sync.foreground();
+    await advance(0);
+    sync.background();
+    sync.foreground();
+    await advance(0);
+
+    expect(pulledAfter).toEqual([undefined, CURSOR_AFTER_FIRST_PULL]);
   });
 });
 
@@ -441,6 +494,10 @@ describe('Sync tries a sync again', () => {
     await account.signOut();
     await advance(0);
     expect(sync.state).toMatchObject({ refused: undefined });
+    await account.requestCode('borys@mail.com');
+    await account.verifyCode(server.account.sentCodes.at(-1)?.code ?? '');
+    await advance(0);
+    expect(server.sync.recordsOf('borys@mail.com').has('favorites.w_one')).toBe(true);
   });
 });
 
@@ -487,6 +544,38 @@ describe('Sync, when too many requests', () => {
     await advance(HOUR);
 
     expect(syncs()).toBe(1);
+  });
+
+  it('holds a moment that came during the sync the Retry-After answered', async () => {
+    const { sync, server, advance, syncs } = await device();
+    server.failNext({ procedure: 'sync.pull', reason: 'too-many-requests', retryAfter: 60 });
+    const release = server.hold();
+    sync.foreground();
+    await advance(0);
+    sync.background();
+    sync.foreground();
+    release();
+    await advance(59_999);
+    expect(syncs()).toBe(1);
+    await advance(1);
+
+    expect(syncs()).toBe(2);
+  });
+
+  it('waits for the Retry-After of a later answer after one that said nothing of when', async () => {
+    const { sync, server, addFavorite, advance, syncs } = await device();
+    server.failNext({ procedure: 'sync.pull', reason: 'too-many-requests' });
+    sync.foreground();
+    await advance(0);
+    expect(syncs()).toBe(1);
+
+    server.failNext({ procedure: 'sync.pull', reason: 'too-many-requests', retryAfter: 60 });
+    await addFavorite('w_one');
+    await advance(SYNC_AFTER_WRITE);
+    expect(syncs()).toBe(2);
+    await advance(60_000);
+
+    expect(syncs()).toBe(3);
   });
 
   it('syncs at the next moment when the answer says nothing of when', async () => {
@@ -642,6 +731,82 @@ describe('Sync and the end of a Session', () => {
     });
   });
 
+  it('says nothing was refused of a Session that ended while its sync ran', async () => {
+    const { sync, server, account, addFavorite, advance } = await device();
+    await addFavorite('w_one');
+    server.failNext({ procedure: 'sync.push', reason: 'unexpected' });
+    const release = server.hold();
+    sync.foreground();
+    await advance(0);
+
+    await account.signOut();
+    release();
+    await advance(0);
+
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: false,
+      offline: false,
+      refused: undefined,
+    });
+  });
+
+  it('stops running when the Session ends while the time of its sync is kept', async () => {
+    const { sync, account, disk, advance } = await device();
+    disk.waits = (changes) =>
+      changes.get(syncSyncedAt.key) === undefined ? Promise.resolve() : account.signOut();
+    sync.foreground();
+    await advance(0);
+
+    expect(account.state).toMatchObject({ status: 'signed-out' });
+    expect(sync.state).toEqual({
+      syncedAt: undefined,
+      running: false,
+      offline: false,
+      refused: undefined,
+    });
+  });
+
+  it('syncs the next Account after a sign-out that left nothing to forget, even when the store refuses to forget', async () => {
+    const { sync, account, server, disk, switchedOff, advance, syncs } = await device({
+      off: ['sync'],
+    });
+    sync.foreground();
+    await advance(0);
+    disk.refuses = (changes) =>
+      changes.has(syncCursor.key) && changes.get(syncCursor.key) === undefined;
+    await account.signOut();
+    await advance(0);
+
+    switchedOff.delete('sync');
+    await account.requestCode('borys@mail.com');
+    await account.verifyCode(server.account.sentCodes.at(-1)?.code ?? '');
+    await advance(0);
+
+    expect(syncs()).toBe(1);
+  });
+
+  it('syncs no next Account from a cursor an ended Session left before the launch and the store failed to forget', async () => {
+    const forgetting = (changes: UserStateChanges) =>
+      changes.has(syncCursor.key) && changes.get(syncCursor.key) === undefined;
+    const { sync, account, server, disk, advance, syncs, pulledAfter } = await device({
+      signedIn: false,
+      left: [[syncCursor.key, '7']],
+      refuses: forgetting,
+    });
+    sync.foreground();
+    await account.requestCode('borys@mail.com');
+    await account.verifyCode(server.account.sentCodes.at(-1)?.code ?? '');
+    await advance(0);
+    expect(syncs()).toBe(0);
+
+    disk.refuses = () => false;
+    sync.background();
+    sync.foreground();
+    await advance(0);
+    expect(pulledAfter).toEqual([undefined]);
+  });
+
   it('syncs no next Account from the cursor of a Session that failed to be forgotten', async () => {
     const { sync, account, server, userState, disk, advance, syncs, pulledAfter } = await device();
     sync.foreground();
@@ -701,6 +866,87 @@ describe('Sync and the end of a Session', () => {
     expect(sync.state.syncedAt).toBeUndefined();
     expect(await userState.cursor()).toBeUndefined();
     expect(await userState.read(syncSyncedAt)).toBeUndefined();
+  });
+
+  // Ticket #2128: the Session changed while Sync was closed, as with its switch off in effect.
+  it('pulls the next Account from its first record when its Session started while Sync was closed', async () => {
+    const before = await device();
+    const { token } = await signInByCode(before.server, 'oleh@mail.com');
+    await before.server.backend.sync.push(
+      {
+        editionId: 'uk',
+        changes: [{ key: 'favorites.w_old', value: FIRST_INSTANT, changedAt: 1 }],
+      },
+      { context: { token } },
+    );
+    await before.addFavorite('w_one');
+    // The second sync pulls what the first pushed, so the cursor moves.
+    before.sync.foreground();
+    await before.advance(0);
+    before.sync.foreground();
+    await before.advance(0);
+    expect(await before.userState.cursor()).toBeGreaterThan(1);
+
+    // The next opening of Sync finds another Account's Session and the cursor as it stood.
+    const { sync, advance, userState, server, pulledAfter } = await device({
+      email: 'oleh@mail.com',
+      kept: { server: before.server, records: before.records },
+    });
+    sync.foreground();
+    await advance(0);
+
+    // Its older record arrives, and the device's own get the first-sign-in change.
+    expect(pulledAfter[0]).toBeUndefined();
+    expect(await userState.read(favorites.record('w_old'))).toBe(FIRST_INSTANT);
+    expect(server.sync.recordsOf('oleh@mail.com').has('favorites.w_one')).toBe(true);
+    expect(sync.state.refused).toBeUndefined();
+  });
+
+  it('keeps the place of the same Account at the next opening of Sync', async () => {
+    const before = await device();
+    await before.addFavorite('w_one');
+    // The second sync pulls what the first pushed, so the cursor moves.
+    before.sync.foreground();
+    await before.advance(0);
+    before.sync.foreground();
+    await before.advance(0);
+    const cursor = await before.userState.cursor();
+
+    const { sync, advance, pulledAfter } = await device({
+      kept: { server: before.server, records: before.records },
+    });
+    sync.foreground();
+    await advance(0);
+
+    expect(cursor).toBeGreaterThan(0);
+    expect(pulledAfter).toEqual([cursor]);
+  });
+
+  it('takes a cursor an older app kept, which names no Account, as its Session’s, once', async () => {
+    const before = await device();
+    await before.addFavorite('w_one');
+    // The second sync pulls what the first pushed, so the cursor moves.
+    before.sync.foreground();
+    await before.advance(0);
+    before.sync.foreground();
+    await before.advance(0);
+    const cursor = await before.userState.cursor();
+    const older = new Map(before.records);
+    older.delete('sync.cursorAccount');
+
+    const first = await device({ kept: { server: before.server, records: older } });
+    first.sync.foreground();
+    await first.advance(0);
+    expect(first.pulledAfter).toEqual([cursor]);
+
+    // From then on it is that Account's: another's Session starts from the first record.
+    const next = await device({
+      email: 'oleh@mail.com',
+      kept: { server: before.server, records: first.records },
+    });
+    next.sync.foreground();
+    await next.advance(0);
+    expect(next.pulledAfter[0]).toBeUndefined();
   });
 
   it('opens signed out even when the store fails to read what an ended Session left', async () => {

@@ -398,6 +398,7 @@ const storedIn1_0: readonly (readonly [
     '{"readAt":"2026-10-30T08:15:00.000Z","known":3,"unknown":1,"saved":2}',
   ],
   ['syncCursor', undefined, 'sync.cursor', '17'],
+  ['syncCursorAccount', undefined, 'sync.cursorAccount', '"anna@mail.com"'],
   ['syncSyncedAt', undefined, 'sync.syncedAt', '"2026-10-30T08:15:00.000Z"'],
   ['mistakeReportQueue', undefined, 'reports.queue', '[]'],
   ['checkIns', '2026-10-30', 'mood.2026-10-30', '{"date":"2026-10-30","choice":"calm"}'],

@@ -160,6 +160,75 @@ describe('the Data export', () => {
     ]);
   });
 
+  it('lists every part by time, then by id, whatever order the records are kept in', async () => {
+    const [t1, t2, t3] = [
+      '2026-11-01T10:00:00.000Z',
+      '2026-11-02T10:00:00.000Z',
+      '2026-11-03T10:00:00.000Z',
+    ];
+    const xp = (at: string) => ({
+      kind: 'xp',
+      date: at.slice(0, 10),
+      at,
+      amount: 1,
+      source: 'seen-word',
+    });
+    const exported = await exportOf(
+      kept({
+        'favorites.w_vyr': t2,
+        'favorites.w_bura': t2,
+        'favorites.w_gone': t1,
+        'collections.c1': { name: 'Перша', createdAt: t2 },
+        'collections.c2': { name: 'Друга', createdAt: t1 },
+        'collectionEntries.c1.w_vyr': t1,
+        'collectionEntries.c1.w_ava': t2,
+        'collectionEntries.c1.w_bura': t1,
+        'collectionEntries.c2.w_ava': t3,
+        'history.w_vyr': { seenAt: t1, wordOfTheDay: false },
+        'history.w_bura': { seenAt: t2, wordOfTheDay: false },
+        'history.w_gone': { seenAt: t1, wordOfTheDay: false },
+        'confirmed.w_bura': t1,
+        'confirmed.w_vyr': t1,
+        'confirmed.w_gone': t2,
+        'activeDays.2026-11-13': true,
+        'activeDays.2026-11-12': true,
+        'xp.x3': xp(t2),
+        'xp.x2': xp(t2),
+        'xp.x1': xp(t3),
+        'game.bestRight.speed': 3,
+        'game.bestRight.classic': 7,
+      }),
+    );
+    const ids = (list: readonly { entryId: string }[]) => list.map(({ entryId }) => entryId);
+
+    expect(ids(exported.favorites)).toEqual(['w_gone', 'w_bura', 'w_vyr']);
+    expect(exported.collections.map(({ id, entries }) => [id, ids(entries)])).toEqual([
+      ['c2', ['w_ava']],
+      ['c1', ['w_bura', 'w_vyr', 'w_ava']],
+    ]);
+    expect(exported.collections[1]?.entries[2]).toEqual({
+      entryId: 'w_ava',
+      lemma: 'ava',
+      addedAt: t2,
+    });
+    expect(ids(exported.history)).toEqual(['w_gone', 'w_vyr', 'w_bura']);
+    expect(ids(exported.progress.confirmed)).toEqual(['w_bura', 'w_vyr', 'w_gone']);
+    expect(exported.progress.activeDays).toEqual(['2026-11-12', '2026-11-13']);
+    expect(exported.progress.xpLog.map(({ id }) => id)).toEqual(['x2', 'x3', 'x1']);
+    expect(Object.entries(exported.progress.gameBest)).toEqual([
+      ['classic', 7],
+      ['speed', 3],
+    ]);
+  });
+
+  it('leaves out a kept setting its schema does not read', async () => {
+    const exported = await exportOf(
+      kept({ 'settings.theme': 'purple', 'settings.selfCheck': true }),
+    );
+
+    expect(Object.keys(exported.settings)).toEqual(['selfCheck']);
+  });
+
   it('of a fresh install is a valid, nearly empty JSON document', async () => {
     const exported = await exportOf(new Map());
 

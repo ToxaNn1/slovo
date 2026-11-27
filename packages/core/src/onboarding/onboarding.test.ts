@@ -41,7 +41,9 @@ async function run({
   api = createFakeBackend(),
   overrides = {},
   scheduler,
+  pack = content,
 }: {
+  pack?: ReturnType<typeof createMemoryContentPort>;
   records?: Map<string, string>;
   on?: readonly FeatureSwitch[];
   api?: FakeBackend;
@@ -61,7 +63,7 @@ async function run({
   });
   const settings = createSettings({ userState, defaults: edition.userSettingDefaults });
   const app = await openComposition({
-    content,
+    content: pack,
     edition,
     userState,
     clock: fakeClock('2026-11-01T09:00:00+02:00').clock,
@@ -596,5 +598,97 @@ describe('the onboarding', () => {
         expect(app.notifications.state.times).toEqual(before);
       }
     });
+  });
+});
+
+describe('the onboarding, step by step', () => {
+  it('leaves out the first Word while there is no Word of the Day', async () => {
+    const { app } = await run({ pack: createMemoryContentPort({ words: [] }) });
+    const seen = [];
+    for (let i = 0, step = stepOf(app); i < 6 && step !== undefined; i += 1, step = stepOf(app)) {
+      seen.push(`${step.kind} ${String(step.number)}/${String(step.total)}`);
+      await app.onboarding.next();
+    }
+    expect(seen).toEqual([
+      'welcome 1/5',
+      'level 2/5',
+      'why 3/5',
+      'dailyGoal 4/5',
+      'notificationTime 5/5',
+    ]);
+  });
+
+  it('shows the Edition options of «Навіщо» on its step', async () => {
+    const { app } = await run();
+    for (let i = 0; i < 3; i += 1) await app.onboarding.next();
+    const why = stepOf(app);
+    expect(why?.kind === 'why' && why.options).toEqual([
+      { id: 'write-correctly', label: 'Write correctly' },
+      { id: 'play', label: 'Play' },
+    ]);
+  });
+
+  it('tells each subscriber of every step it goes on to', async () => {
+    const { app } = await run();
+    const told: unknown[] = [];
+    app.onboarding.subscribe(() => told.push(kinds(app)));
+    await app.onboarding.next();
+    await app.onboarding.next();
+    expect(told).toEqual(['firstWord', 'level']);
+  });
+
+  it('takes one of two Daily Goals chosen at once, and counts it once', async () => {
+    const { app, api } = await run();
+    while (stepOf(app) !== undefined && kinds(app) !== 'dailyGoal') await app.onboarding.next();
+    await Promise.all([app.onboarding.chooseDailyGoal(25), app.onboarding.chooseDailyGoal(50)]);
+    await vi.waitFor(() => {
+      expect(api.counters.answers.filter(({ question }) => question === 'dailyGoal')).toEqual([
+        { editionId: 'test', question: 'dailyGoal', answer: '25' },
+      ]);
+    });
+    expect(kinds(app)).toBe('notificationTime');
+  });
+
+  it('does nothing for a call once finished', async () => {
+    const { app, events } = await run();
+    await app.onboarding.finish();
+    events.length = 0;
+    await app.onboarding.next();
+    await app.onboarding.finish();
+    expect(app.onboarding.state.status).toBe('finished');
+    expect(events).toEqual([]);
+  });
+
+  it('finishes as not skipped past the last step', async () => {
+    const { app, events } = await run();
+    for (let i = 0; i < 6; i += 1) await app.onboarding.next();
+    expect(app.onboarding.state.status).toBe('finished');
+    expect(events).toContainEqual(['onboardingFinished', { skipped: false }]);
+    expect(events).not.toContainEqual(['onboardingFinished', { skipped: true }]);
+  });
+
+  it('ignores an answer on a step that asks no question', async () => {
+    const { app, events } = await run();
+    await app.onboarding.answer('play');
+    expect(kinds(app)).toBe('welcome');
+    expect(events).not.toContainEqual([
+      'questionnaireAnswered',
+      { question: 'welcome', answer: 'play' },
+    ]);
+  });
+
+  it('opens the Rarity Test only from «Рівень», never by its id on «Навіщо»', async () => {
+    const { app } = await run();
+    for (let i = 0; i < 3; i += 1) await app.onboarding.next();
+    await app.onboarding.answer('dont-know');
+    expect(kinds(app)).toBe('why');
+  });
+
+  it('ignores a Daily Goal chosen on another step', async () => {
+    const { app } = await run({ on: ['dailyGoal', 'xpLog'] });
+    const before = app.xpLog.state.dailyGoal;
+    await app.onboarding.chooseDailyGoal(50);
+    expect(kinds(app)).toBe('welcome');
+    expect(app.xpLog.state.dailyGoal).toEqual(before);
   });
 });

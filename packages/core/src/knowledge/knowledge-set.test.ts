@@ -135,6 +135,7 @@ describe('setting, clearing and undoing a Knowledge Mark', () => {
 
     expect(marksOf(records)).toEqual([]);
     expect(told).toBe(0);
+    expect(await unsentOf(app)).toEqual([]);
   });
 
   it('undoes a set on an Entry with no record: no record again, nothing counted', async () => {
@@ -261,5 +262,91 @@ describe('setting, clearing and undoing a Knowledge Mark', () => {
     await app.knowledge.undo();
 
     expect(marksOf(records)).toEqual([]);
+  });
+
+  it('changes nothing on a set of the mark an Entry not yet due shows, kept on an old step', async () => {
+    const records = await recordsWith({ ...dueAtStepSeven, reviewDay: '2026-10-25' });
+    const before = marksOf(records);
+    const app = await run({ records });
+    expect(app.knowledge.state.shown.get('w_one')).toBe('unknown');
+
+    await app.knowledge.set('w_one', 'unknown');
+
+    expect(marksOf(records)).toEqual(before);
+    expect(app.knowledge.state.learning).toMatchObject([{ entryId: 'w_one', daysUntilReview: 6 }]);
+  });
+
+  it('keeps the changes given with a set alone when the mark stays as it is', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records });
+    await app.knowledge.set('w_one', 'known');
+    const also = userStateRecords.confirmed.record('w_two').change('2026-10-19T09:00:00.000Z');
+
+    await app.knowledge.set('w_one', 'known', also);
+
+    expect(records.has('confirmed.w_two')).toBe(true);
+  });
+
+  it('can undo neither a tap nor a Game answer', async () => {
+    const app = await run();
+    await app.knowledge.tap('w_one', 'known');
+    await app.knowledge.undo();
+    expect(app.knowledge.state.shown.get('w_one')).toBe('known');
+
+    await app.knowledge.answer('w_two', 'unknown');
+    await app.knowledge.undo();
+    expect(app.knowledge.state.shown.get('w_two')).toBe('unknown');
+  });
+
+  it('earns no Review XP for a clear or a Game answer on a due Entry', async () => {
+    const cleared = await recordsWith(dueAtStepSeven);
+    await (await run({ records: cleared })).knowledge.clear('w_one');
+    expect(reviewXpOf(cleared)).toBe(0);
+
+    const answered = await recordsWith(dueAtStepSeven);
+    await (await run({ records: answered })).knowledge.answer('w_one', 'known');
+    expect(reviewXpOf(answered)).toBe(0);
+  });
+
+  it('confirms nothing on Unknown at a 7-day Review', async () => {
+    const records = await recordsWith(dueAtStepSeven);
+    const app = await run({ records });
+
+    await app.knowledge.set('w_one', 'unknown');
+
+    expect(app.knowledge.state.confirmed.total).toBe(0);
+    expect(records.has('confirmed.w_one')).toBe(false);
+  });
+
+  it('undoes the confirmation of the last set alone, keeping the Entries confirmed before', async () => {
+    const records = await recordsWith(dueAtStepSeven);
+    const app = await run({ records });
+    await app.knowledge.confirm('w_two');
+    await app.knowledge.set('w_one', 'known');
+    expect(app.knowledge.state.confirmed.total).toBe(2);
+
+    await app.knowledge.undo();
+
+    expect(app.knowledge.state.confirmed.total).toBe(1);
+    expect(app.knowledge.confirmedAfter('2026-10-19T08:00:00.000Z')).toBe(1);
+    expect(records.has('confirmed.w_two')).toBe(true);
+  });
+
+  it('emits the Review answer event once per Entry on a local day, however often it is undone and set again', async () => {
+    const records = await recordsWith({ ...dueAtStepSeven, step: 1 });
+    const answered: unknown[] = [];
+    const analytics: AnalyticsPort = {
+      track: (event, properties) => {
+        if (event === 'reviewAnswered') answered.push(properties);
+      },
+      stop: () => undefined,
+    };
+    const app = await run({ records, on: ['knowledge', 'xpLog', 'analytics'], analytics });
+
+    await app.knowledge.set('w_one', 'known');
+    await app.knowledge.undo();
+    await app.knowledge.set('w_one', 'unknown');
+
+    expect(answered).toHaveLength(1);
   });
 });

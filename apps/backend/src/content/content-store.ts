@@ -4,7 +4,7 @@ import type { BuildError, SnapshotSource } from '@slovo/language-pack';
 import { readEditionWithSnapshot } from '@slovo/language-pack';
 import type { Clock, EditionRegistry } from '@slovo/server-core';
 import type { ContentSnapshot, Patch } from '@slovo/contracts/api';
-import { and, eq, gt, inArray, notInArray, sql } from 'drizzle-orm';
+import { and, eq, gt, inArray } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
 import {
@@ -27,6 +27,7 @@ import {
   needsNewRecordingOf,
   RECORD_KINDS,
   restoredAppearance,
+  retireUnheld,
   TABLES,
 } from './content-records';
 import { readMediaRows } from './media-rows';
@@ -208,25 +209,7 @@ export function createContentStore({
       // Curated Collection or Crossword Day the snapshot no longer holds stays
       // as it is: it is retired by a write, never by the import.
       for (const kind of ENTRY_KINDS) {
-        const table = TABLES[kind];
-        const ids = importedIds[kind];
-        await tx
-          .update(table)
-          .set({
-            retired: true,
-            fields: sql`${table.fields} || '{"retired": true}'::jsonb`,
-            contentVersion,
-            changedBy: 'import',
-            changedAt: now,
-            batchId: batch.id,
-          })
-          .where(
-            and(
-              eq(table.editionId, editionId),
-              eq(table.retired, false),
-              ids.length === 0 ? undefined : notInArray(table.id, [...ids]),
-            ),
-          );
+        await retireUnheld(tx, kind, importedIds[kind], common);
       }
       for (const kind of RECORD_KINDS) {
         const table = TABLES[kind];

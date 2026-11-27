@@ -5,15 +5,9 @@
  * version, the content version and the batch, or what refused the write.
  */
 import type { ApiClient } from '@slovo/contracts/api';
-import {
-  ID_PREFIX,
-  checkRecord,
-  contentSetOf,
-  parseRecord,
-  recordFileOf,
-  type Refusal,
-} from '@slovo/content-rules';
+import { ID_PREFIX, checkWrites, contentSetOf, recordFileOf } from '@slovo/content-rules';
 import type { EditionConfig } from '@slovo/contracts';
+import { editionDateOf } from '@slovo/server-core';
 
 import { refusalLines, type RecordKind } from './api';
 import { readIncoming, readObject, withoutId } from './input';
@@ -224,25 +218,27 @@ export async function check(
     synonymRow: snapshot.synonymRows,
     tip: snapshot.tips,
     curatedCollection: snapshot.curatedCollections,
-    // The snapshot holds no Crossword days, and drafts are never Crossword days.
-    crosswordDay: [],
+    crosswordDay: snapshot.crosswordDays,
   });
   const taken = new Set(
     [set.words, set.corrections, set.idioms, set.synonymRows, set.tips, set.curatedCollections]
       .flat()
       .map(({ file }) => file),
   );
-  let refused = 0;
   let next = 0;
-  for (const { fields, origin } of incoming.records) {
-    // A placeholder id no record of the Edition holds: the backend issues the real one.
+  // A placeholder id no record of the Edition holds for each draft: the backend issues the real one.
+  const writes = incoming.records.map(({ fields, origin }) => {
     let id: string;
     do id = `${ID_PREFIX[kind]}${(next++).toString(36).padStart(6, '0')}`;
     while (taken.has(recordFileOf(kind, id)));
-    const parsed = parseRecord(kind, recordFileOf(kind, id), { ...fields, id });
-    const refusals: Refusal[] = parsed.ok
-      ? checkRecord(config, set, parsed.record, { today })
-      : parsed.refusals;
+    return { kind, id, fields, origin };
+  });
+  // The drafts of one input are checked in turn, as `add` saves them, on the Edition's day.
+  const dates = { today, editionDate: editionDateOf(today) };
+  let refused = 0;
+  for (const { write, checked } of checkWrites(config, set, writes, dates)) {
+    const { origin } = write;
+    const { refusals } = checked;
     for (const { rule, field, message } of refusals) {
       io.problem(
         `${origin}: REFUSED ${rule}${field === undefined ? '' : ` (${field})`}: ${message}`,

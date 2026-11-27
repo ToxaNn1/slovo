@@ -71,6 +71,10 @@ describe('a Rule', () => {
       'a schedule of one moment',
       { schedule: { from: '2026-12-01T00:00:00.000Z', until: '2026-12-01T00:00:00.000Z' } },
     ],
+    ['an app version range open at its start', { appVersion: { until: '1.4.0' } }],
+    ['an app version range open at its end', { appVersion: { from: '1.2.0' } }],
+    ['a schedule open at its start', { schedule: { until: '2026-12-01T00:00:00.000Z' } }],
+    ['a schedule open at its end', { schedule: { from: '2026-12-01T00:00:00.000Z' } }],
   ])('reads %s', (_name, targets) => {
     expect(RuleSchema.parse({ ...rule, targets }).targets).toEqual(targets);
   });
