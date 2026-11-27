@@ -14,3 +14,9 @@
 верцадло household-crafts 5
 вибанітувати history-antiquity 5
 вивірка folk-names 3
+вимисливий emotions-character 5
+вимівка language-speech 5
+випорток witty-insults 5
+виторопень witty-insults 5
+відвіт language-speech 5
+вівсяниця folk-names 4
