@@ -47,4 +47,22 @@ describe('the Illustration rules', () => {
   it('names both rules for a PNG too large and not square', () => {
     expect(rulesOf(png(640, 480, 200_000))).toEqual(['illustration-size', 'illustration-square']);
   });
+
+  it('reads the size from a header of 24 bytes, and refuses one cut shorter', () => {
+    expect(illustrationRefusals(png(512, 512, 24))).toEqual([]);
+    expect(rulesOf(png(512, 512, 64).subarray(0, 23))).toEqual(['illustration-png']);
+  });
+
+  it('refuses a file with one byte of the signature or the IHDR name off', () => {
+    const offAt = (index: number) => {
+      const bytes = png(512, 512);
+      bytes[index] = 0;
+      return bytes;
+    };
+    expect([7, 12, 15].map((index) => rulesOf(offAt(index)))).toEqual([
+      ['illustration-png'],
+      ['illustration-png'],
+      ['illustration-png'],
+    ]);
+  });
 });
