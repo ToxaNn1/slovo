@@ -12,9 +12,10 @@ import {
   type Round,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { optionsOf, seededRandom, testEdition } from '../test-support';
+import { optionsOf, seededRandom, testComparison, testEdition } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
+import { correctionMode } from './correction-mode';
 
 function correction(
   id: string,
@@ -483,5 +484,25 @@ describe('the Knowledge Marks «Обери правильне» leaves', () => {
         daysUntilReview,
       ]),
     ).toEqual([[askedOf(round).id, 1]]);
+  });
+});
+
+describe('a stress trap in «Обери правильне»', () => {
+  it('builds no Round, whatever Corrections it could take its Distractors from', () => {
+    const trap = correction('c_trap', 'wrongStress', { standardEquivalents: ['ви́кличе'] });
+    const others = ['one', 'two', 'three', 'four'].map((name) => correction(`c_${name}`, 'calque'));
+
+    expect(
+      correctionMode.buildRound({
+        answer: trap,
+        eligible: [trap, ...others],
+        next: [],
+        upTo: 1,
+        round: 1,
+        random: seededRandom(1),
+        edition: testEdition(),
+        comparison: testComparison,
+      }),
+    ).toBeUndefined();
   });
 });

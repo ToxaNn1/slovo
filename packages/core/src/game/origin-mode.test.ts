@@ -230,6 +230,9 @@ describe('a Round of «Звідки слово»', () => {
       });
       expect(options).toHaveLength(4);
       expect(new Set(options).size).toBe(4);
+      if (round.form === 'pick') {
+        for (const { stressedVowels } of round.options) expect(stressedVowels).toEqual([]);
+      }
       for (const option of options) expect(languages.map(({ name }) => name)).toContain(option);
       expect(options.filter((option) => option === nameOf(withOrigin[lemma] ?? ''))).toHaveLength(
         1,

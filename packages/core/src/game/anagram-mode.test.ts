@@ -15,10 +15,13 @@ import { seededRandom, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /**
- * The pack's Words that play, of 4 to 9 letters: one with an apostrophe, one
- * with a hyphen, two with equal letters and one starting with a capital.
+ * The pack's Words that play, of 4 to 9 letters: one of 4, one of 9, one with
+ * an apostrophe, one with a hyphen, two with equal letters and one starting
+ * with a capital.
  */
 const playing = [
+  'вежа',
+  'кожушанка',
   'каганець',
   'веремія',
   'вирій',
@@ -38,8 +41,8 @@ const playing = [
   'Купала',
 ] as const;
 
-/** The Words that never play: of 3 letters, of 10, with a space. */
-const notPlaying = ['кий', 'перелесник', 'на розхрист'] as const;
+/** The Words that never play: of 3 letters, of 10, with a space (one of 6 letters besides). */
+const notPlaying = ['кий', 'перелесник', 'на розхрист', 'до ладу'] as const;
 
 const idOf = (lemma: string) => `w_${lemma}`;
 
@@ -173,7 +176,7 @@ describe('«Анаграми» on offer', () => {
 
   it("says it can't start with fewer than 15 Words of 4–9 letters", async () => {
     const app = await run();
-    for (const lemma of ['ринва', 'жупан', 'кирея']) {
+    for (const lemma of ['ринва', 'жупан', 'кирея', 'бекеш', 'пугач']) {
       await app.hide({ kind: 'entry', entryId: idOf(lemma) });
     }
 
@@ -198,7 +201,7 @@ describe('a Round of «Анаграми»', () => {
     expect(rounds).toHaveLength(3 * GAME_ROUNDS);
     for (const round of rounds) {
       const letters = lettersOf(lemmaOf(round));
-      expect(round).toMatchObject({ form: 'chips', highlight: undefined });
+      expect(round).toMatchObject({ form: 'chips', chipKind: 'letter', highlight: undefined });
       expect([...chipsOf(round)].sort()).toEqual([...letters].sort());
       expect(chipsOf(round)).not.toEqual(letters);
       expect(round.answer).toMatchObject({ form: 'chips', expected: letters, right: true });

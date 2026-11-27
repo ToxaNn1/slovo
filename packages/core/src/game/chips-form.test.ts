@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { AnswerSheet } from './answer-form';
-import { chipsForm, type ChipsContent } from './chips-form';
+import { chipsForm, outOfOrder, type ChipsContent } from './chips-form';
 import { testComparison } from '../test-support';
 
 const sheet: AnswerSheet = {
@@ -52,6 +52,17 @@ describe('the chips form', () => {
       chipsForm.judge(content, round, { form: 'chips', chips: [0, 1, 2, 3] }, testComparison)
         ?.answer.right,
     ).toBe(false);
+  });
+
+  it('judges nothing for a chip tapped twice', () => {
+    expect(
+      chipsForm.judge(content, round, { form: 'chips', chips: [1, 1, 3, 0] }, testComparison),
+    ).toBeUndefined();
+  });
+
+  it("moves the chips on when a shuffle left the answer's in order, decoys after them counted", () => {
+    expect(outOfOrder(['a', 'b'], ['a', 'b', 'x'], testComparison)).toEqual(['b', 'x', 'a']);
+    expect(outOfOrder(['a', 'b'], ['b', 'a', 'x'], testComparison)).toEqual(['b', 'a', 'x']);
   });
 
   it('judges nothing for a chip the Round does not have', () => {

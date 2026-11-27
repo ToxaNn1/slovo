@@ -34,11 +34,7 @@ async function run({
   records = new Map<string, string>(),
   on = ALL_ON,
   of = words,
-}: {
-  records?: Map<string, string>;
-  on?: readonly FeatureSwitch[];
-  of?: readonly Word[];
-} = {}) {
+}: { records?: Map<string, string>; on?: readonly FeatureSwitch[]; of?: readonly Word[] } = {}) {
   const events: [string, unknown][] = [];
   const analytics: AnalyticsPort = {
     // The onboarding, which opens on a fresh user state, has events of its own.
@@ -289,6 +285,16 @@ describe('the Word Meaning question', () => {
     expect(card.round).toMatchObject({ form: 'pick', prompt: asked?.lemma, labelKind: 'meaning' });
     expect(card.round.options).toHaveLength(4);
     expect(card.round.options[card.round.correct]?.text).toBe(asked?.primaryDefinition);
+    for (const { stressedVowels } of card.round.options) expect(stressedVowels).toEqual([]);
+    expect(card.round.sheet.answer).toEqual({ text: asked?.primaryDefinition, stressedVowels: [] });
+  });
+
+  it('takes an option the Round lacks as a wrong answer that marks nothing', async () => {
+    const { app } = await run({ on: WORD_MEANING_ONLY, of: meantWords });
+    const { position } = await firstQuestion(app);
+
+    expect(await app.feed.answerQuickQuestion(position, 9)).toBe(false);
+    expect(app.knowledge.state.shown.size).toBe(0);
   });
 
   it('offers the Definitions of other Words of the same part of speech, whole', async () => {

@@ -11,8 +11,9 @@ import {
   type Round,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { seededRandom, testEdition } from '../test-support';
+import { seededRandom, testComparison, testEdition } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { idiomMeaningMode } from './idiom-meaning-mode';
 
 function idiom(id: string, idiomType: IdiomType = 'idiom'): Idiom {
   return {
@@ -46,11 +47,7 @@ async function run({
   seed = 7,
   off = [],
   idiomsInMix = true,
-}: {
-  seed?: number;
-  off?: readonly string[];
-  idiomsInMix?: boolean;
-} = {}): Promise<Composition> {
+}: { seed?: number; off?: readonly string[]; idiomsInMix?: boolean } = {}): Promise<Composition> {
   const app = await openComposition({
     content,
     edition: testEdition({
@@ -258,5 +255,64 @@ describe('a Round of «Фразеологізми»', () => {
 
     expect(places.every((place) => place >= 0 && place < 15)).toBe(true);
     expect(places.some((place) => place >= weak.length)).toBe(true);
+  });
+});
+
+describe('the Distractors of «Фразеологізми»', () => {
+  /** Seeds far apart, so their first draws differ. */
+  const seeds = Array.from({ length: 12 }, (_, index) => 1 + index * 104_729);
+
+  /** The meanings a Round about the answer offers, one list per seed; nothing when it can't be built. */
+  const meaningsOffered = (answer: Idiom, others: readonly Idiom[]) =>
+    seeds.map((seed) => {
+      const round = idiomMeaningMode.buildRound({
+        answer,
+        eligible: [answer, ...others],
+        next: [],
+        upTo: 1,
+        round: 1,
+        random: seededRandom(seed),
+        edition: testEdition(),
+        comparison: testComparison,
+      });
+      if (round === undefined) return undefined;
+      if (round.form !== 'pick') throw new Error(`A ${round.form} Round`);
+      return round.options.map(({ text }) => text);
+    });
+
+  const proverbs = ['a', 'b', 'c', 'd'].map((name) => idiom(`i_proverb${name}`, 'proverb'));
+  const idioms = ['a', 'b', 'c', 'd', 'e'].map((name) => idiom(`i_idiom${name}`));
+  const [asked, ...otherProverbs] = proverbs;
+  if (asked === undefined) throw new Error('No proverb to ask');
+
+  it('are the meanings of Idioms of the same Idiom Type first', () => {
+    const expected = new Set(
+      [asked, ...otherProverbs].map(({ primaryDefinition }) => primaryDefinition),
+    );
+
+    for (const offered of meaningsOffered(asked, [...idioms, ...otherProverbs])) {
+      expect(new Set(offered)).toEqual(expected);
+    }
+  });
+
+  it("never are the Idiom's own extra Definitions, nor one meaning twice", () => {
+    const own: Idiom = { ...asked, extraDefinitions: ['meaning idioma'] };
+    const twin: Idiom = { ...idiom('i_twin'), primaryDefinition: 'meaning idiomb' };
+
+    for (const offered of meaningsOffered(own, [...idioms, twin])) {
+      expect(offered).toHaveLength(4);
+      expect(new Set(offered).size).toBe(4);
+      expect(offered).not.toContain('meaning idioma');
+    }
+  });
+
+  it("leave a Round unbuilt with fewer than three meanings to offer, a place name's not counted", () => {
+    const others = [
+      idiom('i_idiomx'),
+      idiom('i_proverbx', 'proverb'),
+      idiom('i_placex', 'placeName'),
+    ];
+
+    expect(meaningsOffered(idiom('i_asked'), others)).toEqual(seeds.map(() => undefined));
   });
 });

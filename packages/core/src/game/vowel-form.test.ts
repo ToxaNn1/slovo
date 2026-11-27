@@ -52,5 +52,6 @@ describe('the vowel form', () => {
     expect(vowelForm.wellFormed(content)).toBe(true);
     expect(vowelForm.wellFormed({ ...content, stressed: [] })).toBe(false);
     expect(vowelForm.wellFormed({ ...content, stressed: [2] })).toBe(false);
+    expect(vowelForm.wellFormed({ ...content, stressed: [3, 2] })).toBe(false);
   });
 });
