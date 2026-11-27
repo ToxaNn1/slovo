@@ -540,9 +540,45 @@ describe('a Quick Question prompt', () => {
     }
   });
 
+  it('asks an Entry whose prompt is 140 characters exactly', async () => {
+    const exact = overLong([]).map((each) =>
+      each.id === 'w_05' ? { ...each, primaryDefinition: `${'x'.repeat(139)}.` } : each,
+    );
+    const { app } = await run({ of: exact });
+    await app.mix.setQuickQuestionEvery(6);
+
+    const asked = (await cardsOf(app, 24)).flatMap((card) =>
+      card.kind === 'quick-question' ? [card] : [],
+    );
+
+    expect(asked.length).toBeGreaterThan(0);
+    for (const card of asked) {
+      expect(card.entry.id).toBe('w_05');
+      expect(card.round.prompt).toHaveLength(140);
+    }
+  });
+
   it('gives no Quick Question when no Entry fits', async () => {
     const { app } = await run({ of: overLong([]) });
 
     expect(await askedAt(app, 25)).toEqual([]);
+  });
+});
+
+describe('a Quick Question after a card', () => {
+  it.each([
+    { name: 'a Game Mode', on: ALL_ON, of: words.slice(0, 5) },
+    { name: 'the Word Meaning question', on: WORD_MEANING_ONLY, of: meantWords.slice(0, 5) },
+  ])('never asks of the Entry of the card just before it, by $name', async ({ on, of }) => {
+    const { app } = await run({ on, of });
+    await app.mix.setQuickQuestionEvery(6);
+
+    const cards = await cardsOf(app, 150);
+    const asked = cards.flatMap((card, place) =>
+      card.kind === 'quick-question' ? [{ card, before: cards[place - 1] }] : [],
+    );
+
+    expect(asked.length).toBeGreaterThan(20);
+    for (const { card, before } of asked) expect(card.entry.id).not.toBe(before?.entryId);
   });
 });
