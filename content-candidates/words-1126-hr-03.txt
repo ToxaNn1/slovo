@@ -28,3 +28,9 @@
 землеписний science 5
 зимарка household-crafts 5
 златоглавий arts-culture 4
+злорічити language-speech 5
+змерзлюх witty-insults 5
+значковий military 5
+знимка arts-culture 5
+зозулястий folk-names 5
+зух emotions-character 5
