@@ -525,6 +525,20 @@ describe('two devices of one Account', () => {
     expect(await phone.userState.read(guessWordBest)).toBe(12);
   });
 
+  it('push no Best result back when the Account keeps the same one', async () => {
+    const { device, server } = account();
+    const phone = await device();
+    await phone.write(guessWordBest.change(7));
+    await phone.sync();
+    const before = server.calls.length;
+
+    // The pull brings back the phone's own Best result, the same as it keeps.
+    expect(await phone.sync()).toEqual({ ok: true, changed: false });
+
+    expect(server.calls.slice(before)).toEqual(['sync.pull']);
+    expect(await phone.userState.pendingChanges()).toEqual(new Map());
+  });
+
   it('keep the higher Best result of each Game Mode on its own', async () => {
     const { device, time } = account();
     const phone = await device();
@@ -629,6 +643,22 @@ describe('two devices of one Account', () => {
     });
 
     expect(await phone.sync()).toEqual({ ok: true, changed: false });
+  });
+
+  it('write a value the Account holds with one more key than the device’s', async () => {
+    const { device, time, pushFromElsewhere } = account();
+    const phone = await device();
+    const created = { name: 'Море', createdAt: '2026-10-18T08:00:00.000Z' };
+    await phone.write(collections.record('c_sea').change(created));
+    await phone.sync();
+    time.advance(HOUR);
+    await pushFromElsewhere({ key: 'collections.c_sea', value: { ...created, source: 'cc_sea' } });
+
+    expect(await phone.sync()).toEqual({ ok: true, changed: true });
+    expect(await phone.userState.read(collections.record('c_sea'))).toEqual({
+      ...created,
+      source: 'cc_sea',
+    });
   });
 });
 
@@ -755,6 +785,36 @@ describe('History and paging', () => {
     const newest500 = [...ids(50, 300, 'p_'), ...ids(50, 300, 't_')].sort();
     expect([...(await phone.userState.list(history)).keys()].sort()).toEqual(newest500);
     expect([...(await tablet.userState.list(history)).keys()].sort()).toEqual(newest500);
+  });
+
+  it('counts no History entry the pull deletes toward the newest 500', async () => {
+    const { device, time, pushFromElsewhere } = account();
+    const phone = await device();
+    const ids = Array.from({ length: 500 }, (_, index) => `h_${String(index)}`);
+    await phone.write(
+      new Map(
+        ids.flatMap((id, index) => [
+          ...history.record(id).change({ seenAt: seenAt(index), wordOfTheDay: false }),
+        ]),
+      ),
+    );
+    await phone.sync();
+    // The next pull brings the phone's own entries back, so the one after holds only what comes next.
+    await phone.sync();
+    time.advance(HOUR);
+
+    // Elsewhere the newest entry is deleted and a newer one Seen: 500 entries still.
+    await pushFromElsewhere(
+      { key: 'history.h_499', value: null },
+      { key: 'history.h_new', value: { seenAt: seenAt(600), wordOfTheDay: false } },
+    );
+    await phone.sync();
+
+    const kept = [...(await phone.userState.list(history)).keys()];
+    expect(kept).toHaveLength(500);
+    expect(kept).toContain('h_0');
+    expect(kept).toContain('h_new');
+    expect(kept).not.toContain('h_499');
   });
 
   it('trims once the whole pull is in, so a newer entry on a later page is kept', async () => {
