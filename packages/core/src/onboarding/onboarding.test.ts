@@ -411,7 +411,7 @@ describe('the onboarding', () => {
     const { app } = await run({ on: ['wordOfTheDay'] });
     expect(app.onboarding.state).toEqual({
       status: 'open',
-      step: { kind: 'welcome', number: 1, total: 2 },
+      step: { kind: 'welcome', number: 1, total: 2, statisticsLine: false },
     });
     await app.onboarding.finish();
     expect(app.onboarding.state).toEqual({

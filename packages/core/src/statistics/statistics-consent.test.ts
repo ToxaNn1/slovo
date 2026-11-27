@@ -279,4 +279,35 @@ describe('Statistics consent', () => {
 
     expect(reader.sent()).toEqual(NOTHING);
   });
+
+  /** Whether the welcome says the anonymous statistics are on, or the onboarding is not on it. */
+  const statisticsLine = ({ app }: Awaited<ReturnType<typeof run>>) =>
+    app.onboarding.state.status === 'open' && app.onboarding.state.step.kind === 'welcome'
+      ? app.onboarding.state.step.statisticsLine
+      : undefined;
+
+  it('tells a reader outside the EEA on the welcome that the statistics are on', async () => {
+    expect(statisticsLine(await run({ region: 'UA' }))).toBe(true);
+  });
+
+  it('says nothing of the statistics on the welcome of a reader it asks', async () => {
+    expect(statisticsLine(await run({ region: 'DE' }))).toBe(false);
+    expect(statisticsLine(await run({ region: undefined }))).toBe(false);
+  });
+
+  it('says nothing of the statistics on the welcome of a reader who turned them off', async () => {
+    const records = new Map<string, string>();
+    await (await run({ region: 'UA', records })).settings.update({ shareCounters: false });
+
+    expect(statisticsLine(await run({ region: 'UA', records }))).toBe(false);
+  });
+
+  it('says nothing of the statistics on the welcome while the Feature Switch is off', async () => {
+    const reader = await run({
+      region: 'UA',
+      on: ALL_ON.filter((feature) => feature !== 'statisticsConsent'),
+    });
+
+    expect(statisticsLine(reader)).toBe(false);
+  });
 });

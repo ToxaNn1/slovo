@@ -59,7 +59,15 @@ interface StepPlace {
  * the look stay with the UI: the step gives data only.
  */
 export type OnboardingStep =
-  | (StepPlace & { readonly kind: 'welcome' })
+  | (StepPlace & {
+      readonly kind: 'welcome';
+      /**
+       * Whether the welcome says in one line that the anonymous statistics are
+       * on and where to turn them off (ADR 0210): for a reader not asked while
+       * the `statisticsConsent` Feature Switch is on, as long as they share.
+       */
+      readonly statisticsLine: boolean;
+    })
   /**
    * The Statistics consent (ADR 0210): two equal choices, to allow the
    * anonymous statistics or not. Only a reader to ask who has not chosen gets it.
@@ -223,6 +231,10 @@ export async function openOnboarding({
   const word = wordId === undefined ? undefined : await entries.get(wordId);
   const firstWord = word?.kind === 'word' ? await buildWordCard({ word, entries }) : undefined;
   const asksConsent = await statisticsConsentPending(userState, consent);
+  const statisticsLine =
+    !asksConsent &&
+    edition.isFeatureEnabled('statisticsConsent') &&
+    (await sharesStatistics(userState, consent));
   const steps = STEPS.filter((kind) => {
     const feature = STEP_SWITCH[kind];
     return (
@@ -236,12 +248,8 @@ export async function openOnboarding({
     const place = { number: index + 1, total: steps.length };
     const kind = steps[index];
     if (kind === undefined) return undefined;
-    if (
-      kind === 'welcome' ||
-      kind === 'statisticsConsent' ||
-      kind === 'voiceStep' ||
-      kind === 'playStep'
-    )
+    if (kind === 'welcome') return { kind, ...place, statisticsLine };
+    if (kind === 'statisticsConsent' || kind === 'voiceStep' || kind === 'playStep')
       return { kind, ...place };
     if (kind === 'firstWord' && firstWord !== undefined) return { kind, ...place, word: firstWord };
     if (kind === 'dailyGoal') {
@@ -277,7 +285,10 @@ export async function openOnboarding({
   // The welcome is always the first step: no switch leaves it out.
   let state: OnboardingState =
     finished === undefined
-      ? { status: 'open', step: { kind: 'welcome', number: 1, total: steps.length } }
+      ? {
+          status: 'open',
+          step: { kind: 'welcome', number: 1, total: steps.length, statisticsLine },
+        }
       : { status: 'finished', finishedAt: new Date(finished) };
   if (state.status === 'open') viewed(state.step);
 
