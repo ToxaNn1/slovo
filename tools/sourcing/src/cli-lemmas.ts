@@ -5,7 +5,7 @@
  *   pnpm source:lemmas --edition <id> [--snapshot <file>] [--count <n>] [--letters <letters>]
  *                      [--pos noun:55,adj:20,verb:20,adv:5] [--rarity 2:1,3:1,4:1,5:1]
  *                      [--exclude <list file>]… [--seed <n>] [--out <file>] [--cache <dir>]
- *                      [--from hrinchenko]
+ *                      [--from hrinchenko] [--no-esum]
  *
  * The headword list (LanguageTool's morfologik-ukrainian-lt, from dict_uk) and
  * the `wordfreq` list are downloaded once into the sourcing cache. The
@@ -13,7 +13,8 @@
  * `--snapshot`, else the backend at `$SLOVO_API_URL`. The list goes to
  * `--out`, else to standard output; the pool and the seed go to standard error.
  * `--from hrinchenko` keeps only the Lemmas Грінченко has (ADR 0207), from the
- * index `pnpm source:hrinchenko` builds.
+ * index `pnpm source:hrinchenko` builds. `--no-esum` ranks without asking
+ * goroh whether ЕСУМ lists a Lemma.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -41,7 +42,7 @@ import { SOURCE_LANGUAGE } from './text';
 import { zipfOf } from './wordfreq';
 
 const USAGE =
-  'Usage: pnpm source:lemmas --edition <id> [--snapshot <file>] [--count <n>] [--letters <letters>] [--pos noun:55,adj:20,verb:20,adv:5] [--rarity 2:1,3:1,4:1,5:1] [--exclude <list file>]... [--seed <n>] [--out <file>] [--cache <dir>] [--from hrinchenko]';
+  'Usage: pnpm source:lemmas --edition <id> [--snapshot <file>] [--count <n>] [--letters <letters>] [--pos noun:55,adj:20,verb:20,adv:5] [--rarity 2:1,3:1,4:1,5:1] [--exclude <list file>]... [--seed <n>] [--out <file>] [--cache <dir>] [--from hrinchenko] [--no-esum]';
 
 async function main(): Promise<number> {
   const { positionals, values } = parseArgs({
@@ -58,6 +59,7 @@ async function main(): Promise<number> {
       out: { type: 'string' },
       cache: { type: 'string' },
       from: { type: 'string' },
+      'no-esum': { type: 'boolean' },
     },
   });
   const seed =
@@ -133,7 +135,8 @@ async function main(): Promise<number> {
   };
   const result = await sourceLemmas({
     labelled,
-    inEsum,
+    // --no-esum asks goroh nothing: the pick takes seconds, not hours.
+    inEsum: values['no-esum'] === true ? undefined : inEsum,
     headwords:
       hrinchenko === undefined ? headwords : onlyHrinchenkoHeadwords(headwords, hrinchenko),
     zipf: (lemma) => zipfOf(frequencies, lemma),
