@@ -67,3 +67,10 @@
 старизна household-crafts 4
 статочний emotions-character 5
 стерв'яка witty-insults 5
+страховіття emotions-character 5
+стрих household-crafts 5
+стрінути language-speech 5
+суміння emotions-character 5
+супліка history-antiquity 5
+супокійний emotions-character 5
+сьогосвітній language-speech 5
