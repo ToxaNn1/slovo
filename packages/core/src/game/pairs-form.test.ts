@@ -77,11 +77,22 @@ describe('the pairs form', () => {
     ).toBe(undefined);
   });
 
-  it('judges nothing for a cell the grid does not have', () => {
-    expect(
-      pairsForm.judge(content, fresh, { form: 'pairs', word: 3, definition: 0 }, testComparison),
-    ).toBe(undefined);
-  });
+  it.each([
+    [3, 0],
+    [0, 3],
+  ])(
+    'judges nothing for a cell the grid does not have: Word %i, Definition %i',
+    (wordPlace, definitionPlace) => {
+      expect(
+        pairsForm.judge(
+          content,
+          fresh,
+          { form: 'pairs', word: wordPlace, definition: definitionPlace },
+          testComparison,
+        ),
+      ).toBe(undefined);
+    },
+  );
 
   it('is well formed only with every pair shown once in each order, up to four pairs', () => {
     expect(pairsForm.wellFormed(content)).toBe(true);

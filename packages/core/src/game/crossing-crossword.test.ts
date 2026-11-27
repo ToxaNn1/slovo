@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { CROSSWORD_SIZE } from '@slovo/contracts';
+import { CROSSWORD_SIZE, type Word } from '@slovo/contracts';
 
 import {
   CROSSING_PATTERNS,
   crossingPlacesOf,
   generateCrossingCrossword,
+  type CrossingGeneration,
 } from './crossing-crossword';
 import { seededRandomOf } from './seeded-random';
 import {
@@ -78,7 +79,10 @@ describe('the crossing Daily Crossword generator', () => {
   it('numbers the Words in reading order of their first cell, one number per cell', () => {
     const puzzle = puzzleOf('2026-11-07');
     const byNumber = new Map<number, number>();
+    const byStart = new Map<string, number>();
     for (const w of puzzle.words) {
+      expect(byStart.get(key(w.start)) ?? w.number).toBe(w.number);
+      byStart.set(key(w.start), w.number);
       const order = w.start.row * CROSSWORD_SIZE + w.start.column;
       expect(byNumber.get(w.number) ?? order).toBe(order);
       byNumber.set(w.number, order);
@@ -224,4 +228,78 @@ describe('the crossing Daily Crossword over many dates', () => {
     }
     expect(decoys.size).toBeGreaterThan(5);
   });
+});
+
+describe('the Words that can fill the crossing Daily Crossword', () => {
+  /**
+   * Words that fill one pattern only, the one with a 3-letter Word:
+   *
+   *     g # # # b
+   *     h # a # a
+   *     o t t e r
+   *     s # e # n
+   *     t # # # s
+   */
+  const frame = [word('w_ghost'), word('w_barns'), word('w_otter'), word('w_ate')];
+
+  const generated = (words: readonly Word[], alphabet: readonly string[] = ALPHABET) =>
+    generateCrossingCrossword({ date: '2026-11-07', words, alphabet, seeded: seededRandomOf });
+
+  const lemmasOf = (generation: CrossingGeneration) =>
+    generation.kind === 'puzzle' ? generation.puzzle.words.map((w) => w.word.lemma).sort() : [];
+
+  it('fills a 3-letter Word', () => {
+    expect(lemmasOf(generated(frame))).toEqual(['ate', 'barns', 'ghost', 'otter']);
+  });
+
+  it('never fills with a Lemma that has one letter outside the alphabet', () => {
+    const capital = frame.map((w) => (w.id === 'w_ghost' ? word('w_Ghost') : w));
+    expect(generated(capital)).toEqual({ kind: 'no-fill' });
+  });
+
+  it('never fills with a Lemma that uses every letter of the alphabet, which leaves no decoy', () => {
+    const words = [word('w_ddaee'), word('w_aaeaa'), word('w_abcde'), word('w_aca')];
+    expect(generated(words, ['a', 'b', 'c', 'd', 'e'])).toEqual({ kind: 'no-fill' });
+    expect(lemmasOf(generated(words, ['a', 'b', 'c', 'd', 'e', 'f']))).toEqual([
+      'aaeaa',
+      'abcde',
+      'aca',
+      'ddaee',
+    ]);
+  });
+
+  it('takes the first Word of a Lemma in the Language Pack order, never a later one', () => {
+    const twice = [...frame, word('w2_ghost', { lemma: 'ghost' })];
+    for (const date of ['2026-11-07', '2026-11-08', '2026-11-09', '2026-11-10', '2026-11-11']) {
+      const generation = generateCrossingCrossword({
+        date,
+        words: twice,
+        alphabet: ALPHABET,
+        seeded: seededRandomOf,
+      });
+      const ids = generation.kind === 'puzzle' ? generation.puzzle.words.map((w) => w.word.id) : [];
+      expect(ids).toContain('w_ghost');
+    }
+  });
+
+  it('gives up a pattern past the search budget rather than a part-filled grid', () => {
+    // A thousand and one 5-letter Words, each with `a` in its middle and none
+    // starting with it: every pattern needs a Word that starts where another
+    // has its middle, so none fills, and each first slot alone has more
+    // Words than the budget.
+    const starts = ALPHABET.filter((letter) => letter !== 'a');
+    const many = Array.from({ length: 1001 }, (_, i) => {
+      const lemma = [
+        starts[i % starts.length] ?? 'b',
+        ALPHABET[Math.floor(i / starts.length) % ALPHABET.length] ?? 'b',
+        'a',
+        ALPHABET[Math.floor(i / (starts.length * ALPHABET.length))] ?? 'b',
+        'x',
+      ].join('');
+      return word(`w_${lemma}`);
+    });
+    expect(generated(many)).toEqual({ kind: 'no-fill' });
+    // The search runs past its whole budget: well under a second, but several
+    // times slower under mutation testing's instrumented code.
+  }, 30_000);
 });

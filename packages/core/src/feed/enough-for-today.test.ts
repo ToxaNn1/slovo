@@ -111,6 +111,21 @@ describe('«Може, на сьогодні досить?»', () => {
     expect(await readOn(tomorrow, 49, 1)).toBe(50);
   });
 
+  it('counts no Entry for the card right after another Feed Notice, which follows no Entry', async () => {
+    const app = await run({
+      at: dayOne,
+      switches: ['enoughForToday', 'xpLog', 'dailyGoal', 'seenWordXp', 'goalReachedCard'],
+    });
+    await app.xpLog.setDailyGoal(50);
+
+    // The 50th Word on screen meets the goal: «Ціль дня виконано!» comes right after it, then an Entry.
+    expect(await readOn(app, 0, 50)).toBeUndefined();
+    const kinds = app.feed.cards.map((card) => (card.kind === 'notice' ? card.notice : card.kind));
+    expect(kinds.slice(49, 52)).toEqual(['word', 'goalReached', 'word']);
+
+    expect(await readOn(app, 50, 2)).toBe(52);
+  });
+
   it('never comes while its Feature Switch is off', async () => {
     const off = await run({ at: dayOne, switches: [] });
     expect(await readOn(off, 0, 60)).toBeUndefined();

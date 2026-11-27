@@ -302,6 +302,7 @@ describe('a Round of «За літерами»', () => {
       typed: 'кобзар',
       expected: 'кобза',
       right: false,
+      sheet: { answer: { text: 'ко́бза', stressedVowels: ['о'] } },
     });
     expect(current(app).lives).toBe(2);
     expect(app.knowledge.state.shown.get(idOf('кобза'))).toBe('unknown');

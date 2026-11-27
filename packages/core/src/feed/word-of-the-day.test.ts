@@ -340,6 +340,101 @@ describe('the Word of the Day', () => {
     expect(today?.wordId).not.toBe(dayBefore?.wordId);
   });
 
+  describe('Reserved for the morning by the notification plan', () => {
+    /** The records with the plan's Words for the given `date`T`time` slots. */
+    const planned = (slots: readonly (readonly [string, string])[]) =>
+      new Map(slots.map(([slot, id]) => [`notifications.plan.${slot}`, JSON.stringify(id)]));
+
+    it("is the Word of today's earliest notification, taken in the morning", async () => {
+      const records = planned([
+        ['2026-10-11T20:00', 'w_5'],
+        ['2026-10-12T07:00', 'w_9'],
+        ['2026-10-11T08:00', 'w_7'],
+      ]);
+      const { wordOfTheDay } = await open({ records });
+
+      await wordOfTheDay.takeMorningWord();
+
+      expect(wordOfTheDay.chosen()?.wordId).toBe('w_7');
+      expect((await wordOfTheDay.today())?.wordId).toBe('w_7');
+    });
+
+    it('leaves the Word today already has', async () => {
+      const records = new Map<string, string>();
+      const chosen = await (await open({ records })).wordOfTheDay.today();
+      const reserved = wordIds.find((id) => id !== chosen?.wordId) ?? '';
+      for (const [key, value] of planned([['2026-10-11T08:00', reserved]])) records.set(key, value);
+      const { wordOfTheDay } = await open({ records });
+
+      await wordOfTheDay.takeMorningWord();
+
+      expect(wordOfTheDay.chosen()?.wordId).toBe(chosen?.wordId);
+    });
+
+    it("is passed over when it is the day before's Word, though still unseen", async () => {
+      const records = new Map<string, string>();
+      const dayBefore = await (await open({ records })).wordOfTheDay.today();
+      for (const [key, value] of planned([['2026-10-12T08:00', dayBefore?.wordId ?? '']]))
+        records.set(key, value);
+      const { cycle, wordOfTheDay } = await open({
+        records,
+        clock: fakeClock('2026-10-12T09:00:00+03:00').clock,
+      });
+      expect(cycle.unseen().words).toContain(dayBefore?.wordId);
+
+      const today = await wordOfTheDay.today();
+
+      expect(today?.wordId).toBeDefined();
+      expect(today?.wordId).not.toBe(dayBefore?.wordId);
+    });
+  });
+
+  describe('while the Cycle goes on with every Word Seen', () => {
+    const words = wordIds.slice(0, 3);
+
+    /** A run on 2026-10-11 with every Word Seen, a Correction unseen and the given day before's Word. */
+    async function allWordsSeen(dayBefore: string | undefined) {
+      const records = new Map<string, string>();
+      if (dayBefore !== undefined)
+        records.set(
+          'feed.wordOfTheDay',
+          JSON.stringify({ entryId: dayBefore, date: '2026-10-10' }),
+        );
+      const run = await open({ records, words, corrections: ['c_0'] });
+      for (const id of words) await run.keepSeen(id);
+      return run;
+    }
+
+    it.each([
+      ['the first Word of the Cycle order with no day before', undefined, 0],
+      ["the Word after the day before's", 1, 2],
+      ['the first Word again after the last', 2, 0],
+    ])('takes %s', async (_case, before, expected) => {
+      const order = (await allWordsSeen(undefined)).cycle.order().words;
+      const { wordOfTheDay } = await allWordsSeen(before === undefined ? undefined : order[before]);
+
+      expect((await wordOfTheDay.today())?.wordId).toBe(order[expected]);
+    });
+
+    it("passes over a Word to avoid, coming round to the ones before the day before's", async () => {
+      const order = (await allWordsSeen(undefined)).cycle.order().words;
+      const { wordOfTheDay } = await allWordsSeen(order[1]);
+
+      const today = await wordOfTheDay.today({ avoid: new Set([order[2] ?? '']) });
+
+      expect(today?.wordId).toBe(order[0]);
+    });
+
+    it('takes an unseen Word first while one is left', async () => {
+      const { cycle, wordOfTheDay } = await open({ words, corrections: ['c_0'] });
+      const [first = ''] = cycle.order().words;
+      const change = cycle.markSeen(first);
+      change.commit();
+
+      expect((await wordOfTheDay.today())?.wordId).toBe(cycle.order().words[1]);
+    });
+  });
+
   it('reads a stored record whose date is not a local date as no record', async () => {
     const records = new Map<string, string>();
     const firstUnseen = (await open({ records })).cycle.unseen().words[0] ?? '';

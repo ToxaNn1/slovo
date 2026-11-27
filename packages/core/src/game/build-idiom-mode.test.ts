@@ -236,6 +236,7 @@ describe('a Round of «Склади вислів»', () => {
       const words = wordsOf(expressionOf(round));
       expect(round).toMatchObject({
         form: 'chips',
+        chipKind: 'word',
         highlight: undefined,
         fixed: [],
       });

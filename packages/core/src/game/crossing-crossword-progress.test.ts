@@ -155,6 +155,41 @@ describe('the crossing Daily Crossword', () => {
     expect(again.state.cells).toEqual(crossword.state.cells);
   });
 
+  it('writes nothing on a hint that fills no cell', async () => {
+    const records = new Map<string, string>();
+    const crossword = await opened({
+      records,
+      on: ['game', 'dailyCrossword', 'crosswordHint'],
+    });
+    await solve(crossword, 0);
+    const first = crossword.puzzle.words[0];
+    if (!first) throw new Error('No Word');
+    await crossword.play({ type: 'select', place: first.start });
+    if (crossword.state.current !== 0) await crossword.play({ type: 'select', place: first.start });
+    records.delete('crossword.crossing');
+
+    expect((await crossword.play({ type: 'hint' })).outcome).toEqual({ kind: 'nothing' });
+    expect(records.has('crossword.crossing')).toBe(false);
+  });
+
+  it("keeps the progress with the puzzle's fingerprint: each Word's id, direction and start, then each pre-filled cell", async () => {
+    const records = new Map<string, string>();
+    const crossword = await opened({ records });
+    await solve(crossword, 0);
+    const { words, prefilled } = crossword.puzzle;
+    const fingerprint = [
+      ...words.map(
+        ({ word: placed, direction, start }) =>
+          `${placed.id} ${direction} ${String(start.row)}.${String(start.column)}`,
+      ),
+      ...prefilled.map(
+        ({ place, letter }) => `${String(place.row)}.${String(place.column)}=${letter}`,
+      ),
+    ].join('\n');
+    const kept: unknown = JSON.parse(records.get('crossword.crossing') ?? '{}');
+    expect(kept).toMatchObject({ date: '2026-11-04', puzzle: fingerprint });
+  });
+
   it('takes no hint while the Crossword Hint is off', async () => {
     const crossword = await opened();
     expect(crossword.hint).toBe(false);

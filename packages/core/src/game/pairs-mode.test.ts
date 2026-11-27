@@ -190,6 +190,8 @@ describe('the grids of «Пари»', () => {
       const grids = gridsOf(shown);
       expect(grids.map((grid) => grid.words.length)).toEqual([4, 4, 4, 3]);
       for (const grid of grids) {
+        // A grid has no question of its own to show.
+        expect(grid.prompt).toBe('');
         expect(grid.definitions).toHaveLength(grid.words.length);
         const texts = grid.words.map(({ shown: { text } }) => text);
         expect(new Set(texts).size).toBe(texts.length);

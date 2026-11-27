@@ -52,18 +52,45 @@ const others = [
 
 const corrections = [...anglicisms, ...others];
 
+const mainOf = ({ standardEquivalents }: Correction) => standardEquivalents[0];
+
+/** An anglicism whose «people often say» sentence doesn't hold it. */
+const unmarked: Correction = {
+  ...correction('c_anglicismUnmarked', 'anglicism'),
+  examplePair: { nonStandard: 'They said it again.', standard: 'They said it.' },
+};
+
+/** An anglicism with a capital past its first letter: «bad anglicismInner». */
+const innerCapital = correction('c_anglicismInner', 'anglicism');
+
+/** An anglicism whose own equivalents leave only two other anglicisms for its Distractors. */
+const crowded: Correction = {
+  ...correction('c_anglicismCrowded', 'anglicism'),
+  standardEquivalents: [
+    'good anglicismCrowded',
+    ...[...anglicisms.slice(2), unmarked, innerCapital].map(mainOf),
+  ],
+};
+
+/** The anglicisms a run adds to the pack when asked. */
+const extras = [unmarked, innerCapital, crowded];
+
 /** The Core composition of one app run, every Feature Switch on but those turned off. */
 async function run({
   seed = 7,
   off = [],
   correctionsInMix = true,
+  withExtras = false,
 }: {
   seed?: number;
   off?: readonly string[];
   correctionsInMix?: boolean;
+  withExtras?: boolean;
 } = {}): Promise<Composition> {
   const app = await openComposition({
-    content: createMemoryContentPort({ corrections }),
+    content: createMemoryContentPort({
+      corrections: withExtras ? [...corrections, ...extras] : corrections,
+    }),
     edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
       userSettingDefaults: { mix: { categoryIds: [], kinds: { correction: correctionsInMix } } },
@@ -99,7 +126,7 @@ const anglicismOffer = (app: Composition) =>
 
 /** The Correction the Round asks about, by its «people often say» sentence. */
 function askedOf({ prompt }: Round): Correction {
-  const asked = corrections.find((c) => c.examplePair.nonStandard === prompt);
+  const asked = [...corrections, ...extras].find((c) => c.examplePair.nonStandard === prompt);
   if (asked === undefined) throw new Error(`No Correction says «${prompt}»`);
   return asked;
 }
@@ -117,7 +144,8 @@ function replacementOf({ text, highlight }: RoundOption): string {
 const rightOf = (round: Round) =>
   optionsOf(round).findIndex(
     (option) =>
-      replacementOf(option).toLowerCase() === askedOf(round).standardEquivalents[0].toLowerCase(),
+      (option.highlight === undefined ? option.text : replacementOf(option)).toLowerCase() ===
+      askedOf(round).standardEquivalents[0].toLowerCase(),
   );
 
 /** Starts «Англіцизми» and plays it to its end, always right, keeping each answered Round. */
@@ -230,6 +258,7 @@ describe('a Round of «Англіцизми»', () => {
 
     for (const option of optionsOf(round)) {
       const replacement = replacementOf(option);
+      expect(option.stressedVowels).toEqual([]);
       expect(option.highlight?.start).toBe(at);
       expect(option.text).toBe(
         sentence.slice(0, at) + replacement + sentence.slice(at + asked.nonStandardForm.length),
@@ -253,6 +282,28 @@ describe('a Round of «Англіцизми»', () => {
       expect(option.highlight?.start).toBe(0);
     }
     expect(first).toBeDefined();
+  });
+
+  it('offers bare replacements for an anglicism its sentence does not hold, keeps a replacement in lower case past a capital inside the anglicism, and never asks one short of other anglicisms for its Distractors', async () => {
+    const rounds: Round[] = [];
+    for (const seed of [1, 2, 3, 4])
+      rounds.push(...(await playGame(await run({ seed, withExtras: true }))));
+    const asking = (asked: Correction) => rounds.filter((round) => askedOf(round) === asked);
+    const standards = new Set([...anglicisms, ...extras].map(mainOf));
+
+    expect(asking(unmarked).length).toBeGreaterThan(0);
+    for (const round of asking(unmarked)) {
+      expect(round).toMatchObject({ highlight: undefined });
+      for (const option of optionsOf(round)) {
+        expect(option.highlight).toBeUndefined();
+        expect(standards.has(option.text)).toBe(true);
+      }
+    }
+    expect(asking(innerCapital).length).toBeGreaterThan(0);
+    for (const round of asking(innerCapital)) {
+      for (const option of optionsOf(round)) expect(option.text).toMatch(/^They said good /u);
+    }
+    expect(asking(crowded)).toEqual([]);
   });
 
   it('marks the anglicism of a wrong pick «Не знаю», moves no Review and shows the explanation', async () => {

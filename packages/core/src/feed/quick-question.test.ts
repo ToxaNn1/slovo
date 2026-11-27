@@ -34,11 +34,7 @@ async function run({
   records = new Map<string, string>(),
   on = ALL_ON,
   of = words,
-}: {
-  records?: Map<string, string>;
-  on?: readonly FeatureSwitch[];
-  of?: readonly Word[];
-} = {}) {
+}: { records?: Map<string, string>; on?: readonly FeatureSwitch[]; of?: readonly Word[] } = {}) {
   const events: [string, unknown][] = [];
   const analytics: AnalyticsPort = {
     // The onboarding, which opens on a fresh user state, has events of its own.
@@ -342,6 +338,18 @@ describe('the Word Meaning question', () => {
     expect(card.round).toMatchObject({ form: 'pick', prompt: asked?.lemma, labelKind: 'meaning' });
     expect(card.round.options).toHaveLength(4);
     expect(card.round.options[answer.correct]?.text).toBe(asked?.primaryDefinition);
+    for (const { stressedVowels } of card.round.options) expect(stressedVowels).toEqual([]);
+    expect(answer.sheet.answer).toEqual({ text: asked?.primaryDefinition, stressedVowels: [] });
+  });
+
+  it('judges no option the Round lacks and marks nothing', async () => {
+    const { app } = await run({ on: WORD_MEANING_ONLY, of: meantWords });
+    const { position } = await firstQuestion(app);
+
+    expect(await app.feed.answerQuickQuestion(position, 9)).toBeUndefined();
+    const card = app.feed.cards[position];
+    expect(card?.kind === 'quick-question' ? card.answer : 'not a question').toBeUndefined();
+    expect(app.knowledge.state.shown.size).toBe(0);
   });
 
   it('offers the Definitions of other Words of the same part of speech, whole', async () => {
@@ -582,9 +590,43 @@ describe('a Quick Question prompt', () => {
     }
   });
 
+  it('asks an Entry whose prompt is 140 characters exactly', async () => {
+    const exact = overLong([]).map((each) =>
+      each.id === 'w_05' ? { ...each, primaryDefinition: `${'x'.repeat(139)}.` } : each,
+    );
+    const { app } = await run({ of: exact });
+
+    const asked = await questionsOf(app, 24);
+
+    expect(asked.length).toBeGreaterThan(0);
+    for (const card of asked) {
+      expect(card.entry.id).toBe('w_05');
+      expect(card.round.prompt).toHaveLength(140);
+    }
+  });
+
   it('gives no Quick Question when no Entry fits', async () => {
     const { app } = await run({ of: overLong([]) });
 
     expect(await askedAt(app, 25)).toEqual([]);
+  });
+});
+
+describe('a Quick Question after a card', () => {
+  it.each([
+    { name: 'a Game Mode', on: ALL_ON, of: words.slice(0, 5) },
+    { name: 'the Word Meaning question', on: WORD_MEANING_ONLY, of: meantWords.slice(0, 5) },
+  ])('never asks of the Entry of the card just before it, by $name', async ({ on, of }) => {
+    const { app } = await run({ on, of });
+    await app.mix.setQuickQuestionEvery(6);
+
+    const cards = await cardsOf(app, 150);
+    const places = cards.flatMap((card, place) => (card.kind === 'quick-question' ? [place] : []));
+
+    expect(places.length).toBeGreaterThan(20);
+    for (const place of places) {
+      const { entry } = await answerOf(app, place, 0);
+      expect(entry.id).not.toBe(cards[place - 1]?.entryId);
+    }
   });
 });

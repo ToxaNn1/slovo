@@ -95,6 +95,7 @@ async function open(
     edition = testEdition(),
     write = () => Promise.resolve(),
     scheduled = true,
+    others = [],
   }: OpenOptions = {},
 ) {
   let eligible: EligibleOfKind<AskableEntry> = { entries: eligibleAtStart };
@@ -141,7 +142,7 @@ async function open(
     clock: time.clock,
     random: inOrder,
     ...(scheduled ? { schedule: later.schedule } : {}),
-    modes: [gameMode],
+    modes: [...others, gameMode],
     eligibility,
     dayTurned: never,
     returned: never,
@@ -169,6 +170,8 @@ interface OpenOptions {
   write?: () => Promise<void>;
   /** Whether the Game has a schedule to move on by; it has by default. */
   scheduled?: boolean;
+  /** The Game Modes registered before the one under test; none by default. */
+  others?: readonly GameMode[];
 }
 
 /** The Game in play or just over; fails the test on the mode screen. */
@@ -1295,5 +1298,149 @@ describe('the clock of a Game with a time limit', () => {
     await game.resume();
 
     expect(game.state.current).toBeUndefined();
+  });
+});
+
+describe('the edges of a Game in play', () => {
+  const timed: Partial<GameMode> = {
+    lives: 'none',
+    roundLimit: 'none',
+    timeLimit: 20_000,
+    movesOn: true,
+  };
+
+  it('refuses to start a mode that is not on offer', async () => {
+    const { game } = await open(mode(pick));
+
+    await expect(game.start('no-such-mode')).rejects.toThrow(
+      'No Game Mode «no-such-mode» is on offer',
+    );
+    expect(game.state.current).toBeUndefined();
+  });
+
+  it('reads a time limit the mode works out from the Edition at the start', async () => {
+    const { game } = await start(pick, { ...timed, timeLimit: () => 12_000 });
+
+    expect(now(game)).toMatchObject({ timeLimit: 12_000, time: { left: 12_000 } });
+  });
+
+  it('ends a timed Game with no schedule on its first answer once its time is up', async () => {
+    const { game, advance } = await start(pick, timed, undefined, { scheduled: false });
+
+    await advance(20_000);
+
+    expect(await answer(game, pickAnswer(true))).toMatchObject({ status: 'time-up' });
+  });
+
+  it('stays won when the time of a timed Game won before it ran out runs out', async () => {
+    const { game, advance, awarded } = await start(pick, { ...timed, roundLimit: 1 });
+    await game.answer(pickAnswer(true));
+    await advance(550);
+    expect(now(game).status).toBe('won');
+
+    await advance(30_000);
+
+    expect(now(game).status).toBe('won');
+    expect(awarded.filter((source) => source === 'game-finished')).toHaveLength(1);
+  });
+
+  it('counts the XP of each Game on its own, the Round that ends it included', async () => {
+    const { game } = await start(pick, { roundLimit: 2, movesOn: true }, undefined, {
+      roundXp: 10,
+      scheduled: false,
+    });
+    await game.answer(pickAnswer(true));
+    await game.answer(pickAnswer(true));
+    expect(now(game)).toMatchObject({ status: 'won', end: { xp: 20 } });
+
+    await game.start('test');
+    await game.answer(pickAnswer(true));
+    await game.answer(pickAnswer(true));
+
+    expect(now(game)).toMatchObject({ status: 'won', end: { xp: 20 } });
+  });
+
+  it('ends on a later answer in a mode that moves on when the write of its end failed', async () => {
+    let failing = true;
+    const { game } = await start(pick, { roundLimit: 1, movesOn: true }, undefined, {
+      scheduled: false,
+      write: () => (failing ? Promise.reject(new Error('The disk is full')) : Promise.resolve()),
+    });
+    await expect(game.answer(pickAnswer(true))).rejects.toThrow('The disk is full');
+    expect(now(game).status).toBe('playing');
+    failing = false;
+
+    expect(await answer(game, pickAnswer(true))).toMatchObject({ status: 'won' });
+  });
+
+  it('stays left when the Game is left while the write of its end is under way', async () => {
+    let written: () => void = () => undefined;
+    const { game } = await start(pick, { roundLimit: 1 }, undefined, {
+      scheduled: false,
+      write: () =>
+        new Promise<void>((resolve) => {
+          written = resolve;
+        }),
+    });
+    await game.answer(pickAnswer(true));
+    const ending = game.next();
+    await Promise.resolve();
+
+    game.leave();
+    written();
+    await ending;
+
+    expect(game.state.current).toBeUndefined();
+  });
+
+  it('keeps a wrong answer until «Далі» though the Round before it was due to move on', async () => {
+    const { game, advance } = await start(pick);
+    await game.answer(pickAnswer(true));
+    await game.next();
+    await game.answer(pickAnswer(false));
+
+    await advance(5000);
+
+    expect(now(game)).toMatchObject({ status: 'answered', roundsPassed: 1, round: { number: 2 } });
+  });
+
+  it('moves on from an answer by its own delay, not waiting for what an earlier answer waited for', async () => {
+    const { game, advance } = await start(pick, timed);
+    await game.answer(pickAnswer(false));
+    game.waitFor(new Promise(() => undefined));
+    await game.next();
+    await game.answer(pickAnswer(true));
+
+    await advance(550);
+
+    expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 2 });
+  });
+
+  it('opens no letter before a Game starts', async () => {
+    const { game } = await open(mode(pick));
+
+    game.openLetter();
+
+    expect(game.state.current).toBeUndefined();
+  });
+
+  it('builds the Rounds anew from the eligible Entries of its own mode among others', async () => {
+    const idioms = mode(pick, { id: 'idioms', entryKind: 'idiom' });
+    const { game, eligibleNow } = await start(pick, {}, undefined, { others: [idioms] });
+    await game.answer(pickAnswer(true));
+
+    await eligibleNow({ entries: words.slice(20) });
+
+    expect((await next(game)).round.prompt).toBe(wordAt(20).primaryDefinition);
+  });
+
+  it('changes nothing in a Game over when the eligible Entries change', async () => {
+    const { game, eligibleNow } = await start(pick, { roundLimit: 1 }, undefined, {
+      scheduled: false,
+    });
+    await play(game, true);
+    expect(now(game).status).toBe('won');
+
+    await noMove(game, () => eligibleNow({ entries: words.slice(20) }));
   });
 });

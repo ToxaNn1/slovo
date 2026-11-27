@@ -12,6 +12,9 @@ import {
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { correction, seededRandom, testEdition, word } from '../test-support';
+import type { AskableEntry } from '../entries/entries';
+import { createTextComparison } from '../text/text-comparison';
+import { stressMode } from './stress-mode';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** The UA Edition's vowels. */
@@ -380,5 +383,40 @@ describe('a stress trap in «Наголос»', () => {
 
     expect(rounds).toHaveLength(6 * GAME_ROUNDS);
     expect(rounds.filter((round) => trapOf(round) !== undefined)).toEqual([]);
+  });
+});
+
+describe('the Entries «Наголос» builds no Round for', () => {
+  const edition = testEdition({ languageTraits: { stress: { marked: true, vowels } } });
+
+  const roundFor = (answer: AskableEntry) =>
+    stressMode.buildRound({
+      answer,
+      eligible: [answer],
+      next: [],
+      upTo: 1,
+      round: 1,
+      random: seededRandom(1),
+      edition,
+      comparison: createTextComparison(edition),
+    });
+
+  it.each<[string, AskableEntry]>([
+    ['a Word with one vowel', word('w_дуб', { lemma: 'дуб', stress: [1] })],
+    ['a Word whose Stress falls on no vowel', word('w_кобза', { lemma: 'кобза', stress: [0] })],
+    [
+      'a Correction of another Correction Type, its form stressed though',
+      correction('c_calque', { standardEquivalents: ['ви́кличе'] }),
+    ],
+  ])('%s', (_, answer) => {
+    expect(roundFor(answer)).toBeUndefined();
+  });
+
+  it('builds one for a Word of two vowels stressed on one', () => {
+    expect(roundFor(word('w_кобза', { lemma: 'кобза', stress: [1] }))).toMatchObject({
+      form: 'vowel',
+      vowels: [1, 4],
+      stressed: [1],
+    });
   });
 });

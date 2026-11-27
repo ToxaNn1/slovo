@@ -375,4 +375,57 @@ describe('the Round machine', () => {
     expect(replanned.rounds).toBe(plan.rounds);
     expect(replanned.eligible).toBe(now);
   });
+
+  it('labels a Round by its mode unless its content names another label', () => {
+    const game = started(rulesOf(), planOf(pick('w-oko')));
+
+    expect(game.round.labelKind).toBe('mode');
+  });
+
+  it('plans no more Rounds in a mode with no Round limit while planned ones remain', () => {
+    const { planRounds, calls } = planner({ rounds: [pick('w-dim')] });
+    const rules = rulesOf({ roundLimit: 'none' }, { planRounds });
+    const plan = planOf(pick('w-oko'), pick('w-lis'));
+    const answered = playing(answerRound(rules, plan, started(rules, plan), RIGHT));
+
+    const move = nextRound(rules, plan, answered);
+
+    expect(calls).toEqual([]);
+    expect(move?.plan).toBe(plan);
+    expect(move?.game).toMatchObject({ status: 'playing', round: { number: 2 } });
+  });
+
+  it.each([
+    { limit: 4, count: 2 },
+    { limit: 'none', count: 1 },
+  ] as const)(
+    'replans up to the Round limit $limit, or the Rounds planned without one',
+    ({ limit, count }) => {
+      const { planRounds, calls } = planner({ rounds: [pick('w-dim')] });
+      const rules = rulesOf({ roundLimit: limit }, { planRounds });
+      const plan = planOf(pick('w-oko'), pick('w-lis'), pick('w-sad'));
+      const answered = playing(answerRound(rules, plan, started(rules, plan), RIGHT));
+      const second = playing(nextRound(rules, plan, answered));
+
+      replanRounds(rules, plan, second, eligible);
+
+      expect(calls).toEqual([{ count, asked: ['w-lis', 'w-oko'], from: 3 }]);
+    },
+  );
+
+  it('keeps the Rounds when the Game is at a Round the plan lacks', () => {
+    const { planRounds, calls } = planner({ rounds: [pick('w-dim')] });
+    const rules = rulesOf({ roundLimit: 3 }, { planRounds });
+    const longer = planOf(pick('w-oko'), pick('w-lis'));
+    const answered = playing(answerRound(rules, longer, started(rules, longer), RIGHT));
+    const second = playing(nextRound(rules, longer, answered));
+    const shorter = planOf(pick('w-oko'));
+    const now: EligibleOfKind<AskableEntry> = { entries: [word('w-dim')] };
+
+    const replanned = replanRounds(rules, shorter, second, now);
+
+    expect(calls).toEqual([]);
+    expect(replanned.rounds).toBe(shorter.rounds);
+    expect(replanned.eligible).toBe(now);
+  });
 });

@@ -212,6 +212,16 @@ describe('the Yesterday quiz', () => {
     expect(places.size).toBeGreaterThan(1);
   });
 
+  it('takes no meaning of a Word the reader hid', async () => {
+    const app = await run(records(), monday);
+    await app.hide({ kind: 'entry', entryId: noun.id });
+
+    const quiz = await quizOf(app);
+
+    expect(quiz?.meanings).toHaveLength(3);
+    expect(quiz?.meanings).not.toContain(noun.primaryDefinition);
+  });
+
   it('gives no Yesterday when no two other meanings exist', async () => {
     expect(await pageOf(await run(records({ recap: false }), monday, [yesterdays, noun]))).toBe(
       undefined,

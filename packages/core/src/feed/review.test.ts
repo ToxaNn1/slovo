@@ -61,6 +61,7 @@ async function run({
   withCorrections = false,
   withIdioms = false,
   withRowsAndTips = false,
+  content = words,
   on = ['knowledge', 'corrections', 'idioms', 'synonymRows', 'tips', 'rarityCeiling'],
 }: {
   records: Map<string, string>;
@@ -68,12 +69,13 @@ async function run({
   withCorrections?: boolean;
   withIdioms?: boolean;
   withRowsAndTips?: boolean;
+  content?: readonly Word[];
   on?: readonly FeatureSwitch[];
 }): Promise<Composition & { advance: (ms: number) => void }> {
   const { clock, advance } = fakeClock(at);
   const app = await openComposition({
     content: createMemoryContentPort({
-      words,
+      words: content,
       corrections: withCorrections ? corrections : [],
       idioms: withIdioms ? idioms : [],
       synonymRows: withRowsAndTips ? synonymRows : [],
@@ -476,5 +478,127 @@ describe('Review in the Feed', () => {
       // Cards 3, 6, 9, ... are Review slots: the row's turns take cards 9 and 18 from the due Word.
       expect(kindsOf(ids, { dueWord })).toBe('WWRWWRWWSWTRWWRWWSWWRT');
     });
+  });
+});
+
+describe("the reader's place in the Feed", () => {
+  it('goes back to the card hidden from it when it is restored before the reader moves on', async () => {
+    const app = await run({ records: new Map(), at: dayOne });
+    const shown = await firstCards(app.feed, 4);
+    await app.feed.show(2);
+
+    await app.hiddenEntries.hide(shown[2] ?? '');
+    expect([app.feed.position, app.feed.cards[2]?.entryId]).toEqual([2, shown[3]]);
+    await app.hiddenEntries.restore(shown[2] ?? '');
+
+    expect([app.feed.position, app.feed.cards[2]?.entryId]).toEqual([2, shown[2]]);
+  });
+
+  it('stays on its card when the card hidden from it is restored after the reader moved on', async () => {
+    const app = await run({ records: new Map(), at: dayOne });
+    const shown = await firstCards(app.feed, 4);
+    await app.feed.show(1);
+    await app.hiddenEntries.hide(shown[1] ?? '');
+    await app.feed.show(2);
+
+    await app.hiddenEntries.restore(shown[1] ?? '');
+
+    expect(app.feed.cards[app.feed.position]?.entryId).toBe(shown[3]);
+    expect(app.feed.cards[1]?.entryId).toBe(shown[1]);
+  });
+
+  it('stays on its card when another card is hidden while the card hidden from it is out', async () => {
+    const app = await run({ records: new Map(), at: dayOne });
+    const shown = await firstCards(app.feed, 4);
+    await app.feed.show(2);
+    await app.hiddenEntries.hide(shown[2] ?? '');
+    // Long enough on the card that took the place to make it Seen once the reader leaves it.
+    app.advance(1000);
+
+    await app.hiddenEntries.hide(shown[0] ?? '');
+
+    expect(app.feed.cards[app.feed.position]?.entryId).toBe(shown[3]);
+    // The reader never left it, so it is not Seen yet.
+    expect(app.history.list.map(({ entryId }) => entryId)).not.toContain(shown[3]);
+    // The card hidden from the place still takes it back.
+    await app.hiddenEntries.restore(shown[2] ?? '');
+    expect(app.feed.cards[app.feed.position]?.entryId).toBe(shown[2]);
+  });
+
+  it('changes nothing and tells nobody when a change of eligibility leaves every card of the Feed as it was', async () => {
+    const app = await run({ records: new Map(), at: dayOne });
+    const shown = await firstCards(app.feed, 4);
+    await app.feed.show(2);
+    await app.hiddenEntries.hide(shown[0] ?? '');
+    // The one Word of the other Category is not in the Feed, so taking it out drops no card.
+    expect(app.feed.cards.map((card) => card.entryId)).not.toContain('w_other');
+    let told = 0;
+    app.feed.subscribe(() => {
+      told += 1;
+    });
+    app.advance(1000);
+
+    await app.mix.takeOut('other');
+
+    expect(told).toBe(0);
+    expect(app.feed.cards[app.feed.position]?.entryId).toBe(shown[2]);
+    expect(app.history.list.map(({ entryId }) => entryId)).not.toContain(shown[2]);
+  });
+
+  it('moves the reader to the card at a position before a hidden card', async () => {
+    const app = await run({ records: new Map(), at: dayOne });
+    const shown = await firstCards(app.feed, 4);
+    await app.feed.show(0);
+    await app.hiddenEntries.hide(shown[2] ?? '');
+
+    await app.feed.show(1);
+
+    expect([app.feed.position, app.feed.cards[app.feed.position]?.entryId]).toEqual([1, shown[1]]);
+  });
+
+  it("counts no hidden card in the Correction's turn", async () => {
+    const app = await run({ records: new Map(), at: dayOne, withCorrections: true });
+    const shown = await firstCards(app.feed, 7);
+    expect(shown[4]?.startsWith('c_')).toBe(true);
+    await app.feed.show(5);
+    await app.hiddenEntries.hide(shown[5] ?? '');
+
+    const after = await firstCards(app.feed, 11);
+
+    // Four Words after the Correction, the hidden one not counted, then the next Correction.
+    expect(after.findIndex((id, index) => index > 4 && id?.startsWith('c_') === true)).toBe(9);
+  });
+
+  it('keeps the reader on the Word card whose linked Correction opens', async () => {
+    const linking = words.map((each) => ({ ...each, correctionIds: ['c_0'] }));
+    const app = await run({
+      records: new Map(),
+      at: dayOne,
+      withCorrections: true,
+      content: linking,
+    });
+    const shown = await firstCards(app.feed, 4);
+    await app.feed.show(1);
+
+    expect(await app.feed.openLinkedCorrection(1, 'c_0')).toBe(2);
+
+    expect([app.feed.position, app.feed.cards[app.feed.position]?.entryId]).toEqual([1, shown[1]]);
+  });
+
+  it('keeps the reader on its card when a linked Correction opens before it', async () => {
+    const linking = words.map((each) => ({ ...each, correctionIds: ['c_0'] }));
+    const app = await run({
+      records: new Map(),
+      at: dayOne,
+      withCorrections: true,
+      content: linking,
+    });
+    const shown = await firstCards(app.feed, 4);
+    await app.feed.show(3);
+
+    expect(await app.feed.openLinkedCorrection(1, 'c_0')).toBe(2);
+
+    expect(app.feed.cards[2]?.entryId).toBe('c_0');
+    expect([app.feed.position, app.feed.cards[app.feed.position]?.entryId]).toEqual([4, shown[3]]);
   });
 });

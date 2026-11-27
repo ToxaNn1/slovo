@@ -102,6 +102,29 @@ describe('game haptics', () => {
     expect(played).toEqual(['warning', 'success']);
   });
 
+  it('still drops the haptics to come once one of them has played', () => {
+    const { feedback, played, advance } = setup();
+
+    feedback.wrongAnswer();
+    feedback.win();
+    advance(200);
+    feedback.stop();
+    advance(5000);
+
+    expect(played).toEqual(['warning', 'success', 'impactMedium']);
+  });
+
+  it('drops the haptics to come after being stopped before', () => {
+    const { feedback, played, advance } = setup();
+
+    feedback.stop();
+    feedback.wrongAnswer();
+    feedback.stop();
+    advance(5000);
+
+    expect(played).toEqual(['warning']);
+  });
+
   it('plays nothing while Vibration is off', () => {
     const { feedback, played, advance } = setup({ vibration: () => false });
 
