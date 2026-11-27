@@ -20,6 +20,13 @@ export const syncRecords = {
     sync: 'device-only',
   }),
   /**
+   * The email of the Account the Sync cursor was kept for, written with the
+   * cursor in one write. A cursor is read only for that Account: for another
+   * it is forgotten, whoever was open when the Session changed. A cursor an
+   * older app kept has none, and is the Account's that syncs next.
+   */
+  syncCursorAccount: declareRecord('sync.cursorAccount', z.string(), { sync: 'device-only' }),
+  /**
    * The instant the last sync of this device's Session went through, for the
    * status line; without it, none has. Forgotten with the cursor when the
    * Session ends.

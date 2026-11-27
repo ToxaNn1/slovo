@@ -11,7 +11,7 @@ import {
 import { SYNC_AFTER_WRITE } from './sync';
 import { switchedOn } from '../edition/edition';
 import { fakeClock, randomOf, testSchedule } from '../test-support';
-import { signInByCode } from '../fakes/fake-backend';
+import { signInByCode, type FakeBackend } from '../fakes/fake-backend';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { trackChanges } from '../user-state/tracked-user-state';
 import { userStateRecords } from '../user-state-schema';
@@ -19,6 +19,8 @@ import { userStateRecords } from '../user-state-schema';
 const { favorites, syncCursor, syncSyncedAt, theme } = userStateRecords;
 
 const HOUR = 60 * 60_000;
+/** When a Favorite another device kept was added. */
+const FIRST_INSTANT = '2026-10-01T09:00:00.000Z';
 /** The cursor the fake backend answers the first pull with. */
 const CURSOR_AFTER_FIRST_PULL = 0;
 
@@ -29,10 +31,19 @@ const CURSOR_AFTER_FIRST_PULL = 0;
 async function device({
   signedIn = true,
   off = [],
-}: { signedIn?: boolean; off?: FeatureSwitch[] } = {}) {
+  email = 'anna@mail.com',
+  kept,
+}: {
+  signedIn?: boolean;
+  off?: FeatureSwitch[];
+  /** The email of the Account the device is signed into. */
+  email?: string;
+  /** What a launch before left: its backend, and the user state as it stood then. */
+  kept?: { server: FakeBackend; records: ReadonlyMap<string, string> };
+} = {}) {
   const time = fakeClock('2026-10-18T09:00:00.000Z');
   const timers = testSchedule(time);
-  const server = createFakeBackend({ clock: time.clock });
+  const server = kept?.server ?? createFakeBackend({ clock: time.clock });
   /** Whether the backend can be reached by Sync; without it every Sync request gets no answer, and counts. */
   const network = { up: true, unanswered: 0 };
   const unanswered = (): Promise<never> => {
@@ -44,7 +55,7 @@ async function device({
   const pulledAfter: (number | undefined)[] = [];
   const googleSheet = createFakeGoogleSignInSheet();
   const appleSheet = createFakeAppleSignInSheet();
-  const records = new Map<string, string>();
+  const records = new Map<string, string>(kept?.records);
   /** Which writes the device's store refuses: none, unless the test says. */
   const disk = { refuses: (_changes: UserStateChanges) => false };
   const memory = createMemoryUserStatePort(records);
@@ -66,7 +77,7 @@ async function device({
     googleSheet,
     appleSheet,
     userState,
-    sessions: createMemorySessionStore(signedIn ? await signInByCode(server) : undefined),
+    sessions: createMemorySessionStore(signedIn ? await signInByCode(server, email) : undefined),
     clock: time.clock,
     schedule: timers.schedule,
     random: randomOf(0.5),
@@ -701,6 +712,87 @@ describe('Sync and the end of a Session', () => {
     expect(sync.state.syncedAt).toBeUndefined();
     expect(await userState.cursor()).toBeUndefined();
     expect(await userState.read(syncSyncedAt)).toBeUndefined();
+  });
+
+  // Ticket #2128: the Session changed while Sync was closed, as with its switch off in effect.
+  it('pulls the next Account from its first record when its Session started while Sync was closed', async () => {
+    const before = await device();
+    const { token } = await signInByCode(before.server, 'oleh@mail.com');
+    await before.server.backend.sync.push(
+      {
+        editionId: 'uk',
+        changes: [{ key: 'favorites.w_old', value: FIRST_INSTANT, changedAt: 1 }],
+      },
+      { context: { token } },
+    );
+    await before.addFavorite('w_one');
+    // The second sync pulls what the first pushed, so the cursor moves.
+    before.sync.foreground();
+    await before.advance(0);
+    before.sync.foreground();
+    await before.advance(0);
+    expect(await before.userState.cursor()).toBeGreaterThan(1);
+
+    // The next opening of Sync finds another Account's Session and the cursor as it stood.
+    const { sync, advance, userState, server, pulledAfter } = await device({
+      email: 'oleh@mail.com',
+      kept: { server: before.server, records: before.records },
+    });
+    sync.foreground();
+    await advance(0);
+
+    // Its older record arrives, and the device's own get the first-sign-in change.
+    expect(pulledAfter[0]).toBeUndefined();
+    expect(await userState.read(favorites.record('w_old'))).toBe(FIRST_INSTANT);
+    expect(server.sync.recordsOf('oleh@mail.com').has('favorites.w_one')).toBe(true);
+    expect(sync.state.refused).toBeUndefined();
+  });
+
+  it('keeps the place of the same Account at the next opening of Sync', async () => {
+    const before = await device();
+    await before.addFavorite('w_one');
+    // The second sync pulls what the first pushed, so the cursor moves.
+    before.sync.foreground();
+    await before.advance(0);
+    before.sync.foreground();
+    await before.advance(0);
+    const cursor = await before.userState.cursor();
+
+    const { sync, advance, pulledAfter } = await device({
+      kept: { server: before.server, records: before.records },
+    });
+    sync.foreground();
+    await advance(0);
+
+    expect(cursor).toBeGreaterThan(0);
+    expect(pulledAfter).toEqual([cursor]);
+  });
+
+  it('takes a cursor an older app kept, which names no Account, as its Session’s, once', async () => {
+    const before = await device();
+    await before.addFavorite('w_one');
+    // The second sync pulls what the first pushed, so the cursor moves.
+    before.sync.foreground();
+    await before.advance(0);
+    before.sync.foreground();
+    await before.advance(0);
+    const cursor = await before.userState.cursor();
+    const older = new Map(before.records);
+    older.delete('sync.cursorAccount');
+
+    const first = await device({ kept: { server: before.server, records: older } });
+    first.sync.foreground();
+    await first.advance(0);
+    expect(first.pulledAfter).toEqual([cursor]);
+
+    // From then on it is that Account's: another's Session starts from the first record.
+    const next = await device({
+      email: 'oleh@mail.com',
+      kept: { server: before.server, records: first.records },
+    });
+    next.sync.foreground();
+    await next.advance(0);
+    expect(next.pulledAfter[0]).toBeUndefined();
   });
 
   it('opens signed out even when the store fails to read what an ended Session left', async () => {

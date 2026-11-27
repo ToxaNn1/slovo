@@ -49,11 +49,11 @@ function account(start = '2026-10-18T09:00:00.000Z') {
       clock: time.clock,
     });
     const sync = createSyncExchange({ userState, backend, editionId: 'uk' });
-    const { token } = await signInByCode(server);
+    const { token, email } = await signInByCode(server);
     return {
       records,
       userState,
-      sync: () => sync.sync(token),
+      sync: () => sync.sync(token, email),
       forgetRefused: () => {
         sync.forgetRefused();
       },
@@ -1017,6 +1017,64 @@ describe('an interrupted sync', () => {
     ).not.toBeNull();
     expect((await tablet.open()).collections.has(id, 'w_one')).toBe(true);
     expect((await phone.open()).collections.has(id, 'w_one')).toBe(true);
+  });
+});
+
+// Ticket #2127: the limits of a record of Sync (ADR 0208).
+describe('a change over the limits of a record of Sync', () => {
+  it.each([
+    ['a key', `favorites.${'w'.repeat(200)}`, JSON.stringify('2026-10-18T09:00:00.000Z')],
+    ['a value', 'collections.c_long', JSON.stringify({ name: 'м'.repeat(5000) })],
+  ])(
+    'of %s stays on the device, unsent, while every other change syncs, in this launch and the next',
+    async (_, key, text) => {
+      const { device, server } = account();
+      const tablet = await device();
+      await tablet.sync();
+      await tablet.settings.update({ theme: 'dark' });
+      await tablet.write(new Map([[key, text]]));
+      const kept = () => server.sync.recordsOf('anna@mail.com');
+      const pushes = () => server.calls.filter((call) => call === 'sync.push').length;
+
+      // The other change of the batch is kept; the one over is answered as a refusal.
+      expect(await tablet.sync()).toEqual({ ok: false, reason: 'unexpected', changed: false });
+      expect(kept().get('settings.theme')?.value).toBe('dark');
+      expect(kept().has(key)).toBe(false);
+      expect([...(await tablet.userState.pendingChanges()).keys()]).toEqual([key]);
+      expect(tablet.records.get(key)).toBe(text);
+
+      // It is sent no more: a sync with nothing else to send pushes nothing.
+      const before = pushes();
+      expect(await tablet.sync()).toEqual({ ok: false, reason: 'unexpected', changed: false });
+      expect(pushes()).toBe(before);
+
+      // The next launch: a new exchange over the same user state.
+      const relaunched = await device(tablet.records);
+      await relaunched.write(favorites.record('w_one').change('2026-10-18T09:00:00.000Z'));
+      expect(await relaunched.sync()).toEqual({ ok: false, reason: 'unexpected', changed: false });
+      expect(pushes()).toBe(before + 1);
+      expect(kept().has('favorites.w_one')).toBe(true);
+      expect(kept().has(key)).toBe(false);
+      expect(relaunched.records.get(key)).toBe(text);
+    },
+  );
+
+  it('is refused whole by the backend, so the device never sends one', async () => {
+    const { server } = account();
+    const { token } = await signInByCode(server);
+    const push = server.backend.sync.push(
+      {
+        editionId: 'uk',
+        changes: [
+          { key: 'settings.theme', value: 'dark', changedAt: 1 },
+          { key: 'k'.repeat(201), value: true, changedAt: 1 },
+        ],
+      },
+      { context: { token } },
+    );
+
+    await expect(push).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    expect(server.sync.recordsOf('anna@mail.com').size).toBe(0);
   });
 });
 
