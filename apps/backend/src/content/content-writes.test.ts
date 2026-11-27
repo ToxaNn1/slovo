@@ -230,6 +230,42 @@ describe('the content write API', () => {
     });
   });
 
+  it('refuses a save from a form opened before an override import retired its record', async () => {
+    const { client, agent, batchId, importSnapshot } = await contentBackend();
+    const word = await wordOf(client, WORD_ID);
+    const { contentVersion } = await snapshotOf(client);
+    const snapshot = ukrainianSnapshot();
+    const imported = await importSnapshot(
+      'uk',
+      ukrainianFolder.dir,
+      { ...snapshot, words: snapshot.words.filter(({ id }) => id !== WORD_ID) },
+      { override: true },
+    );
+    expect(imported).toMatchObject({ ok: true, contentVersion: contentVersion + 1 });
+    expect(await wordOf(client, WORD_ID)).toMatchObject({ retired: true });
+    const patch = await client.content.patch({
+      params: { editionId: 'uk' },
+      query: { since: contentVersion, patchFormat: PATCH_FORMAT },
+    });
+    const patched =
+      patch.status === 200 && patch.body.status === 'patch'
+        ? patch.body.patch.words.find(({ id }) => id === WORD_ID)
+        : undefined;
+    expect(patched).toMatchObject({ retired: true });
+
+    await expect(
+      agent.admin.content.edit({
+        editionId: 'uk',
+        kind: 'word',
+        id: WORD_ID,
+        batchId,
+        recordVersion: 1,
+        fields: { ...word, primaryDefinition: 'Правка з форми, відкритої до імпорту.' },
+      }),
+    ).rejects.toMatchObject({ code: 'STALE', data: { currentVersion: 2 } });
+    expect(await wordOf(client, WORD_ID)).toMatchObject({ retired: true });
+  });
+
   it('retires a record, keeping it, and creates one under a new id of its kind', async () => {
     const { client, agent, batchId } = await contentBackend();
     const before = await snapshotOf(client);
