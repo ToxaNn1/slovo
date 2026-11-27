@@ -8,6 +8,7 @@ import {
   type Feed,
   type FeedCard,
   type FeedNotice,
+  type FeatureSwitch,
   type EntryRowModel,
   type WeeklyRecapModel,
   type WordCardModel,
@@ -17,6 +18,7 @@ import { dateKeyOf } from '../local-date';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, idiom, randomOf, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { userStateRecords } from '../user-state-schema';
 
 const words: readonly Word[] = Array.from({ length: 30 }, (_, index) =>
   word(`w_${String(index).padStart(2, '0')}`),
@@ -126,10 +128,12 @@ async function run({
   records,
   at,
   feedNotices,
+  switches = ['knowledge', 'corrections', 'idioms', 'synonymRows', 'tips'],
 }: {
   records: Map<string, string>;
   at: string;
   feedNotices?: FeedNotices;
+  switches?: readonly FeatureSwitch[];
 }): Promise<Composition & { advance: (ms: number) => void }> {
   const { clock, advance } = fakeClock(at);
   const app = await openComposition({
@@ -141,8 +145,7 @@ async function run({
       tips,
     }),
     edition: testEdition({
-      isFeatureEnabled: (feature) =>
-        ['knowledge', 'corrections', 'idioms', 'synonymRows', 'tips'].includes(feature),
+      isFeatureEnabled: (feature) => switches.includes(feature),
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
@@ -291,6 +294,39 @@ describe('Feed Notices', () => {
     expect(shownBy(tomorrow.slice(1, 3))).toEqual(['firstWeek', 'yesterday']);
   });
 
+  it('close each for the day, so two swiped past on one day both stay closed', async () => {
+    const records = new Map<string, string>();
+    const feedNotices = fakeNotices(['firstWeek', 'yesterday']);
+    const app = await run({ records, at: dayOne, feedNotices });
+    await firstCards(app.feed, 4);
+
+    for (const position of [0, 1, 2, 3]) await app.feed.show(position);
+
+    const later = await firstCards((await run({ records, at: dayOne, feedNotices })).feed, 4);
+    expect(later.some((card) => card.kind === 'notice')).toBe(false);
+  });
+
+  it('leave a Yesterday that comes after a Weekly Recap shown alone to come on its own', async () => {
+    let yesterdayDue = false;
+    const feedNotices: FeedNotices = {
+      forDay: () =>
+        Promise.resolve(
+          (yesterdayDue ? (['weeklyRecap', 'yesterday'] as const) : (['weeklyRecap'] as const)).map(
+            contentOf,
+          ),
+        ),
+    };
+    const app = await run({ records: new Map(), at: dayOne, feedNotices });
+    await firstCards(app.feed, 3);
+    expect(shownBy(app.feed.cards)[1]).toBe('weeklyRecap');
+    expect(app.feed.cards[2]?.kind).toBe('word');
+
+    yesterdayDue = true;
+    for (const position of [0, 1, 2]) await app.feed.show(position);
+
+    expect(shownBy(app.feed.cards)).toContain('yesterday');
+  });
+
   it('stay open when the app goes to the background on one', async () => {
     const records = new Map<string, string>();
     const feedNotices = fakeNotices(['yesterday']);
@@ -360,5 +396,64 @@ describe('The Feed Notices of a day', () => {
 
     expect(shownBy(cards.slice(1, 4))).toEqual(['communityWord', 'firstWeek', 'yesterday']);
     expect(cards[4]?.kind).toBe('word');
+  });
+});
+
+// ADR 0066: a level milestone, once closed, never comes back on this device.
+describe('A closed level milestone', () => {
+  const levelsOn: readonly FeatureSwitch[] = ['xpLog', 'levels'];
+
+  /** Adds `amount` XP from a Game Round on the local day `date` to the records. */
+  async function earn(records: Map<string, string>, date: string, amount: number) {
+    const userState = await openUserState({ port: createMemoryUserStatePort(records) });
+    await userState.write(
+      userStateRecords.xpLog.record(`seeded-${date}`).change({
+        kind: 'xp',
+        date,
+        at: new Date(`${date}T08:00:00+03:00`).toISOString(),
+        source: 'game-round',
+        amount,
+      }),
+    );
+  }
+
+  /** One app run at 09:00 on the local day `date`, which swipes past the Feed Notices among its first cards. */
+  async function swipePastNotices(
+    records: Map<string, string>,
+    date: string,
+    feedNotices?: FeedNotices,
+  ): Promise<readonly (string | undefined)[]> {
+    const app = await run({
+      records,
+      at: `${date}T09:00:00+03:00`,
+      switches: levelsOn,
+      ...(feedNotices === undefined ? {} : { feedNotices }),
+    });
+    const cards = await firstCards(app.feed, 3);
+    for (const position of [0, 1, 2]) await app.feed.show(position);
+    return shownBy(cards);
+  }
+
+  const milestone = 'levelMilestone';
+
+  it('stays closed when a higher one is closed after it', async () => {
+    const records = new Map<string, string>();
+    await earn(records, '2026-10-13', 306);
+    expect(await swipePastNotices(records, '2026-10-13')).toContain(milestone);
+    await earn(records, '2026-10-14', 500);
+    expect(await swipePastNotices(records, '2026-10-14')).toContain(milestone);
+
+    expect(await swipePastNotices(records, '2026-10-15')).not.toContain(milestone);
+  });
+
+  it('stays closed when another Feed Notice is closed after it', async () => {
+    const records = new Map<string, string>();
+    await earn(records, '2026-10-13', 306);
+    expect(await swipePastNotices(records, '2026-10-13')).toContain(milestone);
+    expect(await swipePastNotices(records, '2026-10-14', fakeNotices(['firstWeek']))).toContain(
+      'firstWeek',
+    );
+
+    expect(await swipePastNotices(records, '2026-10-15')).not.toContain(milestone);
   });
 });

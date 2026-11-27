@@ -119,6 +119,15 @@ describe('Yesterday', () => {
     );
   });
 
+  it('shows nothing when that Word left the Language Pack since', async () => {
+    const { records, wordId } = await sawWordOfTheDay('2026-10-26');
+    const left = words.filter((each) => each.id !== wordId);
+
+    expect(await yesterdayOf(await run({ records, on: '2026-10-27', content: left }))).toBe(
+      undefined,
+    );
+  });
+
   it('shows nothing while either its Feature Switch or the archive’s is off', async () => {
     const { records } = await sawWordOfTheDay('2026-10-26');
 

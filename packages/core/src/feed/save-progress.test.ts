@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { openComposition, type Composition, type FeatureSwitch, type FeedCard } from '../index';
 import { type XpRecord } from '../progress/records';
+import { type FeedNotices } from './feed-notices';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, seededRandom, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
@@ -43,11 +44,13 @@ async function run({
   on,
   off = [],
   signedIn = false,
+  feedNotices,
 }: {
   records: Map<string, string>;
   on: string;
   off?: readonly FeatureSwitch[];
   signedIn?: boolean;
+  feedNotices?: FeedNotices;
 }): Promise<Composition> {
   return openComposition({
     content,
@@ -58,6 +61,7 @@ async function run({
     clock: fakeClock(`${on}T09:00:00+03:00`).clock,
     random: seededRandom(7),
     signedIn: () => signedIn,
+    ...(feedNotices === undefined ? {} : { feedNotices }),
   });
 }
 
@@ -94,6 +98,27 @@ describe('the save-progress Feed Notice', () => {
 
     expect(await offersIn(await run({ records, on: '2026-10-14' }))).toHaveLength(1);
     expect(await offersIn(await run({ records, on: '2026-10-15' }))).toEqual([]);
+  });
+
+  it('comes not on the day of the first new Level while the Level is off', async () => {
+    const records = await readerWith(xp('2026-10-01', 40), xp('2026-10-14', 10));
+
+    expect(await offersIn(await run({ records, on: '2026-10-14', off: ['levels'] }))).toEqual([]);
+  });
+
+  it('counts only the days it was shown on, not those of other Feed Notices', async () => {
+    const records = await readerWith(...threeDays);
+    // Another Feed Notice comes on two days before.
+    const feedNotices: FeedNotices = {
+      forDay: () => Promise.resolve([{ notice: 'enoughForToday' }]),
+    };
+    for (const on of ['2026-10-08', '2026-10-09']) {
+      const before = await run({ records, on, feedNotices });
+      await offersIn(before);
+      expect(before.feed.cards.some((card) => card.kind === 'notice')).toBe(true);
+    }
+
+    expect(await offersIn(await run({ records, on: '2026-10-14' }))).toHaveLength(1);
   });
 
   it('comes at most twice in total, on two days', async () => {

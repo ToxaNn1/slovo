@@ -43,8 +43,9 @@ function fakeWeek(): Map<string, string> {
     // Added in the week, and the week before.
     ['favorites.w_05', JSON.stringify('2026-10-20T12:00:00.000Z')],
     ['favorites.w_06', JSON.stringify('2026-10-12T12:00:00.000Z')],
-    // Known in the week; Known with no time; Unknown in the week; Known after it.
+    // Known in the week twice; Known with no time; Unknown in the week; Known after it.
     ['knowledge.w_07', marked('known', '2026-10-21T12:00:00.000Z')],
+    ['knowledge.w_11', marked('known', '2026-10-23T12:00:00.000Z')],
     ['knowledge.w_08', marked('known')],
     ['knowledge.w_09', marked('unknown', '2026-10-22T12:00:00.000Z')],
     ['knowledge.w_10', marked('known', '2026-10-26T06:00:00.000Z')],
@@ -145,7 +146,7 @@ describe('the Weekly Recap', () => {
         lastDay: { year: 2026, month: 10, day: 25 },
         seen: 3,
         saved: 1,
-        known: 1,
+        known: 2,
         // Saturday, Sunday and Monday, today's open.
         streak: 3,
       },
@@ -231,6 +232,17 @@ describe('the Weekly Recap', () => {
     expect(await app.weeklyRecap.of({ year: 2026, month: 10, day: 26 })).toMatchObject({
       xp: 60,
       goalDays: 2,
+    });
+  });
+
+  it('counts no goal days in a week without a Daily Goal set', async () => {
+    const records = earned(fakeWeek(), 25, '2026-10-20');
+
+    const app = await run({ records, at: monday, xp: true });
+
+    expect(await app.weeklyRecap.of({ year: 2026, month: 10, day: 26 })).toMatchObject({
+      xp: 25,
+      goalDays: 0,
     });
   });
 
