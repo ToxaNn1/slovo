@@ -450,6 +450,88 @@ describe('the Word Meaning question', () => {
     }
   });
 
+  it('offers the Short Definition of a Word that has one, right or Distractor, the primary Definition of the others, and keeps the primary Definition on the sheet', async () => {
+    // Every even Word has a Short Definition.
+    const mixed = Array.from({ length: 14 }, (_, index) =>
+      meant(
+        index,
+        index % 2 === 0 ? { shortDefinition: `Number ${String(index)}, in short.` } : {},
+      ),
+    );
+    const shownOf = (word: Word) => word.shortDefinition ?? word.primaryDefinition;
+    const { app } = await run({ on: WORD_MEANING_ONLY, of: mixed });
+
+    const questions = await questionsOf(app, 96);
+
+    expect(questions).toHaveLength(16);
+    const offered = new Set(questions.flatMap(textsOf));
+    for (const text of offered) expect(mixed.map(shownOf)).toContain(text);
+    // Both kinds were offered, and both were the right answer.
+    expect(mixed.filter((word) => offered.has(shownOf(word))).length).toBeGreaterThan(10);
+    const asked = questions.map((card) => mixed.find(({ id }) => id === card.entry.id));
+    expect(new Set(asked.map((word) => word?.shortDefinition !== undefined)).size).toBe(2);
+    for (const [index, card] of questions.entries()) {
+      const word = asked[index];
+      if (word === undefined || card.answer === undefined) throw new Error('No answered Word');
+      expect(textsOf(card)[card.answer.correct]).toBe(shownOf(word));
+      expect(card.answer.sheet.answer).toEqual({
+        text: word.primaryDefinition,
+        stressedVowels: [],
+      });
+    }
+  });
+
+  it('never offers two options alike by the text shown, whatever the primary Definitions', async () => {
+    // Fourteen primary Definitions, five Short Definitions among them, in differing case and spacing.
+    const alike = Array.from({ length: 14 }, (_, index) =>
+      meant(index, {
+        shortDefinition: `${index % 2 === 0 ? 'Short  number' : 'SHORT number'} ${String(index % 5)}.`,
+      }),
+    );
+    const { app } = await run({ on: WORD_MEANING_ONLY, of: alike });
+
+    const questions = await questionsOf(app, 48);
+
+    expect(questions).toHaveLength(8);
+    for (const card of questions) {
+      const keys = textsOf(card).map((text) => text.toLowerCase().replaceAll(/\s+/g, ' '));
+      expect(new Set(keys).size).toBe(4);
+    }
+  });
+
+  it("never offers a Short Definition worded as one of the asked Word's own Definitions, nor the Short Definition of a Word whose primary Definition is one", async () => {
+    const own = 'What number 0 stands for.';
+    const others = Array.from({ length: 13 }, (_, index) =>
+      meant(index + 1, index < 5 ? { shortDefinition: own.toUpperCase() } : {}),
+    );
+    const twin = meant(20, { primaryDefinition: own, shortDefinition: 'A twin, in short.' });
+    const { app } = await run({ on: WORD_MEANING_ONLY, of: [meant(0), twin, ...others] });
+
+    const questions = (await questionsOf(app, 120)).filter(({ entry }) => entry.id === 'w_m00');
+
+    expect(questions.length).toBeGreaterThan(0);
+    for (const card of questions) {
+      expect(textsOf(card).filter((text) => text.toLowerCase() === own.toLowerCase())).toEqual([
+        own,
+      ]);
+      expect(textsOf(card)).not.toContain('A twin, in short.');
+    }
+  });
+
+  it('asks a Word whose primary Definition holds its Lemma once its Short Definition does not', async () => {
+    const named = Array.from({ length: 14 }, (_, index) =>
+      selfNamed(index, index < 3 ? { shortDefinition: `Number ${String(index)}, in short.` } : {}),
+    );
+    const { app } = await run({ on: WORD_MEANING_ONLY, of: named });
+
+    const questions = await questionsOf(app, 60);
+
+    expect(questions.length).toBeGreaterThan(5);
+    for (const card of questions) {
+      expect(['w_m00', 'w_m01', 'w_m02']).toContain(card.entry.id);
+    }
+  });
+
   it('never asks a Word whose Definition holds its Lemma', async () => {
     const plain = [meant(0), meant(1), meant(2)];
     const named = Array.from({ length: 11 }, (_, index) => selfNamed(index + 3));

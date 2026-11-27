@@ -53,9 +53,14 @@ const content = createMemoryContentPort({ categories: [test, crafts], words });
 async function run({
   seed = 7,
   off = [],
-}: { seed?: number; off?: readonly string[] } = {}): Promise<Composition> {
+  pack = content,
+}: {
+  seed?: number;
+  off?: readonly string[];
+  pack?: typeof content;
+} = {}): Promise<Composition> {
   const app = await openComposition({
-    content,
+    content: pack,
     edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
       userSettingDefaults: { mix: { categoryIds: ['test', 'crafts'] } },
@@ -314,5 +319,21 @@ describe('the grids of «Пари»', () => {
 
     expect(places.every((place) => place >= 0)).toBe(true);
     expect(places.some((place) => place >= 4)).toBe(true);
+  });
+
+  it('keeps the primary Definition of a Word that has a Short Definition (ADR 0210)', async () => {
+    const short = words.map((entry) => ({
+      ...entry,
+      shortDefinition: `${entry.lemma}, in short.`,
+    }));
+    const pack = createMemoryContentPort({ categories: [test, crafts], words: short });
+
+    const grids = gridsOf(await playGame(await run({ pack })));
+
+    expect(grids).toHaveLength(4);
+    const primary = new Set(words.map(({ primaryDefinition }) => primaryDefinition));
+    for (const { definitions } of grids) {
+      for (const { shown } of definitions) expect(primary).toContain(shown);
+    }
   });
 });
