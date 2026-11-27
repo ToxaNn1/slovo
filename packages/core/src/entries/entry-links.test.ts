@@ -74,6 +74,13 @@ describe('what an Entry link from outside the app marks', () => {
     ['without its key', '/entry/c_0a1b2c?from=widget', 'k1'],
     ['with another key', '/entry/c_0a1b2c?from=widget&key=guessed', 'k1'],
     ['with no Widget Snapshot to check its key', '/entry/c_0a1b2c?from=widget&key=k1', undefined],
+    ['with neither its key nor a Widget Snapshot', '/entry/c_0a1b2c?from=widget', undefined],
+    [
+      'of a notification with the key the widget reads',
+      '/entry/c_0a1b2c?from=notification&key=k1',
+      'k1',
+    ],
+    ['of no source with the key the widget reads', '/entry/c_0a1b2c?key=k1', 'k1'],
   ])("opens the widget's mark %s as a plain link, which marks nothing", (_, link, key) => {
     expect(opened(link, key)).toEqual({ entryId: 'c_0a1b2c', source: undefined });
   });

@@ -43,11 +43,11 @@ function account(start = '2026-09-02T09:00:00.000Z') {
       clock: time.clock,
     });
     const exchange = createSyncExchange({ userState, backend, editionId: 'uk' });
-    const { token } = await signInByCode(server);
+    const { token, email } = await signInByCode(server);
     return {
       records,
       userState,
-      sync: () => exchange.sync(token),
+      sync: () => exchange.sync(token, email),
       /** Opens the composition as a launch does, which folds the days past 30, and answers its XP. */
       async launch() {
         const { xpLog } = await openComposition({

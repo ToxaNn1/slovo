@@ -46,7 +46,9 @@ describe('the Stress of the language traits', () => {
       stress: { marked: true, vowels: 'а е' },
     });
 
-    expect(parsed.error?.issues.map(({ path }) => path.join('.'))).toEqual(['stress.vowels.1']);
+    expect(parsed.error?.issues.map(({ path, message }) => [path.join('.'), message])).toEqual([
+      ['stress.vowels.1', '"е" is not a letter of the alphabet'],
+    ]);
   });
 
   it('refuses a Distractor rule', () => {

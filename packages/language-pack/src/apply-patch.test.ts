@@ -222,6 +222,45 @@ describe('applying a Patch', () => {
     db.close();
   });
 
+  it('replaces the child rows of every Entry kind it brings again, never doubling them', async () => {
+    const pack = writablePack();
+    const live = <T extends { retired: boolean }>(rows: readonly T[]): T[] =>
+      rows.filter((row) => !row.retired).slice(0, 1);
+    const records = {
+      corrections: live(snapshot.corrections),
+      idioms: live(snapshot.idioms),
+      synonymRows: live(snapshot.synonymRows),
+      tips: live(snapshot.tips),
+    };
+    const ids = Object.values(records).flatMap((rows) => rows.map(({ id }) => id));
+    expect(ids).toHaveLength(4);
+    const before = await pack.getEntries(ids);
+
+    await applyPatch(pack.writer, patchOf(records), '"again"');
+
+    expect(await pack.getEntries(ids)).toEqual(before);
+  });
+
+  it('refuses every Patch on a pack opened read-only, the default', async () => {
+    const pack = openLanguagePack(builtFile);
+    opened.push(pack);
+
+    await expect(applyPatch(pack.writer, patchOf(), '"x"')).rejects.toThrow(/readonly/);
+    expect((await pack.metadata()).contentVersion).toBe(snapshot.contentVersion);
+  });
+
+  it('applies a Patch that keeps the content version, as it lowers nothing', async () => {
+    const pack = writablePack();
+
+    await applyPatch(
+      pack.writer,
+      { ...patchOf(), contentVersion: snapshot.contentVersion },
+      '"same"',
+    );
+
+    expect((await pack.metadata()).contentVersion).toBe(snapshot.contentVersion);
+  });
+
   it('refuses a Patch that would lower the content version', async () => {
     const pack = writablePack();
 

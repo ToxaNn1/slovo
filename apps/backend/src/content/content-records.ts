@@ -6,7 +6,7 @@ import {
 } from '@slovo/content-rules';
 import type { Word } from '@slovo/contracts';
 import { collectionAppearance, editionDayStart, type Json } from '@slovo/server-core';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, isNull, notInArray, sql } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { z } from 'zod';
 
@@ -341,6 +341,36 @@ export async function saveRecord(
       return { ok: true, needsNewRecording: false };
     }
   }
+}
+
+/**
+ * Retires every live Entry of the kind that is not among the ids held, as the
+ * import does with the Entries its snapshot no longer holds: one record
+ * version on, so a form opened before it is stale, and at the row's content
+ * version, so a device's Patch retires the Entry too (ADR 0090).
+ */
+export async function retireUnheld(
+  tx: Transaction,
+  kind: EntryKind,
+  held: readonly string[],
+  row: Omit<SavedRow, 'recordVersion'>,
+): Promise<void> {
+  const table = TABLES[kind];
+  await tx
+    .update(table)
+    .set({
+      ...row,
+      retired: true,
+      fields: sql`${table.fields} || '{"retired": true}'::jsonb`,
+      recordVersion: sql`${table.recordVersion} + 1`,
+    })
+    .where(
+      and(
+        eq(table.editionId, row.editionId),
+        eq(table.retired, false),
+        held.length === 0 ? undefined : notInArray(table.id, [...held]),
+      ),
+    );
 }
 
 /** What a write does to its record. */

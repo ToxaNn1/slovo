@@ -62,13 +62,28 @@ describe('a record of a push', () => {
     const { device } = await signIn();
     const now = Date.now();
     // 8 KB is 8192 bytes of the value's JSON in UTF-8, its quotes included:
-    // a Cyrillic letter takes two.
+    // a Cyrillic letter takes two. The first characters of two, three and four
+    // bytes each end a value that fills the 8 KB or goes one byte over.
+    const firstOfTheirLength = ['\u0080', '\u0800', '\u{10000}'];
+    const endingIn = (character: string, bytes: number) =>
+      'a'.repeat(bytes - 2 - new TextEncoder().encode(character).length) + character;
     const fits = [
       { key: 'notes.latin', value: 'a'.repeat(8190), changedAt: now },
       { key: 'notes.cyrillic', value: 'ж'.repeat(4095), changedAt: now },
+      ...firstOfTheirLength.map((character, index) => ({
+        key: `notes.ending-${String(index)}`,
+        value: endingIn(character, 8192),
+        changedAt: now,
+      })),
+    ];
+    const overs = [
+      'a'.repeat(8191),
+      'ж'.repeat(4096),
+      { text: 'a'.repeat(8190) },
+      ...firstOfTheirLength.map((character) => endingIn(character, 8193)),
     ];
 
-    for (const over of ['a'.repeat(8191), 'ж'.repeat(4096), { text: 'a'.repeat(8190) }]) {
+    for (const over of overs) {
       await expect(
         device.sync.push({
           editionId: 'uk',

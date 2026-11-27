@@ -138,16 +138,47 @@ async function openApp() {
 
 const hidden = { includeHiddenElements: true };
 
+const ONBOARDED: UserStateFacts = {
+  onboardingFinished: '2026-09-01T09:00:00Z',
+  mixQuickQuestion: 6,
+};
+
+/** Turns the opened Feed on to its first Quick Question and gives it and its place. */
+async function firstQuestion() {
+  while (!composition.feed.cards.some((card) => card.kind === 'quick-question')) {
+    if ((await composition.feed.next()) === undefined) throw new Error('No Quick Question');
+  }
+  const position = composition.feed.cards.findIndex((card) => card.kind === 'quick-question');
+  const asked = composition.feed.cards[position];
+  if (asked?.kind !== 'quick-question') throw new Error('No Quick Question');
+  return { asked, position };
+}
+
+/** The answer the Quick Question at `position` holds, once picked. */
+function answerAt(position: number) {
+  const card = composition.feed.cards[position];
+  if (card?.kind !== 'quick-question' || card.answer === undefined) throw new Error('Not answered');
+  return card.answer;
+}
+
+/**
+ * The right option of the first Quick Question, which its card keeps out
+ * until the pick: told by answering it in an opening of its own, which
+ * draws the same Feed.
+ */
+async function rightOfFirst(): Promise<number> {
+  await open(ONBOARDED);
+  const { position } = await firstQuestion();
+  await composition.feed.answerQuickQuestion(position, 0);
+  return answerAt(position).correct;
+}
+
 // Spec #1358, ticket #1374: the Quick Question in its own Feed slot.
 describe('the Quick Question on the Feed', () => {
   it('asks its Round and keeps the option the reader picked', async () => {
-    await open({ onboardingFinished: '2026-09-01T09:00:00Z', mixQuickQuestion: 6 });
-    while (!composition.feed.cards.some((card) => card.kind === 'quick-question')) {
-      if ((await composition.feed.next()) === undefined) throw new Error('No Quick Question');
-    }
-    const position = composition.feed.cards.findIndex((card) => card.kind === 'quick-question');
-    const asked = composition.feed.cards[position];
-    if (asked?.kind !== 'quick-question') throw new Error('No Quick Question');
+    const correct = await rightOfFirst();
+    await open(ONBOARDED);
+    const { asked, position } = await firstQuestion();
     // The reader is on the Quick Question when the Feed is drawn.
     await composition.feed.show(position);
     await openApp();
@@ -160,12 +191,10 @@ describe('the Quick Question on the Feed', () => {
     );
     expect(within(card).getAllByText(asked.round.prompt, hidden).length).toBeGreaterThan(0);
     await settle(() =>
-      fireEvent.press(
-        within(card).getByTestId(`game-option-${String(asked.round.correct)}`, hidden),
-      ),
+      fireEvent.press(within(card).getByTestId(`game-option-${String(correct)}`, hidden)),
     );
 
-    expect(composition.feed.cards[position]).toMatchObject({ answered: asked.round.correct });
+    expect(answerAt(position)).toMatchObject({ chosen: correct, correct, right: true });
     expect(
       within(screen.getByTestId('quick-question', hidden)).getByTestId('game-option-0', hidden),
     ).toBeDisabled();
@@ -176,16 +205,12 @@ describe('the Quick Question on the Feed', () => {
     ['right', true],
     ['wrong', false],
   ])('explains a %s answer in the answer card until «Далі →»', async (_, right) => {
-    await open({ onboardingFinished: '2026-09-01T09:00:00Z', mixQuickQuestion: 6 });
-    while (!composition.feed.cards.some((card) => card.kind === 'quick-question')) {
-      if ((await composition.feed.next()) === undefined) throw new Error('No Quick Question');
-    }
-    const position = composition.feed.cards.findIndex((card) => card.kind === 'quick-question');
-    const asked = composition.feed.cards[position];
-    if (asked?.kind !== 'quick-question') throw new Error('No Quick Question');
+    const correct = await rightOfFirst();
+    await open(ONBOARDED);
+    const { position } = await firstQuestion();
     await composition.feed.show(position);
     await openApp();
-    const option = right ? asked.round.correct : (asked.round.correct + 1) % 4;
+    const option = right ? correct : (correct + 1) % 4;
     const card = screen.getByTestId('quick-question', hidden);
     expect(screen.queryByTestId('game-answer-card', hidden)).toBeNull();
 
@@ -197,9 +222,10 @@ describe('the Quick Question on the Feed', () => {
     expect(screen.getByTestId('game-answer-card-title', hidden)).toHaveTextContent(
       right ? answerCard.right : answerCard.wrong,
     );
-    const definition = 'primaryDefinition' in asked.entry ? asked.entry.primaryDefinition : '';
+    const { entry, sheet } = answerAt(position);
+    const definition = 'primaryDefinition' in entry ? entry.primaryDefinition : '';
     expect(screen.getByTestId('game-answer-card-line', hidden)).toHaveTextContent(
-      asked.round.sheet.explanation ?? definition,
+      sheet.explanation ?? definition,
     );
     await settle(() => fireEvent.press(screen.getByTestId('game-next', hidden)));
     await act(() => jest.advanceTimersByTimeAsync(1000));

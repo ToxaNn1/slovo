@@ -112,6 +112,36 @@ describe('The Starter Media list', () => {
     expect(chosen.wordIds).not.toContain(first?.id);
     expect(chosen.wordIds).toHaveLength(300);
   });
+
+  it('bundles the sample Word in every voice and its Illustration when the Mix leaves it out', () => {
+    const listed: EditionConfig = {
+      ...config,
+      userSettingDefaults: {
+        ...config.userSettingDefaults,
+        mix: { ...config.userSettingDefaults.mix, categories: ['elsewhere'] },
+      },
+    };
+    const words = snapshot.words.map((word) =>
+      word.id === 'w_fx0001' ? word : { ...word, categoryId: 'elsewhere' },
+    );
+    const chosen = starterMediaOf(listed, { ...snapshot, words });
+    const sample = chosen.files.filter((file) => file.wordId === 'w_fx0001');
+    expect(chosen.wordIds).not.toContain('w_fx0001');
+    expect(
+      sample.map((file) => (file.kind === 'recording' ? `recording ${file.voice}` : file.kind)),
+    ).toEqual(['recording anna', 'recording boris', 'illustration']);
+  });
+
+  it('joins every file to the Media Store base with one slash, however many the base ends with', () => {
+    const slashed = starterMediaOf(config, {
+      ...snapshot,
+      mediaBase: 'https://media.slovo.test//',
+    });
+    for (const file of slashed.files) {
+      expect(file.url).toBe(`https://media.slovo.test/${file.path}`);
+    }
+    expect(slashed.files.some((file) => file.kind === 'illustration')).toBe(true);
+  });
 });
 
 describe('The Starter Media folder', () => {

@@ -5,14 +5,42 @@ import { writeStaged } from '../user-state/staged-write';
 import type { UserState } from '../user-state/user-state';
 import { shuffled } from '../shuffled';
 import { markAnswer } from './answer-mark';
-import { pickForm } from './pick-form';
-import type { GameEdition, GameMode, RoundContent } from './game-mode';
+import { pickForm, type PickAnswer, type PickRound as PickShown } from './pick-form';
+import type { GameEdition, GameMode, RoundContent, RoundLabelKind, TextRange } from './game-mode';
 import { WORD_MEANING_ID, asksWordMeaning, wordMeaningRound } from './word-meaning';
 import type { GameXp } from './game-xp';
 import type { TextComparison } from '../text/text-comparison';
 
-/** A Round the reader answers by picking one of its options. */
-export type PickRound = Extract<RoundContent, { readonly form: 'pick' }>;
+/** A Round the reader answers by picking one of its options, as a Game Mode builds it. */
+type PickRound = Extract<RoundContent, { readonly form: 'pick' }>;
+
+/**
+ * A Quick Question's Round as the reader sees it before the pick: the right
+ * option and the sheet that names it kept out, as a Game's Round keeps them.
+ */
+export type QuickQuestionRound = PickShown & {
+  readonly prompt: string;
+  /** The part of the prompt to mark; none to mark. */
+  readonly highlight: TextRange | undefined;
+  /** The gap in the prompt, where the Lemma of an Example stands; none in another Round. */
+  readonly gap: TextRange | undefined;
+  /** Which label the Round shows over its prompt: the Game Mode's, or its own kind's. */
+  readonly labelKind: RoundLabelKind;
+  /** The Definition shown under the prompt; none when left out. */
+  readonly definition: string | undefined;
+  /** The non-standard form a Tip's question replaces, shown under it; none for another Entry. */
+  readonly nonStandardForm: string | undefined;
+};
+
+/** A Quick Question's pick judged by its Answer Form, with the Entry it asked about, whose Definition the answer card explains it with. */
+export type QuickQuestionAnswer = PickAnswer & { readonly entry: AskableEntry };
+
+/** A Quick Question as the reader is asked it: where it came from, its Round and, once picked, the answer judged. */
+export interface AskedQuickQuestion {
+  readonly source: QuickQuestionSource;
+  readonly round: QuickQuestionRound;
+  readonly answer: QuickQuestionAnswer | undefined;
+}
 
 /**
  * Where a Quick Question's Round came from: a Game Mode on offer, named by
@@ -52,12 +80,14 @@ export interface QuickQuestion {
    * mode whose Round is a pick of options with a prompt of at most
    * `QUICK_QUESTION_PROMPT_LIMIT` characters can give one. Nothing when none can.
    */
-  build(avoid?: string): Promise<QuickQuestionContent | undefined>;
+  build(avoid?: string): Promise<AskedQuickQuestion | undefined>;
   /**
-   * Keeps the option the reader picked, judged by the pick form, and resolves
-   * whether it is right; an option the Round lacks is wrong and writes nothing.
+   * Judges the option the reader picked by the pick form, keeps it and
+   * resolves the question answered. A question is answered once: nothing when
+   * it was answered already or not built here, or the Round lacks the option,
+   * and then nothing is written.
    */
-  answer(content: QuickQuestionContent, option: number): Promise<boolean>;
+  answer(question: AskedQuickQuestion, option: number): Promise<AskedQuickQuestion | undefined>;
 }
 
 /** What may give a Quick Question: its Round over an Entry other than `avoid`, or nothing. */
@@ -133,29 +163,51 @@ export function createQuickQuestion({
     ...(edition.isFeatureEnabled('quickQuestionWordMeaning') ? [wordMeaning] : []),
   ];
 
-  async function build(avoid?: string): Promise<QuickQuestionContent | undefined> {
+  // What each question asked and not answered yet was built from, the right option among it, by its Round.
+  const unanswered = new WeakMap<QuickQuestionRound, QuickQuestionContent>();
+
+  async function build(avoid?: string): Promise<AskedQuickQuestion | undefined> {
     for (const candidate of shuffled(candidates, random)) {
       const content = await candidate(avoid);
-      if (content !== undefined) return content;
+      if (content === undefined) continue;
+      const { entry, round: built } = content;
+      // What the reader sees of the Round, named one by one so the right option never slips in.
+      const round: QuickQuestionRound = {
+        form: built.form,
+        options: built.options,
+        prompt: built.prompt,
+        highlight: built.highlight,
+        gap: built.gap,
+        labelKind: built.labelKind ?? 'mode',
+        definition: built.definition,
+        nonStandardForm: entry.kind === 'tip' ? entry.nonStandardForm : undefined,
+      };
+      unanswered.set(round, content);
+      return { source: content.source, round, answer: undefined };
     }
     return undefined;
   }
 
-  async function answer(content: QuickQuestionContent, option: number): Promise<boolean> {
-    const { round } = content;
+  async function answer(
+    question: AskedQuickQuestion,
+    option: number,
+  ): Promise<AskedQuickQuestion | undefined> {
+    const content = unanswered.get(question.round);
+    if (content === undefined || question.answer !== undefined) return undefined;
     // Judged by its Answer Form, as a Game's pick Round is; an option the Round lacks is no answer.
     const judged = pickForm.judge(
-      round,
-      pickForm.shown(round, []),
+      content.round,
+      pickForm.shown(content.round, []),
       { form: 'pick', option },
       comparison,
     );
-    if (judged === undefined) return false;
+    if (judged === undefined) return undefined;
+    unanswered.delete(question.round);
     const { right } = judged.answer;
     if (right) await writeStaged(userState, [xp.award({ source: 'quick-question' })]);
     await markAnswer(knowledge, content.entry.id, right);
     await answered?.(content, right);
-    return right;
+    return { ...question, answer: { ...judged.answer, entry: content.entry } };
   }
 
   return { build, answer };

@@ -16,6 +16,7 @@ const strings: Strings = {
   registers: {
     colloquial: { short: 'coll.', full: 'colloquial' },
     archaic: { short: 'arch.', full: 'archaic' },
+    dialectal: { short: 'dial.', full: 'dialectal' },
   } as Strings['registers'],
   registerWithRegion: '{register}, {region}',
 };
@@ -72,5 +73,14 @@ describe('wordGrammarText', () => {
         'full',
       ),
     ).toBe('verb, archaic, colloquial');
+  });
+
+  it('follows only the dialectal register with the Word’s region', () => {
+    const word = { ...noun, registers: ['archaic', 'dialectal'], region: 'Hutsulshchyna' } as const;
+
+    expect(wordGrammarText(strings, word, 'short')).toBe('n., f. · arch. · dial., Hutsulshchyna');
+    expect(wordGrammarText(strings, { ...word, region: undefined }, 'full')).toBe(
+      'noun, feminine, archaic, dialectal',
+    );
   });
 });

@@ -45,7 +45,8 @@ export interface SyncState {
  * until the next launch or Session. When the Session ends, Sync forgets its cursor and
  * the time of its last sync, once no sync of that Session runs, and keeps the
  * pending changes and the words, so the next Session starts by the
- * first-sign-in rule. Nothing it does rejects.
+ * first-sign-in rule. The cursor is kept for its Account, so a Session that
+ * changed while Sync was closed starts by that rule too (`SyncExchange`). Nothing it does rejects.
  */
 export interface Sync {
   /**
@@ -68,7 +69,7 @@ export interface Sync {
   background(): void;
 }
 
-const { syncCursor, syncSyncedAt } = userStateRecords;
+const { syncCursor, syncCursorAccount, syncSyncedAt } = userStateRecords;
 
 /**
  * Opens Sync apart from the composition, like the Account, over
@@ -108,7 +109,11 @@ export async function openSync({
       (await userState.read(syncSyncedAt)) !== undefined;
     if (kept) {
       await userState.write(
-        new Map([...syncCursor.change(undefined), ...syncSyncedAt.change(undefined)]),
+        new Map([
+          ...syncCursor.change(undefined),
+          ...syncCursorAccount.change(undefined),
+          ...syncSyncedAt.change(undefined),
+        ]),
       );
     }
   }
@@ -164,8 +169,9 @@ export async function openSync({
         withRetries(
           async () => {
             // A Session that ended on the way is no more tried; the Account knows it ended.
-            if (session !== endedSessions) return ended;
-            const tried = await exchange.sync(token);
+            const { state: reader } = account;
+            if (session !== endedSessions || reader.status !== 'signed-in') return ended;
+            const tried = await exchange.sync(token, reader.email);
             changed ||= tried.changed;
             return tried;
           },

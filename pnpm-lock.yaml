@@ -978,6 +978,9 @@ importers:
       '@slovo/language-pack':
         specifier: workspace:*
         version: link:../../packages/language-pack
+      '@slovo/server-core':
+        specifier: workspace:*
+        version: link:../../packages/server-core
       '@slovo/sourcing':
         specifier: workspace:*
         version: link:../sourcing

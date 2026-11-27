@@ -138,6 +138,10 @@ describe('the cursor', () => {
     await expect(
       phone.sync.pull({ editionId: 'uk', after: third.cursor, limit: 2 }),
     ).resolves.toEqual({ records: [], cursor: third.cursor, more: false });
+    // A page the last records fill exactly says that none follow.
+    await expect(
+      phone.sync.pull({ editionId: 'uk', after: first.cursor, limit: 3 }),
+    ).resolves.toMatchObject({ records: changes.slice(2), more: false });
   });
 
   it('answers at most 500 records a page', async () => {
