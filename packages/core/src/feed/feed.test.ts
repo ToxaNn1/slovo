@@ -24,6 +24,7 @@ import {
   idiom,
   randomOf,
   randomSequence,
+  seededRandom,
   testEdition,
   word as sharedWord,
 } from '../test-support';
@@ -1223,6 +1224,29 @@ describe('Corrections in the Feed', () => {
       expect(before).not.toContain(next?.entryId);
     });
 
+    it('opens nothing from a card that is no Word, past the cards, or for a Correction the Word does not link', async () => {
+      const { feed, position } = await feedOnLinkedWord();
+      while (!feed.cards.some((card) => card.kind === 'correction')) await feed.next();
+      const onCorrection = feed.cards.findIndex((card) => card.kind === 'correction');
+      const before = feed.cards;
+      const unlinked = liveCorrections[0]?.id ?? '';
+
+      expect(await feed.openLinkedCorrection(onCorrection, 'c_protiazi')).toBeUndefined();
+      expect(await feed.openLinkedCorrection(feed.cards.length, 'c_protiazi')).toBeUndefined();
+      expect(await feed.openLinkedCorrection(position, unlinked)).toBeUndefined();
+      expect(feed.cards).toBe(before);
+    });
+
+    it('tells the subscribers of the Correction it opens', async () => {
+      const { feed, position } = await feedOnLinkedWord();
+      const told: (readonly FeedCard[])[] = [];
+      feed.subscribe(() => told.push(feed.cards));
+
+      await feed.openLinkedCorrection(position, 'c_protiazi');
+
+      expect(told).toEqual([feed.cards]);
+    });
+
     it('opens the same card again when tapped twice', async () => {
       const { feed, position } = await feedOnLinkedWord();
       await feed.openLinkedCorrection(position, 'c_protiazi');
@@ -1866,5 +1890,516 @@ describe('Synonym Rows and Tips in the Feed', () => {
       kind: 'synonymRow',
       entryId: feed.cards[SYNONYM_ROW_EVERY - 1]?.entryId,
     });
+  });
+});
+
+describe('the Feed at its edges', () => {
+  /** The cards each subscriber call finds, so a call that changed nothing shows as a repeat. */
+  function toldOf(feed: Feed): (readonly FeedCard[])[] {
+    const told: (readonly FeedCard[])[] = [];
+    feed.subscribe(() => told.push(feed.cards));
+    return told;
+  }
+
+  it('opens on the Word of the Day alone when the Language Pack cannot read the card the reader was on', async () => {
+    const records = new Map<string, string>();
+    const first = await run({ records });
+    await first.next();
+    await first.show(0);
+    await first.show(1);
+    const unreadable = first.cards[1]?.entryId;
+    const memory = createMemoryContentPort({ words: pack });
+    const content: ContentReadPort = {
+      ...memory,
+      getEntries: async (ids) =>
+        (await memory.getEntries(ids)).filter((entry) => entry.id !== unreadable),
+    };
+
+    const reopened = await run({ records, content });
+
+    expect(entryIdsOf(reopened.cards)).toEqual([first.cards[0]?.entryId]);
+    expect(wordOfTheDayOf(reopened.cards[0])).toEqual({ year: 2026, month: 10, day: 11 });
+  });
+
+  it('keeps the reader on the card they were on when the app reopens the same local day', async () => {
+    const records = new Map<string, string>();
+    const first = await run({ records });
+    await first.next();
+    await first.show(0);
+    await first.show(1);
+
+    const reopened = await run({ records });
+
+    expect(reopened.position).toBe(1);
+    expect(reopened.cards[reopened.position]?.entryId).toBe(first.cards[1]?.entryId);
+  });
+
+  it('keeps the dwell time of a card reported on screen again', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-11T09:00:00+03:00');
+    const feed = await run({ records, clock: time.clock });
+    await feed.show(0);
+    time.advance(SEEN_DWELL_MS / 2);
+    await feed.show(0);
+    time.advance(SEEN_DWELL_MS / 2);
+    await feed.show(undefined);
+
+    expect(records.has(`feed.seen.${feed.cards[0]?.entryId ?? ''}`)).toBe(true);
+  });
+
+  it('keeps no place of the day before when the card left the screen after midnight', async () => {
+    const records = new Map<string, string>();
+    const time = fakeClock('2026-10-11T23:58:00+03:00');
+    const feed = await run({ records, clock: time.clock });
+    await feed.next();
+    await feed.show(1);
+    time.advance(5 * 60_000);
+    await feed.show(undefined);
+
+    const reopened = await run({ records, clock: time.clock });
+
+    expect(reopened.cards).toHaveLength(1);
+    expect(wordOfTheDayOf(reopened.cards[0])).toEqual({ year: 2026, month: 10, day: 12 });
+  });
+
+  it('puts the Word of the Day in place of the card got ready the day before, never of the card on screen', async () => {
+    const time = fakeClock('2026-10-11T23:58:00+03:00');
+    const app = await runApp({ clock: time.clock });
+    const { feed } = app;
+    await feed.show(0);
+    await feed.show(1);
+    const onScreen = feed.cards[1];
+    expect(feed.cards).toHaveLength(3);
+
+    time.advance(5 * 60_000);
+    await app.resume();
+    await feed.show(1);
+
+    expect(feed.cards).toHaveLength(3);
+    expect(feed.cards[1]).toBe(onScreen);
+    expect(wordOfTheDayOf(feed.cards[2])).toEqual({ year: 2026, month: 10, day: 12 });
+  });
+
+  it('tells the subscribers nothing when the reader hides an Entry no card shows or links', async () => {
+    const app = await runApp();
+    const { feed } = app;
+    await feed.next();
+    const hidden = liveIds.find((id) => !entryIdsOf(feed.cards).includes(id)) ?? '';
+    const told = toldOf(feed);
+
+    await app.hide({ kind: 'entry', entryId: hidden });
+
+    expect(told).toEqual([]);
+  });
+
+  it('drops the link to a Synonym Row the reader hides', async () => {
+    const row = synonymRowOf(
+      'r_linked',
+      liveIds.map((id) => ({ text: id, stress: [0], wordId: id })),
+    );
+    const app = await runApp({ synonymRows: [row] });
+    const { feed } = app;
+    expect(wordCardOf(feed.cards[0])?.synonymRow?.synonymRowId).toBe(row.id);
+
+    await app.hide({ kind: 'entry', entryId: row.id });
+
+    expect(wordCardOf(feed.cards[0])?.synonymRow).toBeUndefined();
+  });
+
+  it("tells the subscribers once when the reader's card is dropped and no card comes after it", async () => {
+    const app = await runApp({ words: [word('w_only')] });
+    const { feed } = app;
+    const told = toldOf(feed);
+
+    await app.hide({ kind: 'entry', entryId: 'w_only' });
+
+    expect(feed.cards).toEqual([]);
+    expect(told).toEqual([[]]);
+  });
+
+  it("tells the subscribers once when the reader's card is dropped and the next card comes in its place", async () => {
+    const app = await runApp({ words: [word('w_one'), word('w_two')] });
+    const { feed } = app;
+    const told = toldOf(feed);
+
+    await app.hide({ kind: 'entry', entryId: feed.cards[0]?.entryId ?? '' });
+
+    expect(entryIdsOf(feed.cards)).toHaveLength(1);
+    expect(told).toEqual([feed.cards]);
+  });
+
+  it("opens on no card when the Language Pack cannot read today's Word of the Day, and goes on with the other Words", async () => {
+    const unreadable = (await run()).cards[0]?.entryId;
+    const memory = createMemoryContentPort({ words: pack });
+    const content: ContentReadPort = {
+      ...memory,
+      getEntries: async (ids) =>
+        (await memory.getEntries(ids)).filter((entry) => entry.id !== unreadable),
+    };
+
+    const feed = await run({ content });
+
+    expect(feed.cards).toEqual([]);
+    const next = await feed.next();
+    expect(next?.kind).toBe('word');
+    expect(next?.entryId).not.toBe(unreadable);
+  });
+
+  describe('a Language Pack without Words', () => {
+    const corrections = ['c_one', 'c_two'].map((id) => correction(id));
+
+    it('opens on no card and gives the Entries of the other kinds', async () => {
+      const app = await runApp({ words: [], corrections });
+      const { feed } = app;
+
+      expect(feed.cards).toEqual([]);
+      await app.feed.seeWordOfTheDay();
+      expect((await feed.next())?.kind).toBe('correction');
+    });
+
+    it('gives a Feed Notice only from the second card on', async () => {
+      const time = fakeClock('2026-10-26T09:00:00+02:00');
+      const records = new Map([['activeDays.2026-10-24', 'true']]);
+      const feed = (
+        await openComposition({
+          content: createMemoryContentPort({ words: [], corrections }),
+          edition: testEdition({
+            isFeatureEnabled: (feature) =>
+              feature === 'corrections' || feature === 'weeklyRecap' || feature === 'knowledge',
+          }),
+          userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+          clock: time.clock,
+          random: randomOf(0.25),
+        })
+      ).feed;
+
+      expect((await feed.next())?.kind).toBe('correction');
+      expect(await feed.next()).toMatchObject({ kind: 'notice', notice: 'weeklyRecap' });
+    });
+  });
+
+  /** A live Synonym Row of the given members. */
+  const synonymRowOf = (id: string, members: SynonymRow['members'] = []): SynonymRow => ({
+    kind: 'synonymRow',
+    id,
+    dominant: { text: 'іти', stress: [2] },
+    meaning: 'Рухатися пішки.',
+    members: [
+      { text: 'простувати', stress: [6] },
+      { text: 'чимчикувати', stress: [6] },
+      ...members,
+    ],
+    sources: [{ title: 'Test source' }],
+    retired: false,
+  });
+  /** A live Tip. */
+  const tipOf = (id: string): Tip => ({
+    kind: 'tip',
+    id,
+    title: 'Котра година?',
+    nonStandardForm: 'Скільки час?',
+    standardForm: 'Котра година?',
+    explanation: 'Про час питають «котра година».',
+    sources: [{ title: 'Test source' }],
+    gameQuestion: {
+      prompt: 'Як запитати про час?',
+      rightAnswer: 'Котра година?',
+      wrongAnswers: ['Скільки час?', 'Скільки годин?', 'Який час?'],
+    },
+    retired: false,
+  });
+
+  it.each([
+    { kind: 'Correction', corrections: ['c_one', 'c_two'].map((id) => correction(id)) },
+    { kind: 'Idiom', idioms: ['i_one', 'i_two'].map((id) => idiom(id)) },
+    { kind: 'Synonym Row', synonymRows: ['r_one', 'r_two'].map((id) => synonymRowOf(id)) },
+    { kind: 'Tip', tips: ['t_one', 't_two'].map((id) => tipOf(id)) },
+  ])('moves past an eligible $kind the Language Pack cannot read', async (entries) => {
+    const memory = createMemoryContentPort({
+      words: pack,
+      corrections: entries.corrections ?? [],
+      idioms: entries.idioms ?? [],
+      synonymRows: entries.synonymRows ?? [],
+      tips: entries.tips ?? [],
+    });
+    const content: ContentReadPort = {
+      ...memory,
+      getEntries: async (ids) =>
+        (await memory.getEntries(ids)).filter((entry) => !entry.id.endsWith('_one')),
+    };
+
+    const ids = await walk(await run({ content }));
+
+    expect(ids.filter((id) => id.endsWith('_one'))).toEqual([]);
+    expect(ids.filter((id) => id.endsWith('_two'))).toHaveLength(1);
+  });
+});
+
+describe('the Feed Notices in the Feed', () => {
+  // Spec #1842: a Monday whose week before has an Active Day and whose day before archived `w_live3`.
+  const yesterdays = 'w_live3';
+  const words = liveIds.map((id) => sharedWord(id));
+  const records = ({ recap = true, yesterday = true } = {}) =>
+    new Map([
+      ...(recap ? ([['activeDays.2026-10-24', 'true']] as const) : []),
+      ...(yesterday
+        ? ([['wordOfTheDayArchive.2026-10-25', JSON.stringify(yesterdays)]] as const)
+        : []),
+    ]);
+
+  /** The Core composition of one app run at 09:00 in Kyiv on Monday 2026-10-26, over the records. */
+  async function runOn(
+    kept: Map<string, string>,
+    clock = fakeClock('2026-10-26T09:00:00+02:00').clock,
+  ) {
+    return openComposition({
+      content: createMemoryContentPort({ words }),
+      edition: testEdition({
+        isFeatureEnabled: (feature) =>
+          ['knowledge', 'weeklyRecap', 'yesterday', 'wordOfTheDayArchive'].includes(feature),
+        userSettingDefaults: {
+          mix: { kinds: { correction: false, idiom: false, synonymRow: false, tip: false } },
+        },
+      }),
+      userState: await openUserState({ port: createMemoryUserStatePort(kept) }),
+      clock,
+      random: randomOf(0.25),
+    });
+  }
+
+  /** The Feed with its first three cards: the Word of the Day, the day's Feed Notice page and a Word. */
+  async function feedOn(kept: Map<string, string>): Promise<Feed> {
+    const { feed } = await runOn(kept);
+    while (feed.cards.length < 3) if ((await feed.next()) === undefined) break;
+    return feed;
+  }
+
+  /** The Feed Notice page, the second card. */
+  const pageOf = (feed: Feed) => {
+    const card = feed.cards[1];
+    return card?.kind === 'notice' ? card : undefined;
+  };
+
+  /** The Yesterday quiz on the page, alone or under the Weekly Recap. */
+  const quizOf = (feed: Feed) => {
+    const page = pageOf(feed);
+    const yesterday = page?.notice === 'weeklyRecap' ? page.yesterday : page;
+    if (yesterday?.notice !== 'yesterday') throw new Error('No quiz');
+    return yesterday.quiz;
+  };
+
+  /** The cards each subscriber call finds. */
+  function toldOf(feed: Feed): (readonly FeedCard[])[] {
+    const told: (readonly FeedCard[])[] = [];
+    feed.subscribe(() => told.push(feed.cards));
+    return told;
+  }
+
+  it('tells the subscribers of the Feed Notice it adds', async () => {
+    const { feed } = await runOn(records());
+    const told = toldOf(feed);
+
+    const notice = await feed.next();
+
+    expect(notice?.kind).toBe('notice');
+    expect(told).toEqual([feed.cards]);
+  });
+
+  it("gives the next day's Feed Notice in a Feed left open over midnight that showed the day before's", async () => {
+    const time = fakeClock('2026-10-26T23:50:00+02:00');
+    const app = await runOn(records({ recap: false }), time.clock);
+    const { feed } = app;
+    await feed.next();
+    expect(pageOf(feed)).toMatchObject({ notice: 'yesterday' });
+    // The reader reads the Word of the Day, so it is the next day's Yesterday.
+    await feed.show(0);
+    time.advance(SEEN_DWELL_MS);
+    await feed.show(1);
+
+    time.advance(9 * 60 * 60_000);
+    await app.resume();
+    while (feed.cards.length < 6) if ((await feed.next()) === undefined) break;
+
+    expect(
+      feed.cards.filter((card) => card.kind === 'notice' && card.notice === 'yesterday'),
+    ).toMatchObject([{ day: { day: 26 } }, { day: { day: 27 } }]);
+  });
+
+  it('keeps the Feed Notice page the reader leaves the screen on, and comes back to, for the day', async () => {
+    const kept = records();
+    const feed = await feedOn(kept);
+    await feed.show(0);
+    await feed.show(1);
+    await feed.show(undefined);
+    await feed.show(1);
+
+    expect(pageOf(await feedOn(kept))).toMatchObject({ notice: 'weeklyRecap' });
+  });
+
+  it('answers nothing past the cards, or on a Weekly Recap with no Yesterday under it', async () => {
+    const recapAlone = await feedOn(records({ yesterday: false }));
+    expect(pageOf(recapAlone)).toMatchObject({ notice: 'weeklyRecap', yesterday: undefined });
+
+    expect(await recapAlone.answerYesterday(1, 0)).toBeUndefined();
+    expect(await recapAlone.answerYesterday(recapAlone.cards.length, 0)).toBeUndefined();
+  });
+
+  it('answers nothing with an option the quiz lacks, and takes the first one', async () => {
+    const feed = await feedOn(records({ recap: false }));
+    const { meanings, right } = quizOf(feed);
+
+    const lacking = [-1, 0.5, meanings.length, meanings.length + 1];
+    for (const option of lacking) expect(await feed.answerYesterday(1, option)).toBeUndefined();
+
+    expect(await feed.answerYesterday(1, 0)).toBe(right === 0 ? 'known' : 'unknown');
+    expect(quizOf(feed)).toMatchObject({ answered: 0 });
+  });
+
+  it('answered under the Weekly Recap, keeps the page the Weekly Recap and every other card as it was', async () => {
+    const feed = await feedOn(records());
+    const before = feed.cards;
+    const told = toldOf(feed);
+
+    await feed.answerYesterday(1, quizOf(feed).right);
+
+    expect(pageOf(feed)).toMatchObject({ notice: 'weeklyRecap', folded: false });
+    expect(quizOf(feed)).toMatchObject({ answered: quizOf(feed).right });
+    expect(feed.cards[0]).toBe(before[0]);
+    expect(feed.cards[2]).toBe(before[2]);
+    expect(told).toEqual([feed.cards]);
+  });
+
+  it('folds no page that is no Weekly Recap', async () => {
+    const feed = await feedOn(records({ recap: false }));
+    const before = feed.cards;
+
+    expect(await feed.foldWeeklyRecap(1)).toBe(false);
+
+    expect(feed.cards).toBe(before);
+  });
+
+  it('tells the subscribers of the Weekly Recap folded, and brings it back from among later cards', async () => {
+    const feed = await feedOn(records());
+    const told = toldOf(feed);
+
+    expect(await feed.foldWeeklyRecap(1)).toBe(true);
+
+    expect(told).toEqual([feed.cards]);
+    expect(pageOf(feed)).toMatchObject({ folded: true });
+
+    await feed.next();
+    await feed.next();
+    expect(await feed.restoreWeeklyRecap()).toBe(true);
+    expect(pageOf(feed)).toMatchObject({ folded: false });
+  });
+});
+
+// ADR 0066: the Quick Question in the Feed.
+describe('the Quick Question in the Feed', () => {
+  const words = Array.from({ length: 14 }, (_, index) =>
+    sharedWord(`w_${String(index).padStart(2, '0')}`),
+  );
+  const questionSwitches = ['xpLog', 'game', 'quickQuestion', 'gameGuessWord', 'knowledge'];
+
+  /** The Feed of one app run over the Words, with the Quick Question every 6th card. */
+  async function feedOf({
+    of = words,
+    records = new Map<string, string>(),
+    switches = questionSwitches,
+    random = seededRandom(7),
+  }: {
+    of?: readonly Word[];
+    records?: Map<string, string>;
+    switches?: readonly string[];
+    random?: Random;
+  } = {}): Promise<Feed> {
+    const app = await openComposition({
+      content: createMemoryContentPort({ words: of }),
+      edition: testEdition({ isFeatureEnabled: (feature) => switches.includes(feature) }),
+      userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+      clock: fakeClock('2026-10-26T09:00:00+02:00').clock,
+      random,
+    });
+    await app.mix.setQuickQuestionEvery(6);
+    return app.feed;
+  }
+
+  /** The Feed with its cards up to the first Quick Question, which it returns with its place. */
+  async function untilQuestion(feed: Feed) {
+    while (feed.cards.length < 20) {
+      const card = await feed.next();
+      if (card?.kind === 'quick-question') return { card, position: feed.cards.length - 1 };
+    }
+    throw new Error('No Quick Question');
+  }
+
+  /** The kinds of the cards, a Feed Notice by its own. */
+  const kindsOf = (cards: readonly FeedCard[]) =>
+    cards.map((card) => (card.kind === 'notice' ? card.notice : card.kind));
+
+  it('comes as the next card itself, and tells the subscribers of it', async () => {
+    const feed = await feedOf();
+    const told: (readonly FeedCard[])[] = [];
+    feed.subscribe(() => told.push(feed.cards));
+
+    const { card, position } = await untilQuestion(feed);
+
+    expect(position).toBe(5);
+    expect(feed.cards).toHaveLength(6);
+    expect(feed.cards[5]).toBe(card);
+    expect(told.at(-1)).toBe(feed.cards);
+  });
+
+  it('counts no Feed Notice in its turn', async () => {
+    const records = new Map([['wordOfTheDayArchive.2026-10-25', JSON.stringify('w_03')]]);
+    const feed = await feedOf({
+      records,
+      switches: [...questionSwitches, 'yesterday', 'wordOfTheDayArchive'],
+    });
+
+    const { position } = await untilQuestion(feed);
+
+    expect(kindsOf(feed.cards).slice(0, 2)).toEqual(['word', 'yesterday']);
+    expect(position).toBe(6);
+  });
+
+  it('never asks the Entry of the card right before it', async () => {
+    const asked = [];
+    for (let seed = 1; seed <= 30; seed++) {
+      const feed = await feedOf({ of: words.slice(0, 7), random: seededRandom(seed) });
+      const { card, position } = await untilQuestion(feed);
+      asked.push(card.entry.id === feed.cards[position - 1]?.entryId);
+    }
+
+    expect(asked).not.toContain(true);
+  });
+
+  it('answers nothing on a card that is no Quick Question, or past the cards', async () => {
+    const feed = await feedOf();
+    await untilQuestion(feed);
+    const before = feed.cards;
+
+    expect(await feed.answerQuickQuestion(0, 0)).toBeUndefined();
+    expect(await feed.answerQuickQuestion(feed.cards.length, 0)).toBeUndefined();
+    expect(feed.cards).toBe(before);
+  });
+
+  it('answered, keeps the option on its card, every other card as it was, and tells the subscribers', async () => {
+    const feed = await feedOf();
+    const { card, position } = await untilQuestion(feed);
+    const before = feed.cards;
+    const told: (readonly FeedCard[])[] = [];
+    feed.subscribe(() => told.push(feed.cards));
+
+    expect(await feed.answerQuickQuestion(position, card.round.correct)).toBe(true);
+
+    expect(feed.cards[position]).toMatchObject({
+      kind: 'quick-question',
+      answered: card.round.correct,
+    });
+    feed.cards.forEach((each, at) => {
+      if (at !== position) expect(each).toBe(before[at]);
+    });
+    expect(told).toEqual([feed.cards]);
   });
 });
