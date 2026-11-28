@@ -205,6 +205,29 @@ jobs:
             echo "- Update id: \`$ids\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # The update's source maps, which `eas update` left in dist/, go to
+      # Sentry so a crash in this update shows readable stacks (ADR 0048);
+      # each bundle carries the debug id its map is matched by. Without the
+      # secret SENTRY_AUTH_TOKEN or the variables SENTRY_ORG and
+      # SENTRY_PROJECT the upload is skipped with a line in the log, and the
+      # published update stands either way.
+      - name: Upload the source maps to Sentry
+        if: ${{ inputs.action == 'publish' }}
+        working-directory: apps/mobile
+        shell: bash
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+        run: |
+          if [[ -z "$SENTRY_AUTH_TOKEN" || -z "$SENTRY_ORG" || -z "$SENTRY_PROJECT" ]]; then
+            echo "::notice::Sentry source maps not uploaded: set the secret SENTRY_AUTH_TOKEN and the variables SENTRY_ORG and SENTRY_PROJECT"
+            echo "- Sentry source maps: skipped, no SENTRY_AUTH_TOKEN, SENTRY_ORG or SENTRY_PROJECT" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          pnpm exec sentry-expo-upload-sourcemaps dist
+          echo "- Sentry source maps: uploaded" >> "$GITHUB_STEP_SUMMARY"
+
       # The same bundle, signed again, reaches production at the Rollout
       # share; a group that is not on beta, one built against any address but
       # the production Deployment's, or one whose message cannot be read, is

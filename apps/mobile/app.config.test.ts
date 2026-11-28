@@ -841,6 +841,38 @@ describe('app config', () => {
     );
   });
 
+  it("uploads the build's dSYM and source map to the Sentry project the environment names", () => {
+    vi.stubEnv('SENTRY_ORG', 'slovo-org');
+    vi.stubEnv('SENTRY_PROJECT', 'slovo-app');
+    vi.stubEnv('SENTRY_AUTH_TOKEN', 'token-from-the-environment');
+
+    expect(pluginOptions(appConfig(context), '@sentry/react-native/expo')).toEqual({
+      organization: 'slovo-org',
+      project: 'slovo-app',
+      disableAutoUpload: false,
+    });
+  });
+
+  it('skips the Sentry upload, never failing the build, when the environment has no auth token', () => {
+    vi.stubEnv('SENTRY_ORG', 'slovo-org');
+    vi.stubEnv('SENTRY_PROJECT', 'slovo-app');
+    vi.stubEnv('SENTRY_AUTH_TOKEN', '');
+
+    expect(pluginOptions(appConfig(context), '@sentry/react-native/expo')).toMatchObject({
+      disableAutoUpload: true,
+    });
+  });
+
+  it('skips the Sentry upload when the environment names no Sentry project', () => {
+    vi.stubEnv('SENTRY_ORG', undefined);
+    vi.stubEnv('SENTRY_PROJECT', undefined);
+    vi.stubEnv('SENTRY_AUTH_TOKEN', 'token-from-the-environment');
+
+    expect(pluginOptions(appConfig(context), '@sentry/react-native/expo')).toEqual({
+      disableAutoUpload: true,
+    });
+  });
+
   it.each(['beta', 'production'])(
     'refuses a release build (%s) with no API address, naming the variable',
     (profile) => {
