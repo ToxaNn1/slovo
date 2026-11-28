@@ -344,6 +344,8 @@ jobs:
     needs: [checks, deploy-scope]
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # The GitHub environment that holds RAILWAY_TOKEN, open to main only.
+    environment: production
     # One deploy at a time: a newer push waits for the running deploy and
     # replaces any deploy still waiting.
     concurrency:

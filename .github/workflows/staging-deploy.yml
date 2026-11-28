@@ -36,6 +36,9 @@ jobs:
     name: Deploy to staging
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # The GitHub environment that holds RAILWAY_STAGING_TOKEN, open to runs
+    # started from main only; the ref deployed is the input, any branch.
+    environment: staging
     steps:
       # The checks come from this workflow's own commit, whatever the ref holds.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
