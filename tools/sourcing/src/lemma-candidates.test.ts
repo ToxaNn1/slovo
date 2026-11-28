@@ -365,6 +365,25 @@ describe('sourceLemmas', () => {
     expect(asked).toHaveLength(4);
   });
 
+  it('without ЕСУМ to ask, ranks by archaic and Wiktionary alone and notes no ЕСУМ', async () => {
+    const nouns = ['ар', 'бор', 'вир', 'гай', 'дуб', 'жар', 'зав', 'кій', 'лан', 'мур'];
+    const result = await sourceLemmas(
+      input({
+        headwords: [
+          ...nouns.map((lemma) => `${lemma}\tnoun:inanim:m:v_naz`),
+          'перст\tnoun:inanim:m:v_naz:arch',
+        ].join('\n'),
+        zipf: () => 0,
+        labelled: new Set(['лан']),
+        inEsum: undefined,
+        options: { count: '2', rarity: '5:1' },
+      }),
+    );
+    if (!result.ok) throw new Error(result.errors.join('\n'));
+    expect(lines(result.list).sort()).toEqual(['лан ? 5', 'перст ? 5']);
+    expect(result.list).not.toContain('ЕСУМ');
+  });
+
   it('notes the evidence of each line after its Zipf', async () => {
     const result = await sourceLemmas(
       input({
