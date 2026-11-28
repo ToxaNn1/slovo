@@ -185,13 +185,17 @@ export async function openCuratedCollections({
 
   let grid = await gridOf();
   let rail = grid.slice(0, RAIL_LENGTH);
-  // The refreshes started, so one that ends after a newer one never puts back what it read.
+  // The refreshes started, and the newest whose read was put in place, so one
+  // that ends after a newer one never puts back what it read, and one a newer
+  // failed read leaves is put in place all the same.
   let started = 0;
+  let applied = 0;
   async function refresh(): Promise<void> {
     started += 1;
     const mine = started;
     const next = await gridOf();
-    if (mine !== started) return;
+    if (mine < applied) return;
+    applied = mine;
     grid = next;
     rail = next.slice(0, RAIL_LENGTH);
     subscribers.tell();
