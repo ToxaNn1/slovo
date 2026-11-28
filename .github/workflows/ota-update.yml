@@ -21,10 +21,12 @@ name: OTA update
 # The secret EXPO_TOKEN of the GitHub environment `production` signs in to
 # EAS; only the steps that call EAS see it, and only a run from main goes on.
 # The EAS environment "production" holds the bundle's EXPO_PUBLIC_* variables, the production
-# Deployment's address among them (EXPO_PUBLIC_SLOVO_API_URL), and the
-# code-signing private key as the file variable UPDATES_PRIVATE_KEY
-# (visibility "sensitive"); the key is never in the repository. The public
-# certificate is apps/mobile/certs/certificate.pem.
+# Deployment's address among them (EXPO_PUBLIC_SLOVO_API_URL). The
+# code-signing private key is the secret UPDATES_PRIVATE_KEY of the GitHub
+# environment `production` (the PEM text): EAS never hands a sensitive
+# variable out to a runner, so the key cannot come from there. Only the step
+# that writes it to a temporary file sees it, and it is never in the
+# repository. The public certificate is apps/mobile/certs/certificate.pem.
 on:
   workflow_dispatch:
     inputs:
@@ -156,22 +158,22 @@ jobs:
 
       # The app accepts only an update signed with the key of this certificate;
       # a promotion signs the republished update again.
-      - name: Fetch the code-signing key
+      - name: Write the code-signing key
         if: ${{ inputs.action != 'widen' }}
         working-directory: apps/mobile
         shell: bash
         env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          UPDATES_PRIVATE_KEY: ${{ secrets.UPDATES_PRIVATE_KEY }}
         run: |
           if [[ ! -f certs/certificate.pem ]]; then
             echo "::error::apps/mobile/certs/certificate.pem is missing, so the app would refuse a signed update"
             exit 1
           fi
-          npx --yes "$EAS_CLI" env:exec "$EAS_ENVIRONMENT" \
-            'test -f "$UPDATES_PRIVATE_KEY" && install -m 600 "$UPDATES_PRIVATE_KEY" "$RUNNER_TEMP/updates-private-key.pem"' \
-            --non-interactive
-          if [[ ! -s "$RUNNER_TEMP/updates-private-key.pem" ]]; then
-            echo "::error::The EAS environment \"$EAS_ENVIRONMENT\" has no file variable UPDATES_PRIVATE_KEY"
+          key="$RUNNER_TEMP/updates-private-key.pem"
+          (umask 077 && printf '%s\n' "$UPDATES_PRIVATE_KEY" > "$key")
+          chmod 600 "$key"
+          if [[ -z "$UPDATES_PRIVATE_KEY" || ! -s "$key" ]]; then
+            echo "::error::The secret UPDATES_PRIVATE_KEY of the GitHub environment production is not set"
             exit 1
           fi
 
