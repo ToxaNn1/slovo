@@ -233,6 +233,40 @@ describe('Statistics consent', () => {
     expect((await later.settings.read()).shareCounters).toBe(false);
   });
 
+  it('keeps the switch off for a reader who left without a choice, when the switch or the region change later', async () => {
+    const leaves = {
+      'skips on the welcome': async (device: Awaited<ReturnType<typeof run>>) => {
+        await device.app.onboarding.finish();
+      },
+      'skips on the step': async (device: Awaited<ReturnType<typeof run>>) => {
+        await device.app.onboarding.next();
+        await device.app.onboarding.finish();
+      },
+      'goes on from the step': async (device: Awaited<ReturnType<typeof run>>) => {
+        await device.app.onboarding.next();
+        await device.app.onboarding.next();
+        await device.app.onboarding.finish();
+      },
+    };
+    for (const [how, leave] of Object.entries(leaves)) {
+      const records = new Map<string, string>();
+      await leave(await run({ region: 'DE', records }));
+
+      const switchedOff = await run({
+        region: 'DE',
+        records,
+        on: ALL_ON.filter((feature) => feature !== 'statisticsConsent'),
+      });
+      await switchedOff.use();
+      const moved = await run({ region: 'UA', records });
+      await moved.use();
+
+      expect(switchedOff.sent(), how).toEqual(NOTHING);
+      expect(moved.sent(), how).toEqual(NOTHING);
+      expect((await moved.settings.read()).shareCounters, how).toBe(false);
+    }
+  });
+
   it('does not ask a reader outside the EEA: the switch is on and the device sends from the start', async () => {
     const reader = await run({ region: 'UA' });
 

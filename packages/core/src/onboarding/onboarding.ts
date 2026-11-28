@@ -18,7 +18,7 @@ import type { Feed } from '../feed/feed';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
 import { createSubscribers } from '../in-turn';
 import { todayKey } from '../local-date';
-import type { Backend, Clock } from '../ports';
+import type { Backend, Clock, UserStateChanges } from '../ports';
 import type { XpLog } from '../progress/xp-log';
 import {
   sharesStatistics,
@@ -323,10 +323,22 @@ export async function openOnboarding({
         ...firstWeekFrom.change(todayKey(clock)),
         // A reader asked the Daily Goal here gets no later Feed Notice for it.
         ...(steps.includes('dailyGoal') ? await dailyGoalAsked(userState) : []),
+        ...(await keptOff()),
       ]),
     );
     change({ status: 'finished', finishedAt });
     analytics.track('onboardingFinished', { skipped }).catch(() => undefined);
+  }
+
+  /**
+   * The switch kept off for a reader asked the Statistics consent who has made
+   * no choice, so a later change of the Feature Switch or the region does not
+   * turn it on (ADR 0210).
+   */
+  async function keptOff(): Promise<UserStateChanges> {
+    return asksConsent && (await userState.read(shareCounters)) === undefined
+      ? shareCounters.change(false)
+      : new Map();
   }
 
   function show(step: OnboardingStep): void {
@@ -370,6 +382,7 @@ export async function openOnboarding({
       endStep(async ({ kind }) => {
         // «Беру!» takes the first Word, so it is Seen: XP, History and the Daily Goal count it.
         if (kind === 'firstWord') await feed.seeWordOfTheDay();
+        if (kind === 'statisticsConsent') await userState.write(await keptOff());
         await countSkipped(kind);
         await goOn(kind);
       }),
