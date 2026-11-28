@@ -11,9 +11,7 @@ The Core is not versioned or published. Every Edition always builds from the Cor
 
 **Amended by ADR 0089.** Until then the remote switches were only an emergency off button.
 
-**Amended by ADR 0167.** The app has two Update channels, `production` and `beta`, each with its own store build profile, instead of one.
-
-The Editions live inside one app (ADR 0065), so a native change ships as one store build of the app, from one build profile per platform, and an OTA update reaches every Edition at once on the app's one Update channel, with staged rollout (ADR 0062). No build or update names an Edition: every build bundles the AppConfig's default Edition.
+The Editions live inside one app (ADR 0065), so a native change ships as one store build per Update channel (`beta`, `production`, ADR 0167), and an OTA update reaches every Edition at once on its channel, with staged rollout (ADR 0062). No build or update names an Edition: every build bundles the AppConfig's default Edition.
 
 ## Considered Options
 
