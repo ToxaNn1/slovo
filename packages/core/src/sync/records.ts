@@ -15,6 +15,15 @@ export const syncRecords = {
     z.object({ changedAt: InstantSchema, value: z.string().nullable() }),
     { sync: 'device-only' },
   ),
+  /**
+   * The latest change time, in milliseconds since the epoch, this device knows
+   * the Account to hold: of a record a pull brought or of a change a push sent.
+   * The tracked user state gives every change a later one, so a clock behind
+   * another device's cannot make the reader's last change lose (ADR 0215).
+   */
+  syncAccountChangedAt: declareRecord('sync.accountChangedAt', z.number().int().nonnegative(), {
+    sync: 'device-only',
+  }),
   /** The Sync cursor: the server's sequence number of the last record pulled; without it, no sync has pulled yet. */
   syncCursor: declareRecord('sync.cursor', z.number().int().nonnegative(), {
     sync: 'device-only',

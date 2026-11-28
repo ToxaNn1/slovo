@@ -56,7 +56,8 @@ export interface SyncExchange {
    * with no pending change gets one with change time 0, so the Account's
    * value wins where it has one and gets the device's where it has none. The
    * pull applies every page after the cursor, each in one write with its
-   * cursor, by the record's mark:
+   * cursor and the latest change time it brings, which every later change of
+   * the device passes (ADR 0215), by the record's mark:
    * - last write wins: the Account's value replaces the device's, unless the
    *   key has a later pending change, which stays for the push;
    * - `union`: every Active Day is kept, and none is deleted;
@@ -88,7 +89,8 @@ export interface SyncExchange {
 /** Every record of the user state, by key, as the JSON it keeps. */
 const everyRecord = declareRecords('', z.json());
 
-const { history, syncCursor, syncCursorAccount, syncPending } = userStateRecords;
+const { history, syncAccountChangedAt, syncCursor, syncCursorAccount, syncPending } =
+  userStateRecords;
 const { xpLog, xpDays } = progressRecords;
 
 /** The time of every first-sign-in change, older than any change. */
@@ -317,6 +319,11 @@ export function createSyncExchange({
         ...syncCursor.change(cursor),
         ...syncCursorAccount.change(account),
       ]);
+      // The latest change time the page brings is one the Account holds (ADR 0215).
+      const pulledAt = Math.max(0, ...records.map(({ changedAt }) => changedAt));
+      if (pulledAt > ((await userState.read(syncAccountChangedAt)) ?? 0)) {
+        for (const change of syncAccountChangedAt.change(pulledAt)) untracked.set(...change);
+      }
       const tracked = new Map<string, string | undefined>();
       // Read at once: the turn holds every other change back while the page is read.
       const read = await Promise.all(

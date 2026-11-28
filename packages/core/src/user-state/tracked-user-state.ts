@@ -26,7 +26,8 @@ export interface TrackedUserState extends UserState {
   /**
    * Deletes the pending changes the Account accepted, each only while it is
    * still the one sent, so a newer change of the same key written meanwhile
-   * stays for the next push.
+   * stays for the next push; and keeps their latest change time as one the
+   * Account holds, so a change written next is later.
    */
   deleteSent(sent: ReadonlyMap<string, PendingChange>): Promise<void>;
   /**
@@ -51,11 +52,13 @@ export interface TrackedUserState extends UserState {
   subscribe(listener: () => void): () => void;
 }
 
-const { syncPending, syncCursor } = userStateRecords;
+const { syncAccountChangedAt, syncPending, syncCursor } = userStateRecords;
 
 /**
  * Wraps the user state so that every write of a synced record leaves its
- * pending change with the clock's time, in the same atomic batch: a write that
+ * pending change in the same atomic batch, with the clock's time, or 1 ms
+ * after the latest change time the Account holds when the clock is not past
+ * it (ADR 0215): a write that
  * fails leaves none. `device-only` records, the schema version, the pending
  * changes and the cursor are never tracked, and nothing written before is
  * back-filled. Writes, `deleteSent` and `merge` run one at a time.
@@ -78,9 +81,16 @@ export function trackChanges({
     return pending;
   }
 
-  /** The changes with the pending change of each synced record, at the clock's time. */
-  function withPending(changes: UserStateChanges): UserStateChanges {
-    const changedAt = clock.now().toISOString();
+  /** The latest change time the Account holds, of the record or of a write that changes it. */
+  async function accountChangedAt(changes: UserStateChanges = new Map()): Promise<number> {
+    const kept = (await userState.read(syncAccountChangedAt)) ?? 0;
+    const written = syncAccountChangedAt.decode(changes.get(syncAccountChangedAt.key)) ?? 0;
+    return Math.max(kept, written);
+  }
+
+  /** The changes with the pending change of each synced record, later than what the Account holds. */
+  function withPending(changes: UserStateChanges, after: number): UserStateChanges {
+    const changedAt = new Date(Math.max(clock.now().getTime(), after + 1)).toISOString();
     const pending = [...changes]
       .filter(([key]) => syncs(key))
       .flatMap(([key, value]) => [
@@ -94,7 +104,7 @@ export function trackChanges({
     list: (records) => userState.list(records),
     write: (changes) =>
       inTurn(async () => {
-        const tracked = withPending(changes);
+        const tracked = withPending(changes, await accountChangedAt());
         await userState.write(tracked);
         if (tracked.size > changes.size) subscribers.tell();
       }),
@@ -103,8 +113,13 @@ export function trackChanges({
     deleteSent: (sent) =>
       inTurn(async () => {
         const current = await pendingChanges();
-        const changes: UserStateChanges = new Map(
-          [...sent]
+        const sentAt = Math.max(
+          0,
+          ...[...sent.values()].map(({ changedAt }) => changedAt.getTime()),
+        );
+        const changes: UserStateChanges = new Map([
+          ...(sentAt > (await accountChangedAt()) ? syncAccountChangedAt.change(sentAt) : []),
+          ...[...sent]
             .filter(([key, change]) => {
               const stored = current.get(key);
               return (
@@ -112,14 +127,17 @@ export function trackChanges({
                 stored.value === change.value
               );
             })
-            .map(([key]) => [syncPending.record(key).key, undefined]),
-        );
+            .map(([key]): [string, undefined] => [syncPending.record(key).key, undefined]),
+        ]);
         if (changes.size > 0) await userState.write(changes);
       }),
     merge: (make) =>
       inTurn(async () => {
         const { untracked, tracked } = await make();
-        const changes = new Map([...untracked, ...withPending(tracked)]);
+        const changes = new Map([
+          ...untracked,
+          ...withPending(tracked, await accountChangedAt(untracked)),
+        ]);
         if (changes.size > 0) await userState.write(changes);
       }),
     subscribe: subscribers.subscribe,

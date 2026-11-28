@@ -19,6 +19,10 @@ A Word's primary Definition is written for its card. Half of them are over 66 ch
 - **Storage.** The content store keeps a Word's fields as jsonb, so there is no migration: nothing is read or written on the live base until a text is saved through the write API. The snapshot and the Patch carry the field; a build before it reads them as outputs, open to later fields (ADR 0031), and drops it.
 - **Language Pack.** The pack gets the nullable column `words.short_definition`. A build before it never reads the column, so the pack format stays 14. A build with it could not apply a Patch to a pack of format 14 built before the column, so `openPack` refuses such a pack and the app copies the bundled one over it, as for another pack format.
 
+## Consequences
+
+- The owner accepts the risk (28.11, PR #2150 review, finding 1): after a fallback to an older bundled Language Pack, a Word may show a stale Short Definition, and this is not raised again.
+
 ## Rejected
 
 - Asking only the Words with a short primary Definition: a third of the Words would leave the question.

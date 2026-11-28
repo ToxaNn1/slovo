@@ -16,6 +16,7 @@ const {
   fontSize,
   gameBest,
   notificationTimes,
+  syncAccountChangedAt,
   syncCursor,
   theme,
   vibration,
@@ -287,16 +288,71 @@ describe('deleting the sent pending changes', () => {
     expect((await userState.pendingChanges()).get('settings.theme')?.value).toBe('"light"');
   });
 
-  it('writes nothing when nothing sent is still pending', async () => {
+  it('keeps the latest change time sent as one the Account holds, even when nothing sent is still pending', async () => {
     const { userState, writes } = await tracked();
 
     await userState.deleteSent(
       new Map([
         ['settings.theme', { changedAt: new Date('2026-10-18T08:00:00.000Z'), value: '"dark"' }],
+        ['settings.textSize', { changedAt: new Date('2026-10-18T08:30:00.000Z'), value: '"L"' }],
       ]),
     );
 
+    expect(writes).toEqual([
+      new Map([['sync.accountChangedAt', String(new Date('2026-10-18T08:30:00.000Z').getTime())]]),
+    ]);
+  });
+
+  it('writes nothing when nothing was sent', async () => {
+    const { userState, writes } = await tracked();
+
+    await userState.deleteSent(new Map());
+
     expect(writes).toEqual([]);
+  });
+});
+
+// ADR 0215: a change is later than every change time the Account is known to hold.
+describe('the change time of a write after one the Account holds', () => {
+  it('is 1 ms after the Account’s when the clock is not past it', async () => {
+    const { userState } = await tracked();
+    await userState.write(
+      syncAccountChangedAt.change(new Date('2026-10-18T09:05:00.000Z').getTime()),
+    );
+
+    await userState.write(theme.change('dark'));
+
+    expect((await userState.pendingChanges()).get('settings.theme')?.changedAt).toEqual(
+      new Date('2026-10-18T09:05:00.001Z'),
+    );
+  });
+
+  it('is the clock’s when the clock is past it', async () => {
+    const { userState } = await tracked();
+    await userState.write(
+      syncAccountChangedAt.change(new Date('2026-10-18T08:05:00.000Z').getTime()),
+    );
+
+    await userState.write(theme.change('dark'));
+
+    expect((await userState.pendingChanges()).get('settings.theme')?.changedAt).toEqual(
+      new Date('2026-10-18T09:00:00.000Z'),
+    );
+  });
+
+  it('counts the Account’s change time a merge writes with its tracked changes', async () => {
+    const { userState } = await tracked();
+
+    await userState.merge(() =>
+      Promise.resolve({
+        untracked: syncAccountChangedAt.change(new Date('2026-10-18T09:05:00.000Z').getTime()),
+        tracked: theme.change('dark'),
+      }),
+    );
+
+    expect((await userState.pendingChanges()).get('settings.theme')?.changedAt).toEqual(
+      new Date('2026-10-18T09:05:00.001Z'),
+    );
   });
 });
 
