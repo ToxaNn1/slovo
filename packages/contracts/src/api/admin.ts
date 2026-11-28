@@ -267,7 +267,7 @@ const FlaggableKindSchema = ContentRecordKindSchema.exclude(['crosswordDay']);
 
 /** What every content procedure can be refused with. */
 const contentProcedure = procedure.errors({
-  /** No Власник yet, an Edition the backend doesn't serve, or an unknown batch or record. */
+  /** No Власник yet, an Edition the backend doesn't serve, or an unknown or reviewed batch, or an unknown record. */
   NOT_FOUND: { message: 'Not found' },
   /** No Агент token, an unknown or revoked one, or the app's Session. */
   UNAUTHORIZED: { message: 'Content is written by an Агент token or an admin session' },

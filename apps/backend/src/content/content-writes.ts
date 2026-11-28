@@ -17,7 +17,7 @@ import {
   type EditionRegistry,
   type Random,
 } from '@slovo/server-core';
-import { and, asc, desc, eq, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 import type { Database } from '../database/database';
@@ -390,7 +390,10 @@ export function createContentWrites({
   const authorOf = (writer: Writer): ContentAuthor =>
     writer.kind === 'agent' ? `agent:${writer.name}` : `admin:${writer.email}`;
 
-  /** Whether the batch is the Агент's own, of the Edition. */
+  /**
+   * Whether the batch is the writer's own, of the Edition, and still open: a
+   * batch an Адмін reviewed or rolled back takes no more writes.
+   */
   async function ownBatch(tx: Tx, writer: Writer, editionId: string, batchId: string) {
     const [batch] = await tx
       .select({ id: contentBatches.id })
@@ -400,6 +403,7 @@ export function createContentWrites({
           eq(contentBatches.id, batchId),
           eq(contentBatches.editionId, editionId),
           eq(contentBatches.changedBy, authorOf(writer)),
+          isNull(contentBatches.reviewedAt),
         ),
       );
     return batch !== undefined;
