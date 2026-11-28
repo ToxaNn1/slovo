@@ -212,6 +212,19 @@ describe('the XP log’s awards and appends', () => {
     expect(xpLog.award({ source: 'daily-crossword', date: '2026-10-13' }).amount).toBe(15);
   });
 
+  it('earns a Review answer right after midnight by today’s cap, before the day change reaches the log', async () => {
+    const { xpLog, time } = await open([], { instant: '2026-10-14T23:00:00+03:00' });
+    for (let index = 0; index < 10; index += 1)
+      xpLog
+        .award({ source: 'review-answer', entryId: `w_${String(index).padStart(2, '0')}` })
+        .commit();
+    expect(xpLog.award({ source: 'review-answer', entryId: 'w_10' }).amount).toBe(0);
+
+    time.set('2026-10-15T00:00:05+03:00');
+
+    expect(xpLog.award({ source: 'review-answer', entryId: 'w_10' }).amount).toBe(1);
+  });
+
   describe('two awards staged before either is committed', () => {
     const reviewed = (entryId: string, minute: number) =>
       [
