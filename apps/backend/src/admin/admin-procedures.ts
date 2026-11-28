@@ -758,6 +758,7 @@ export function adminProcedures({
       });
       const {
         crashFree,
+        crashFreeUsers,
         crashes,
         errors: errorCount,
         newIssues,
@@ -770,6 +771,7 @@ export function adminProcedures({
         to: answer.to.toISOString(),
         kpis: {
           crashFree: kpiOf(crashFree),
+          crashFreeUsers: kpiOf(crashFreeUsers),
           crashes: kpiOf(crashes),
           errors: kpiOf(errorCount),
           newIssues: kpiOf(newIssues),

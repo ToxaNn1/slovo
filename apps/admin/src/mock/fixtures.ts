@@ -552,6 +552,13 @@ export const FIXTURES: AdminApiOutputs = {
         atLeast: false,
         fetchedAt: FETCHED_AT,
       },
+      crashFreeUsers: {
+        state: 'ok',
+        value: 99.8,
+        yesterday: 99.7,
+        atLeast: false,
+        fetchedAt: FETCHED_AT,
+      },
       crashes: { state: 'ok', value: 3, yesterday: 5, atLeast: false, fetchedAt: FETCHED_AT },
       errors: { state: 'ok', value: 42, yesterday: 40, atLeast: false, fetchedAt: FETCHED_AT },
       newIssues: { state: 'ok', value: 0, yesterday: 2, atLeast: false, fetchedAt: FETCHED_AT },

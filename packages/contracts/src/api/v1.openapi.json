@@ -32386,7 +32386,7 @@
       "get": {
         "operationId": "admin.quality",
         "summary": "Якість: the Sentry numbers of a period, with the day before",
-        "description": "Crash-free rate, crashes, errors, new issues, backend p95 and app start times. Sentry keeps 30 days, so a longer period is cut to 30 days and answers `capped`.",
+        "description": "Crash-free rate of sessions and of users, crashes, errors, new issues, backend p95 and app start times. Sentry keeps 30 days, so a longer period is cut to 30 days and answers `capped`.",
         "tags": [
           "admin"
         ],
@@ -32442,6 +32442,63 @@
                       "type": "object",
                       "properties": {
                         "crashFree": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "state": {
+                                  "const": "ok"
+                                },
+                                "value": {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "yesterday": {
+                                  "anyOf": [
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "atLeast": {
+                                  "type": "boolean"
+                                },
+                                "fetchedAt": {
+                                  "type": "string",
+                                  "format": "date-time"
+                                }
+                              },
+                              "required": [
+                                "state",
+                                "value",
+                                "yesterday",
+                                "atLeast",
+                                "fetchedAt"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "state": {
+                                  "const": "unavailable"
+                                }
+                              },
+                              "required": [
+                                "state"
+                              ]
+                            }
+                          ]
+                        },
+                        "crashFreeUsers": {
                           "anyOf": [
                             {
                               "type": "object",
@@ -32786,6 +32843,7 @@
                       },
                       "required": [
                         "crashFree",
+                        "crashFreeUsers",
                         "crashes",
                         "errors",
                         "newIssues",

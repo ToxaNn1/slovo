@@ -1543,7 +1543,7 @@ export const adminContract = {
       path: '/admin/quality',
       summary: 'Якість: the Sentry numbers of a period, with the day before',
       description:
-        'Crash-free rate, crashes, errors, new issues, backend p95 and app start times. Sentry keeps 30 days, so a longer period is cut to 30 days and answers `capped`.',
+        'Crash-free rate of sessions and of users, crashes, errors, new issues, backend p95 and app start times. Sentry keeps 30 days, so a longer period is cut to 30 days and answers `capped`.',
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
@@ -1555,6 +1555,7 @@ export const adminContract = {
         to: z.iso.datetime(),
         kpis: z.object({
           crashFree: QualityKpiSchema,
+          crashFreeUsers: QualityKpiSchema,
           crashes: QualityKpiSchema,
           errors: QualityKpiSchema,
           newIssues: QualityKpiSchema,

@@ -47,21 +47,28 @@ function loadSentry(): CrashReportsSdk {
 /**
  * Starts reporting crashes and unhandled errors to Sentry, once, at launch.
  * Without a DSN (`EXPO_PUBLIC_SENTRY_DSN` in the build's environment) it
- * starts nothing and the app runs as before. Sentry gets no personal data: no
- * default PII, user, IP address, email or Account id, no breadcrumbs, no
- * release-health sessions (a launch ping per install), and no performance
+ * starts nothing and the app runs as before. The environment is the build's
+ * EAS Update channel (`beta` for TestFlight, `production` for the App Store),
+ * or `development` with none. Release-health sessions are on, so Sentry counts
+ * crash-free sessions and users (ADR 0048); a session names only the install
+ * Sentry's SDK makes up for it. Sentry gets no personal data: no default PII,
+ * user, IP address, email or Account id, no breadcrumbs, and no performance
  * tracing or session replay.
  */
-export function startCrashReports(dsn: string | undefined, load = loadSentry): void {
+export function startCrashReports(
+  dsn: string | undefined,
+  channel: string | null,
+  load = loadSentry,
+): void {
   if (dsn === undefined || dsn === '') return;
   load().init({
     dsn,
-    environment: __DEV__ ? 'development' : 'production',
+    environment: channel === null || channel === '' ? 'development' : channel,
     // The React Native SDK takes `sendDefaultPii` and leaves out `dataCollection`.
     sendDefaultPii: false,
     maxBreadcrumbs: 0,
     beforeBreadcrumb: () => null,
-    enableAutoSessionTracking: false,
+    enableAutoSessionTracking: true,
     enableAutoPerformanceTracing: false,
     enableUserInteractionTracing: false,
     attachScreenshot: false,

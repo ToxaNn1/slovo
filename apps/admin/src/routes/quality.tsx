@@ -17,7 +17,8 @@ type CiRun = AdminApiOutputs['ciHistory']['runs'][number];
 
 /** The tiles of Якість, in order: each with its title and unit. */
 const TILES: readonly { key: keyof Kpis; title: string; unit: string }[] = [
-  { key: 'crashFree', title: 'Без збоїв', unit: '%' },
+  { key: 'crashFree', title: 'Сесії без збоїв', unit: '%' },
+  { key: 'crashFreeUsers', title: 'Користувачі без збоїв', unit: '%' },
   { key: 'crashes', title: 'Збої', unit: '' },
   { key: 'errors', title: 'Помилки', unit: '' },
   { key: 'newIssues', title: 'Нові помилки', unit: '' },
