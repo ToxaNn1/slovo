@@ -18,7 +18,9 @@ The map says an environment variable selects the Edition for `apps/mobile`. The 
 
 Evidence: `apps/mobile/app.config.ts:356` (`const id = app.config.defaultEdition`), `app/app.json` (`"defaultEdition": "uk"`); `app.config.ts` reads only `EAS_BUILD_PROFILE`, the Google client id and the API URL from the environment (`:210`, `:233`, `:246`).
 
-БУЛО: «The Expo app; the environment variable selects the Edition.» / СТАЛО: «The Expo app; it bundles the AppConfig's `defaultEdition` (`app/app.json`).»
+The same wrong claim sits in `README.md:31` («One Expo app that builds whichever Edition the environment variable selects»), and `README.md:103` and `README.md:242` still tell you to start Metro with `SLOVO_EDITION=uk`; `apps/mobile/app.config.test.ts:241-244` pins that `SLOVO_EDITION` is ignored.
+
+БУЛО: «The Expo app; the environment variable selects the Edition.» / СТАЛО: «The Expo app; it bundles the AppConfig's `defaultEdition` (`app/app.json`).» (README:31 the same; README:103 and :242 drop `SLOVO_EDITION=uk`.)
 
 ### F3. CONTEXT.md:83 — glossary calls the wave "a retired repo process" while three docs run it — CONFIRMED
 
@@ -34,11 +36,89 @@ Evidence: `CLAUDE.md:48` ("A spec is built on one integration branch … `docs/a
 
 БУЛО: «What the page shows of an Entry: its headword, with Stress where it has one» / СТАЛО: «What the page shows of an Entry: its text (a Word's Lemma), with Stress where it has one»
 
-### F5. CLAUDE.md:15 — "the owner checks on the phone through Metro (8082)" — PLAUSIBLE
+### F5. CLAUDE.md:15 and README.md:136 — Metro port 8082 against `pnpm dev`'s 8081 — CONFIRMED (the mismatch), PLAUSIBLE (which port the owner uses)
 
-`pnpm dev` starts Metro on the first free port from `SLOVO_METRO_PORT`, default 8081, and `README.md:95` says the development client connects on `localhost:8081`. No script, config or env default in the repo names 8082. It is right only if the owner's own setup sets `SLOVO_METRO_PORT=8082` or 8081 is busy.
+`CLAUDE.md:15` says the owner checks through Metro on 8082, and `README.md:136` says `pnpm smoke:halves` needs "the one Metro … on port 8082", which matches `scripts/smoke-halves.mjs:45` (`default: '8082'`). But `pnpm dev`, which the same README line names as the way to start that Metro, starts Metro on the first free port from 8081 (`scripts/dev.mjs:18`, `:47`), and `README.md:95`, `:120`, `:149` and the Maestro flows (`apps/mobile/maestro/launch.yaml:10`, `METRO_URL || 'http://localhost:8081'`) default to 8081. Following the README (`pnpm dev`, then `pnpm smoke:halves` without `--metro`) points Maestro at a port with no Metro, unless 8081 was busy.
 
-Evidence: `scripts/dev.mjs:18` and `:47` (`SLOVO_METRO_PORT ?? 8081`), `apps/mobile/package.json` (`start`: `expo start --dev-client`, no port).
+БУЛО: «the one Metro must already run on port 8082 (`--metro <port>` names another)» / СТАЛО: «the one Metro must already run (`pnpm dev` prints its port; pass it with `--metro <port>`, 8082 when left out)»; and either the script default or `dev.mjs` default moves so both say the same port.
 
-БУЛО: «through Metro (8082)» / СТАЛО: «through Metro (`pnpm dev`, port 8081 or the next free one)»
+### F6. README.md:21 and README.md:187 — "an Edition is a standalone app" — CONFIRMED
+
+`README.md:21`: «An **Edition** is a standalone app for exactly one language»; `README.md:187`: the iOS client id is «One per Edition, since each Edition is its own app». The glossary and ADR 0065 say the opposite, and the same README says so at `:61` («Every build is the one app (ADR 0065)»).
+
+Evidence: `CONTEXT.md:10` («One language inside the one SLOVO app (ADR 0065)»), `CONTEXT.md:11` _Avoid_ «separate app»; ADR 0065 summary («One app per platform with the Editions inside»); `app/app.json` holds one `bundleId` (`app.slovo.uk`) for the app.
+
+БУЛО: «An **Edition** is a standalone app for exactly one language.» / СТАЛО: «An **Edition** is one language inside the one SLOVO app (ADR 0065).»; README:187 БУЛО: «One per Edition, since each Edition is its own app.» / СТАЛО: «One for the app's bundle id.»
+
+### F7. README.md:31-45 — repo map out of date — CONFIRMED
+
+- `:45` `editions/<edition>` holds "content": content lives in Postgres since ADR 0090; the folder holds `edition.json`, strings, tokens, Decor, `seed-snapshot.json`, assets and legal pages (`ls editions/uk`; `docs/agents/map.md:18` lists them right).
+- `:47` `tools/content` "drafts Entries in `$EDITOR` and checks an Edition with the build's rules": nothing in `tools/content/src` reads `$EDITOR`; the CLI writes through the content write API (`tools/content/src/cli.ts:5-13`).
+- `:46` `tools/sourcing` "drafts Words from goroh.pp.ua and СУМ-11": it drafts Words, Idioms, Corrections and Synonym Rows from goroh and picks Lemmas (`source:lemmas`, `source:hrinchenko`; `package.json` scripts); no source names СУМ-11.
+- The map leaves out `apps/site`, `apps/admin`, `apps/video` and `packages/content-rules`, which exist and `docs/agents/map.md` partly lists.
+
+БУЛО: «| `tools/content` | Dev-only CLI that drafts Entries in `$EDITOR` and checks an Edition with the build's rules. |» / СТАЛО: «| `tools/content` | Dev-only CLI that writes Entries through the content write API and checks drafts (`pnpm content`). |» (and the other rows as `docs/agents/map.md` words them)
+
+### F8. README.md:300 — `pnpm content` row describes a CLI that no longer exists — CONFIRMED
+
+The Commands table says `pnpm content new word --edition uk` drafts an Entry "in `$EDITOR`", `pnpm content edit <id or text>`, `pnpm content retire <id>` and `pnpm content check --edition uk` "checks the whole Edition". The CLI has no `new`; `edit` takes `<kind> <id> <file.json>`, `retire` takes `<kind> <id>`, `check` takes `<kind> <array.json | drafts folder>`; it also has `add`, `flag`, `have`, `counts`, `verify`, `import`.
+
+Evidence: `tools/content/src/cli.ts:5-13` (usage), `:173-193` (dispatch).
+
+БУЛО: «`pnpm content new word --edition uk` drafts an Entry with a fresh id in `$EDITOR` … `pnpm content check --edition uk` checks the whole Edition.» / СТАЛО: «`pnpm content add|edit|retire|flag <kind> …` write through the content write API with the Агент token; `have`, `counts`, `check <kind> <drafts>`, `verify` and `import` as in `tools/content/README.md`.»
+
+### F9. README.md:290 and README.md:293 — `pnpm build:pack uk` "validates the Edition's content", `pnpm test` "Jest for `packages/ui`" — CONFIRMED
+
+- `build:pack` builds the Language Pack from the backend's content snapshot (or `--snapshot <file>`), not from files in the Edition (`packages/language-pack/src/cli.ts:41`, usage `[<edition-id>] [--snapshot <file>] [--out <file>]`; `packages/language-pack/src/build.ts:8` `fetchSnapshot`). README step 1 (`:66-69`) says to run it right after `pnpm install` with no backend, which fails (`CONTEXT.md:30`: «A build with the backend down fails»).
+- `pnpm test` runs Jest in `apps/mobile` too (`apps/mobile/package.json` `test`: `vitest run && jest`).
+
+БУЛО: «Validates the Edition's content, prints the content report and builds the Language Pack.» / СТАЛО: «Builds the Language Pack from the backend's content snapshot (`EXPO_PUBLIC_SLOVO_API_URL`, or `--snapshot <file>`) and prints the content report.»
+
+### F10. README.md:272 — "the HTML admin (`pnpm admin`) sets the other Rules" — CONFIRMED
+
+`pnpm admin` is a CLI with only `owner add`, `agent add|revoke`, `check add|import` (`apps/backend/src/admin/admin-command.ts:26-30`). Rules and force-update minimums are set in the Owner admin web app (`apps/admin/src/routes/switches.rule.tsx`, `switches.kill.tsx`), served at `/admin`.
+
+БУЛО: «the HTML admin (`pnpm admin`) sets the other Rules» / СТАЛО: «the Owner admin (`/admin`, «Перемикачі») sets the other Rules»
+
+### F11. README.md:53 — Core constant `LEGAL_SITE` — CONFIRMED
+
+The README says "the Core constant `LEGAL_SITE` is the one place that names the site's base" and pages publish at `<LEGAL_SITE>/<edition>/<page>`. No `LEGAL_SITE` exists in code; the address is built from the AppConfig's `domain`.
+
+Evidence: `apps/mobile/src/settings/legal-page.ts:10-12` (`editionSite(appDomain, edition.id)` → `https://<domain>/<edition>/<page>`, ADR 0065); `.github/workflows/pages.yml:3-10` (the site behind the domain `apps/site/public/CNAME` names, kept equal to the AppConfig's domain).
+
+БУЛО: «at `<LEGAL_SITE>/<edition>/<page>` … the Core constant `LEGAL_SITE` is the one place that names the site's base (ADR 0049)» / СТАЛО: «at `https://<domain>/<edition>/<page>`, the AppConfig's `domain` (ADR 0065)»
+
+### F12. README.md:105-113 and :149 — step 4 "Check the result" describes the 0.2 app — CONFIRMED
+
+The tabs "read Головна, Налаштування, Гра, Збережене", "the four tabs show", and Settings offers "the font size (S, M, L, XL)". The tab strings are now Стрічка, Профіль, Ігри, Збережене, Теми (`editions/uk/strings.json` `tabs.*`), and Text size is «Як у системі» / «Більший» / «Найбільший», with stored S and M read as the first (`CONTEXT.md:232-233`).
+
+БУЛО: «The tabs read Головна, Налаштування, Гра, Збережене (Home, Settings, Game, Saved).» / СТАЛО: «The tabs read as `tabs.*` in `editions/uk/strings.json` (Стрічка, Теми, Ігри, Збережене, Профіль, each behind its Feature Switch).»; «font size (S, M, L, XL)» → «Text size («Як у системі», «Більший», «Найбільший»)».
+
+### F13. README.md:121 — Maestro `SCHEME` default `slovo-uk` — CONFIRMED
+
+The flows default `SCHEME` to `slovo`, the AppConfig's scheme.
+
+Evidence: `apps/mobile/maestro/launch.yaml:10` and `smoke-2.yaml:7` (`SCHEME || 'slovo'`), `app/app.json` (`"scheme": "slovo"`).
+
+БУЛО: «`SCHEME` (default `slovo-uk`)» / СТАЛО: «`SCHEME` (default `slovo`)»
+
+### F14. docs/agents/map.md:28 and README.md:294 — "CI runs everything" — CONFIRMED
+
+CI on a pull request runs only the test parts the change can affect; every part runs on a push to `main` or a change outside the packages.
+
+Evidence: `.github/workflows/ci.yml:46-53` and `:77` (`scripts/ci-affected-parts.mjs`).
+
+БУЛО: «CI runs everything.» / СТАЛО: «CI runs lint, typecheck, deps, the Contract and the Language Pack whole, and the test parts the change can affect (all of them on `main`).»
+
+### F15. README.md:297 — broken anchor `#run-the-ukrainian-edition-on-the-simulator` — CONFIRMED
+
+The heading is `## Run the UA Edition on the simulator` (`README.md:57`), whose anchor is `#run-the-ua-edition-on-the-simulator`.
+
+БУЛО: «(#run-the-ukrainian-edition-on-the-simulator)» / СТАЛО: «(#run-the-ua-edition-on-the-simulator)»
+
+### F16. README.md:288 — `pnpm lint` "ESLint in every package, then Prettier" — CONFIRMED
+
+`pnpm lint` runs oxlint first and the ADR index check (`node scripts/adr-index.mjs --check`), then `turbo run lint` and Prettier (root `package.json` `lint`). A failing ADR `summary:` fails `pnpm lint`, which the row does not tell.
+
+БУЛО: «ESLint in every package, then Prettier.» / СТАЛО: «oxlint, the ADR index check, ESLint in every package, then Prettier.»
 
