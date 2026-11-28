@@ -2,6 +2,7 @@ import {
   ORPCError,
   safe,
   TooManyRequestsError,
+  ValidationError,
   type ClientPromiseResult,
 } from '@slovo/contracts/api';
 
@@ -16,7 +17,8 @@ type DefinedError<E> = Extract<E, ORPCError<string, unknown>>;
  * defines for the procedure comes to the failure `failureOf` makes of it, if
  * any; its code is typed by the contract, so comparing it with a code the
  * procedure doesn't define, or renaming one in the contract, fails typecheck.
- * Otherwise no answer is `offline`, a 429 `too-many-requests` with the
+ * A 2xx answer whose body the procedure's output doesn't take is
+ * `unexpected`. Otherwise no answer is `offline`, a 429 `too-many-requests` with the
  * seconds of its `Retry-After`, a 5xx `server-error`, and any other answer
  * `unexpected`, such as a request the backend refuses (400) or an Edition it
  * doesn't serve (404).
@@ -29,6 +31,7 @@ export async function answerOf<O, E, F extends { readonly ok: false } = never>(
   if (isSuccess) return { ok: true, output: data };
   const failure = isDefined ? failureOf?.(error) : undefined;
   if (failure !== undefined) return failure;
+  if (error instanceof ValidationError) return { ok: false, reason: 'unexpected' };
   if (!(error instanceof ORPCError)) return { ok: false, reason: 'offline' };
   if (error.status === 429) {
     const retryAfter = error instanceof TooManyRequestsError ? error.retryAfter : undefined;

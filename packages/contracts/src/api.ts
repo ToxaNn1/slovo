@@ -1,5 +1,11 @@
 import { createORPCClient, isORPCErrorJson, ORPCError } from '@orpc/client';
-import { oc, type ContractRouterClient } from '@orpc/contract';
+import {
+  isContractProcedure,
+  oc,
+  ValidationError,
+  type ContractRouterClient,
+  type Schema,
+} from '@orpc/contract';
 import type { JsonifiedClient } from '@orpc/openapi-client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
 
@@ -33,6 +39,12 @@ export { ORPCError } from '@orpc/client';
  * contract defines for its procedure typed by their codes and data.
  */
 export { safe, type ClientPromiseResult } from '@orpc/client';
+
+/**
+ * What a call throws when the backend answers 2xx with a body its
+ * procedure's output doesn't take, such as a proxy's page of HTML.
+ */
+export { ValidationError } from '@orpc/contract';
 
 /**
  * The API contract: the only description of the backend's API (spec #333).
@@ -110,15 +122,51 @@ export class TooManyRequestsError extends ORPCError<'TOO_MANY_REQUESTS', unknown
 }
 
 /**
+ * The output of a call that succeeded, parsed with the output of the
+ * contract's procedure at `path`; throws `ValidationError` when it doesn't
+ * take it. An error the call throws never gets here, so it stays as thrown.
+ */
+async function validOutput(path: readonly string[], output: unknown): Promise<unknown> {
+  const procedure = path.reduce(childOf, apiContract);
+  const schema = isContractProcedure(procedure)
+    ? childOf(childOf(procedure, '~orpc'), 'outputSchema')
+    : undefined;
+  if (!isSchema(schema)) return output;
+  const result = await schema['~standard'].validate(output);
+  if (result.issues !== undefined) {
+    throw new ValidationError({
+      message: `The answer of ${path.join('.')} is no output of the contract`,
+      issues: result.issues,
+      data: output,
+    });
+  }
+  return result.value;
+}
+
+/** The value under `key` of an object of the contract, none of anything else. */
+function childOf(node: unknown, key: string): unknown {
+  return typeof node === 'object' && node !== null ? Reflect.get(node, key) : undefined;
+}
+
+/** Whether the value is a schema of the contract, which validates the Standard Schema way. */
+function isSchema(value: unknown): value is Schema<unknown, unknown> {
+  return typeof value === 'object' && value !== null && '~standard' in value;
+}
+
+/**
  * A client of the API built from the contract. A call that acts on an
  * Account names its Session as `context.token`, which the client sends as
- * `authorization: Bearer <token>`; a 429 throws `TooManyRequestsError`.
+ * `authorization: Bearer <token>`; a 429 throws `TooManyRequestsError`. A
+ * 2xx answer is parsed with its procedure's output, and one it doesn't take
+ * throws `ValidationError`: no answer outside the contract reaches a caller
+ * as its output.
  */
 export function createApiClient({ url, fetch, headers = {} }: ApiClientOptions): ApiClient {
   return createORPCClient(
     new OpenAPILink(apiContract, {
       url,
       ...(fetch === undefined ? {} : { fetch }),
+      interceptors: [async (options) => validOutput(options.path, await options.next())],
       headers: ({ context }) =>
         context.token === undefined
           ? headers

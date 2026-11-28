@@ -95,6 +95,7 @@ describe('counts', () => {
         report,
         targets: {},
         missed: [{ target: 'words', message: '12 of 300 Words' }],
+        quoteCheck: { unverified: 0, failed: 0 },
       }),
     });
     const { io, printed } = fakeIo();
@@ -134,7 +135,13 @@ describe('counts', () => {
 
   it('says every target is met when none is missed', async () => {
     const { api } = backend({
-      report: () => ({ contentVersion: 9, report, targets: {}, missed: [] }),
+      report: () => ({
+        contentVersion: 9,
+        report,
+        targets: {},
+        missed: [],
+        quoteCheck: { unverified: 0, failed: 0 },
+      }),
     });
     const { io, printed } = fakeIo();
 

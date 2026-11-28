@@ -143,6 +143,24 @@ describe('answerOf', () => {
     },
   );
 
+  it('answers unexpected for a Sign-in code a page of HTML answers with 200', async () => {
+    const backend = backendOver(answeringWith(200, '<h1>Welcome to the hotel Wi-Fi</h1>'));
+
+    await expect(
+      answerOf(backend.account.verifyCode({ email: 'anna@example.com', code: '123456' })),
+    ).resolves.toEqual({ ok: false, reason: 'unexpected' });
+  });
+
+  it('answers unexpected for a pull a body out of the contract answers with 200', async () => {
+    const backend = backendOver(
+      answeringWith(200, '{"nope":1}', { 'content-type': 'application/json' }),
+    );
+
+    await expect(
+      answerOf(backend.sync.pull({ editionId: 'uk' }, { context: { token: 'session' } })),
+    ).resolves.toEqual({ ok: false, reason: 'unexpected' });
+  });
+
   it.each(['BAD_REQUEST', 'NOT_FOUND', 'UNAUTHORIZED'] as const)(
     'answers unexpected when the backend answers %s and the call expects no such thing',
     async (code) => {
