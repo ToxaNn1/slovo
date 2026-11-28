@@ -228,8 +228,11 @@ export const onboardingLayout = {
 
 /** The Rarity Test's bars and result (board 11, screens 92–93). */
 export const rarityTestLayout = {
-  /** The bar of one segment per Word over the question. */
-  progressBar: { height: 6, gap: 4 },
+  /**
+   * The bar of one segment per Word over the question, and the extra room over
+   * it, so it never reads as one bar with the onboarding's step dots.
+   */
+  progressBar: { height: 6, gap: 4, marginTop: 14 },
   /** The five rarity bars of the result, lit up to the Rarity Range. */
   rarityBars: { height: 16, gap: 6 },
   /** How skewed every segment is. */
@@ -238,6 +241,8 @@ export const rarityTestLayout = {
   resultCard: { radius: 24, paddingVertical: 32, paddingHorizontal: 24, gap: 18 },
   /** How wide the result's line and bars run beside the big number. */
   resultWidth: 220,
+  /** The room the line and bars leave at the card's right for the big number, on a narrow card. */
+  numberRoom: 96,
   /** How wide the note under the bars runs. */
   noteWidth: 240,
   /** Where the big number sits, off the card's top right corner, which cuts it. */

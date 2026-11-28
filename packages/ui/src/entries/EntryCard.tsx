@@ -2,6 +2,7 @@ import type { EntryFeedCard, SynonymRowFeedCard, TipFeedCard } from '@slovo/core
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { CardGroundContext } from './CardTabs';
 import { CardPage, type EntryCardPage } from './CardPage';
 import { CorrectionCardBody } from './CorrectionCard';
 import { IdiomCardBody } from './IdiomCard';
@@ -164,101 +165,104 @@ function EntryCardFace({
       </EntryReveal>
     );
 
+  // A clamped tab's last line fades into the card's surface.
   return (
-    <EntryReveal>
-      <RevealFrame
-        testID={`${card.kind}-card`}
-        style={[
-          // The tabbed card takes the page's height, whatever its tab holds,
-          // outlined in ink over the red offset shadow of board p1.
-          styles.card,
-          {
-            borderColor: colors.ink,
-            boxShadow: [
-              {
-                offsetX: entryCardFrame.shadow,
-                offsetY: entryCardFrame.shadow,
-                blurRadius: 0,
-                color: colors.accent,
-              },
-            ],
-            backgroundColor: colors.surface,
-            borderRadius: entryCardFrame.radius,
-            paddingTop: entryCardFrame.padding.top * padding,
-            paddingHorizontal: entryCardFrame.padding.side * padding,
-            paddingBottom: entryCardFrame.padding.bottom * padding,
-            gap: entryCardFrame.gap * padding,
-          },
-        ]}
-      >
-        {card.review === true && (
-          <KickerRow testID={`${card.kind}-review-row`} corner={corner}>
-            <ReviewLabel />
-          </KickerRow>
-        )}
-        {/* A Word draws its kicker beside its corner; the other kinds over their own kicker. */}
-        {card.kind !== 'word' && kicker !== undefined && (
-          <CardKicker testID={`${card.kind}-card-kicker`} text={kicker} />
-        )}
-        {card.kind === 'word' ? (
-          <WordCardBody
-            card={card.model}
-            wordOfTheDay={card.wordOfTheDay}
-            lemmaSize={lemmaSize}
-            onOpenCorrection={onOpenCorrection}
-            onOpenSynonymRow={onOpenSynonymRow}
-            onHistoryShown={onWordHistoryShown}
-            concealed={concealed}
-            corner={bodyCorner}
-            kicker={kicker}
-          />
-        ) : card.kind === 'correction' ? (
-          <CorrectionCardBody
-            card={card.model}
-            lemmaSize={lemmaSize}
-            concealed={concealed}
-            corner={bodyCorner}
-          />
-        ) : card.kind === 'idiom' ? (
-          <IdiomCardBody
-            card={card.model}
-            lemmaSize={lemmaSize}
-            concealed={concealed}
-            corner={bodyCorner}
-          />
-        ) : card.kind === 'synonymRow' ? (
-          <SynonymRowCardBody
-            card={card.model}
-            lemmaSize={lemmaSize}
-            concealed={concealed}
-            onOpenWord={onOpenWord}
-            corner={bodyCorner}
-          />
-        ) : (
-          <TipCardBody
-            card={card.model}
-            lemmaSize={lemmaSize}
-            concealed={concealed}
-            corner={bodyCorner}
-          />
-        )}
-        {concealed && (
-          <Button
-            size="small"
-            variant="neutral"
-            testID={`${card.kind}-reveal`}
-            // The Edition names the reveal for each kind: a Word's, an Idiom's or a row's meaning, a Correction's or a Tip's right form.
-            label={
-              (card.kind === 'correction' || card.kind === 'tip'
-                ? strings.correctionCard
-                : strings.wordCard
-              ).reveal
-            }
-            onPress={reveal}
-          />
-        )}
-      </RevealFrame>
-    </EntryReveal>
+    <CardGroundContext value={colors.surface}>
+      <EntryReveal>
+        <RevealFrame
+          testID={`${card.kind}-card`}
+          style={[
+            // The tabbed card takes the page's height, whatever its tab holds,
+            // outlined in ink over the red offset shadow of board p1.
+            styles.card,
+            {
+              borderColor: colors.ink,
+              boxShadow: [
+                {
+                  offsetX: entryCardFrame.shadow,
+                  offsetY: entryCardFrame.shadow,
+                  blurRadius: 0,
+                  color: colors.accent,
+                },
+              ],
+              backgroundColor: colors.surface,
+              borderRadius: entryCardFrame.radius,
+              paddingTop: entryCardFrame.padding.top * padding,
+              paddingHorizontal: entryCardFrame.padding.side * padding,
+              paddingBottom: entryCardFrame.padding.bottom * padding,
+              gap: entryCardFrame.gap * padding,
+            },
+          ]}
+        >
+          {card.review === true && (
+            <KickerRow testID={`${card.kind}-review-row`} corner={corner}>
+              <ReviewLabel />
+            </KickerRow>
+          )}
+          {/* A Word draws its kicker beside its corner; the other kinds over their own kicker. */}
+          {card.kind !== 'word' && kicker !== undefined && (
+            <CardKicker testID={`${card.kind}-card-kicker`} text={kicker} />
+          )}
+          {card.kind === 'word' ? (
+            <WordCardBody
+              card={card.model}
+              wordOfTheDay={card.wordOfTheDay}
+              lemmaSize={lemmaSize}
+              onOpenCorrection={onOpenCorrection}
+              onOpenSynonymRow={onOpenSynonymRow}
+              onHistoryShown={onWordHistoryShown}
+              concealed={concealed}
+              corner={bodyCorner}
+              kicker={kicker}
+            />
+          ) : card.kind === 'correction' ? (
+            <CorrectionCardBody
+              card={card.model}
+              lemmaSize={lemmaSize}
+              concealed={concealed}
+              corner={bodyCorner}
+            />
+          ) : card.kind === 'idiom' ? (
+            <IdiomCardBody
+              card={card.model}
+              lemmaSize={lemmaSize}
+              concealed={concealed}
+              corner={bodyCorner}
+            />
+          ) : card.kind === 'synonymRow' ? (
+            <SynonymRowCardBody
+              card={card.model}
+              lemmaSize={lemmaSize}
+              concealed={concealed}
+              onOpenWord={onOpenWord}
+              corner={bodyCorner}
+            />
+          ) : (
+            <TipCardBody
+              card={card.model}
+              lemmaSize={lemmaSize}
+              concealed={concealed}
+              corner={bodyCorner}
+            />
+          )}
+          {concealed && (
+            <Button
+              size="small"
+              variant="neutral"
+              testID={`${card.kind}-reveal`}
+              // The Edition names the reveal for each kind: a Word's, an Idiom's or a row's meaning, a Correction's or a Tip's right form.
+              label={
+                (card.kind === 'correction' || card.kind === 'tip'
+                  ? strings.correctionCard
+                  : strings.wordCard
+                ).reveal
+              }
+              onPress={reveal}
+            />
+          )}
+        </RevealFrame>
+      </EntryReveal>
+    </CardGroundContext>
   );
 }
 

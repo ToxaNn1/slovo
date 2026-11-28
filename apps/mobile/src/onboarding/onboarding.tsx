@@ -33,7 +33,7 @@ import { keep } from '../keep';
 import { useSubscribed } from '../opening';
 import { rarityTestQuestionOf, useApplyRarityTest } from '../mix/rarity-test';
 import { deviceClock } from '../device/device-clock';
-import { timeOfDay } from '../notifications/notification-scheduler';
+import { dateOfTime, timeOfDay } from '../notifications/notification-scheduler';
 import { TimePickerSheet, timePickerAvailable } from '../notifications/time-picker';
 
 const { onboarding: strings } = editionStrings;
@@ -508,8 +508,17 @@ function StatisticsConsentStep({
 const chipTime = (time: string): string => time.replace(/^0/, '');
 
 /**
+ * Where «Інший час» starts the picker: at the Edition's default time for the
+ * Word, which the answer sets, on the day of `now`; not at the time it is now.
+ */
+function pickerStart(now: Date): Date {
+  const [wordTime] = edition.userSettingDefaults.notificationTimes;
+  return wordTime === undefined ? now : dateOfTime(wordTime, now);
+}
+
+/**
  * «Коли нагадати?»: a chip per time, «Інший час», which opens the time picker
- * while the binary has it, and «Без нагадувань». Each answer goes on.
+ * at the Edition's default time while the binary has it, and «Без нагадувань». Each answer goes on.
  */
 function NotificationTimeStep({
   step,
@@ -564,7 +573,7 @@ function NotificationTimeStep({
       </View>
       <TimePickerSheet
         visible={picking}
-        value={deviceClock.now()}
+        value={pickerStart(deviceClock.now())}
         onPick={(picked) => {
           setPicking(false);
           onChoose(timeOfDay(picked));

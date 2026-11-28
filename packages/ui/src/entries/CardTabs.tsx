@@ -1,6 +1,7 @@
-import { useState, type ReactNode } from 'react';
+import { createContext, useContext, useId, useState, type ReactNode } from 'react';
 import { smallerTextSize } from '@slovo/core';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Svg, { Defs, LinearGradient, Rect, Stop } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import {
@@ -12,10 +13,17 @@ import { useTokens } from '../providers/TokensProvider';
 import { PagerScrollView } from '../primitives/VerticalPager';
 import { Wedge } from '../primitives/Wedge';
 import { useDrawnLines, WholeLinesText, WholeLinesView } from '../primitives/WholeLines';
-import { wholeLinesCut } from '../primitives/whole-lines-cut';
+import { lastLineShown, wholeLinesCut } from '../primitives/whole-lines-cut';
 import { blockGap, entryCardFrame, minTouchTarget, typeStyle, wedges } from '../tokens';
 import { capitalised } from './capitalised';
 import { SeenDepthContext } from './seen-depth';
+
+/**
+ * The colour of the ground under an Entry's tabs, which a clamped tab's last
+ * line fades into: the card's surface in the Feed, the screen's background on
+ * the Entry screen. Its owner gives it; with none the line does not fade.
+ */
+export const CardGroundContext = createContext<string | undefined>(undefined);
 
 /**
  * How content sits in the card's fixed frame: whole at a size from the
@@ -153,7 +161,9 @@ const SOURCE_TAB = { key: 'source', own: undefined } as const;
  * content too tall for it takes the text size a step smaller at a time down
  * the scale in effect to its floor (S of S…XL, «Як у системі» on the ladder),
  * and content too tall even there stays at the floor, clamped to the
- * frame at whole lines, never through one, with «Детальніше» a little under
+ * frame at whole lines, never through one, the last of them, a line of text,
+ * fading out where its text ends into the ground its owner gives
+ * (`CardGroundContext`, `<testID>-tab-fade`), with «Детальніше» a little under
  * the last line shown (`entryCardFrame.moreGap`), inside the room: every `WholeLinesText` and `useWholeBlock` in it reports
  * its lines, and the clip ends under the lowest that fits above the link
  * (`wholeLinesCut`). A tap on it opens the whole content in a
@@ -181,6 +191,7 @@ function FitPanel({
   children: ReactNode;
 }) {
   const tokens = useTokens();
+  const ground = useContext(CardGroundContext);
   const { strings, voice } = useEdition();
   const { size } = useWordTextSizes();
   const from = size;
@@ -217,6 +228,10 @@ function FitPanel({
     room === undefined
       ? undefined
       : wholeLinesCut(room - linkHeight - entryCardFrame.moreGap, lines);
+  // The last line shown fades out at the end of its text, which goes on under «Детальніше»; a block never fades.
+  const lastShown = cut === undefined ? undefined : lastLineShown(cut, lines);
+  const fadeWidth =
+    lastShown?.kind === 'text' ? Math.min(entryCardFrame.moreFade, lastShown.end) : 0;
   // How far down the content the opened scroll has reached, for the tab and size it was drawn at.
   const [scrolled, setScrolled] = useState<{ at: string; depth: number } | undefined>(undefined);
   const onScrolledTo = (depth: number) => {
@@ -301,6 +316,16 @@ function FitPanel({
         <>
           <View testID={`${testID}-tab-clip`} style={[styles.clip, { height: cut }]}>
             {content}
+            {lastShown?.kind === 'text' && ground !== undefined && fadeWidth > 0 && (
+              <LineEndFade
+                testID={`${testID}-tab-fade`}
+                top={lastShown.top}
+                left={lastShown.end - fadeWidth}
+                width={fadeWidth}
+                height={lastShown.bottom - lastShown.top}
+                color={ground}
+              />
+            )}
           </View>
           {link('more', false, () => {
             setOpenAt(drawnAt);
@@ -310,6 +335,49 @@ function FitPanel({
         content
       )}
     </View>
+  );
+}
+
+/**
+ * The end of a clamped tab's last line shown fading into the card's ground,
+ * `color`, over `width` (`entryCardFrame.moreFade`, or the line's whole text
+ * when shorter) up to where its text ends: no line is cut through, so this
+ * says the text goes on. It catches no touches and VoiceOver skips it.
+ */
+function LineEndFade({
+  testID,
+  top,
+  left,
+  width,
+  height,
+  color,
+}: {
+  testID: string;
+  top: number;
+  left: number;
+  width: number;
+  height: number;
+  color: string;
+}) {
+  const gradient = useId();
+  return (
+    <Svg
+      testID={testID}
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      width={width}
+      height={height}
+      style={[styles.fade, { top, left }]}
+    >
+      <Defs>
+        <LinearGradient id={gradient} x1="0" y1="0" x2="1" y2="0">
+          <Stop offset="0" stopColor={color} stopOpacity={0} />
+          <Stop offset="1" stopColor={color} stopOpacity={1} />
+        </LinearGradient>
+      </Defs>
+      <Rect width="100%" height="100%" fill={`url(#${gradient})`} />
+    </Svg>
   );
 }
 
@@ -342,6 +410,7 @@ const styles = StyleSheet.create({
   // reach out of the room.
   linkRoom: { overflow: 'visible' },
   clip: { overflow: 'hidden' },
+  fade: { position: 'absolute' },
   // A little air between the last whole line, or the scroll, and the link, both in the room (owner 13.11).
   link: { alignSelf: 'flex-start', marginTop: entryCardFrame.moreGap },
   content: { gap: entryCardFrame.panelGap },

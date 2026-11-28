@@ -276,7 +276,7 @@ describe('app config', () => {
   });
 
   it('carries the version of the milestone the code belongs to (ADR 0044)', () => {
-    expect(appConfig(context).version).toBe('0.9');
+    expect(appConfig(context).version).toBe('1.0');
   });
 
   it('turns on the React Compiler', () => {

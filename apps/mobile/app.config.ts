@@ -403,7 +403,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     name,
     slug: 'slovo',
     owner: 'slovo-app',
-    version: '0.9',
+    version: '1.0',
     scheme,
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',

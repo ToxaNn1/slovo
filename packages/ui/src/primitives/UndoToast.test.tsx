@@ -1,9 +1,10 @@
-import { EditionProvider, UndoToastProvider, useUndoToast } from '@slovo/ui';
+import { EditionProvider, OverCardToasts, UndoToastProvider, useUndoToast } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo, Pressable, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
+import { entryCardFrame, space } from '../tokens';
 
 /** Opens a toast with the message, and an undo when it has `onUndo`. */
 function Opener({
@@ -75,6 +76,37 @@ describe('UndoToast', () => {
   afterEach(() => {
     jest.useRealTimers();
     jest.restoreAllMocks();
+  });
+
+  it("raised by an Entry card's action spans the card and stays clear of its tab bar", async () => {
+    await render(
+      <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
+        <UndoToastProvider>
+          <OverCardToasts>
+            <Opener message="Marked" onUndo={jest.fn()} />
+          </OverCardToasts>
+          <Opener message="Folded" onUndo={jest.fn()} />
+        </UndoToastProvider>
+      </EditionProvider>,
+    );
+
+    await fireEvent.press(screen.getByTestId('open-Marked'));
+    // The card's own inset on its page, from edge to edge of its outline,
+    // above the page's bottom air, the card's bottom padding and its tab bar.
+    expect(screen.getByTestId('undo-toast')).toHaveStyle({
+      left: space[3],
+      right: space[3],
+      bottom: space[6] + entryCardFrame.padding.bottom + entryCardFrame.tabBar.height + space[2],
+    });
+
+    // Review 1128 (5): a page with no card, as the Weekly Recap's, keeps the usual place.
+    await fireEvent.press(screen.getByTestId('open-Folded'));
+    expect(screen.getByTestId('undo-toast-message')).toHaveTextContent('Folded');
+    expect(screen.getByTestId('undo-toast')).toHaveStyle({
+      left: space[3] + 2,
+      right: space[3] + 2,
+      bottom: space[8] + space[2],
+    });
   });
 
   it('undoes what just happened and closes', async () => {

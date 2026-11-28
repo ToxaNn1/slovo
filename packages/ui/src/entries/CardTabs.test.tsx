@@ -1,10 +1,12 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen, within } from '@testing-library/react-native';
-import { StyleSheet, Text } from 'react-native';
+import { useEffect, type ComponentRef } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { EditionProvider, FontSizeProvider } from '@slovo/ui';
-import { CardTabs } from './CardTabs';
+import { CardGroundContext, CardTabs } from './CardTabs';
+import { useWholeBlock, WholeLinesText } from '../primitives/WholeLines';
 import { useWordTextSizes } from '../providers/FontSizeProvider';
 import { testStrings } from '../test-strings';
 import { entryCardFrame, typeRoles } from '../tokens';
@@ -226,6 +228,117 @@ describe("an Entry card's clamped tab (owner 13.11)", () => {
     expect(StyleSheet.flatten(scroll.props['contentContainerStyle'])).toMatchObject({
       paddingRight: entryCardFrame.scrollGutter,
     });
+  });
+});
+
+// Review 1128 (2, 3): the last line shown fades into its owner's ground, at the end of its text.
+const ground = '#123456';
+/** The chips drawn, which Jest measures apart from the text. */
+const chips = new Set<unknown>();
+
+/** A block under the text, as a row of link chips. */
+function Chip() {
+  const { ref, onLayout } = useWholeBlock();
+  useEffect(() => {
+    chips.add(ref.current);
+  }, [ref]);
+  return <View testID="chip" ref={ref} onLayout={onLayout} />;
+}
+
+/** A clamped tab of ten lines of 28 drawn 12 in and 4 down, the sixth `last` wide, a chip after the fourth with `withChip`. */
+async function renderClamped({ last, withChip = false }: { last: number; withChip?: boolean }) {
+  // Jest measures no view, and its views share one measureLayout: each text sits 12 in and 4 down
+  // in the content, the chip 120 down.
+  jest
+    .spyOn(Text.prototype as ComponentRef<typeof Text>, 'measureLayout')
+    .mockImplementation(function (this: unknown, _content, done) {
+      if (chips.has(this)) done(0, 120, 358, 50);
+      else done(12, 4, 300, 28);
+    });
+  await render(
+    <GestureHandlerRootView>
+      <EditionProvider
+        edition={{ locale: 'en' }}
+        strings={testStrings({ wordCard: { tabMore: 'More', tabLess: 'Less' } })}
+      >
+        <CardGroundContext value={ground}>
+          <CardTabs testID="word" tabs={tabs} nameOf={(tab) => names[tab.key]}>
+            {() => (
+              <>
+                <WholeLinesText testID="lines">Lines</WholeLinesText>
+                {withChip && <Chip />}
+              </>
+            )}
+          </CardTabs>
+        </CardGroundContext>
+      </EditionProvider>
+    </GestureHandlerRootView>,
+  );
+  const layout = async (testID: string, height: number) => {
+    await fireEvent(screen.getByTestId(testID), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 358, height } },
+    });
+  };
+  await layout('word-tab-panel', 200);
+  for (let size = 0; size < 4 && screen.queryByTestId('word-tab-more') === null; size++)
+    await layout('word-tab-content', 2000);
+  await layout('word-tab-more', 16);
+  const count = withChip ? 4 : 10;
+  await fireEvent(screen.getByTestId('lines'), 'textLayout', {
+    nativeEvent: {
+      lines: Array.from({ length: count }, (_, index) => ({
+        x: 0,
+        y: index * 28,
+        width: index === 5 ? last : 300,
+        height: 28,
+      })),
+    },
+  });
+  if (withChip) await layout('chip', 50);
+}
+
+/** The stops of the gradient drawn under `node`, as react-native-svg hands them to the native view. */
+function gradientOf(node: ReturnType<typeof screen.getByTestId>): unknown {
+  if (node.type === 'RNSVGLinearGradient') return node.props['gradient'];
+  for (const child of node.children) {
+    if (typeof child === 'string') continue;
+    const found = gradientOf(child);
+    if (found !== undefined) return found;
+  }
+  return undefined;
+}
+
+describe("an Entry card's clamped tab fade (review 1128)", () => {
+  it('fades the last line shown at the end of its text into the ground its owner gives', async () => {
+    // The room under the link and its air is 200 − 16 − 8 = 176: the sixth line, 144–172, is the last.
+    await renderClamped({ last: 250 });
+
+    const fade = screen.getByTestId('word-tab-fade', { includeHiddenElements: true });
+    expect(StyleSheet.flatten(fade.props['style'])).toMatchObject({
+      position: 'absolute',
+      top: 144,
+      left: 12 + 250 - entryCardFrame.moreFade,
+    });
+    expect(fade).toHaveProp('width', entryCardFrame.moreFade);
+    expect(fade).toHaveProp('height', 28);
+    // The gradient runs from the ground, clear, to the ground, opaque (react-native-svg packs ARGB).
+    expect(gradientOf(fade)).toEqual([0, 0x123456, 1, 0xff123456 | 0]);
+  });
+
+  it('fades no further left than where a short line starts', async () => {
+    await renderClamped({ last: 30 });
+
+    const fade = screen.getByTestId('word-tab-fade', { includeHiddenElements: true });
+    expect(StyleSheet.flatten(fade.props['style'])).toMatchObject({ top: 144, left: 0 });
+    expect(fade).toHaveProp('width', 12 + 30);
+  });
+
+  it('fades nothing when the clip ends under a block, such as a row of chips', async () => {
+    // Four lines, 4–116, then the chip 120–170, the last whole row above 176.
+    await renderClamped({ last: 300, withChip: true });
+
+    expect(screen.getByTestId('word-tab-clip')).toHaveStyle({ height: 170 });
+    expect(screen.queryByTestId('word-tab-fade', { includeHiddenElements: true })).toBeNull();
   });
 });
 

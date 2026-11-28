@@ -91,11 +91,10 @@ export function WholeLinesView({ report, onLayout, ...props }: ViewProps & { rep
   );
 }
 
-/** A line drawn in one host view, by its top and height in that view. */
-interface DrawnRow {
-  readonly y: number;
-  readonly height: number;
-}
+/** A line of text or a block drawn in one host view, by its top and height in that view, a line also by its right end. */
+type DrawnRow =
+  | { readonly kind: 'text'; readonly y: number; readonly height: number; readonly end: number }
+  | { readonly kind: 'block'; readonly y: number; readonly height: number };
 
 /** Reports `lines`, drawn in `view`, by where `view` is in the content now. */
 function measureIn(
@@ -111,10 +110,19 @@ function measureIn(
   }
   const content = context?.content.current;
   if (content == null || view === null) return;
-  view.measureLayout(content, (_left, top) => {
+  view.measureLayout(content, (left, top) => {
     context?.report(
       id,
-      lines.map((line) => ({ top: top + line.y, bottom: top + line.y + line.height })),
+      lines.map((line) =>
+        line.kind === 'text'
+          ? {
+              kind: 'text',
+              top: top + line.y,
+              bottom: top + line.y + line.height,
+              end: left + line.end,
+            }
+          : { kind: 'block', top: top + line.y, bottom: top + line.y + line.height },
+      ),
     );
   });
 }
@@ -151,7 +159,14 @@ export function WholeLinesText({ onTextLayout, ...props }: TextProps) {
       ref={ref}
       onTextLayout={(event: TextLayoutEvent) => {
         onTextLayout?.(event);
-        report(event.nativeEvent.lines);
+        report(
+          event.nativeEvent.lines.map((line) => ({
+            kind: 'text',
+            y: line.y,
+            height: line.height,
+            end: line.x + line.width,
+          })),
+        );
       }}
     />
   );
@@ -168,7 +183,7 @@ export function useWholeBlock(below = 0): {
   return {
     ref,
     onLayout: ({ nativeEvent }: LayoutChangeEvent) => {
-      report([{ y: 0, height: nativeEvent.layout.height + below }]);
+      report([{ kind: 'block', y: 0, height: nativeEvent.layout.height + below }]);
     },
   };
 }

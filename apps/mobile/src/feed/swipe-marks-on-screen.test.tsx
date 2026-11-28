@@ -182,6 +182,31 @@ async function swipeRight() {
   });
 }
 
+/** Swipes the current card left, which marks it Unknown with the side swipes on. */
+async function swipeLeft() {
+  await pass(500, () => {
+    fireGestureHandler(getByGestureTestId('entry-card-side-swipe'), [
+      { state: State.BEGAN, translationX: 0, velocityX: 0 },
+      { state: State.ACTIVE, translationX: -8, velocityX: 0 },
+      { state: State.ACTIVE, translationX: -200, velocityX: 0 },
+      { state: State.END, translationX: -200, velocityX: 0 },
+    ]);
+  });
+}
+
+/** The testID of the Feed's current page, the one VoiceOver and touches reach. */
+function cardOnScreen() {
+  const pages = screen.queryAllByTestId(/^feed-card-\d+$/, hidden);
+  const current = pages.filter((page) => {
+    for (let node: typeof page | null = page; node !== null; node = node.parent)
+      if ((node.props as { accessibilityElementsHidden?: unknown }).accessibilityElementsHidden)
+        return false;
+    return true;
+  });
+  expect(current).toHaveLength(1);
+  return String(current[0]?.props['testID']);
+}
+
 /** One swipe up on the Feed, which turns it to the next page. */
 async function swipeUp() {
   await pass(500, () => {
@@ -213,6 +238,27 @@ describe('the side swipes on the Feed', () => {
     const page = yesterdayPage();
     expect(swipedPages().length).toBeGreaterThan(0);
     expect(within(page).queryAllByTestId('swipe-card', hidden)).toHaveLength(0);
+  });
+
+  it.each([
+    ['right', swipeRight],
+    ['left', swipeLeft],
+  ])('turn to the next card after a swipe %s, as the card flies off', async (_side, swipe) => {
+    // Motion on, so the card flies and the pager turns on the UI thread, as on the device.
+    // The swipe demo loops, so time passes by the step rather than until every timer is done.
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(false);
+    await open();
+    await renderApp({ index: HomeScreen }, { shell: shell() });
+    await pass(2000);
+    await fireEvent(screen.getByTestId('feed'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 844 } },
+    });
+    await pass(2000);
+    const before = cardOnScreen();
+
+    await swipe();
+    expect(cardOnScreen()).not.toBe(before);
+    expect(screen.getByTestId('undo-toast', hidden)).toBeOnTheScreen();
   });
 
   it('close the undo toast once the Feed turns to another page', async () => {

@@ -324,7 +324,7 @@ describe("the Category's Feed", () => {
       const card = cardAt(position);
       expect(card.meaning).toHaveTextContent(`Значення слова ${lemma}.`);
       expect(card.kicker).toHaveTextContent(
-        `Категорія · Емоції · ${String((position % 3) + 1)} з 3`,
+        `Категорія\u00a0· Емоції\u00a0· ${String((position % 3) + 1)}\u00a0з\u00a03`,
       );
     }
   });

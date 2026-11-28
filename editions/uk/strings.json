@@ -173,7 +173,7 @@
       "shareMessage": "Мій рівень — {level} · {name}",
       "level": "{level} · {name}",
       "levelProgress": "{progress} / {toNext} XP",
-      "levelLeft": "ще {left} XP до рівня {next}",
+      "levelLeft": "ще {left} XP до {next}-го рівня",
       "record": "рекорд",
       "bestStreak": {
         "one": "найдовша {count} день",
@@ -1565,7 +1565,7 @@
       "toasts": {
         "added": "Добірка «{name}» тепер у твоїх Колекціях."
       },
-      "feedKicker": "Добірка · {name} · {place} з {of}"
+      "feedKicker": "Добірка\u00a0· {name}\u00a0· {place}\u00a0з\u00a0{of}"
     },
     "categories": {
       "title": "Категорії",
@@ -1593,7 +1593,7 @@
       "inMix": "У ТЕМАХ",
       "known": "ЗНАЮ {x} З {n}",
       "knownStamp": "ЗНАЮ",
-      "feedKicker": "Категорія · {name} · {place} з {of}",
+      "feedKicker": "Категорія\u00a0· {name}\u00a0· {place}\u00a0з\u00a0{of}",
       "toasts": {
         "added": "«{name}» тепер у твоїх темах.",
         "removed": "«{name}» прибрано з твоїх тем."
@@ -1950,7 +1950,7 @@
         "xp": "+{count} XP",
         "wrong": "Мимо",
         "lastLife": "Життя все",
-        "answer": "Майже. Ось як правильно: {answer}"
+        "answer": "Ось як правильно: {answer}"
       },
       "prompts": {
         "meaning": "«{word}» — це…",

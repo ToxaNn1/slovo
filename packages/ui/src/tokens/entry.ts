@@ -61,6 +61,11 @@ export const entryCardFrame = {
   tabMark: { height: 5, top: -2, inset: '18%' },
   panelGap: 14,
   moreGap: 8,
+  /**
+   * How wide the fade runs at the end of the last line a clamped tab shows,
+   * over the card's ground, so the line reads as going on under «Детальніше».
+   */
+  moreFade: 72,
   /** The air between an opened tab's text and its scroll bar (owner 14.11). */
   scrollGutter: 12,
   kicker: { wedge: { width: 14, height: 12 }, gap: 8 },

@@ -249,7 +249,7 @@ export const SettingsStringsSchema = z.strictObject({
     level: templateOf('level', 'name'),
     /** The Level card's XP into the Level, e.g. «40 / 120 XP». */
     levelProgress: templateOf('progress', 'toNext'),
-    /** The Level card's XP still to go, e.g. «ще 80 XP до рівня 8». Takes `{left}` and `{next}`, the next Level. */
+    /** The Level card's XP still to go, e.g. «ще 80 XP до 8-го рівня». Takes `{left}` and `{next}`, the next Level. */
     levelLeft: templateOf('left', 'next'),
     /** The word under the Best Streak's number in its tile beside the Streak, e.g. «рекорд». */
     record: TextSchema,

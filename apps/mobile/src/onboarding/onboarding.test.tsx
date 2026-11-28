@@ -24,6 +24,19 @@ jest.mock('expo-constants', () => ({
   default: { expoConfig: { extra: { edition: { wordOfTheDayFontFamily: 'Unbounded' } } } },
 }));
 
+// The installed binary has the time picker; a plain view stands in for its native one.
+jest.mock('../device/device-native-modules', () => ({
+  nativeModules: {
+    has: () => true,
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    load: () => (require('react-native') as typeof import('react-native')).View,
+  },
+}));
+// The device's clock reads 20:35, as on the app pass.
+jest.mock('../device/device-clock', () => ({
+  deviceClock: { now: () => new Date(2026, 10, 27, 20, 35), timeZone: () => 'Europe/Kyiv' },
+}));
+
 const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
 
 function word(id: string, lemma: string): Word {
@@ -296,6 +309,26 @@ describe('the onboarding', () => {
 
     expect(screen.queryByText(strings.level.title)).toBeNull();
     expect(screen.getByText(strings.dailyGoal.title)).toBeTruthy();
+  });
+
+  // App pass 27.11 (B5): «Інший час» opened the picker at the time it was, 20:35.
+  it("opens «Інший час» at the Edition's default time for the Word", async () => {
+    await renderOnboarding();
+    for (const step of [
+      'onboarding-start',
+      'onboarding-next',
+      'onboarding-next',
+      'onboarding-next',
+      'onboarding-answer-good',
+      'onboarding-later',
+      'onboarding-done',
+    ])
+      await press(step);
+    await press('onboarding-time-other');
+
+    const start = screen.getByTestId('time-picker').props['value'] as Date;
+    expect([start.getHours(), start.getMinutes()]).toEqual([9, 0]);
+    expect(start.getDate()).toBe(27);
   });
 });
 
