@@ -231,11 +231,13 @@ export async function openOnboarding({
   const wordId = wordOfTheDay.chosen()?.wordId;
   const word = wordId === undefined ? undefined : await entries.get(wordId);
   const firstWord = word?.kind === 'word' ? await buildWordCard({ word, entries }) : undefined;
-  const asksConsent = await statisticsConsentPending(userState, consent);
+  // The same answer as the switch on «Конфіденційність»: with nothing it governs, no one is asked or told.
+  const governed = statisticsGoverned(edition);
+  const asksConsent = governed && (await statisticsConsentPending(userState, consent));
   const statisticsLine =
+    governed &&
     !asksConsent &&
     edition.isFeatureEnabled('statisticsConsent') &&
-    statisticsGoverned(edition) &&
     (await sharesStatistics(userState, consent));
   const steps = STEPS.filter((kind) => {
     const feature = STEP_SWITCH[kind];
