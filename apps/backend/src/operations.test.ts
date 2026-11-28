@@ -218,6 +218,21 @@ describe('/docs', () => {
     expect(response.headers.get('content-type')).toContain('text/html');
   });
 
+  it('loads its viewer only as one exact version that the page checks by hash', async () => {
+    const { request } = testApp();
+
+    const html = await (await request('/docs')).text();
+    const scripts = [...html.matchAll(/<script src="([^"]+)"([^>]*)>/g)];
+
+    expect(scripts).toHaveLength(1);
+    const [, src = '', rest = ''] = scripts[0] ?? [];
+    expect(src).toMatch(
+      /^https:\/\/cdn\.jsdelivr\.net\/npm\/@scalar\/api-reference@\d+\.\d+\.\d+\//,
+    );
+    expect(rest).toMatch(/integrity="sha384-[A-Za-z0-9+/]+={0,2}"/);
+    expect(rest).toContain('crossorigin="anonymous"');
+  });
+
   it("serves the contract's description, which the repo commits, with the server it is read from", async () => {
     const { request } = testApp();
 

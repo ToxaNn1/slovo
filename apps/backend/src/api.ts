@@ -203,7 +203,61 @@ export function createApiHandler({
         specPath: '/docs/openapi.json',
         docsTitle: apiDescriptionOptions.specGenerateOptions.info.title,
         ...apiDescriptionOptions,
+        renderDocsHtml: docsHtml,
       }),
     ],
   });
+}
+
+/**
+ * The viewer of /docs, one exact version of Scalar's standalone bundle, which
+ * the browser runs only if it hashes to `integrity`: the page shares its
+ * origin with /admin, so a changed file on the CDN must not run there. A new
+ * version takes its new hash (`openssl dgst -sha384 -binary standalone.js |
+ * openssl base64 -A`, from the npm tarball).
+ */
+const DOCS_SCRIPT = {
+  url: 'https://cdn.jsdelivr.net/npm/@scalar/api-reference@1.78.1/dist/browser/standalone.js',
+  integrity: 'sha384-HVpqul+lojb2wwVK554SYr5rD2XqgJZqkYKGl4MyZarBSg+rHR9F0x1LVgzgj7JZ',
+} as const;
+
+const escapeHtml = (text: string) =>
+  text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/** JSON that cannot close the inline script it stands in. */
+const scriptJson = (value: unknown) =>
+  JSON.stringify(value)
+    .replace(/&/g, '\\u0026')
+    .replace(/'/g, '\\u0027')
+    .replace(/</g, '\\u003C')
+    .replace(/>/g, '\\u003E')
+    .replace(/\//g, '\\u002F');
+
+/** The /docs page: the plugin's own Scalar page, with the pinned and hashed script. */
+function docsHtml(
+  _specUrl: string,
+  title: string,
+  head: string,
+  _scriptUrl: string,
+  config: Record<string, unknown> | undefined,
+  spec: unknown,
+): string {
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>${escapeHtml(title)}</title>
+    ${head}
+  </head>
+  <body>
+    <div id="app"></div>
+    <script src="${DOCS_SCRIPT.url}" integrity="${DOCS_SCRIPT.integrity}" crossorigin="anonymous"></script>
+    <script>
+      const scalarConfig = ${scriptJson({ content: JSON.stringify(spec), ...config })}
+      Scalar.createApiReference('#app', scalarConfig)
+    </script>
+  </body>
+</html>
+`;
 }
