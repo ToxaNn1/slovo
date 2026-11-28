@@ -451,11 +451,11 @@ describe('The searchNoResult event', () => {
     tip: tip('t_ba'),
   };
 
-  function trackedOver(results: SearchResults, answers = true) {
+  function trackedOver(results: SearchResults, answers = true, answersByMeaning = answers) {
     const events: unknown[] = [];
     const inner: Search = {
       answers: () => answers,
-      answersByMeaning: () => answers,
+      answersByMeaning: () => answersByMeaning,
       search: () => Promise.resolve(results),
     };
     const search = withNoResultEvent(inner, {
@@ -479,6 +479,14 @@ describe('The searchNoResult event', () => {
     const { search, events } = trackedOver(NONE, false);
 
     await search.search('я');
+
+    expect(events).toEqual([]);
+  });
+
+  it('goes for no query the screen still asks to keep typing, too short for «За значенням»', async () => {
+    const { search, events } = trackedOver(NONE, true, false);
+
+    await search.search('яб');
 
     expect(events).toEqual([]);
   });
