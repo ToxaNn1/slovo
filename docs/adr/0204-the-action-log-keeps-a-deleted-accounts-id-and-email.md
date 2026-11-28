@@ -16,7 +16,7 @@ Decision of 2026-11-20, the owner's call on audit finding 4.M4.
 
 ## Consequences
 
-- An email erased through the admin stays in `action_log`; the privacy text names this retention.
+- An email erased through the admin stays in `action_log`; the privacy policy says so in «Акаунт SLOVO і синхронізація», and says a reader's own deletion leaves no row.
 - A request to erase the row itself would need a superseding ADR, since the log is never edited.
 
 ## Considered Options
