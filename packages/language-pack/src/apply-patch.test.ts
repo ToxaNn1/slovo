@@ -128,6 +128,19 @@ describe('applying a Patch', () => {
     expect(await pack.listIds('word')).toContain(added.id);
   });
 
+  it('retires a Word with the Word that replaces it, and lists the two', async () => {
+    const pack = writablePack();
+    const [, second] = snapshot.words;
+    if (second === undefined) throw new Error('The fixture has two Words');
+    const replaced: Word = { ...first, retired: true, replacedBy: second.id };
+    expect(await pack.listReplacedWords()).toEqual([]);
+
+    await applyPatch(pack.writer, patchOf({ words: [replaced] }), '"next"');
+
+    expect(await pack.getEntries([first.id])).toEqual([replaced]);
+    expect(await pack.listReplacedWords()).toEqual([{ id: first.id, replacedBy: second.id }]);
+  });
+
   it('brings a Word its Short Definition and takes it away again', async () => {
     const pack = writablePack();
     const short: Word = { ...first, shortDefinition: 'A short meaning.' };
