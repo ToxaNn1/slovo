@@ -18,6 +18,7 @@ The CEO runs this every day so that the Board is fresh before the owner's 9:00 T
 6. **Cards.** File the cards that today's state calls for. Every open risk to the 15.12 release has one.
 7. **Journal.** One entry for the standup, one for each action taken. Then save the day's entries, oldest first, to `~/projects/WORD/office/journal/<YYYY-MM-DD>.md`: the owner's copy outside the Board.
 8. **Summary.** Reply in Ukrainian, 10 lines at most: new cards by priority, the three KPIs against the plan, what the team does today, what waits for the owner longest.
+9. **Telegram.** Send the owner one line through the Telegram Bot API (`sendMessage` with `TELEGRAM_BOT_TOKEN` to `TELEGRAM_CHAT_ID`), starting «Офіс:»: cards waiting for the owner (P0 count), PRs waiting for his «так», crash-free users. It is the «Офіс» line of the card `ceo-001`; the backend's 09:00 digest stays separate. If the send fails, name it in the summary.
 
 ## The schedule
 
@@ -28,4 +29,4 @@ On since 28.11.2026: the owner approved the card `ceo-002`. It is the cloud sche
 - Model: Opus.
 - Prompt: kept in the scheduled task. It tells the run to act as the `ceo` agent, to follow this document, and what a cloud session lacks.
 
-A cloud session has no `~/projects/WORD` and no Sentry or PostHog key. It skips the inbox upload of step 1 and the Journal copy of step 7, writes everything to the Board, and ends with the summary as the standup's Journal entry. A local run (`Запусти агента ceo: ранкова планірка`) does both skipped steps.
+A cloud session has no `~/projects/WORD`; since 28.11 the environment `slovo` holds the Sentry, PostHog and Telegram keys. It skips the inbox upload of step 1 and the Journal copy of step 7, writes everything to the Board, and ends with the summary as the standup's Journal entry. A local run (`Запусти агента ceo: ранкова планірка`) does both skipped steps.
