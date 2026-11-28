@@ -1,0 +1,2 @@
+# snapshot content v15432, plan[671:672]
+EDIT 671 w_8l2x5a акрополь [0] w_8l2x5a v3 content v15433 batch e93fd462-f1f0-48d1-a209-978f14f9e739 | $ pnpm --filter @slovo/content content edit word w_8l2x5a /home/user/slovo/.short-1128/edits/w_8l2x5a.json --edition uk | $ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_8l2x5a /home/user/slovo/.short-1128/edits/w_8l2x5a.json --edition uk
