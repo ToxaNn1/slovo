@@ -107,14 +107,21 @@ export function accountRequests(backend: Pick<Backend, 'account'>, editionId: st
       if (!answer.ok) return answer;
       return { ok: true, token: answer.output.token, email: answer.output.email };
     },
-    /** The email of the Session's Account. */
-    async me(
-      token: string,
-    ): Promise<{ readonly ok: true; readonly email: string } | AccountApiFailure> {
+    /** The email of the Session's Account and the Google and Apple sign-in methods recorded for it. */
+    async me(token: string): Promise<
+      | {
+          readonly ok: true;
+          readonly email: string;
+          readonly signInMethods: readonly ('google' | 'apple')[];
+        }
+      | AccountApiFailure
+    > {
       const answer = await answerOf(account.me(undefined, { context: { token } }), ({ code }) =>
         code === 'UNAUTHORIZED' ? unauthorized : undefined,
       );
-      return answer.ok ? { ok: true, email: answer.output.email } : answer;
+      return answer.ok
+        ? { ok: true, email: answer.output.email, signInMethods: answer.output.signInMethods }
+        : answer;
     },
     /** Ends the Session. */
     signOut: (token: string) =>
@@ -122,8 +129,18 @@ export function accountRequests(backend: Pick<Backend, 'account'>, editionId: st
     /** Ends every Session of the Session's Account. */
     signOutEverywhere: (token: string) =>
       actWithSession(() => account.signOutEverywhere(undefined, { context: { token } })),
-    /** Deletes the Session's Account with every Session of it, for good. */
-    delete: (token: string) =>
-      actWithSession(() => account.delete(undefined, { context: { token } })),
+    /**
+     * Deletes the Session's Account with every Session of it, for good; with
+     * Apple's fresh authorization code, the backend revokes SLOVO at Apple first.
+     */
+    delete: (token: string, appleAuthorizationCode?: string) =>
+      actWithSession(() =>
+        account.delete(
+          appleAuthorizationCode === undefined ? undefined : { appleAuthorizationCode },
+          {
+            context: { token },
+          },
+        ),
+      ),
   };
 }

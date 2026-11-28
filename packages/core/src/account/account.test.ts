@@ -1109,9 +1109,119 @@ describe('the Account signs in with Apple', () => {
 
     appleSheet.signsIn(anna.email);
     await account.signInWithApple();
+    appleSheet.authorizes();
     await account.delete();
     expect(account.state).toMatchObject({ status: 'signed-out', problem: undefined });
     expect(api.account.accounts).toEqual([]);
+  });
+});
+
+describe('the Account deletes an Account with Sign in with Apple', () => {
+  it("sends a fresh authorization code from Apple's sheet with the deletion", async () => {
+    const { account, api, appleSheet } = await setup();
+    appleSheet.signsIn(anna.email);
+    await account.signInWithApple();
+    appleSheet.authorizes();
+
+    await account.delete();
+
+    expect(appleSheet.authorizations).toBe(1);
+    expect(api.account.deletions).toEqual([
+      { email: 'anna@mail.com', appleAuthorizationCode: 'apple-code:1' },
+    ]);
+    expect(account.state).toEqual({
+      status: 'signed-out',
+      inFlight: undefined,
+      problem: undefined,
+    });
+  });
+
+  it('asks Apple when the Account has Sign in with Apple, whatever signed this device in', async () => {
+    const { account, api, appleSheet } = await setup();
+    appleSheet.signsIn(anna.email);
+    await account.signInWithApple();
+    await account.signOut();
+    await account.requestCode(anna.email);
+    await account.verifyCode('100001');
+    appleSheet.authorizes();
+
+    await account.delete();
+
+    expect(api.account.deletions).toEqual([
+      { email: 'anna@mail.com', appleAuthorizationCode: 'apple-code:1' },
+    ]);
+  });
+
+  it("keeps the Account, with no problem, when the reader cancels Apple's sheet", async () => {
+    const { account, api, appleSheet, sessions } = await setup();
+    appleSheet.signsIn(anna.email);
+    await account.signInWithApple();
+    appleSheet.cancelsAuthorization();
+
+    await account.delete();
+
+    expect(account.state).toEqual({
+      status: 'signed-in',
+      email: 'anna@mail.com',
+      inFlight: undefined,
+      problem: undefined,
+    });
+    expect(api.calls).not.toContain('account.delete');
+    expect(api.account.accounts).toEqual(['anna@mail.com']);
+    expect(await sessions.read()).toMatchObject({ email: 'anna@mail.com' });
+  });
+
+  it.each(['unavailable', 'unexpected'] as const)(
+    "deletes without a code when Apple's sheet is %s",
+    async (reason) => {
+      const { account, api, appleSheet } = await setup();
+      appleSheet.signsIn(anna.email);
+      await account.signInWithApple();
+      appleSheet.failsAuthorization(reason);
+
+      await account.delete();
+
+      expect(api.account.deletions).toEqual([
+        { email: 'anna@mail.com', appleAuthorizationCode: undefined },
+      ]);
+      expect(account.state).toMatchObject({ status: 'signed-out', problem: undefined });
+    },
+  );
+
+  it("shows the deletion in flight while Apple's sheet is up", async () => {
+    const { account, appleSheet } = await setup();
+    appleSheet.signsIn(anna.email);
+    await account.signInWithApple();
+    appleSheet.authorizes();
+
+    const deleting = account.delete();
+    expect(account.state).toMatchObject({ status: 'signed-in', inFlight: 'delete' });
+    await deleting;
+    expect(account.state).toMatchObject({ status: 'signed-out', inFlight: undefined });
+  });
+
+  it("never shows Apple's sheet for an Account without Sign in with Apple", async () => {
+    const { account, api, appleSheet } = await signedIn();
+
+    await account.delete();
+
+    expect(appleSheet.authorizations).toBe(0);
+    expect(api.account.deletions).toEqual([
+      { email: 'anna@mail.com', appleAuthorizationCode: undefined },
+    ]);
+  });
+
+  it('stays signed in and says so when the Account cannot be read before the deletion', async () => {
+    const { account, api, appleSheet } = await setup();
+    appleSheet.signsIn(anna.email);
+    await account.signInWithApple();
+    api.failNext({ reason: 'unexpected', procedure: 'account.me' });
+
+    await account.delete();
+
+    expect(appleSheet.authorizations).toBe(0);
+    expect(account.state).toMatchObject({ status: 'signed-in', problem: 'unexpected' });
+    expect(api.account.accounts).toEqual(['anna@mail.com']);
   });
 });
 
