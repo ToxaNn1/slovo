@@ -142,10 +142,18 @@ export async function edit(
   return written === undefined ? 1 : 0;
 }
 
-/** Retires a record at its current record version: it stays, marked retired. */
+/**
+ * Retires a record at its current record version: it stays, marked retired.
+ * `replacedBy` names the Word that replaces a Retired Word (ADR 0212).
+ */
 export async function retire(
   api: ApiClient,
-  { editionId, kind, id }: { editionId: string; kind: RecordKind; id: string },
+  {
+    editionId,
+    kind,
+    id,
+    replacedBy,
+  }: { editionId: string; kind: RecordKind; id: string; replacedBy?: string | undefined },
   io: Io,
 ): Promise<number> {
   const recordVersion = await currentVersion(api, { editionId, kind, id }, io);
@@ -155,7 +163,7 @@ export async function retire(
   const written = await attempt(
     id,
     io,
-    () => api.admin.content.retire({ editionId, kind, id, batchId, recordVersion }),
+    () => api.admin.content.retire({ editionId, kind, id, batchId, recordVersion, replacedBy }),
     writtenLine,
   );
   return written === undefined ? 1 : 0;

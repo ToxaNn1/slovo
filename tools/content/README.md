@@ -10,6 +10,7 @@ Kinds: `word`, `correction`, `idiom`, `synonymRow`, `tip`, `curatedCollection`.
 pnpm content add <kind> <array.json | drafts folder> --edition uk
 pnpm content edit <kind> <id> <file.json> --edition uk
 pnpm content retire <kind> <id> --edition uk
+pnpm content retire word <id> --replaced-by <id> --edition uk
 pnpm content flag <kind> <id> --reason <text> --edition uk
 ```
 
@@ -17,7 +18,7 @@ Each run opens one batch; the batch publishes at once and lands «не пере�
 
 - `add` sends each record of a JSON array, or each `*.json` draft of a folder; the backend issues the ids, so an id in a draft is left out.
 - `edit` replaces the record's fields with the file's. The file names the record version it was made from as `recordVersion` (the version a write printed); without it the edit is made from the current one.
-- `retire` retires the record at its current version: it stays, marked retired.
+- `retire` retires the record at its current version: it stays, marked retired. `--replaced-by <id>`, on a Word only, names the Word that replaces it, so the reader's records move to that Word (ADR 0212). The backend refuses a link unless it names a live Word of the Edition that is not the Word itself; the same command on an already Retired Word gives it a link or changes it, and a retire without the option keeps the link the Word has.
 - `flag` changes no content: the reason is an Action log row the Черга контенту lists.
 
 ## Check drafts: `check`
