@@ -19,6 +19,7 @@ import {
   correction,
   fakeClock,
   randomOf,
+  settle,
   steppingRandom,
   testEdition,
   testSchedule,
@@ -285,6 +286,22 @@ describe('a Collection Link', () => {
     // The author's share, then the reader's try and its 3 tries again.
     expect(api.calls).toHaveLength(5);
     expect(app.collections.list).toEqual([]);
+  });
+
+  it('says there is no connection when the composition closes while a try again waits', async () => {
+    const time = fakeClock();
+    const timers = testSchedule(time);
+    const { app, api, share } = await reader({ schedule: timers.schedule });
+    const id = await share(link('Осінь', ['w_one']));
+    api.online = false;
+
+    const opened = app.collectionLinkCopy.preview(id);
+    await settle();
+    await app.close();
+
+    expect(await opened).toEqual({ ok: false, reason: 'offline' });
+    // The author's share, then the reader's one try: nothing is tried once closed.
+    expect(api.calls).toHaveLength(2);
   });
 
   it('says there is no connection after one try in a composition without a schedule', async () => {

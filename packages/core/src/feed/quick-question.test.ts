@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import type { Word } from '@slovo/contracts';
 
-import { openComposition, type AnalyticsPort, type FeatureSwitch, type FeedCard } from '../index';
+import {
+  openComposition,
+  type AnalyticsPort,
+  type FeatureSwitch,
+  type FeedCard,
+  type UserStatePort,
+} from '../index';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, seededRandom, testEdition, word, analyticsInto } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
@@ -34,7 +40,13 @@ async function run({
   records = new Map<string, string>(),
   on = ALL_ON,
   of = words,
-}: { records?: Map<string, string>; on?: readonly FeatureSwitch[]; of?: readonly Word[] } = {}) {
+  port = createMemoryUserStatePort(records),
+}: {
+  records?: Map<string, string>;
+  on?: readonly FeatureSwitch[];
+  of?: readonly Word[];
+  port?: UserStatePort;
+} = {}) {
   const events: [string, unknown][] = [];
   const analytics: AnalyticsPort = {
     // The onboarding, which opens on a fresh user state, has events of its own.
@@ -47,7 +59,7 @@ async function run({
   const app = await openComposition({
     content: packOf(of),
     edition: testEdition({ isFeatureEnabled: (feature) => on.includes(feature) }),
-    userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+    userState: await openUserState({ port }),
     clock: time.clock,
     random: seededRandom(7),
     analytics: analyticsInto(analytics),
@@ -229,6 +241,30 @@ describe('a Quick Question answered', () => {
       'quickQuestionAnswered',
       { right: false, mode: 'guess-word', entryKind: 'word', rarity: 3, categoryId: 'test' },
     ]);
+  });
+
+  it('can be answered again after its answer fails to write', async () => {
+    const memory = createMemoryUserStatePort(new Map());
+    let failing = false;
+    const { app } = await run({
+      port: {
+        ...memory,
+        write: (changes) =>
+          failing ? Promise.reject(new Error('The disk is full')) : memory.write(changes),
+      },
+    });
+    const { position } = await firstQuestion(app);
+    const correct = await rightOfFirst();
+
+    failing = true;
+    await expect(app.feed.answerQuickQuestion(position, correct)).rejects.toThrow(
+      'The disk is full',
+    );
+    failing = false;
+
+    expect(await app.feed.answerQuickQuestion(position, correct)).toBe(true);
+    expect(app.xpLog.state).toMatchObject({ total: 2, today: 2 });
+    expect(app.knowledge.state.confirmed.total).toBe(1);
   });
 
   it('is answered once: a second answer changes nothing', async () => {

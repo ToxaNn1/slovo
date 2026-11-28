@@ -121,6 +121,26 @@ describe('The Correction Types', () => {
     });
   });
 
+  it('follows a Correction hidden and restored, and tells the Dashboard', async () => {
+    const { app } = await run();
+    let told = 0;
+    app.correctionTypes.subscribe(() => (told += 1));
+
+    await app.hiddenEntries.hide('c_two');
+    await settle();
+    expect(app.correctionTypes.tiles).toEqual([
+      { type: 'surzhyk', total: 1, workedThrough: 0 },
+      { type: 'calque', total: 1, workedThrough: 0 },
+    ]);
+    expect(told).toBe(1);
+    const block = app.dashboard.blocks.find(({ kind }) => kind === 'correctionTypes');
+    expect(block).toMatchObject({ tiles: [{ type: 'surzhyk' }, { type: 'calque', total: 1 }] });
+
+    await app.hiddenEntries.restore('c_two');
+    await settle();
+    expect(app.correctionTypes.tiles[1]).toEqual({ type: 'calque', total: 2, workedThrough: 0 });
+  });
+
   it('grows «розібрано» when a Correction is Seen on the Feed', async () => {
     const { app, time } = await run();
     while (!app.feed.cards.some(({ entryId }) => entryId === 'w_one')) await app.feed.next();
