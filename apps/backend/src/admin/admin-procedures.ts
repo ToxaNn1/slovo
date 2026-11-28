@@ -602,10 +602,10 @@ export function adminProcedures({
       }),
       retire: content.retire.handler(async ({ context, input, errors }) => {
         const writer = actorOf(context.caller);
-        const { id, recordVersion, ...write } = input;
+        const { id, recordVersion, replacedBy, ...write } = input;
         const written = await contentWrites.write(writer, {
           ...write,
-          change: { op: 'retire', id, recordVersion },
+          change: { op: 'retire', id, recordVersion, replacedBy },
         });
         if (!written.ok) throw refusalOf(written, errors);
         return written.written;
