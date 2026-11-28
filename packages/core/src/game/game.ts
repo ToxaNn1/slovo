@@ -463,6 +463,9 @@ export async function openGame({
     void analytics?.track('gameStarted', { mode: modeId }).catch(() => undefined);
   }
 
+  /** The Games an answer or the time up is ending, which stay in play until their awards are written. */
+  const ending = new WeakSet<PlayingGame>();
+
   /**
    * Ends the Game in play once the clock that `ran` started has run out,
    * unless the Game paused or ended since.
@@ -471,7 +474,14 @@ export async function openGame({
     const game = state.current;
     if (game?.time !== ran || !inPlay(game)) return;
     time.stop();
-    await finish(game, { ...game, time: TIME_UP, status: 'time-up' });
+    // A letter opened meanwhile is no move; after a failed write the Game ends on its next answer.
+    ending.add(game);
+    try {
+      await finish(game, { ...game, time: TIME_UP, status: 'time-up' });
+    } catch (error) {
+      ending.delete(game);
+      throw error;
+    }
   }
 
   /** The move of the Round machine kept: the Rounds planned after it; the Game it made is for the caller to show. */
@@ -479,9 +489,6 @@ export async function openGame({
     if (played !== undefined && move !== undefined) played = { ...played, plan: move.plan };
     return move?.game;
   }
-
-  /** The Games an answer is ending, which stay in play until their awards are written. */
-  const ending = new WeakSet<PlayingGame>();
 
   async function answer(given: GivenAnswer): Promise<void> {
     const game = state.current;
@@ -641,7 +648,9 @@ export async function openGame({
     openLetter() {
       const game = state.current;
       const opened =
-        played && game && inPlay(game) ? openRoundLetter(played.plan, game) : undefined;
+        played && game && inPlay(game) && !ending.has(game)
+          ? openRoundLetter(played.plan, game)
+          : undefined;
       if (opened !== undefined) changeCurrent(opened);
     },
     waitFor(done) {

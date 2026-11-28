@@ -1439,6 +1439,39 @@ describe('the edges of a Game in play', () => {
     expect(now(game)).toMatchObject({ status: 'playing', roundsPassed: 2 });
   });
 
+  it('shows the Game over and ends the Game once when a letter is opened while the time-up is written', async () => {
+    const typed: Build = (of) => ({
+      form: 'typed',
+      prompt: of.primaryDefinition,
+      expected: of.lemma,
+      blanks: { inPlace: [] },
+      sheet: sheetOf(of.lemma),
+    });
+    let holding = false;
+    let release: (() => void) | undefined;
+    let writing: (() => void) | undefined;
+    const written = new Promise<void>((resolve) => (writing = resolve));
+    const write = () => {
+      if (!holding) return Promise.resolve();
+      holding = false;
+      writing?.();
+      return new Promise<void>((resolve) => (release = resolve));
+    };
+    const { game, advance, awarded } = await start(typed, timed, undefined, { write });
+
+    holding = true;
+    const ran = advance(20_000);
+    await written;
+    game.openLetter();
+    release?.();
+    await ran;
+    expect(now(game)).toMatchObject({ status: 'time-up' });
+    await game.answer({ form: 'typed', text: 'nothing' });
+
+    expect(now(game)).toMatchObject({ status: 'time-up' });
+    expect(awarded.filter((source) => source === 'game-finished')).toHaveLength(1);
+  });
+
   it('opens no letter before a Game starts', async () => {
     const { game } = await open(mode(pick));
 
