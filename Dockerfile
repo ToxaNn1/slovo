@@ -5,7 +5,8 @@
 # Language Pack is not built here: content lives in the Deployment's Postgres
 # and reaches the app as Patches (ADR 0090). `.railway/railway.ts` names the release
 # command and the health route.
-FROM node:22.23.4-bookworm-slim AS base
+# The tag names the version; the digest pins the image, which Dependabot moves.
+FROM node:22.23.4-bookworm-slim@sha256:5ec23b7c622b00547753bc6ffd78085dd868a68aeb41c8e0a1418f033e13d96d AS base
 
 # `production` makes the server refuse to send to Mailpit and leaves the
 # development dependencies out of the install. Corepack keeps the pnpm of
