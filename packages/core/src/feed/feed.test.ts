@@ -1301,6 +1301,45 @@ describe('Corrections in the Feed', () => {
       expect(await feed.openLinkedCorrection(position, 'c_protiazi')).toBe(position + 1);
     });
 
+    it('marks the Word Seen when the reader swipes on while a hide builds its card again', async () => {
+      const pack = createMemoryContentPort({ words, corrections: linkedCorrections });
+      let hold: (() => void) | undefined;
+      let held: (() => void) | undefined;
+      const reached = new Promise<void>((resolve) => (held = resolve));
+      let holding = false;
+      const content: ContentReadPort = {
+        ...pack,
+        async getEntries(ids) {
+          if (holding && ids.includes(linked.id)) {
+            holding = false;
+            held?.();
+            await new Promise<void>((resolve) => (hold = resolve));
+          }
+          return pack.getEntries(ids);
+        },
+      };
+      const records = new Map<string, string>();
+      const time = fakeClock('2026-10-11T09:00:00+03:00');
+      const app = await runApp({ records, clock: time.clock, content });
+      const { feed } = app;
+      while (!feed.cards.some((card) => card.entryId === linked.id)) await feed.next();
+      const position = feed.cards.findIndex((card) => card.entryId === linked.id);
+      if (feed.cards.length === position + 1) await feed.next();
+      await feed.show(position);
+      time.advance(SEEN_DWELL_MS);
+
+      holding = true;
+      const hidden = app.hide({ kind: 'entry', entryId: 'c_protiazi' });
+      await reached;
+      // The swipe waits its turn behind the hide, which builds the Word card again.
+      const swiped = feed.show(position + 1);
+      hold?.();
+      await Promise.all([hidden, swiped]);
+
+      expect(wordCardOf(feed.cards[position])?.linkedCorrections).toEqual([]);
+      expect(records.get(`feed.seen.${linked.id}`)).toBeDefined();
+    });
+
     it('builds again only the Word cards whose links a hide changes, and keeps every other card as it was', async () => {
       const app = await runApp({ words, corrections: linkedCorrections });
       const { feed } = app;
