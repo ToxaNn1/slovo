@@ -275,8 +275,10 @@ function found(results: SearchResults): number {
 }
 
 /**
- * Search that tells Analytics of each query it answers with nothing found
- * (spec #1709): only the query's length goes, never its text.
+ * Search that tells Analytics of each query that found nothing where the
+ * screen reads «Нічого не знайдено» (spec #1709): one «За значенням» answers
+ * too, never one the screen still asks to keep typing. Only the query's
+ * length goes, never its text.
  */
 export function withNoResultEvent(search: Search, analytics: Pick<Analytics, 'track'>): Search {
   return {
@@ -284,7 +286,7 @@ export function withNoResultEvent(search: Search, analytics: Pick<Analytics, 'tr
     answersByMeaning: (query) => search.answersByMeaning(query),
     async search(query) {
       const results = await search.search(query);
-      if (search.answers(query) && found(results) === 0)
+      if (search.answersByMeaning(query) && found(results) === 0)
         await analytics
           .track('searchNoResult', { queryLength: Array.from(query.trim()).length })
           .catch(() => undefined);
