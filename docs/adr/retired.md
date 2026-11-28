@@ -163,3 +163,4 @@ Every ADR number with no file, one line each: unused, merged into another ADR, o
 - 0190: removed, not a lasting decision; the history is in the commit log.
 - 0191: removed, not a lasting decision; the history is in the commit log.
 - 0192: removed, not a lasting decision; the history is in the commit log.
+- 0197: removed, not a lasting decision; a Game of «На час» lasts 60 seconds (`TIMED_GAME_LENGTH`, the glossary's Game Mode); the history is in the commit log.
