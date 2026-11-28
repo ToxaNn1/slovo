@@ -116,16 +116,19 @@ export function createQuality({
       const cut = Math.min(days, SENTRY_RETENTION_DAYS);
       const to = clock.now();
       const read = (sentryRead: SentryRead) => kpi(sentryRead, editionId, cut);
-      const [crashFree, crashes, errors, newIssues, backendP95, appStart] = await Promise.all([
-        read('crashFree'),
-        read('crashes'),
-        read('errors'),
-        read('newIssues'),
-        read('backendP95'),
-        read('appStart'),
-      ]);
+      const [crashFree, crashFreeUsers, crashes, errors, newIssues, backendP95, appStart] =
+        await Promise.all([
+          read('crashFree'),
+          read('crashFreeUsers'),
+          read('crashes'),
+          read('errors'),
+          read('newIssues'),
+          read('backendP95'),
+          read('appStart'),
+        ]);
       const kpis: Record<SentryRead, QualityKpi> = {
         crashFree,
+        crashFreeUsers,
         crashes,
         errors,
         newIssues,

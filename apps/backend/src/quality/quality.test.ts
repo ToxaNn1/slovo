@@ -129,6 +129,7 @@ describe('the Sentry numbers of Якість', () => {
     const backend = await backendWithOwner();
     backend.sentry.set('crashFree', 99.5);
     backend.sentry.set('crashFree', 98, 'yesterday');
+    backend.sentry.set('crashFreeUsers', 99.8);
     backend.sentry.set('newIssues', 0);
     const now = new Date();
 
@@ -143,6 +144,7 @@ describe('the Sentry numbers of Якість', () => {
       atLeast: false,
       fetchedAt: now.toISOString(),
     });
+    expect(answer.kpis.crashFreeUsers).toMatchObject({ state: 'ok', value: 99.8 });
     expect(answer.kpis.newIssues).toMatchObject({ state: 'ok', value: 0 });
     expect(answer.kpis.backendP95).toMatchObject({ state: 'ok', value: null });
   });

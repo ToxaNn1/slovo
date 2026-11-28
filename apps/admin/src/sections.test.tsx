@@ -42,7 +42,7 @@ const OPENED = ORDER.filter((title) => !BUILT.includes(title));
 async function settled(section: HTMLElement, title: string) {
   const inside = within(section);
   if (title !== 'Якість') return inside.getByText('Поки що порожньо');
-  await inside.findByRole('listitem', { name: 'Без збоїв' });
+  await inside.findByRole('listitem', { name: 'Сесії без збоїв' });
   return inside.findByRole('figure', { name: 'Тривалість CI' });
 }
 

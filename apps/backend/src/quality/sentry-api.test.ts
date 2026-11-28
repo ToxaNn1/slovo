@@ -33,6 +33,11 @@ describe('the Sentry API', () => {
     );
     expect(await sessions.sentry.read('crashFree', window)).toEqual({ ok: true, value: 99.5 });
 
+    const users = sentryAnswering(() =>
+      json({ groups: [{ by: {}, totals: { 'crash_free_rate(user)': 0.998 } }] }),
+    );
+    expect(await users.sentry.read('crashFreeUsers', window)).toEqual({ ok: true, value: 99.8 });
+
     const issues = sentryAnswering(() => json([{ count: '12' }, { count: '3' }]));
     expect(await issues.sentry.read('newIssues', window)).toEqual({ ok: true, value: 2 });
     expect(await issues.sentry.read('newIssueEvents', window)).toEqual({ ok: true, value: 12 });

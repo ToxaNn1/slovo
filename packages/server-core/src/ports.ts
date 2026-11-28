@@ -538,7 +538,7 @@ export interface EasSource {
 
 /** What Якість reads of Sentry (ADR 0048). */
 export type SentryRead =
-  'crashFree' | 'crashes' | 'errors' | 'newIssues' | 'backendP95' | 'appStart';
+  'crashFree' | 'crashFreeUsers' | 'crashes' | 'errors' | 'newIssues' | 'backendP95' | 'appStart';
 
 /** The window a Sentry read covers: one Edition's, or every Edition's when none is named. */
 export interface SentryWindow {

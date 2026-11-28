@@ -234,6 +234,7 @@ export function createSentryApi({
     newIssueEvents,
     backendErrorRate,
     crashFree: (window) => sessionTotal(window, 'crash_free_rate(session)'),
+    crashFreeUsers: (window) => sessionTotal(window, 'crash_free_rate(user)'),
     crashes: (window) => sessionTotal(window, 'sum(session)', 'crashed'),
     errors: (window) => discover(appProject, 'count()', 'event.type:error', 'errors', window),
     newIssues,

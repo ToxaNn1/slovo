@@ -10,9 +10,12 @@ test('Якість shows each Sentry number with its change against yesterday an
   window.history.replaceState(null, '', '/admin/quality');
   render(<Admin />);
 
-  const crashFree = within(await screen.findByRole('listitem', { name: 'Без збоїв' }));
+  const crashFree = within(await screen.findByRole('listitem', { name: 'Сесії без збоїв' }));
   expect(crashFree.getByText('99,6%')).toBeDefined();
   expect(crashFree.getByText('+0,2 проти вчора')).toBeDefined();
+  const crashFreeUsers = within(screen.getByRole('listitem', { name: 'Користувачі без збоїв' }));
+  expect(crashFreeUsers.getByText('99,8%')).toBeDefined();
+  expect(crashFreeUsers.getByText('+0,1 проти вчора')).toBeDefined();
   expect(
     within(screen.getByRole('listitem', { name: 'Збої' })).getByText('−2 проти вчора'),
   ).toBeDefined();
@@ -113,7 +116,7 @@ test('on Якість 90 days reads as 30 days with a hint, and longer periods a
   window.history.replaceState(null, '', '/admin/quality?period=90d');
   render(<Admin />);
 
-  await screen.findByRole('listitem', { name: 'Без збоїв' });
+  await screen.findByRole('listitem', { name: 'Сесії без збоїв' });
   const period = within(screen.getByRole('group', { name: 'Період' }));
   expect(period.getByRole('button', { name: '30 днів' }).getAttribute('aria-pressed')).toBe('true');
   expect(screen.getByText('Sentry зберігає дані 30 днів')).toBeDefined();
