@@ -15,6 +15,7 @@ import type {
   AlertSettings,
   AlertStore,
   AccessResult,
+  LastOwner,
   Actor,
   AdminAccess,
   AdminAnalytics,
@@ -201,6 +202,15 @@ export function adminProcedures({
     if (!result.ok) throw errors.CONFLICT({ data: { refusal: result.reason } });
   }
 
+  /** As `done`, for a change of a person's role or access, which may leave no Власник. */
+  function changed(
+    result: AccessResult | LastOwner,
+    errors: Parameters<typeof done>[1] & { PRECONDITION_FAILED: () => Error },
+  ) {
+    if (!result.ok && result.reason === 'last-owner') throw errors.PRECONDITION_FAILED();
+    done(result, errors);
+  }
+
   /** The refusal the contract lists for what the content store refused. */
   function refusalOf(
     refusal: WriteRefusal,
@@ -329,13 +339,13 @@ export function adminProcedures({
 
     setRole: os.setRole.handler(async ({ context, input, errors }) => {
       const write = writeOf(context.caller, input.reason);
-      done(await admin.setRole(input.email, input.role, write), errors);
+      changed(await admin.setRole(input.email, input.role, write), errors);
       return { changed: true as const };
     }),
 
     removePerson: os.removePerson.handler(async ({ context, input, errors }) => {
       const write = writeOf(context.caller, input.reason);
-      done(await admin.remove(input.email, write), errors);
+      changed(await admin.remove(input.email, write), errors);
       return { removed: true as const };
     }),
 

@@ -244,6 +244,15 @@ const ACCESS_WRITE_ERRORS = {
   CONFLICT: { message: 'The write is refused', data: AccessRefusalSchema },
 } as const;
 
+/**
+ * The errors of a change of a person's role or access: those of every
+ * Безпека write, and the one active Власник left, whom no one demotes or removes.
+ */
+const OWNER_WRITE_ERRORS = {
+  ...ACCESS_WRITE_ERRORS,
+  PRECONDITION_FAILED: { message: 'The last active Власник keeps their role and access' },
+} as const;
+
 /** An Агент's name: lower-case letters, digits and hyphens. */
 const AgentNameSchema = z
   .string()
@@ -1222,7 +1231,7 @@ export const adminContract = {
       description: 'Refused with `self` for the caller, `unknown` for an email with no access.',
       tags: ['admin'],
     })
-    .errors(ACCESS_WRITE_ERRORS)
+    .errors(OWNER_WRITE_ERRORS)
     .input(z.strictObject({ email: EmailSchema, role: AdminRoleSchema, reason: ReasonSchema }))
     .output(z.object({ changed: z.literal(true) })),
 
@@ -1234,7 +1243,7 @@ export const adminContract = {
       description: 'Refused with `self` for the caller, `unknown` for an email with no access.',
       tags: ['admin'],
     })
-    .errors(ACCESS_WRITE_ERRORS)
+    .errors(OWNER_WRITE_ERRORS)
     .input(z.strictObject({ email: EmailSchema, reason: ReasonSchema }))
     .output(z.object({ removed: z.literal(true) })),
 

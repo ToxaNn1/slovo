@@ -27,6 +27,22 @@ export function createAdminStore({ db }: Database): AdminStore {
     return { id: row.id, email: row.email, role: row.role, totp };
   };
   const active = eq(adminUsers.state, 'active');
+  type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+  /**
+   * Whether the user is the one active Власник left, with every active
+   * Власник's row locked to the commit: two Власники demoting or removing
+   * each other at once take turns, and the second finds the first gone.
+   */
+  async function lastOwner(tx: Tx, adminUserId: string): Promise<boolean> {
+    const owners = await tx
+      .select({ id: adminUsers.id })
+      .from(adminUsers)
+      .where(and(active, eq(adminUsers.role, 'owner')))
+      .orderBy(asc(adminUsers.id))
+      .for('update');
+    return owners.length === 1 && owners[0]?.id === adminUserId;
+  }
   const sessionsWith = (where: ReturnType<typeof eq>) =>
     db
       .select({ session: adminSessions, user: adminUsers })
@@ -192,16 +208,20 @@ export function createAdminStore({ db }: Database): AdminStore {
       return rows.map(userOf);
     },
 
-    async setAdminRole(adminUserId, role) {
-      await db.update(adminUsers).set({ role }).where(eq(adminUsers.id, adminUserId));
-    },
+    setAdminRole: (adminUserId, role) =>
+      db.transaction(async (tx) => {
+        if (role !== 'owner' && (await lastOwner(tx, adminUserId))) return 'last-owner';
+        await tx.update(adminUsers).set({ role }).where(eq(adminUsers.id, adminUserId));
+        return 'done';
+      }),
 
-    async removeAdminUser(adminUserId) {
-      await db.transaction(async (tx) => {
+    removeAdminUser: (adminUserId) =>
+      db.transaction(async (tx) => {
+        if (await lastOwner(tx, adminUserId)) return 'last-owner';
         await tx.update(adminUsers).set({ state: 'removed' }).where(eq(adminUsers.id, adminUserId));
         await tx.delete(adminSessions).where(eq(adminSessions.adminUserId, adminUserId));
-      });
-    },
+        return 'done';
+      }),
 
     async reactivateAdminUser(email, role) {
       return db.transaction(async (tx) => {
