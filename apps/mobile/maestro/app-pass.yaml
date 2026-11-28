@@ -11,8 +11,9 @@
 #
 # The pass reads and keeps the reader's state: it saves, files and sends
 # nothing. A route behind a Feature Switch that is off leads to its fallback,
-# which the step's `SCREEN` names too. The Collection steps need one
-# Collection with an Entry on the simulator (`--state full-saved` loads one).
+# which the step's `SCREEN` names too; a route reached by a tap that a switch
+# hides is passed over (`app-pass/tap.yaml`). The Collection steps run only
+# with a Collection on the simulator (`--state full-saved` loads one).
 #
 # Settings (`-e`): APP_ID, SCHEME or LINK (Expo Go: `exp://127.0.0.1:8082/--/`),
 # ENTRY_ID (an Entry of the API, `w_0wr2ne` by default).
@@ -31,13 +32,28 @@ appId: ${APP_ID || 'app.slovo.uk'}
       ROUTE: '/feed'
       LINK_PATH: 'feed'
       SCREEN: feed
+# The Feed's first open on a device shows its gestures hint, «ГОРТАЙ ПАЛЬЦЕМ»,
+# a moment after the cards; «ЗРОЗУМІЛО» closes it.
+- extendedWaitUntil:
+    visible:
+      id: gestures-hint-dismiss
+    timeout: 3000
+    optional: true
+- runFlow:
+    when:
+      visible:
+        id: gestures-hint-dismiss
+    commands:
+      - tapOn:
+          id: gestures-hint-dismiss
+      - waitForAnimationToEnd
 
 # The sheets the Feed opens by a tap, each closed again unused: a card's
 # «Більше дій» and its error report, «Додати до колекції», the stats sheet.
 - tapOn: 'Вимова'
 - tapOn: 'Більше дій'
 - waitForAnimationToEnd
-- tapOn: 'ПОВІДОМИТИ ПРО ПОМИЛКУ'
+- tapOn: 'Повідомити про помилку'
 - waitForAnimationToEnd
 - takeScreenshot: app-pass-sheet-report
 - runFlow: app-pass/close-sheet.yaml
@@ -81,45 +97,34 @@ appId: ${APP_ID || 'app.slovo.uk'}
     file: app-pass/screen.yaml
     env:
       ROUTE: '/category-feed/[categoryId]'
-      SCREEN: category-feed-screen|entry-screen
+      SCREEN: category-feed|entry-screen
+# The grid the Dashboard's «Виправлення» rail opens: with `correctionTypeGrid`
+# on, the Correction types (`correction-types`), each opening its type;
+# off, the Categories of Corrections (`correction-categories`), each opening
+# its Category.
 - runFlow:
     file: app-pass/open.yaml
     env:
       ROUTE: '/correction-categories'
       LINK_PATH: 'correction-categories'
-      SCREEN: correction-categories
-- scrollUntilVisible:
-    element:
-      id: 'correction-categories-(?!back|title)(?!.*-(cascade|name|count)$).+'
-    centerElement: true
-- waitForAnimationToEnd
-- tapOn:
-    id: 'correction-categories-(?!back|title)(?!.*-(cascade|name|count)$).+'
-    index: 0
+      SCREEN: correction-types|correction-categories
 - runFlow:
-    file: app-pass/screen.yaml
+    when:
+      visible:
+        id: correction-categories
+    file: app-pass/tap.yaml
     env:
       ROUTE: '/correction-category/[categoryId]'
+      TILE: 'correction-categories-(?!back|title)(?!.*-(cascade|name|count)$).+'
       SCREEN: category
-# Back to the grid for its Correction types.
 - runFlow:
-    file: app-pass/open.yaml
-    env:
-      ROUTE: '/correction-categories'
-      LINK_PATH: 'correction-categories'
-      SCREEN: correction-categories
-- scrollUntilVisible:
-    element:
-      id: 'correction-types-(?!title)(?!.*-(name|count)$).+'
-    centerElement: true
-- waitForAnimationToEnd
-- tapOn:
-    id: 'correction-types-(?!title)(?!.*-(name|count)$).+'
-    index: 0
-- runFlow:
-    file: app-pass/screen.yaml
+    when:
+      visible:
+        id: correction-types
+    file: app-pass/tap.yaml
     env:
       ROUTE: '/correction-type/[type]'
+      TILE: 'correction-types-(?!title)(?!.*-(name|count)$).+'
       SCREEN: correction-type
 # The Dashboard's rail of Curated Collections.
 - runFlow:
@@ -154,7 +159,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     file: app-pass/screen.yaml
     env:
       ROUTE: '/curated-collection-feed/[collectionId]'
-      SCREEN: curated-collection-feed-screen|entry-screen
+      SCREEN: curated-collection-feed|entry-screen
 # The grid of every Curated Collection, and a collection's screen from its tile.
 - runFlow:
     file: app-pass/open.yaml
@@ -265,31 +270,45 @@ appId: ${APP_ID || 'app.slovo.uk'}
       ROUTE: '/saved/collections'
       LINK_PATH: 'saved/collections'
       SCREEN: collections
-- scrollUntilVisible:
-    element:
+# A Collection's screen from its card, and an Entry from its row: with no
+# Collection on the simulator both are passed over, but under `--state
+# full-saved` (`COLLECTION`) both are required.
+- extendedWaitUntil:
+    visible:
       id: 'collection-card-.+'
-    centerElement: true
-- waitForAnimationToEnd
-- tapOn:
-    id: 'collection-card-.+'
-    index: 0
+    timeout: 3000
+    optional: true
 - runFlow:
-    file: app-pass/screen.yaml
+    when:
+      true: ${COLLECTION === '1'}
+    commands:
+      - assertVisible:
+          id: 'collection-card-.+'
+- runFlow:
+    when:
+      visible:
+        id: 'collection-card-.+'
+    file: app-pass/tap.yaml
     env:
       ROUTE: '/saved/collections/[collectionId]'
+      TILE: 'collection-card-.+'
       SCREEN: collection
-- scrollUntilVisible:
-    element:
-      id: 'collection-row-.+'
-    centerElement: true
-- waitForAnimationToEnd
-- tapOn:
-    id: 'collection-row-.+'
-    index: 0
 - runFlow:
-    file: app-pass/screen.yaml
+    when:
+      true: ${COLLECTION === '1'}
+    commands:
+      - extendedWaitUntil:
+          visible:
+            id: 'collection-row-.+'
+          timeout: 3000
+- runFlow:
+    when:
+      visible:
+        id: 'collection-row-.+'
+    file: app-pass/tap.yaml
     env:
       ROUTE: '/saved/collections/[collectionId]/[entryId]'
+      TILE: 'collection-row-.+'
       SCREEN: entry-screen
 # A Collection Link no Account shared: the screen says so.
 - runFlow:

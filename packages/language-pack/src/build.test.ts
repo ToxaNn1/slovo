@@ -490,9 +490,11 @@ describe('the build of a fixture Edition from its snapshot', () => {
     // The fixture must fill every Word field, so a new field can't skip the pack.
     // But the Short Definition: only a Word whose primary Definition is over 80 characters has
     // one, the fixture's is short, and `apply-patch.test.ts` round-trips it through the same rows.
+    // And the Word that replaces it: only a Retired Word names one, the fixture's Word is live,
+    // and `apply-patch.test.ts` round-trips it too.
     expect(Object.keys(authored).toSorted()).toEqual(
       Object.keys(WordSchema.shape)
-        .filter((field) => field !== 'shortDefinition')
+        .filter((field) => field !== 'shortDefinition' && field !== 'replacedBy')
         .toSorted(),
     );
 

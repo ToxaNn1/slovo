@@ -76,6 +76,7 @@ interface WordRow {
   illustration: string | null;
   retired: number;
   short_definition: string | null;
+  replaced_by: string | null;
 }
 
 interface CorrectionRow {
@@ -347,6 +348,7 @@ export function createPackReader(db: PackDatabase): PackReader {
         ...(row.gender === null ? {} : { gender: row.gender }),
         primaryDefinition,
         ...(row.short_definition === null ? {} : { shortDefinition: row.short_definition }),
+        ...(row.replaced_by === null ? {} : { replacedBy: row.replaced_by }),
         extraDefinitions,
         examples: (examples.get(row.id) ?? []).map(({ text, author }) =>
           author === null ? { text } : { text, author },
@@ -598,6 +600,13 @@ export function createPackReader(db: PackDatabase): PackReader {
     getEntries: readEntries,
     listLinkedWordIds: (correctionId) => column(SQL.linkedWordIds, [correctionId], 'id'),
     listLinkingSynonymRowIds: (wordId) => column(SQL.linkingSynonymRowIds, [wordId], 'id'),
+    listReplacedWords: () =>
+      db.getAllAsync<{ id: string; replacedBy: string }>(
+        `SELECT words.id, words.replaced_by AS replacedBy FROM words
+         JOIN words AS replacing ON replacing.id = words.replaced_by
+         WHERE words.retired = 1`,
+        [],
+      ),
     listCuratedCollections: async () => {
       const [collections, entries] = await Promise.all([
         db.getAllAsync<CuratedCollectionRow>(SQL.curatedCollections, []),
@@ -662,6 +671,17 @@ export async function openPack(db: PackDatabase, app: AppEditions): Promise<Pack
       ok: false,
       reason:
         'The Language Pack was built before the Short Definition: its Words have no short_definition column. Rebuild the Language Pack.',
+    };
+  }
+  const replacedBy = await db.getAllAsync<{ name: string }>(
+    "SELECT name FROM pragma_table_info('words') WHERE name = 'replaced_by'",
+    [],
+  );
+  if (replacedBy.length === 0) {
+    return {
+      ok: false,
+      reason:
+        'The Language Pack was built before a Retired Word named the Word that replaces it: its Words have no replaced_by column. Rebuild the Language Pack.',
     };
   }
   const { bundle, native } = app;

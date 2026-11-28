@@ -9,12 +9,12 @@
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - openLink: ${output.devClientLink}
-# A simulator asks once whether the link may open the app.
+# A simulator asks once whether the link may open the app, in its own language.
 - runFlow:
     when:
-      visible: Open
+      visible: Open|Відкрити
     commands:
-      - tapOn: Open
+      - tapOn: Open|Відкрити
 # Wait for the Feed: a card of any kind, since the Feed reopens on the card the
 # reader was on, which may be a Correction or the end of the Cycle. On a new
 # simulator the development client opens its menu over the app, before or after

@@ -112,7 +112,7 @@ Reading decisions: query `cards` where `status` is `approved` or `changes` and `
 }
 ```
 
-The document id is `<YYYYMMDD-HHmm>-<agent>-<n>`. The Journal lives in the Board, not in the repo: the repo is public and takes changes through PRs only.
+The document id is `<YYYYMMDD-HHmm>-<agent>-<n>`. The Journal lives in the Board, not in the repo: the repo is public and takes changes through PRs only. At each standup the CEO saves the day's entries to `~/Downloads/WORD/office/journal/<YYYY-MM-DD>.md`, so the owner keeps a copy that outlives the Board.
 
 ## Files
 

@@ -178,7 +178,7 @@ export const GameStringsSchema = z.strictObject({
       wrong: TextSchema,
       /** Its head after the answer that took the last Life, e.g. «Життя все». */
       lastLife: TextSchema,
-      /** Its line after a wrong answer, e.g. «Майже. Ось як правильно: вереск». Takes `{answer}`. */
+      /** Its line after a wrong answer, e.g. «Ось як правильно: вереск». Takes `{answer}`. */
       answer: templateOf('answer'),
     }),
     /** The prompts of the restyled Rounds (spec #1674). */

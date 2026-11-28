@@ -18,7 +18,7 @@ import type { Feed } from '../feed/feed';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
 import { createSubscribers } from '../in-turn';
 import { todayKey } from '../local-date';
-import type { Backend, Clock } from '../ports';
+import type { Backend, Clock, UserStateChanges } from '../ports';
 import type { XpLog } from '../progress/xp-log';
 import {
   sharesStatistics,
@@ -177,7 +177,28 @@ export interface Onboarding {
   subscribe(listener: () => void): () => void;
 }
 
-const { onboardingFinished, firstWeekFrom, shareCounters } = userStateRecords;
+const { onboardingFinished, firstWeekFrom, shareCounters, statisticsConsentDue } = userStateRecords;
+
+/**
+ * Settles once the Statistics consent of a reader who finished the onboarding
+ * before ADR 0210 with no choice kept (ADR 0212): one this device would ask
+ * keeps «Ділитися анонімною статистикою» off until they turn it on in
+ * «Конфіденційність»; any other keeps the switch on, as before. The mark goes
+ * either way, so a later trip changes nothing.
+ */
+async function settleStatisticsConsent(
+  userState: UserState,
+  consent: StatisticsConsent | undefined,
+): Promise<void> {
+  if ((await userState.read(statisticsConsentDue)) !== true) return;
+  const keptOff = consent?.asks() === true && (await userState.read(shareCounters)) === undefined;
+  await userState.write(
+    new Map([
+      ...statisticsConsentDue.change(undefined),
+      ...(keptOff ? shareCounters.change(false) : []),
+    ]),
+  );
+}
 
 /**
  * Opens the onboarding over the user state, for the Core composition, once
@@ -221,6 +242,7 @@ export async function openOnboarding({
 }): Promise<Onboarding> {
   const subscribers = createSubscribers();
   const finished = await userState.read(onboardingFinished);
+  await settleStatisticsConsent(userState, consent);
   const { questionnaire, onboardingNotificationTimes } = edition;
   const offeredTimes = OFFERED.map((bucket) => onboardingNotificationTimes[bucket]);
   /** The bucket a time chosen on «Коли нагадати?» is counted in; nothing is `none`. */
@@ -231,11 +253,13 @@ export async function openOnboarding({
   const wordId = wordOfTheDay.chosen()?.wordId;
   const word = wordId === undefined ? undefined : await entries.get(wordId);
   const firstWord = word?.kind === 'word' ? await buildWordCard({ word, entries }) : undefined;
-  const asksConsent = await statisticsConsentPending(userState, consent);
+  // The same answer as the switch on «Конфіденційність»: with nothing it governs, no one is asked or told.
+  const governed = statisticsGoverned(edition);
+  const asksConsent = governed && (await statisticsConsentPending(userState, consent));
   const statisticsLine =
+    governed &&
     !asksConsent &&
     edition.isFeatureEnabled('statisticsConsent') &&
-    statisticsGoverned(edition) &&
     (await sharesStatistics(userState, consent));
   const steps = STEPS.filter((kind) => {
     const feature = STEP_SWITCH[kind];
@@ -321,10 +345,22 @@ export async function openOnboarding({
         ...firstWeekFrom.change(todayKey(clock)),
         // A reader asked the Daily Goal here gets no later Feed Notice for it.
         ...(steps.includes('dailyGoal') ? await dailyGoalAsked(userState) : []),
+        ...(await keptOff()),
       ]),
     );
     change({ status: 'finished', finishedAt });
     analytics.track('onboardingFinished', { skipped }).catch(() => undefined);
+  }
+
+  /**
+   * The switch kept off for a reader asked the Statistics consent who has made
+   * no choice, so a later change of the Feature Switch or the region does not
+   * turn it on (ADR 0210).
+   */
+  async function keptOff(): Promise<UserStateChanges> {
+    return asksConsent && (await userState.read(shareCounters)) === undefined
+      ? shareCounters.change(false)
+      : new Map();
   }
 
   function show(step: OnboardingStep): void {
@@ -368,6 +404,7 @@ export async function openOnboarding({
       endStep(async ({ kind }) => {
         // «Беру!» takes the first Word, so it is Seen: XP, History and the Daily Goal count it.
         if (kind === 'firstWord') await feed.seeWordOfTheDay();
+        if (kind === 'statisticsConsent') await userState.write(await keptOff());
         await countSkipped(kind);
         await goOn(kind);
       }),

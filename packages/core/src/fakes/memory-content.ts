@@ -80,6 +80,14 @@ export function createMemoryContentPort({
           .map((word) => word.id),
       ),
     listCuratedCollections: () => Promise.resolve(curatedCollections),
+    listReplacedWords: () =>
+      Promise.resolve(
+        words.flatMap(({ id, retired, replacedBy }) =>
+          retired && replacedBy !== undefined && words.some((word) => word.id === replacedBy)
+            ? [{ id, replacedBy }]
+            : [],
+        ),
+      ),
     listLinkingSynonymRowIds: (wordId) =>
       Promise.resolve(
         liveWords.some((word) => word.id === wordId)

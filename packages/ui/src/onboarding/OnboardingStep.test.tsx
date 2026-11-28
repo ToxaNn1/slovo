@@ -5,6 +5,7 @@ import {
   OnboardingWelcome,
   TokensProvider,
 } from '@slovo/ui';
+import { capitalMarkRoom } from '@slovo/ui/tokens';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo, StyleSheet, Text } from 'react-native';
@@ -242,6 +243,23 @@ describe('An onboarding step', () => {
     expect(shoutOnScreen().highest).toBeGreaterThanOrEqual(skipRowBottom);
   });
 
+  // App pass 27.11 (B2): «ГРАЙ!» and «ДЗИНЬ!» ran into «Пропустити»: the marks over the capitals
+  // rise above the word's line, which the room under the skip button left out.
+  it.each([
+    ['under a notch', notched],
+    ['on the smallest phone', small],
+  ])('keeps the marks over its shrunk shout word under its skip button %s', async (_, on) => {
+    await renderWelcome(on);
+    // The word shrunk to half its size to fit across the top.
+    await fireEvent(screen.getByTestId('onboarding-shout'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 340, height: 151 / 2 } },
+    });
+    const room = capitalMarkRoom('stepShout', { fontSize: 168 / 2, lineHeight: 151 / 2 });
+    const { scale, highest } = shoutOnScreen();
+    expect(room).toBeGreaterThan(0);
+    expect(highest - scale * room).toBeGreaterThan(on.insets.top + 44 - 0.01);
+  });
+
   it("draws its red top as the board on the board's phone", async () => {
     await renderWelcome(notched);
     expect(styleOf('onboarding-hero')['height']).toBe(440);
@@ -341,7 +359,9 @@ describe('The first Word’s step, which opens on its red top over the whole scr
 
   /** How far a view is moved up or down from its place. */
   function shift(testID: string): number {
-    const style = getAnimatedStyle(screen.getByTestId(testID)) as {
+    // Where it sits, whether or not VoiceOver reaches it yet.
+    const view = screen.getByTestId(testID, { includeHiddenElements: true });
+    const style = getAnimatedStyle(view) as {
       transform?: { translateY?: number }[];
     };
     return style.transform?.[0]?.translateY ?? 0;
@@ -359,6 +379,21 @@ describe('The first Word’s step, which opens on its red top over the whole scr
     expect(shift('onboarding-hero')).toBeCloseTo(0);
     expect(shift('onboarding-content')).toBeCloseTo(cover - band);
     expect(screen.getByTestId('onboarding-skip')).toBeTruthy();
+  });
+
+  it('hides the content and the buttons from VoiceOver while the red covers the screen', async () => {
+    await renderIntro();
+    await pass(100);
+
+    expect(screen.queryByText('Card', { includeHiddenElements: false })).toBeNull();
+    expect(screen.queryByText('Take', { includeHiddenElements: false })).toBeNull();
+    expect(screen.getByTestId('onboarding-skip')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('onboarding-intro'));
+    await pass(500 + 50);
+
+    expect(screen.getByText('Card', { includeHiddenElements: false })).toBeTruthy();
+    expect(screen.getByText('Take', { includeHiddenElements: false })).toBeTruthy();
   });
 
   it('gives way to its band once the shout word has flown in and held, the content risen to its place', async () => {

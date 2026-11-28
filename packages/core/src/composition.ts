@@ -45,6 +45,7 @@ import { openHistory, type History } from './saved/history';
 import { openWordOfTheDayArchive, type WordOfTheDayArchive } from './saved/word-of-the-day-archive';
 import { openDueQuiz, type DueQuiz } from './knowledge/due-quiz';
 import { openKnowledge, type Knowledge } from './knowledge/knowledge';
+import { moveToReplacingWords } from './replaced-words/replaced-words';
 import { seededRandomOf } from './game/seeded-random';
 import { openBadges, type Badges } from './progress/badges';
 import {
@@ -292,9 +293,15 @@ function closable({
   userState: UserState;
   scheduling: NotificationScheduling | undefined;
   schedule: Schedule | undefined;
+  /** Settles once the composition closes, so a request waiting to try again answers. */
+  stopped: Promise<void>;
   close: () => Promise<void>;
 } {
   let closed = false;
+  let stop: () => void = () => undefined;
+  const stopped = new Promise<void>((resolve) => {
+    stop = resolve;
+  });
   const underWay = new Set<Promise<void>>();
   const waiting = new Set<() => void>();
   /** Runs `change` unless the composition is closed, and keeps it under way until it ends. */
@@ -329,8 +336,10 @@ function closable({
           cancel();
         };
       }),
+    stopped,
     async close() {
       closed = true;
+      stop();
       for (const cancel of waiting) cancel();
       waiting.clear();
       await Promise.allSettled(underWay);
@@ -425,7 +434,7 @@ export async function openComposition({
    */
   signedIn?: () => boolean;
 }): Promise<Composition> {
-  const { userState, scheduling, schedule, close } = closable(ports);
+  const { userState, scheduling, schedule, stopped, close } = closable(ports);
   /** The Edition's text comparison, built once and handed to every module that compares text. */
   const comparison = createTextComparison(edition);
   // The named subjects the modules link through, made before any
@@ -436,6 +445,10 @@ export async function openComposition({
   const opened: Subject<OpenedEntry> = createSubject();
   const dayTurned: Subject<LocalDate> = createSubject();
   const returned: Subject<void> = createSubject();
+  // Before any module reads the user state: the records of a Retired Word move
+  // to the Word that replaces it (ADR 0214). The composition opens after the
+  // pack does, after each Patch and after each sync that wrote, so each runs it.
+  await moveToReplacingWords({ content, userState });
   // The Entries read the reader's choices live; the Mix opens before the
   // Feed, whose turns follow its kind weights.
   const { entries, rows, mix, rarityRange, hiddenEntries } = await openEligibility({
@@ -705,7 +718,13 @@ export async function openComposition({
   });
   await day.resume();
   // Once the day is turned to, so its hero is today's Word of the Day.
-  const correctionTypes = await openCorrectionTypes({ edition, entries, userState, seen });
+  const correctionTypes = await openCorrectionTypes({
+    edition,
+    entries,
+    userState,
+    seen,
+    hiddenEntries,
+  });
   const curatedCollections = await openCuratedCollections({
     edition,
     content,
@@ -779,6 +798,7 @@ export async function openComposition({
       collections,
       schedule,
       random,
+      stopped,
     }),
     collectionSharing: openCollectionSharing({
       backend,
@@ -786,6 +806,7 @@ export async function openComposition({
       collections,
       schedule,
       random,
+      stopped,
     }),
     history,
     dataExport: () => buildDataExport({ userState, clock, edition, rows }),

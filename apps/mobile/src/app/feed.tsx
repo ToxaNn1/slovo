@@ -13,6 +13,7 @@ import {
   SwipeDemoStage,
   Placeholder,
   QuickQuestionRound,
+  OverCardToasts,
   UndoToastProvider,
   useCloseUndoToast,
   useTokens,
@@ -297,8 +298,16 @@ const FeedPage = memo(function FeedPage({
   );
 });
 
-/** An Entry's card in the Feed, with its action row or its corner and side swipes. */
+/** An Entry's card in the Feed, with its action row or its corner and side swipes, whose toasts sit over it. */
 function SwipedEntryCard(props: Omit<ComponentProps<typeof EntryCard>, 'slots'>) {
+  return (
+    <OverCardToasts>
+      <SlottedEntryCard {...props} />
+    </OverCardToasts>
+  );
+}
+
+function SlottedEntryCard(props: Omit<ComponentProps<typeof EntryCard>, 'slots'>) {
   return <EntryCard {...props} slots={useEntrySlots(props.card)} />;
 }
 

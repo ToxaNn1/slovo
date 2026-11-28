@@ -1,0 +1,17 @@
+# One app pass step by tap: scrolls to the first element whose id matches
+# `TILE` on the screen shown, taps it, then checks the screen it opens, the
+# route `ROUTE`, by `SCREEN` (`screen.yaml`). `app-pass.yaml` runs it only
+# while the tile's screen is up, for a route that a Feature Switch or the
+# reader's state may leave with nothing to tap.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- scrollUntilVisible:
+    element:
+      id: ${TILE}
+    centerElement: true
+- waitForAnimationToEnd
+- tapOn:
+    id: ${TILE}
+    index: 0
+- runFlow:
+    file: screen.yaml

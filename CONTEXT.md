@@ -80,7 +80,7 @@ _Avoid_: Inbox, moderation queue
 
 **Batch** («пачка»):
 The records one `pnpm content add|edit|flag` run adds or edits, published at once and reviewed afterwards in the Content queue; «Відкотити пачку» reverts it whole, new records to Retired and edits to their previous versions, skipping a record anyone changed after the batch (ADR 0090).
-_Avoid_: Wave (that is a retired repo process, replaced by ADR 0090), PR, commit
+_Avoid_: Wave (a content wave is many Batches, one per implementer: `docs/agents/content-wave.md`), PR, commit
 
 **Owner check**:
 A manual check the owner ticks in the Owner admin, kept in the database per version; agents add one through a command (ADR 0088).
@@ -157,7 +157,7 @@ A PNG picture a Word may carry above its Definition, kept in the Media Store and
 _Avoid_: Image, picture, Decor (Decor belongs to the Edition's look, not to Words)
 
 **Retired Word**:
-A Word marked Retired in the content database (never deleted), so it leaves the Language Pack and the Patches. It never appears in the Feed, notifications, widgets or the Game, but stays visible wherever the user already keeps it (Favorites, Collections, History).
+A Word marked Retired in the content database (never deleted). Its row stays in the Language Pack, marked Retired, and a Patch carries the mark to a pack that holds the Word. It never appears in the Feed, notifications, widgets or the Game, but stays visible wherever the user already keeps it (Favorites, Collections, History). It may name the Word that replaces it (`replacedBy`): the reader's records of it then move to that Word, on every device (ADR 0214). A Retired Entry is never due for Review.
 _Avoid_: Deleted word
 
 **Lemma**:
@@ -203,7 +203,7 @@ A real use of a Correction's standard form in literature, quoted with its author
 _Avoid_: Quote, citation (a citation is a source)
 
 **Retired Correction**:
-A Correction marked Retired in the content database (never deleted), so it leaves the Language Pack and the Patches. Like a Retired Word, it never appears anywhere new and is no longer linked from Words, but stays visible wherever the user already keeps it.
+A Correction marked Retired in the content database (never deleted). Like a Retired Word, its row stays in the Language Pack, marked Retired, and a Patch carries the mark to a pack that holds the Correction; it never appears anywhere new and is no longer linked from Words, but stays visible wherever the user already keeps it.
 _Avoid_: Deleted correction
 
 **Correction Type**:
@@ -218,7 +218,7 @@ What kind of fixed expression an Idiom is: `idiom` («фразеологізм»
 _Avoid_: Subtype, kind (a kind is Word, Correction, Idiom, Synonym Row or Tip)
 
 **Retired Idiom**:
-An Idiom marked Retired in the content database (never deleted), so it leaves the Language Pack and the Patches. Like a Retired Word, it never appears anywhere new, but stays visible wherever the user already keeps it.
+An Idiom marked Retired in the content database (never deleted). Like a Retired Word, its row stays in the Language Pack, marked Retired, and a Patch carries the mark to a pack that holds the Idiom; it never appears anywhere new, but stays visible wherever the user already keeps it.
 _Avoid_: Deleted idiom
 
 **Synonym Row**:
@@ -367,7 +367,7 @@ _Avoid_: Provider, login type, auth method
 ### Discovery
 
 **Feed**:
-The vertical stream of Entries the user swipes through, opened from the Dashboard; Corrections, Idioms, Synonym Rows and Tips are mixed in among Words. Every 5th card of the Cycle is a Correction's turn while the Cycle has unseen Corrections, every 7th an Idiom's turn while it has unseen Idioms, every 9th a Synonym Row's turn while it has unseen Synonym Rows and every 11th a Tip's turn while it has unseen Tips, each counted from its kind's last card, at the Mix kind weight «Звичайно» («Менше» spaces a kind's turns twice as far apart, «Більше» twice as close). When turns fall on one card the order is Correction, Idiom, Synonym Row, Tip, and each loser takes the next card. While Entries are due for Review, every 3rd card that is no other kind's turn is a Word due for Review, labelled «Повторення», and a Correction, an Idiom, a Synonym Row or a Tip due for Review takes the next turn of its kind before a new one, Seen in this Cycle or not. The Word of the Day and the Review slot stay Words only; once the Word of the Day's card opened the day, that Word takes no other card of the Feed that day. Beside Entry cards the Feed shows Feed Notices, which take no turn.
+The vertical stream of Entries the user swipes through, opened from the Dashboard; Corrections, Idioms, Synonym Rows and Tips are mixed in among Words. Every 5th card of the Cycle is a Correction's turn while the Cycle has unseen Corrections, every 7th an Idiom's turn while it has unseen Idioms, every 9th a Synonym Row's turn while it has unseen Synonym Rows and every 11th a Tip's turn while it has unseen Tips, each counted from its kind's last card, at the Mix kind weight «Звичайно» («Менше» spaces a kind's turns twice as far apart, «Більше» twice as close). When turns fall on one card the order is Correction, Idiom, Synonym Row, Tip, and each loser takes the next card. While Entries are due for Review, every 3rd card that is no other kind's turn is a Word due for Review, labelled «Повторення», and a Correction, an Idiom, a Synonym Row or a Tip due for Review takes the next turn of its kind before a new one, Seen in this Cycle or not. An Entry whose card the reader read in this app session today and passed without a Knowledge Mark takes no Review slot or turn again that day; it stays due and comes back the next local day. The Word of the Day and the Review slot stay Words only; once the Word of the Day's card opened the day, that Word takes no other card of the Feed that day. Beside Entry cards the Feed shows Feed Notices, which take no turn.
 _Avoid_: Timeline, home list, home screen
 
 **Feed Notice**:
@@ -470,7 +470,7 @@ Reader-consented product events (onboarding steps, Games, Review, goals, Streak 
 _Avoid_: Tracking, telemetry, stats (the reader's own numbers)
 
 **Statistics consent**:
-The question the onboarding asks a reader whose phone's region is in the EEA or unknown, with two equal choices, before anything is sent: the answer sets «Ділитися анонімною статистикою», which is off for that reader until they choose and on for every other reader (ADR 0210).
+The question the onboarding asks a reader whose phone's region is in the EEA or unknown, or whose phone's time zone is in the EEA, with two equal choices, before anything is sent: the answer sets «Ділитися анонімною статистикою», which is off for that reader until they choose and on for every other reader (ADR 0210, 0212).
 _Avoid_: Cookie banner, GDPR prompt, tracking prompt, opt-in
 
 **Mistake Report**:
@@ -539,7 +539,7 @@ _Avoid_: Search index cache
 ### Game
 
 **Game**:
-A run of Rounds in one Game Mode: up to 15 Rounds with 3 Lives by default. A Game Mode may set its own Lives, Round limit and time limit: «Виживання» has no Round limit, «На час» 20 seconds and no Lives. In every Game Mode up to 5 Rounds are drawn from eligible Entries that are Unknown or due for Review, the rest as before; a wrong answer marks the Entry Unknown. At its end the Game shows its Game Review. The Daily Crossword is not a Game.
+A run of Rounds in one Game Mode: up to 15 Rounds with 3 Lives by default. A Game Mode may set its own Lives, Round limit and time limit: «Виживання» has no Round limit, «На час» 60 seconds and no Lives. In every Game Mode up to 5 Rounds are drawn from eligible Entries that are Unknown or due for Review, the rest as before; a wrong answer marks the Entry Unknown. At its end the Game shows its Game Review. The Daily Crossword is not a Game.
 _Avoid_: Quiz, practice, test
 
 **Game Mode**:
@@ -549,7 +549,7 @@ The kind of challenge in a Game. A Game Mode sets its Lives (or none), its Round
 - «Значення»: «Обери правильне» (`correction`), a sentence with a non-standard form → pick the standard equivalent; «Пари» (`pairs`), match 4 Words to 4 Definitions; «Фразеологізми» (`idiom-meaning`), an idiom or a proverb → pick its meaning.
 - «Букви»: «Анаграми» (`anagram`), assemble the Word from shuffled letters.
 - «Швидкість»: «На час» (`timed`), 60 seconds and no Lives.
-- «Нове»: «Вгадай слово» (`guess-word`), a Definition → pick the Word, getting harder as it goes (Rounds 6–10 an Example with a gap, Rounds 11–15 a Definition → type the Word); it asks about idioms of Idiom Type `idiom` the same way, with four idioms (place names never play), about Synonym Rows with «Що є синонімом до „{домінанта}“?», one member of the row right and members of other rows wrong (only while the Mix holds at least 4 Synonym Rows), and about Tips, each with its own Game question; «За літерами» (`by-letters`), tap letter tiles into the slots by the Definition (no typing, no opened letters); «Впиши слово» (`type-word`), a sentence with a non-standard form → type the standard form; «Звідки слово» (`origin`), pick the language a Word came from; «Англіцизми» (`anglicism`), the same as «Обери правильне» with anglicisms only; «Склади вислів» (`build-idiom`), assemble an expression from its words among decoy words of other expressions, judged on «Перевірити»; «Виживання» (`survival`), 1 Life and no Round limit.
+- «Нове»: «Вгадай слово» (`guess-word`), a Definition → pick the Word, getting harder as it goes (Rounds 6–10 an Example with a gap, Rounds 11–15 a Definition → type the Word); it asks about idioms of Idiom Type `idiom` the same way, with four idioms (place names never play), about Synonym Rows with «Що є синонімом до „{домінанта}“?», one member of the row right and members of other rows wrong (only while the Mix holds at least 4 Synonym Rows), and about Tips, each with its own Game question; «За літерами» (`by-letters`), tap letter tiles into the slots by the Definition (no typing, no opened letters); «Впиши слово» (`type-word`), a sentence with a non-standard form → type the standard form; «Звідки слово» (`origin`), pick the language a Word came from; «Англіцизми» (`anglicism`), the same as «Обери правильне» with anglicisms only; «Склади вислів» (`build-idiom`), assemble an expression from its words among decoy words of other expressions, judged on «Перевірити»; «Виживання» (`survival`), 3 Lives and no Round limit.
 
 Editions may add modes through an Extension Point.
 

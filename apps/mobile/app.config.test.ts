@@ -276,7 +276,7 @@ describe('app config', () => {
   });
 
   it('carries the version of the milestone the code belongs to (ADR 0044)', () => {
-    expect(appConfig(context).version).toBe('0.9');
+    expect(appConfig(context).version).toBe('1.0');
   });
 
   it('turns on the React Compiler', () => {
@@ -839,6 +839,38 @@ describe('app config', () => {
     expect(() => appConfig(context)).toThrow(
       /EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID.*\.apps\.googleusercontent\.com/s,
     );
+  });
+
+  it("uploads the build's dSYM and source map to the Sentry project the environment names", () => {
+    vi.stubEnv('SENTRY_ORG', 'slovo-org');
+    vi.stubEnv('SENTRY_PROJECT', 'slovo-app');
+    vi.stubEnv('SENTRY_AUTH_TOKEN', 'token-from-the-environment');
+
+    expect(pluginOptions(appConfig(context), '@sentry/react-native/expo')).toEqual({
+      organization: 'slovo-org',
+      project: 'slovo-app',
+      disableAutoUpload: false,
+    });
+  });
+
+  it('skips the Sentry upload, never failing the build, when the environment has no auth token', () => {
+    vi.stubEnv('SENTRY_ORG', 'slovo-org');
+    vi.stubEnv('SENTRY_PROJECT', 'slovo-app');
+    vi.stubEnv('SENTRY_AUTH_TOKEN', '');
+
+    expect(pluginOptions(appConfig(context), '@sentry/react-native/expo')).toMatchObject({
+      disableAutoUpload: true,
+    });
+  });
+
+  it('skips the Sentry upload when the environment names no Sentry project', () => {
+    vi.stubEnv('SENTRY_ORG', undefined);
+    vi.stubEnv('SENTRY_PROJECT', undefined);
+    vi.stubEnv('SENTRY_AUTH_TOKEN', 'token-from-the-environment');
+
+    expect(pluginOptions(appConfig(context), '@sentry/react-native/expo')).toEqual({
+      disableAutoUpload: true,
+    });
   });
 
   it.each(['beta', 'production'])(

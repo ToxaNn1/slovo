@@ -5,11 +5,12 @@
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - openLink: ${(LINK || ((SCHEME || 'slovo') + '://')) + (LINK_PATH || '')}
-# A simulator asks once whether the link may open the app.
+# A simulator asks once whether the link may open the app, in its own
+# language.
 - runFlow:
     when:
-      visible: Open
+      visible: Open|Відкрити
     commands:
-      - tapOn: Open
+      - tapOn: Open|Відкрити
 - runFlow:
     file: screen.yaml

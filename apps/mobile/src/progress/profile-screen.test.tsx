@@ -342,7 +342,7 @@ describe('the Profile', () => {
     expect(screen.queryByText(/Рівень 0/)).toBeNull();
     expect(screen.getByTestId('profile-level-name')).toHaveTextContent(/^Початківець$/);
     expect(screen.getByTestId('profile-level-progress')).toHaveTextContent('20 / 50 XP');
-    expect(screen.getByTestId('profile-level-left')).toHaveTextContent('ще 30 XP до рівня 1');
+    expect(screen.getByTestId('profile-level-left')).toHaveTextContent('ще 30 XP до 1-го рівня');
   });
 
   describe('today waiting for its Daily Goal', () => {
@@ -393,7 +393,7 @@ describe('the Profile', () => {
     await renderScreen({ xp: 2598 });
 
     expect(screen.getByTestId('profile-level-number')).toHaveTextContent('25');
-    expect(screen.getByTestId('profile-level-left')).toHaveTextContent('ще 120 XP до рівня 26');
+    expect(screen.getByTestId('profile-level-left')).toHaveTextContent('ще 120 XP до 26-го рівня');
     expect(screen.queryByTestId('profile-ladder-to-next')).not.toBeOnTheScreen();
   });
 

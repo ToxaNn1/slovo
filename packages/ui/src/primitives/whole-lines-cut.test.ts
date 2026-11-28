@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { wholeLinesCut } from './whole-lines-cut';
+import { lastLineShown, wholeLinesCut, type DrawnLine } from './whole-lines-cut';
 
-const line = (top: number, bottom: number) => ({ top, bottom });
+const line = (top: number, bottom: number): DrawnLine => ({ kind: 'block', top, bottom });
 
 describe('wholeLinesCut', () => {
   it('cuts under the last line that ends within the limit, never through the next one', () => {
@@ -28,5 +28,21 @@ describe('wholeLinesCut', () => {
 
   it('keeps the limit when no line has been reported', () => {
     expect(wholeLinesCut(120, [])).toBe(120);
+  });
+});
+
+// App pass 27.11 (B4): the last line shown fades out at its end, so it reads as going on.
+describe('lastLineShown', () => {
+  it('is the line that ends at the cut', () => {
+    expect(lastLineShown(56, [line(0, 28), line(28, 56), line(56, 84)])).toEqual(line(28, 56));
+  });
+
+  it('is the tallest of two lines side by side that end there', () => {
+    expect(lastLineShown(56, [line(36, 56), line(28, 56), line(56, 84)])).toEqual(line(28, 56));
+  });
+
+  it('is none when no line ends at the cut', () => {
+    expect(lastLineShown(70, [line(0, 28), line(28, 56)])).toBeUndefined();
+    expect(lastLineShown(70, [])).toBeUndefined();
   });
 });

@@ -176,31 +176,34 @@ export function RarityTestQuestions({
     ),
     children: word !== undefined && (
       <>
-        <Segments
-          count={words.length}
-          colorOf={(index) =>
-            index < phase.answers.length
-              ? colors.accent
-              : index === phase.answers.length
-                ? colors.muted
-                : colors.silhouette
-          }
-          style={rarityTestLayout.progressBar}
-        />
-        <View style={styles.askLine}>
-          {[progressOf(phase.answers.length), '·', strings.rarityTest.question].map(
-            (part, index) => (
-              <Text
-                key={index}
-                testID={index === 0 ? `${testID}-progress` : undefined}
-                {...voice}
-                maxFontSizeMultiplier={fontScaleCap.text}
-                style={[typeStyle('progressCount', tokens), { color: colors.muted }]}
-              >
-                {part}
-              </Text>
-            ),
-          )}
+        {/* The bar and «3 з 10» together, apart from the onboarding's step dots above them. */}
+        <View style={styles.progress}>
+          <Segments
+            count={words.length}
+            colorOf={(index) =>
+              index < phase.answers.length
+                ? colors.accent
+                : index === phase.answers.length
+                  ? colors.muted
+                  : colors.silhouette
+            }
+            style={rarityTestLayout.progressBar}
+          />
+          <View style={styles.askLine}>
+            {[progressOf(phase.answers.length), '·', strings.rarityTest.question].map(
+              (part, index) => (
+                <Text
+                  key={index}
+                  testID={index === 0 ? `${testID}-progress` : undefined}
+                  {...voice}
+                  maxFontSizeMultiplier={fontScaleCap.text}
+                  style={[typeStyle('progressCount', tokens), { color: colors.muted }]}
+                >
+                  {part}
+                </Text>
+              ),
+            )}
+          </View>
         </View>
         <WholeWordsText
           text={word.lemma}
@@ -249,8 +252,8 @@ function Segments({
  * The result (screen 93, XSettings t7): a card with the top of the Rarity
  * Range as a big number cut by its top right corner, beside the heading that
  * says the range the test set and whether that changed it, five
- * bars lit up to it, and how many Words the reader knew. The heading is a few
- * short words, so each fits its line beside the number.
+ * bars lit up to it, and how many Words the reader knew. The heading wraps
+ * between words only, shrinking until its widest word fits, and keeps clear of the number.
  */
 function RarityTestOutcome({ result }: { result: RarityTestResult }) {
   const tokens = useTokens();
@@ -273,16 +276,19 @@ function RarityTestOutcome({ result }: { result: RarityTestResult }) {
       >
         {String(result.top)}
       </Text>
-      <Text
-        accessibilityRole="header"
-        {...voice}
-        maxFontSizeMultiplier={fontScaleCap.number}
-        style={[typeStyle('rarityTestResult', tokens), styles.outcomeLine, { color: colors.ink }]}
-      >
-        {fill(result.changed ? strings.rarityTest.resultChanged : strings.rarityTest.resultKept, {
-          range,
-        })}
-      </Text>
+      <View style={styles.outcomeLine}>
+        <WholeWordsText
+          text={fill(
+            result.changed ? strings.rarityTest.resultChanged : strings.rarityTest.resultKept,
+            { range },
+          )}
+          typeRole="rarityTestResult"
+          accessibilityRole="header"
+          {...voice}
+          maxFontSizeMultiplier={fontScaleCap.number}
+          style={[typeStyle('rarityTestResult', tokens), { color: colors.ink }]}
+        />
+      </View>
       <View style={styles.outcomeLine}>
         <Segments
           count={RARITIES.length}
@@ -338,6 +344,7 @@ function QuietButton({
 
 const styles = StyleSheet.create({
   pair: { flexDirection: 'row', gap: space[3] },
+  progress: { marginTop: rarityTestLayout.progressBar.marginTop, gap: space[2] },
   askLine: { flexDirection: 'row', flexWrap: 'wrap', gap: space[1] },
   half: { flex: 1 },
   segments: { flexDirection: 'row', alignSelf: 'stretch' },
@@ -350,7 +357,7 @@ const styles = StyleSheet.create({
     gap: rarityTestLayout.resultCard.gap,
   },
   number: { position: 'absolute', ...rarityTestLayout.number },
-  outcomeLine: { maxWidth: rarityTestLayout.resultWidth },
+  outcomeLine: { maxWidth: rarityTestLayout.resultWidth, marginRight: rarityTestLayout.numberRoom },
   outcomeNote: { maxWidth: rarityTestLayout.noteWidth },
   quiet: { minHeight: minTouchTarget, alignItems: 'center', justifyContent: 'center' },
 });

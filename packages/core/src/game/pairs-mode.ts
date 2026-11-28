@@ -35,9 +35,15 @@ function pairOf(word: Word): GridPair {
  * a Round is a grid of up to 4 Words and their primary Definitions, each
  * shuffled apart, whose every pair is a Round of its own, so that a Game's 15
  * Rounds are grids of 4, 4, 4 and 3 pairs. A grid holds the answer and the
- * Words the Game would ask next, those of its part of speech first; no two of
- * them share a Lemma, none fits the primary Definition of another by one of
- * its own Definitions, primary or extra, and no two are synonyms, so each Word
+ * Words the Game would ask next. First come the ones the reader is weak on
+ * whose places the grid reaches; one of them that may not sit in the grid
+ * gives its place to the next weak one and moves to a later grid. Then comes a
+ * weak one that may not share a grid with another still to come, ahead of its
+ * place, so that the two never meet at the Game's last grid, which neither
+ * could leave. Then come the Words of the answer's part of speech, then the
+ * others. No two Words of a grid share a Lemma, none fits the primary
+ * Definition of another by one of its own Definitions, primary or extra, and
+ * no two are synonyms, so each Word
  * has one right Definition. A wrong pair costs a Life and marks Unknown the Word tapped,
  * whose Definition was matched wrongly. Each pair's sheet shows its Word and
  * the Word's first Example, if it has one.
@@ -47,20 +53,37 @@ export const pairsMode: GameMode = {
   group: 'meaning',
   entryKind: 'word',
   isOn: (edition) => edition.isFeatureEnabled('gamePairs'),
-  buildRound({ answer, next, upTo, random, comparison }) {
-    /** Whether either Word fits the other's Definition in the grid, so a pair would have two right matches. */
-    const fit = (one: Word, other: Word) =>
-      fitsDefinitionOf(comparison, one, other) || fitsDefinitionOf(comparison, other, one);
+  buildRound({ answer, next, weakNext, upTo, random, comparison }) {
     if (answer.kind !== 'word') return undefined;
-    const others = gridOrder(answer, next.filter(isWord));
+    /**
+     * Whether the two Words may not share a grid: they share a Lemma, or
+     * either fits the other's Definition, so a pair would have two right matches.
+     */
+    const apart = (one: Word, other: Word) =>
+      one.lemma === other.lemma ||
+      fitsDefinitionOf(comparison, one, other) ||
+      fitsDefinitionOf(comparison, other, one);
+    const size = Math.min(ROUND_OPTIONS, upTo);
+    const words = next.filter(isWord);
+    // The grid's places after the answer's are those of the first Words the Game would ask next.
+    const due = words.slice(0, size - 1).filter(({ id }) => weakNext.has(id));
+    const later = words.slice(size - 1).filter(({ id }) => weakNext.has(id));
     const grid = [answer];
-    const lemmas = new Set([answer.lemma]);
-    for (const word of others) {
-      if (grid.length >= Math.min(ROUND_OPTIONS, upTo)) break;
-      if (lemmas.has(word.lemma) || grid.some((placed) => fit(placed, word))) continue;
-      lemmas.add(word.lemma);
-      grid.push(word);
+    /** Puts in the grid, in order, the Words that may sit in it, while it has places and until it has `enough`. */
+    function take(candidates: readonly Word[], enough = () => false): void {
+      for (const word of candidates) {
+        if (grid.length >= size || enough()) return;
+        if (!grid.some((placed) => apart(placed, word))) grid.push(word);
+      }
     }
+    take(due);
+    take(later, () => grid.length > due.length);
+    take(
+      later.filter((word) =>
+        [...due, ...later].some((other) => other !== word && apart(word, other)),
+      ),
+    );
+    take(gridOrder(answer, words));
     const places = grid.map((_, place) => place);
     return {
       form: 'pairs',

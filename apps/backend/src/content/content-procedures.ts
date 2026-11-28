@@ -31,8 +31,10 @@ export function contentProcedures(
     patch: content.patch.handler(async ({ input, errors }) => {
       const { editionId } = input.params;
       const { since, patchFormat } = input.query;
-      // The backend serves the one Patch format it writes; the app keeps its content.
-      if (patchFormat !== PATCH_FORMAT) {
+      // `patchFormat` is the highest format the app reads. The backend writes
+      // one format: an app that reads only lower ones keeps its content, an
+      // app that reads a higher one gets this format.
+      if (patchFormat < PATCH_FORMAT) {
         return {
           status: 200 as const,
           headers: {

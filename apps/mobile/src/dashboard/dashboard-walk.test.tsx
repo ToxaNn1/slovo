@@ -188,6 +188,12 @@ async function settle(action: () => unknown = () => undefined) {
   });
 }
 
+/**
+ * Waits on the first Word for its red to give way, which lets VoiceOver reach
+ * the step only once Reduce Motion has answered, after a first pass.
+ */
+const pastTheRed = () => settle();
+
 const press = (testID: string) => settle(() => fireEvent.press(screen.getByTestId(testID)));
 
 /** Goes back to the Dashboard; the stack reports the transition's end, which lets the next tap open a screen. */
@@ -204,6 +210,7 @@ describe('the whole Dashboard', () => {
     // Onboarding, the quickest way through: it lands on the Dashboard.
     expect(screen.getByText(steps.welcome.title)).toBeTruthy();
     await press('onboarding-start');
+    await pastTheRed();
     expect(composition.history.list).toEqual([]);
     // «Беру!» makes the first Word Seen then, the onboarding still open (ticket #2062).
     await press('onboarding-next');
@@ -342,7 +349,10 @@ describe('a landing on the Word of the Day card', () => {
       'done',
       'time-20:30',
     ];
-    for (const step of onboarding) await press(`onboarding-${step}`);
+    for (const step of onboarding) {
+      await press(`onboarding-${step}`);
+      if (step === 'start') await pastTheRed();
+    }
     await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.toCard)));
     expect(app.pathname()).toBe('/feed');
     screenSettled();

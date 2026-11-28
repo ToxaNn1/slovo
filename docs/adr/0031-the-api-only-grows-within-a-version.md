@@ -4,9 +4,11 @@ summary: The API is one oRPC contract that only grows within `/v1`, held by a co
 
 # The API only grows within a version
 
-The app talks to the backend (ADR 0003, 0030). An app in the field updates late: a reader may run a build from months ago, and an old build can't be fixed from the server. So a change of the API that an old app doesn't understand breaks a reader's app, not a test.
+The app talks to the backend (ADR 0030). An app in the field updates late: a reader may run a build from months ago, and an old build can't be fixed from the server. So a change of the API that an old app doesn't understand breaks a reader's app, not a test.
 
-The API is described once, as a contract-first oRPC contract in `packages/contracts` (`apiContract`, built with oRPC's contract builder and Zod). It has its own entry point, `@slovo/contracts/api`, as the Language Pack's Edition reader has, so what loads the package's main entry alone, such as the Language Pack build, never loads oRPC. The backend implements it and serves it through oRPC's OpenAPI handler: every procedure has a readable REST address, and the generated OpenAPI description is at `/docs`. The Core calls it through `createApiClient`, the client built from the same contract, which the app builds for it as its one Backend port (ADR 0064), as the backend's tests do; the Core, and the UI over it, load the client this way and never the server. Neither side depends on the other, and a mismatch fails typecheck. The contract has one router per domain (`account`, `content`, `edition`, `sync`).
+The API is described once, as a contract-first oRPC contract in `packages/contracts` (`apiContract`, built with oRPC's contract builder and Zod). It has its own entry point, `@slovo/contracts/api`, as the Language Pack's Edition reader has, so what loads the package's main entry alone, such as the Language Pack build, never loads oRPC. The backend implements it and serves it through oRPC's OpenAPI handler: every procedure has a readable REST address, and the generated OpenAPI description is at `/docs`. The Core calls it through `createApiClient`, the client built from the same contract, which the app builds for it as its one Backend port (ADR 0064), as the backend's tests do; the Core, and the UI over it, load the client this way and never the server. Neither side depends on the other, and a mismatch fails typecheck. The contract has one router per domain.
+
+The admin's paths (`/v1/admin/`) are the exception: the admin and the Агент tooling ship with the backend, so an admin input may narrow, an admin procedure may go and an admin strict output may gain a field.
 
 Within a version the contract only grows:
 

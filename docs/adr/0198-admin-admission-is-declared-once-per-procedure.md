@@ -4,7 +4,7 @@ summary: Who may call each admin procedure (Власник, Адмін, Аген
 
 # Admin admission is declared once per procedure
 
-Decision of 2026-11-19 (ticket #2054, spec #2049). It refines ADR 0088, 0096 and 0164; their rules on who may call what are unchanged.
+Decision of 2026-11-19 (ticket #2054, spec #2049). It refines ADR 0088; its rules on who may call what are unchanged.
 
 **Why.** Each admin handler chose one of seven admission helpers with flags of opposite defaults. A write without the admin header compiled, and no test walked the contract.
 

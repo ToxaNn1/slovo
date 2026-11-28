@@ -224,17 +224,14 @@ describe('Feed Notices', () => {
     const limit = 3;
     const opened: { history?: Composition['history'] } = {};
     const feedNotices: FeedNotices = {
-      forDay: (_day, after) =>
+      forDay: () =>
         Promise.resolve(
           (
             [
               'yesterday',
               'communityWord',
               'firstWeek',
-              ...(new Set([
-                ...(opened.history?.list ?? []).map(({ entryId }) => entryId),
-                ...(after === undefined ? [] : [after]),
-              ]).size >= limit
+              ...(new Set((opened.history?.list ?? []).map(({ entryId }) => entryId)).size >= limit
                 ? (['enoughForToday'] as const)
                 : []),
             ] as const
@@ -243,12 +240,12 @@ describe('Feed Notices', () => {
     };
     const app = await run({ records: new Map(), at: dayOne, feedNotices });
     opened.history = app.history;
-    // The card on screen when it is the Entry that reaches the limit.
+    // The card on screen once leaving the one before it made the limit's Entry Seen.
     let onScreenAtLimit: number | undefined;
 
     for (let position = 0; position < 12; position += 1) {
       await app.feed.show(position);
-      if (onScreenAtLimit === undefined && app.history.list.length + 1 >= limit)
+      if (onScreenAtLimit === undefined && app.history.list.length >= limit)
         onScreenAtLimit = position;
       app.advance(1000);
     }

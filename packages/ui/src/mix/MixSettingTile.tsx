@@ -67,7 +67,9 @@ export function MixSettingTile({
       <Text
         {...voice}
         testID={`${testID}-value`}
+        // A value is one word, «Помірно»: it shrinks to the tile rather than lose its end.
         numberOfLines={1}
+        adjustsFontSizeToFit
         style={[typeStyle('mixSettingValue', tokens), { color: colors.ink }]}
       >
         {value}

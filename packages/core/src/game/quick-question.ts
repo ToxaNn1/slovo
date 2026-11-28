@@ -129,6 +129,7 @@ export function createQuickQuestion({
           answer,
           eligible: eligible.entries,
           next: [],
+          weakNext: new Set(),
           upTo: 1,
           round: 1,
           random,
@@ -204,8 +205,16 @@ export function createQuickQuestion({
     if (judged === undefined) return undefined;
     unanswered.delete(question.round);
     const { right } = judged.answer;
-    if (right) await writeStaged(userState, [xp.award({ source: 'quick-question' })]);
-    await markAnswer(knowledge, content.entry.id, right);
+    let earned = false;
+    try {
+      if (right) await writeStaged(userState, [xp.award({ source: 'quick-question' })]);
+      earned = right;
+      await markAnswer(knowledge, content.entry.id, right);
+    } catch (error) {
+      // An answer that wrote nothing is no answer: the question waits for another.
+      if (!earned) unanswered.set(question.round, content);
+      throw error;
+    }
     await answered?.(content, right);
     return { ...question, answer: { ...judged.answer, entry: content.entry } };
   }

@@ -1,16 +1,16 @@
-# Onboarding: a fresh install shows the welcome over the Feed;
-# «Почати» leads to the first Word, «КРОК 2 З 5», today's Word of the Day on
-# its card; «Далі» to «Хто ви?», «КРОК 3 З 5», whose answer leads to «Навіщо
-# вам рідкісні слова?», «КРОК 4 З 5», whose «Пізніше» keeps the defaults and
-# leads to the Daily Goal, «КРОК 5 З 5», with the Edition's default picked;
-# «Готово» with another goal picked finishes the onboarding on the Feed, and
-# Settings shows that goal; a relaunch shows no onboarding. («Пропустити»
-# finishes it on every fresh install, see `open-in-dev-client.yaml`.) The
-# onboarding asks for nothing: notifications are turned on in Settings ›
-# Сповіщення, see `notifications-enable.yaml`. A subflow of `smoke.yaml`; run
-# it from there. It starts from a fresh install, whatever the simulator holds,
-# so it clears the app's state: put it last in the smoke flow, as it takes the
-# Favorites and the other choices with it.
+# Onboarding: a fresh install shows the welcome over the Dashboard, step 1 of
+# 8; «До першого слова» leads to the first Word, today's Word of the Day; «Беру!»
+# to the voice; «ОБИРАЮ» to «Грай»; «Зіграю!» to the level, whose «Перевір
+# мене» opens the 10-word Rarity Test in its place; the test leads to «Навіщо»,
+# whose «Пізніше» keeps the defaults and leads to the Daily Goal, with the
+# Edition's highlighted goal picked; «Обираю» with another goal picked leads to
+# the reminder, whose «Без нагадувань» finishes the onboarding on the Dashboard
+# and asks nothing; Settings shows the goal picked; a relaunch shows no
+# onboarding. («Пропустити» finishes it on every fresh install, see
+# `open-in-dev-client.yaml`.) A subflow of `smoke.yaml`; run it from there. It
+# starts from a fresh install, whatever the simulator holds, so it clears the
+# app's state: put it last in the smoke flow, as it takes the Favorites and the
+# other choices with it.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 # A fresh install shows the welcome.
@@ -19,86 +19,189 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: onboarding
 - assertVisible:
+    id: onboarding-progress
+    text: Крок 1 з 8
+- assertVisible: Рідкісні слова рідної мови — нові щодня.
+- assertVisible:
     id: onboarding-start
-    text: Почати
+    text: До першого слова
 - assertVisible:
     id: onboarding-skip
 - takeScreenshot: onboarding-welcome
-# The onboarding covers the Feed: no Feed card is reachable behind it.
+# The onboarding covers the Dashboard: nothing behind it is reachable.
 - assertNotVisible:
-    id: feed-card-.*
-# The first Word: today's Word of the Day on its card.
+    id: dashboard
+# The first Word: «ТРИМАЙ!» over the whole screen gives way to today's Word of
+# the Day on its card.
 - tapOn:
     id: onboarding-start
+- extendedWaitUntil:
+    visible:
+      id: onboarding-next
+    timeout: 5000
 - assertVisible:
     id: onboarding-first-word
 - assertVisible:
-    id: onboarding-step
-- assertVisible: КРОК 2 З 5
-- assertVisible: Ваше перше слово
+    id: onboarding-progress
+    text: Крок 2 з 8
+- assertVisible: Твоє перше Слово дня. Завтра буде нове.
 - assertVisible:
     id: onboarding-next
-    text: Далі
+    text: Беру!
 - takeScreenshot: onboarding-first-word
-# «Як добре ви знаєте мову?»: one button per option, «Не знаю» among them, and «Пізніше».
+# The voice: a voice per row, to hear and to pick.
+- tapOn:
+    id: onboarding-next
+- assertVisible:
+    id: onboarding-voice
+- assertVisible:
+    id: onboarding-progress
+    text: Крок 3 з 8
+- assertVisible: Хто читатиме тобі слова?
+- assertVisible:
+    id: onboarding-voice-list
+- assertVisible:
+    id: onboarding-next
+    text: ОБИРАЮ
+- takeScreenshot: onboarding-voice
+# «Грай»: the games.
+- tapOn:
+    id: onboarding-next
+- assertVisible:
+    id: onboarding-play
+- assertVisible:
+    id: onboarding-progress
+    text: Крок 4 з 8
+- assertVisible: Ігри, де треба влучати
+- assertVisible:
+    id: onboarding-next
+    text: Зіграю!
+- takeScreenshot: onboarding-play
+# The level: one button per option, «Перевір мене» among them, and «Пізніше».
 - tapOn:
     id: onboarding-next
 - assertVisible:
     id: onboarding-question
-- assertVisible: КРОК 3 З 5
-- assertVisible: Як добре ви знаєте мову?
+- assertVisible:
+    id: onboarding-progress
+    text: Крок 5 з 8
+- assertVisible: Як у тебе з рідкісними словами?
 - assertVisible:
     id: onboarding-answer-good
 - assertVisible:
     id: onboarding-answer-dont-know
+    text: Перевір мене
 - assertVisible:
     id: onboarding-later
     text: Пізніше
 - takeScreenshot: onboarding-level
-# An answer goes on to «Навіщо вам рідкісні слова?».
+# «Перевір мене» opens the Rarity Test on the same step: «Знаю» on each of its
+# 10 Words, then its result, whose «Далі» goes on. A Mix with no Words to draw
+# goes on at once.
 - tapOn:
-    id: onboarding-answer-good
+    id: onboarding-answer-dont-know
+- extendedWaitUntil:
+    visible:
+      id: onboarding-rarity-question|onboarding-question
+    timeout: 10000
+- runFlow:
+    when:
+      visible:
+        id: onboarding-rarity-question
+    commands:
+      - assertVisible:
+          id: onboarding-progress
+          text: Крок 5 з 8
+      - assertVisible:
+          id: onboarding-rarity-unknown
+      - takeScreenshot: onboarding-rarity-test
+      - repeat:
+          while:
+            visible:
+              id: onboarding-rarity-known
+          times: 12
+          commands:
+            - tapOn:
+                id: onboarding-rarity-known
+      - runFlow:
+          when:
+            visible:
+              id: onboarding-rarity-result
+          commands:
+            - takeScreenshot: onboarding-rarity-result
+            - tapOn:
+                id: onboarding-rarity-next
+                text: Далі
+# «Навіщо»: one button per option.
 - assertVisible:
     id: onboarding-question
-- assertVisible: КРОК 4 З 5
-- assertVisible: Навіщо вам рідкісні слова?
+- assertVisible:
+    id: onboarding-progress
+    text: Крок 6 з 8
+- assertVisible: Чого ти хочеш від SLOVO?
 - assertVisible:
     id: onboarding-answer-rare-words
 - takeScreenshot: onboarding-why
-# «Пізніше» keeps the defaults and goes on to the Daily Goal, 20 picked.
+# «Пізніше» keeps the defaults and goes on to the Daily Goal, 10 picked.
 - tapOn:
     id: onboarding-later
 - assertVisible:
     id: onboarding-daily-goal
-- assertVisible: КРОК 5 З 5
-- assertVisible: Ваша денна ціль
 - assertVisible:
-    id: onboarding-daily-goal-20
+    id: onboarding-progress
+    text: Крок 7 з 8
+- assertVisible: Скільки слів на день?
+- assertVisible:
+    id: onboarding-daily-goal-10
     selected: true
 - takeScreenshot: onboarding-daily-goal
-# «Готово» with 30 picked finishes the onboarding and brings the Feed.
+# «Обираю» with 25 picked goes on to the reminder.
 - tapOn:
-    id: onboarding-daily-goal-30
+    id: onboarding-daily-goal-25
 - assertVisible:
-    id: onboarding-daily-goal-30
+    id: onboarding-daily-goal-25
     selected: true
 - tapOn:
     id: onboarding-done
-    text: Готово
+    text: Обираю
 - assertVisible:
-    id: feed-card-.*
+    id: onboarding-notification-time
+- assertVisible:
+    id: onboarding-progress
+    text: Крок 8 з 8
+- assertVisible: Коли нагадати про слово?
+- assertVisible:
+    id: onboarding-time-09:00
+    text: 9:00
+- assertVisible:
+    id: onboarding-time-20:30
+- assertVisible:
+    id: onboarding-time-none
+    text: Без нагадувань
+- takeScreenshot: onboarding-reminder
+# «Без нагадувань» asks for nothing and finishes the onboarding on the Dashboard.
+- tapOn:
+    id: onboarding-time-none
+- assertVisible:
+    id: dashboard
 - assertNotVisible:
-    id: onboarding-daily-goal
+    id: onboarding-notification-time
 - assertNotVisible:
-    id: onboarding
+    id: onboarding-skip
 # Settings shows the goal picked.
 - runFlow:
     file: ../open-settings-row.yaml
     env:
-      ROW: settings-daily-goal-30
+      ROW: settings-row-daily-goal
+- tapOn:
+    id: settings-row-daily-goal
 - assertVisible:
-    id: settings-daily-goal-30
+    id: daily-goal-25
     selected: true
+- tapOn:
+    id: daily-goal-back
+- runFlow:
+    file: ../leave-settings.yaml
 - tapOn:
     id: tab-home
 # A relaunch brings the Feed, with no onboarding.

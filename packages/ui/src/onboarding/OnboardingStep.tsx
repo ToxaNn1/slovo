@@ -10,6 +10,7 @@ import {
   Text,
   View,
   type HostInstance,
+  type ViewProps,
 } from 'react-native';
 import Animated, {
   Easing,
@@ -27,10 +28,12 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { HalftoneGround } from '../primitives/HalftoneGround';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import {
+  capitalMarkRoom,
   fontScaleCap,
   minTouchTarget,
   motion,
   onboardingLayout,
+  roleSize,
   space,
   typeStyle,
   wedges,
@@ -49,14 +52,16 @@ const SHOUT_TURN = `${String(shoutAt.turn)}deg`;
  * to the shortest top that holds its art, so a step's `content` shows whole
  * above its `footer` (the rest scrolls), with its art (the shout
  * word and the Mascot) drawn at the board's size over `artWidth` and scaled
- * by `scale`. The shout word sits low enough that its turned right end stays
- * under «Пропустити», whose row ends at `skipBottom`.
+ * by `scale`. The shout word sits low enough that its turned right end, with
+ * the capitals' marks over its line (`shoutRoom`), stays under «Пропустити»,
+ * whose row ends at `skipBottom`.
  */
 function onboardingHero({
   width,
   height,
   bottom,
   skipBottom,
+  shoutRoom,
   content,
   footer,
 }: {
@@ -64,6 +69,7 @@ function onboardingHero({
   height: number;
   bottom: number;
   skipBottom: number;
+  shoutRoom: number;
   content: number;
   footer: number;
 }): { height: number; scale: number; artWidth: number; shoutTop: number } {
@@ -78,14 +84,15 @@ function onboardingHero({
     height: heroHeight,
     scale,
     artWidth,
-    shoutTop: shoutTopIn(artWidth, skipBottom / scale),
+    shoutTop: shoutTopIn(artWidth, skipBottom / scale + shoutRoom),
   };
 }
 
 /**
  * Where the shout word sits on art `artWidth` wide: the board's place, or
  * lower so its turned right end stays under «Пропустити», whose row ends
- * `skipBottom` below the art's top, both at the board's size.
+ * `skipBottom` below the art's top (with the room the capitals' marks take
+ * over the word's line), both at the board's size.
  */
 function shoutTopIn(artWidth: number, skipBottom: number): number {
   // Turned about its middle, the word's right end rises by half its width times the turn's sine.
@@ -105,11 +112,13 @@ function introCover({
   height,
   top,
   bottom,
+  shoutRoom,
 }: {
   width: number;
   height: number;
   top: number;
   bottom: number;
+  shoutRoom: number;
 }) {
   const skipBottom = top + minTouchTarget;
   const band = skipBottom + intro.cut;
@@ -126,7 +135,7 @@ function introCover({
     scale,
     artWidth,
     artTop,
-    shoutTop: shoutTopIn(artWidth, (skipBottom - artTop) / scale),
+    shoutTop: shoutTopIn(artWidth, (skipBottom - artTop) / scale + shoutRoom),
     // The board's cut, its depth kept at `intro.cut` points however tall the red is.
     points: [
       [0, 0],
@@ -210,11 +219,21 @@ export function OnboardingStep({
   // The content's and the buttons' own heights, once laid out: a taller content gets a shorter red top.
   const [content, setContent] = useState(0);
   const [footerHeight, setFooterHeight] = useState(0);
+  // How far the shout word is shrunk to fit across the top, from its height as drawn (a word
+  // that wraps counts as unshrunk): the marks over its capitals rise above it in proportion.
+  const shoutSize = roleSize('stepShout');
+  const [shoutHeight, setShoutHeight] = useState(shoutSize.lineHeight);
+  const shoutRatio = Math.min(1, shoutHeight / shoutSize.lineHeight);
+  const shoutRoom = capitalMarkRoom('stepShout', {
+    fontSize: shoutSize.fontSize * shoutRatio,
+    lineHeight: shoutSize.lineHeight * shoutRatio,
+  });
   const hero = onboardingHero({
     width,
     height,
     bottom,
     skipBottom: top + minTouchTarget,
+    shoutRoom,
     // A framed step's content takes whatever room there is: the red top stays its shortest.
     content: framed ? Number.POSITIVE_INFINITY : content,
     footer: footerHeight,
@@ -262,10 +281,15 @@ export function OnboardingStep({
     ],
   }));
   // The intro: 0 while the red covers the screen, 1 once it has given way to its band.
-  const cover = introCover({ width, height, top, bottom });
+  const cover = introCover({ width, height, top, bottom, shoutRoom });
   const open = useSharedValue(introStep ? 0 : 1);
   const [givenWay, setGivenWay] = useState(false);
   const opened = !introStep || givenWay || known === true;
+  // Under the red, the content and the buttons stay out of reach of VoiceOver.
+  const underCover: Pick<ViewProps, 'accessibilityElementsHidden' | 'importantForAccessibility'> = {
+    accessibilityElementsHidden: !opened,
+    importantForAccessibility: opened ? 'auto' : 'no-hide-descendants',
+  };
   useEffect(() => {
     if (!introStep || known === undefined) return;
     if (known) open.value = 1;
@@ -336,7 +360,13 @@ export function OnboardingStep({
         { width: at.artWidth, top: at.top ?? 0, transform: [{ scale: at.scale }] },
       ]}
     >
-      <Animated.View testID="onboarding-shout" style={[styles.shout, { top: at.shoutTop }, flyIn]}>
+      <Animated.View
+        testID="onboarding-shout"
+        onLayout={({ nativeEvent }) => {
+          if (nativeEvent.layout.height > 0) setShoutHeight(nativeEvent.layout.height);
+        }}
+        style={[styles.shout, { top: at.shoutTop }, flyIn]}
+      >
         {/* Scaled down until the whole word fits across the top, never cut. */}
         <WholeWordsText
           text={shout}
@@ -376,6 +406,7 @@ export function OnboardingStep({
   const footerBar = (
     <Animated.View
       testID="onboarding-footer"
+      {...underCover}
       onLayout={({ nativeEvent }) => {
         setFooterHeight(nativeEvent.layout.height);
       }}
@@ -401,7 +432,11 @@ export function OnboardingStep({
       >
         {/* The band the red leaves at the top, which the red itself draws. */}
         <View style={{ height: cover.band }} />
-        <Animated.View testID="onboarding-content" style={[styles.content, styles.framed, follow]}>
+        <Animated.View
+          testID="onboarding-content"
+          {...underCover}
+          style={[styles.content, styles.framed, follow]}
+        >
           {body}
         </Animated.View>
         {footerBar}

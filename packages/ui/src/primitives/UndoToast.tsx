@@ -31,6 +31,7 @@ import Animated, {
 
 import { useEdition } from '../providers/EditionProvider';
 import {
+  entryCardFrame,
   fontScaleCap,
   minTouchTarget,
   motion,
@@ -104,7 +105,20 @@ export interface PlateToastContent {
 /** What one toast says: with an undo, a message alone, or on the plate of board 09. */
 export type ToastContent = UndoToastContent | MessageToastContent | PlateToastContent;
 
-const UndoToastContext = createContext<((toast: ToastContent) => void) | undefined>(undefined);
+const UndoToastContext = createContext<
+  ((toast: ToastContent, overCard: boolean) => void) | undefined
+>(undefined);
+const OverCardContext = createContext(false);
+
+/**
+ * Wraps an Entry card on a page of the Feed or a list's Feed: a toast its
+ * actions raise spans the card and sits above its tab bar, which stays in
+ * reach. A toast raised elsewhere on that screen, such as by the Weekly
+ * Recap's page, keeps the usual place.
+ */
+export function OverCardToasts({ children }: { children: ReactNode }) {
+  return <OverCardContext value>{children}</OverCardContext>;
+}
 const CloseUndoToastContext = createContext<(() => void) | undefined>(undefined);
 
 /**
@@ -120,11 +134,15 @@ export function UndoToastProvider({
   children: ReactNode;
   schedule?: Schedule;
 }) {
-  const [toast, setToast] = useState<{ readonly id: number; readonly content: ToastContent }>();
+  const [toast, setToast] = useState<{
+    readonly id: number;
+    readonly content: ToastContent;
+    readonly overCard: boolean;
+  }>();
   const lastId = useRef(0);
-  const show = useCallback((content: ToastContent) => {
+  const show = useCallback((content: ToastContent, overCard: boolean) => {
     lastId.current += 1;
-    setToast({ id: lastId.current, content });
+    setToast({ id: lastId.current, content, overCard });
   }, []);
   const dismiss = useCallback((id: number) => {
     setToast((shown) => (shown?.id === id ? undefined : shown));
@@ -144,6 +162,7 @@ export function UndoToastProvider({
               content={toast.content}
               onDismiss={dismiss}
               schedule={schedule}
+              overCard={toast.overCard}
             />
           )}
         </View>
@@ -152,11 +171,21 @@ export function UndoToastProvider({
   );
 }
 
-/** Shows a toast, with an undo or without, on the screen of the nearest `UndoToastProvider`. */
+/**
+ * Shows a toast, with an undo or without, on the screen of the nearest
+ * `UndoToastProvider`, over the card when raised inside `OverCardToasts`.
+ */
 export function useUndoToast(): (toast: ToastContent) => void {
   const show = useContext(UndoToastContext);
+  const overCard = useContext(OverCardContext);
+  const showHere = useCallback(
+    (toast: ToastContent) => {
+      show?.(toast, overCard);
+    },
+    [show, overCard],
+  );
   if (show === undefined) throw new Error('useUndoToast needs an UndoToastProvider above it');
-  return show;
+  return showHere;
 }
 
 /**
@@ -185,11 +214,13 @@ function UndoToast({
   content,
   onDismiss,
   schedule,
+  overCard,
 }: {
   id: number;
   content: ToastContent;
   onDismiss: (id: number) => void;
   schedule: Schedule;
+  overCard: boolean;
 }) {
   const { width: windowWidth } = useWindowDimensions();
   // Each toast mounts afresh, so it waits for the system's answer before it comes in.
@@ -260,7 +291,7 @@ function UndoToast({
     <Animated.View
       testID="undo-toast"
       onAccessibilityEscape={close}
-      style={[styles.place, inStyle]}
+      style={[styles.place, overCard && styles.overCard, inStyle]}
     >
       {plate ? (
         <PlateFace content={content} messageRef={messageRef} onAction={close} />
@@ -428,6 +459,12 @@ const styles = StyleSheet.create({
     left: space[3] + 2,
     right: space[3] + 2,
     bottom: space[8] + space[2],
+  },
+  // An Entry card's page: the card's inset and outline, clear above its bottom padding and tab bar.
+  overCard: {
+    left: space[3],
+    right: space[3],
+    bottom: space[6] + entryCardFrame.padding.bottom + entryCardFrame.tabBar.height + space[2],
   },
   face: {
     flexDirection: 'row',

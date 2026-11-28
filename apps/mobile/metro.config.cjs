@@ -1,8 +1,9 @@
 const { existsSync, mkdirSync, writeFileSync } = require('node:fs');
 const { basename, dirname, extname, join } = require('node:path');
 
-const { getDefaultConfig } = require('expo/metro-config');
 const { require: tsxRequire } = require('tsx/cjs/api');
+
+const { appMetroConfig } = require('./metro-app-config.cjs');
 
 // The Edition folder module is TypeScript, which tsx loads, as for app.config.ts.
 const { APP_CONFIG_FILE, EDITIONS_DIR, REPO_DIR, openAppConfig, openEditionWithoutRecords } =
@@ -167,17 +168,4 @@ const generatedModules = {
   'slovo-editions/fonts': fontsModule(),
 };
 
-const config = getDefaultConfig(__dirname);
-config.resolver.assetExts.push('db');
-// The Editions are no workspace package, so Metro would read their files once at start and miss
-// every change to an Edition's switches or strings until a restart.
-config.watchFolders = [...config.watchFolders, EDITIONS_DIR];
-
-const resolveRequest = config.resolver.resolveRequest;
-config.resolver.resolveRequest = (context, moduleName, platform) => {
-  const filePath = appModules[moduleName] ?? generatedModules[moduleName];
-  if (filePath !== undefined) return { type: 'sourceFile', filePath };
-  return (resolveRequest ?? context.resolveRequest)(context, moduleName, platform);
-};
-
-module.exports = config;
+module.exports = appMetroConfig(__dirname, { ...appModules, ...generatedModules });

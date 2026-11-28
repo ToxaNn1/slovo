@@ -595,7 +595,7 @@ describe('two devices of one Account', () => {
 
     expect(server.sync.recordsOf('anna@mail.com').has('notifications.sound')).toBe(false);
     expect((await tablet.settings.read()).vibration).toBe(true);
-    expect(tablet.records.get('schema.version')).toBe('9');
+    expect(tablet.records.get('schema.version')).toBe('10');
     expect(await tablet.userState.pendingChanges()).toEqual(new Map());
     expect(await tablet.userState.cursor()).not.toBe(999);
   });

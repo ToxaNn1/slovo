@@ -139,13 +139,19 @@ export interface EntryRows {
    * one per Entry. An id the Language Pack doesn't have is not in the map.
    */
   rows(entryIds: Iterable<string>): Promise<ReadonlyMap<string, EntryRowModel>>;
+  /** Which of the Entries are Retired, read with their rows. */
+  retired(entryIds: Iterable<string>): Promise<ReadonlySet<string>>;
 }
 
 export function createEntryRows(entries: Pick<Entries, 'getManyOfAnyKind'>): EntryRows {
-  const kept = new Map<string, Promise<EntryRowModel | undefined>>();
+  /** The row of each Entry read, with whether it is Retired. */
+  const kept = new Map<
+    string,
+    Promise<{ readonly row: EntryRowModel; readonly retired: boolean } | undefined>
+  >();
 
   /** Reads the rows of the Entries together, and keeps each. */
-  function read(entryIds: readonly string[]): void {
+  function readTogether(entryIds: readonly string[]): void {
     const read = entries.getManyOfAnyKind(entryIds);
     for (const entryId of entryIds) {
       kept.set(
@@ -153,7 +159,9 @@ export function createEntryRows(entries: Pick<Entries, 'getManyOfAnyKind'>): Ent
         read.then(
           (found) => {
             const entry = found.get(entryId);
-            return entry === undefined ? undefined : buildEntryRow(entry);
+            return entry === undefined
+              ? undefined
+              : { row: buildEntryRow(entry), retired: entry.retired };
           },
           (error: unknown) => {
             // A failed read is tried again next time.
@@ -165,18 +173,23 @@ export function createEntryRows(entries: Pick<Entries, 'getManyOfAnyKind'>): Ent
     }
   }
 
-  async function rows(entryIds: Iterable<string>): Promise<ReadonlyMap<string, EntryRowModel>> {
+  /** What is kept of the Entries, by id, those not read yet read together. */
+  async function read(entryIds: Iterable<string>) {
     const ids = [...new Set(entryIds)];
     const unread = ids.filter((entryId) => !kept.has(entryId));
-    if (unread.length > 0) read(unread);
-    const found = new Map<string, EntryRowModel>();
+    if (unread.length > 0) readTogether(unread);
+    const found = new Map<string, { readonly row: EntryRowModel; readonly retired: boolean }>();
     await Promise.all(
       ids.map(async (entryId) => {
-        const row = await kept.get(entryId);
-        if (row !== undefined) found.set(entryId, row);
+        const entry = await kept.get(entryId);
+        if (entry !== undefined) found.set(entryId, entry);
       }),
     );
     return found;
+  }
+
+  async function rows(entryIds: Iterable<string>): Promise<ReadonlyMap<string, EntryRowModel>> {
+    return new Map([...(await read(entryIds))].map(([entryId, { row }]) => [entryId, row]));
   }
 
   return {
@@ -184,5 +197,9 @@ export function createEntryRows(entries: Pick<Entries, 'getManyOfAnyKind'>): Ent
       return (await rows([entryId])).get(entryId);
     },
     rows,
+    async retired(entryIds) {
+      const found = await read(entryIds);
+      return new Set([...found].flatMap(([entryId, { retired }]) => (retired ? [entryId] : [])));
+    },
   };
 }

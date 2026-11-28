@@ -303,6 +303,32 @@ describe('retire', () => {
     expect(printed).toEqual([`i_abc123 v3 content v42 batch ${BATCH}`]);
   });
 
+  it('names the Word that replaces a Retired Word', async () => {
+    const { api, calls } = backend({
+      record: () => ({ fields: {}, recordVersion: 2, retired: false }),
+      openBatch: () => ({ batchId: BATCH }),
+      retire: () => written('w_abc123', 3),
+    });
+    const { io, printed } = fakeIo();
+
+    const code = await retire(
+      api,
+      { editionId: 'uk', kind: 'word', id: 'w_abc123', replacedBy: 'w_def456' },
+      io,
+    );
+
+    expect(code).toBe(0);
+    expect(calls[2]?.input).toEqual({
+      editionId: 'uk',
+      kind: 'word',
+      id: 'w_abc123',
+      batchId: BATCH,
+      recordVersion: 2,
+      replacedBy: 'w_def456',
+    });
+    expect(printed).toEqual([`w_abc123 v3 content v42 batch ${BATCH}`]);
+  });
+
   it('exits 1 with the reason when the retire is refused', async () => {
     const { api } = backend({
       record: () => ({ fields: {}, recordVersion: 2, retired: false }),

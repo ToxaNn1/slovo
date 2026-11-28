@@ -218,6 +218,31 @@ function googleSignIn(): NonNullable<ExpoConfig['plugins']> {
   return [['@react-native-google-signin/google-signin', { iosUrlScheme }]];
 }
 
+/** A variable of the build's environment, or undefined when it is unset or empty. */
+function environmentVariable(name: string): string | undefined {
+  // Expo types every environment variable as `any`; narrow it here.
+  const value: unknown = process.env[name];
+  return typeof value === 'string' && value !== '' ? value : undefined;
+}
+
+/**
+ * Sentry's build phases (ADR 0048), which upload the dSYM and the bundle's
+ * source map so a crash report shows readable stacks. The org and project come
+ * from the build's environment and the auth token, read by sentry-cli itself,
+ * from the secret SENTRY_AUTH_TOKEN, never from the repository. Without either,
+ * the phases skip the upload with a log line instead of failing the build.
+ */
+function sentry(): NonNullable<ExpoConfig['plugins']>[number] {
+  const organization = environmentVariable('SENTRY_ORG');
+  const project = environmentVariable('SENTRY_PROJECT');
+  const named = organization !== undefined && project !== undefined;
+  const upload = named && environmentVariable('SENTRY_AUTH_TOKEN') !== undefined;
+  return [
+    '@sentry/react-native/expo',
+    named ? { organization, project, disableAutoUpload: !upload } : { disableAutoUpload: true },
+  ];
+}
+
 /** The backend's address the bundle carries (`src/api.ts`). */
 const API_URL_VARIABLE = 'EXPO_PUBLIC_SLOVO_API_URL';
 
@@ -403,7 +428,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     name,
     slug: 'slovo',
     owner: 'slovo-app',
-    version: '0.9',
+    version: '1.0',
     scheme,
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',
@@ -456,6 +481,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       ['expo-build-properties', { ios: { deploymentTarget: '17.0' } }],
       // The widget extension, from apps/widget/expo-target.config.json.
       ['@bacons/apple-targets', { root: '..', match: 'widget' }],
+      sentry(),
       ...googleSignIn(),
     ],
     extra: {
