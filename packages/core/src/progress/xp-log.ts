@@ -709,9 +709,6 @@ export async function openXpLog({
   /** The log as of today, read off the fold. */
   function derive(): XpLogDays & {
     state: XpLogState;
-    reviewToday: number;
-    /** Today's Seen-Word records counted toward today's goal. */
-    seenWordsCounted: number;
     milestones: XpLogMilestones;
   } {
     const date = todayKey(clock);
@@ -725,8 +722,6 @@ export async function openXpLog({
         dailyGoal: dailyGoal === null ? null : { ...dailyGoal, seen: seenToday() },
         level: levelsOn ? levelOf(edition.levels, total) : undefined,
       },
-      reviewToday: folded.reviewXpOf(date),
-      seenWordsCounted: folded.seenWordsOf(date),
       byDate,
       active,
       frozen,
@@ -792,7 +787,8 @@ export async function openXpLog({
     const today = todayKey({ now: () => at, timeZone: () => clock.timeZone() });
     const fixedId = fixedIdOf(action, today, scoped);
     if (!on || (fixedId !== undefined && records.has(fixedId))) return NOTHING_EARNED;
-    const amount = amountOf(edition.xp, action, derived.reviewToday);
+    // The Review XP of the record's own day, not of the day the log was last derived on.
+    const amount = amountOf(edition.xp, action, folded.reviewXpOf(today));
     if (amount === 0) return NOTHING_EARNED;
     const id = fixedId ?? newId(at);
     const record = xpEntryOf({
@@ -959,14 +955,17 @@ export async function openXpLog({
   ): Map<string, XpRecord> {
     const added = new Map<string, XpRecord>();
     if (!seenWordOn || goal === undefined || !isFirstCycle()) return added;
-    let counted = derived.seenWordsCounted;
+    const at = clock.now();
+    const today = todayKey({ now: () => at, timeZone: () => clock.timeZone() });
+    // Today's Seen-Word records, not those of the day the log was last derived on.
+    let counted = folded.seenWordsOf(today);
     for (const entryId of entryIds) {
       if (records.has(seenWordId(entryId)) || counted >= goal) continue;
       counted += 1;
       added.set(seenWordId(entryId), {
         kind: 'xp',
-        date: todayKey(clock),
-        at: clock.now().toISOString(),
+        date: today,
+        at: at.toISOString(),
         source: 'seen-word',
         amount: edition.xp.seenWord,
       });

@@ -168,6 +168,40 @@ describe('The Curated Collections rail', () => {
     expect(idsOf(app)).toEqual(['cc_today:new', 'cc_oct:new', 'cc_jan:opened']);
   });
 
+  it('keeps an older refresh’s rail when a newer one fails to read', async () => {
+    const memory = createMemoryUserStatePort();
+    const held: (() => void)[] = [];
+    /** How the next reads of what was opened go, in order; each later one passes. */
+    const reads: ('pass' | 'hold' | 'fail')[] = [];
+    const port: UserStatePort = {
+      ...memory,
+      async list(prefix) {
+        const found = await memory.list(prefix);
+        if (!prefix.startsWith('curatedCollections.opened.')) return found;
+        const read = reads.shift() ?? 'pass';
+        if (read === 'fail') throw new Error('The database is busy');
+        if (read === 'pass') return found;
+        return new Promise((resolve) =>
+          held.push(() => {
+            resolve(found);
+          }),
+        );
+      },
+    };
+    const { app } = await run({ port });
+
+    // Opening a collection refreshes the rail with a slow read; a second open
+    // meanwhile refreshes it with a read that fails.
+    reads.push('pass', 'hold', 'pass', 'fail');
+    const opening = app.curatedCollections.open('cc_jan');
+    await settle();
+    await expect(app.curatedCollections.open('cc_oct')).rejects.toThrow('The database is busy');
+    for (const release of held) release();
+    await opening;
+
+    expect(idsOf(app)).toContain('cc_jan:opened');
+  });
+
   it('shows ten collections at most', async () => {
     const many = Array.from({ length: 12 }, (_, i) =>
       collection(`cc_${String(i).padStart(2, '0')}`, `2026-01-${String(i + 1).padStart(2, '0')}`),

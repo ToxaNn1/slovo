@@ -169,6 +169,13 @@ describe('a text found in another', () => {
     expect(found('Він прийшов з міста́', 'міста')).toBe('міста́');
   });
 
+  it('finds it when both texts are written decomposed, as the key compares them', () => {
+    const decomposed = (text: string) => text.normalize('NFD');
+    expect(ua.find(decomposed('мій край'), decomposed('край'))).toEqual({ start: 5, end: 10 });
+    expect(found(decomposed('Їжак, ї́жак'), decomposed('їжак'))).toBe(decomposed('Їжак'));
+    expect(found(decomposed('мій край'), decomposed('ий'))).toBeUndefined();
+  });
+
   it('finds it whatever the kind of apostrophe', () => {
     expect(found('Їх було п’ятеро', "п'ятеро")).toBe('п’ятеро');
   });

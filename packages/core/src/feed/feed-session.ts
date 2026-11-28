@@ -27,7 +27,11 @@ export interface FeedSession {
    * card, the card dropped from their place no longer takes it back.
    */
   moveTo(place: number): void;
-  /** Whether the card belongs to the current Cycle: the cards before its first card belong to an earlier one. */
+  /**
+   * Whether the card belongs to the current Cycle: the cards before its first
+   * card belong to an earlier one. A card `renew` replaced answers as the card
+   * in its place does, so a card taken before a change still counts.
+   */
   inCurrentCycle(card: FeedCard): boolean;
   /** The cards shown in the current Cycle. */
   cycleCards(): readonly FeedCard[];
@@ -72,6 +76,16 @@ export function createFeedSession(): FeedSession {
    * again, as on an undo.
    */
   let droppedFromPlace: FeedCard | undefined;
+  /** The card `renew` put in place of each card it replaced. */
+  const renewedTo = new WeakMap<FeedCard, FeedCard>();
+
+  /** The card in the session for `card`: itself, or the card `renew` last put in its place. */
+  function latest(card: FeedCard): FeedCard {
+    let current = card;
+    for (let next = renewedTo.get(current); next !== undefined; next = renewedTo.get(current))
+      current = next;
+    return current;
+  }
 
   function set(changed: readonly FeedCard[], changedDropped = dropped): void {
     session = changed;
@@ -125,7 +139,7 @@ export function createFeedSession(): FeedSession {
       place = to;
       droppedFromPlace = undefined;
     },
-    inCurrentCycle: (card) => session.indexOf(card) >= cycleStart,
+    inCurrentCycle: (card) => session.indexOf(latest(card)) >= cycleStart,
     cycleCards: () => session.slice(cycleStart).filter((card) => !dropped.has(card)),
     shownIds(except) {
       const shown = session.slice(cycleStart).filter((card) => card !== except);
@@ -143,7 +157,12 @@ export function createFeedSession(): FeedSession {
       if (place > at) place += 1;
       set([...session.slice(0, at + 1), inserted, ...session.slice(at + 1)]);
     },
-    renew(renewed) {
+    renew(given) {
+      const renewed = (card: FeedCard): FeedCard => {
+        const next = given(card);
+        if (next !== card) renewedTo.set(card, next);
+        return next;
+      };
       if (droppedFromPlace !== undefined) droppedFromPlace = renewed(droppedFromPlace);
       set(session.map(renewed), new Set([...dropped].map(renewed)));
     },

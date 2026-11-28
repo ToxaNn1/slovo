@@ -255,14 +255,19 @@ export async function openDashboard({
 
   let blocks = await blocksOf();
   let shownKey = keyOf(blocks);
-  // The refreshes started, so one that ends after a newer one never puts back what it read.
+  // The refreshes started, and the newest whose read was put in place, so one
+  // that ends after a newer one never puts back what it read, and one a newer
+  // failed read leaves is put in place all the same.
   let started = 0;
+  let applied = 0;
   async function refresh(): Promise<void> {
     started += 1;
     const mine = started;
     const next = await blocksOf();
+    if (mine < applied) return;
+    applied = mine;
     const key = keyOf(next);
-    if (mine !== started || key === shownKey) return;
+    if (key === shownKey) return;
     blocks = next;
     shownKey = key;
     subscribers.tell();

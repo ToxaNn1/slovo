@@ -117,7 +117,7 @@ export interface FeedNoticeQueue {
     day: LocalDate,
     inSession: ReadonlySet<FeedNotice>,
   ): Promise<FeedNoticeContent | undefined>;
-  /** Keeps that the Feed shows `content` on the local day `day`: the offer to save progress counts its day. */
+  /** Keeps that `content` of the local day `day` came on screen: the offer to save progress counts its day. */
   shown(content: FeedNoticeContent, day: LocalDate): Promise<void>;
   /**
    * The change that closes `content` for the local day `date`
