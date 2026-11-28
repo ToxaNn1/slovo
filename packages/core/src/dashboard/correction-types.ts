@@ -33,8 +33,9 @@ export interface CorrectionTypeRow {
 /**
  * The Correction Types: the rail's tiles and each type's
  * Corrections. A Correction is «розібрано» once its standard form was shown:
- * Seen on the Feed, or revealed with «Як правильно?» on the type's screen.
- * With `correctionTypes` off there are no tiles and no Corrections.
+ * Seen on the Feed, or revealed with «Як правильно?» on the type's screen,
+ * kept with `correctionTypes` off too. With `correctionTypes` off there are
+ * no tiles and no Corrections.
  */
 export interface CorrectionTypes {
   /** The tiles in the contract's order of types, the types without live Corrections left out. */
@@ -84,21 +85,27 @@ export async function openCorrectionTypes({
 
   let tiles = await tilesOf();
 
-  /** Marks a live Correction worked through, once; a Word or an unknown id changes nothing. */
+  /**
+   * Marks a live Correction worked through, once, with `correctionTypes` off
+   * too, so the tiles count it once the switch turns on; a Word or an unknown
+   * id changes nothing.
+   */
   async function markWorkedThrough(correctionId: string): Promise<void> {
-    const [corrections, done] = await Promise.all([live(), workedThroughIds()]);
+    const [corrections, done] = await Promise.all([entries.liveCorrections(), workedThroughIds()]);
     if (done.has(correctionId) || !corrections.some(({ id }) => id === correctionId)) return;
     await userState.write(records.record(correctionId).change(true));
+    if (!on) return;
     tiles = await tilesOf();
     subscribers.tell();
   }
 
-  // A Seen Word reads nothing; a read that fails here leaves the Correction to its next Seen.
+  // A Correction Seen in any Cycle is «розібрано», whatever the switch; a Seen
+  // Word reads nothing; a read that fails here leaves the Correction to its next Seen.
+  seen.subscribe(async (entryId) => {
+    if (!CorrectionIdSchema.safeParse(entryId).success) return;
+    await markWorkedThrough(entryId).catch(() => undefined);
+  });
   if (on) {
-    seen.subscribe(async (entryId) => {
-      if (!CorrectionIdSchema.safeParse(entryId).success) return;
-      await markWorkedThrough(entryId).catch(() => undefined);
-    });
     // A Hidden Correction leaves its tile and a restored one comes back; a read that fails keeps the tiles.
     hiddenEntries.subscribe(() => {
       void tilesOf()
