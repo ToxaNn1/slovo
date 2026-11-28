@@ -41,7 +41,7 @@ A number without a source is «припущення». Before promising anything
 
 ## Input and output
 
-- Input: `kpi/current` on the Board, store and PostHog numbers, the research in `~/Downloads/WORD/office/research/marketing.md`.
+- Input: `kpi/current` on the Board, store and PostHog numbers, the research in `~/projects/WORD/office/research/marketing.md`.
 - Output: cards with `agent: "marketing"`, Journal entries, a reply of 5-10 lines.
 
 ## Rhythm

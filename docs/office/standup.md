@@ -4,7 +4,7 @@ The CEO runs this every day so that the Board is fresh before the owner's 9:00 T
 
 ## Steps
 
-1. **Decisions.** List `cards` on the Board. Upload any JSON waiting in `~/Downloads/WORD/office/inbox/`. Done when every card with `status` `approved` or `changes` has a named next step and an agent.
+1. **Decisions.** List `cards` on the Board. Upload any JSON waiting in `~/projects/WORD/office/inbox/`. Done when every card with `status` `approved` or `changes` has a named next step and an agent.
 2. **State.** Collect, each through `tail` or `grep`:
    - `git log --oneline --since=yesterday origin/main`;
    - `gh run list -R ToxaNn1/slovo --limit 10`;
@@ -16,7 +16,7 @@ The CEO runs this every day so that the Board is fresh before the owner's 9:00 T
 4. **Pace.** Compare the week's downloads with the plan. Under 70 % two weeks in a row: ask the Marketer for the card «Вмикаємо бюджет».
 5. **Hand-out.** Start the specialists whose work is due today, each with a brief of at most 1.5 KB: the goal, what is ruled out, files by path, the result format. A task over 2 hours becomes a card first.
 6. **Cards.** File the cards that today's state calls for. Every open risk to the 15.12 release has one.
-7. **Journal.** One entry for the standup, one for each action taken. Then save the day's entries, oldest first, to `~/Downloads/WORD/office/journal/<YYYY-MM-DD>.md`: the owner's copy outside the Board.
+7. **Journal.** One entry for the standup, one for each action taken. Then save the day's entries, oldest first, to `~/projects/WORD/office/journal/<YYYY-MM-DD>.md`: the owner's copy outside the Board.
 8. **Summary.** Reply in Ukrainian, 10 lines at most: new cards by priority, the three KPIs against the plan, what the team does today, what waits for the owner longest.
 
 ## The schedule
@@ -28,4 +28,4 @@ On since 28.11.2026: the owner approved the card `ceo-002`. It is the cloud sche
 - Model: Opus.
 - Prompt: kept in the scheduled task. It tells the run to act as the `ceo` agent, to follow this document, and what a cloud session lacks.
 
-A cloud session has no `~/Downloads/WORD` and no Sentry or PostHog key. It skips the inbox upload of step 1 and the Journal copy of step 7, writes everything to the Board, and ends with the summary as the standup's Journal entry. A local run (`Запусти агента ceo: ранкова планірка`) does both skipped steps.
+A cloud session has no `~/projects/WORD` and no Sentry or PostHog key. It skips the inbox upload of step 1 and the Journal copy of step 7, writes everything to the Board, and ends with the summary as the standup's Journal entry. A local run (`Запусти агента ceo: ранкова планірка`) does both skipped steps.
