@@ -401,7 +401,6 @@ export async function openFeed({
     );
     const content = await notices.nextFor(day, inSession);
     if (content === undefined) return undefined;
-    await notices.shown(content, day);
     const card: FeedCard = { ...content, kind: 'notice', day };
     session.add(card);
     subscribers.tell();
@@ -740,6 +739,7 @@ export async function openFeed({
     left,
     stayed,
     entryId,
+    shown,
     now,
     date,
     swiped = false,
@@ -747,6 +747,8 @@ export async function openFeed({
     left: FeedCard | undefined;
     stayed: number;
     entryId: string | undefined;
+    /** The card now on screen, if any. */
+    shown: FeedCard | undefined;
     now: number;
     /** Today's key, as the reader's place keeps it. */
     date: string;
@@ -764,6 +766,8 @@ export async function openFeed({
       swiped && left?.kind === 'notice' && dateKeyOf(left.day) === date
         ? await notices.close(left, date)
         : new Map();
+    // A Feed Notice counts as shown once it is on screen, not once it is got ready.
+    if (shown?.kind === 'notice') await notices.shown(shown, shown.day);
     return keepSeen(
       seenId === undefined
         ? undefined
@@ -825,12 +829,13 @@ export async function openFeed({
     // Leaving the screen, or coming back to the card left, keeps the reader where they were.
     if (shown !== undefined) session.moveTo(shown);
     onScreenSince = shown === undefined ? undefined : now;
-    const entryId = shown === undefined ? undefined : session.readerCard?.entryId;
+    const onScreenCard = shown === undefined ? undefined : session.readerCard;
+    const entryId = onScreenCard?.entryId;
     // In turn with the requests that change the cards, so a new Cycle never
     // starts between the card leaving the screen and its Entry becoming Seen.
     const swiped = left !== undefined && shown !== undefined;
     const kept = inTurnTellingSeen(() =>
-      keepScreenChange({ left, stayed, entryId, now, date, swiped }),
+      keepScreenChange({ left, stayed, entryId, shown: onScreenCard, now, date, swiped }),
     );
     await Promise.all([kept, keepNextCardReady()]);
   }
@@ -932,6 +937,7 @@ export async function openFeed({
       stayed: now - since,
       // Adding the next card may move the reader's place.
       entryId: session.readerCard?.entryId,
+      shown: session.readerCard,
       now,
       date: todayKey(clock),
     });

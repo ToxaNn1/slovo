@@ -73,6 +73,18 @@ async function offersIn(app: Composition): Promise<readonly FeedCard[]> {
   return app.feed.cards.filter((card) => card.kind === 'notice' && card.notice === 'saveProgress');
 }
 
+/**
+ * Gets the Feed's first cards ready and swipes to the save-progress Feed
+ * Notice among them, if one is, then leaves the app on it.
+ */
+async function swipeToOffer(app: Composition): Promise<readonly FeedCard[]> {
+  const offers = await offersIn(app);
+  const at = app.feed.cards.findIndex((card) => offers.includes(card));
+  for (let position = 0; position <= at; position += 1) await app.feed.show(position);
+  await app.feed.show(undefined);
+  return offers;
+}
+
 /** The XP of a three-day Streak ending on 2026-10-14. */
 const threeDays = [xp('2026-10-12', 5), xp('2026-10-13', 5), xp('2026-10-14', 5)];
 
@@ -134,10 +146,30 @@ describe('the save-progress Feed Notice', () => {
     );
     const shown = [];
     for (const on of ['2026-10-14', '2026-10-14', '2026-10-22', '2026-10-30']) {
-      shown.push((await offersIn(await run({ records, on }))).length);
+      shown.push((await swipeToOffer(await run({ records, on }))).length);
     }
     // A second run on the same day shows it again; a third day does not.
     expect(shown).toEqual([1, 1, 1, 0]);
+  });
+
+  it('spends no day on a notice got ready behind the card on screen and never shown', async () => {
+    const records = await readerWith(
+      ...threeDays,
+      xp('2026-10-20', 5),
+      xp('2026-10-21', 5),
+      xp('2026-10-22', 5),
+      xp('2026-10-28', 5),
+      xp('2026-10-29', 5),
+      xp('2026-10-30', 5),
+    );
+    // Got ready on two days, the app closed before the reader swiped to it.
+    for (const on of ['2026-10-14', '2026-10-22']) {
+      const app = await run({ records, on });
+      await app.feed.show(0);
+      expect(await offersIn(app)).toHaveLength(1);
+    }
+
+    expect(await swipeToOffer(await run({ records, on: '2026-10-30' }))).toHaveLength(1);
   });
 
   it('never comes to a reader with an Account, or while the Profile or the Account is off', async () => {
