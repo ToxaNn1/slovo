@@ -329,4 +329,14 @@ describe('Statistics consent', () => {
       expect(statisticsLine(reader)).toBe(true);
     },
   );
+  it('does not ask an EEA reader while nothing it governs is on', async () => {
+    const nothingGoverned = ALL_ON.filter(
+      (feature) => feature !== 'analytics' && feature !== 'communityCounters',
+    );
+
+    expect(await steps(await run({ region: 'DE', on: nothingGoverned }))).not.toContain(
+      'statisticsConsent',
+    );
+    expect(await steps(await run({ region: 'DE' }))).toContain('statisticsConsent');
+  });
 });
