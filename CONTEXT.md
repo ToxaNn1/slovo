@@ -157,7 +157,7 @@ A PNG picture a Word may carry above its Definition, kept in the Media Store and
 _Avoid_: Image, picture, Decor (Decor belongs to the Edition's look, not to Words)
 
 **Retired Word**:
-A Word marked Retired in the content database (never deleted), so it leaves the Language Pack and the Patches. It never appears in the Feed, notifications, widgets or the Game, but stays visible wherever the user already keeps it (Favorites, Collections, History). It may name the Word that replaces it (`replacedBy`): the reader's records of it then move to that Word, on every device (ADR 0212). A Retired Entry is never due for Review.
+A Word marked Retired in the content database (never deleted). Its row stays in the Language Pack, marked Retired, and a Patch carries the mark to a pack that holds the Word. It never appears in the Feed, notifications, widgets or the Game, but stays visible wherever the user already keeps it (Favorites, Collections, History). It may name the Word that replaces it (`replacedBy`): the reader's records of it then move to that Word, on every device (ADR 0212). A Retired Entry is never due for Review.
 _Avoid_: Deleted word
 
 **Lemma**:
