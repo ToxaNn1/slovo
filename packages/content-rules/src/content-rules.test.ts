@@ -188,6 +188,13 @@ describe('checkContentSet', () => {
     ['word-correction', () => fixtureSet({ w_fx0002: { correctionIds: ['c_zzzzzz'] } })],
     ['word-origin', () => fixtureSet({ w_fx0002: { origin: 'latin' } })],
     [
+      'replaced-by',
+      () =>
+        fixtureSet({}, [
+          parsed(record('w_fx0002', { id: 'w_fx0009', retired: true, replacedBy: 'w_zzzzzz' })),
+        ]),
+    ],
+    [
       'synonym-row-word',
       () => {
         const { dominant } = record('r_fx0001') as { dominant: Json };
@@ -559,6 +566,22 @@ describe('the Entry rules', () => {
   it('passes a Retired Word of the Lemma and primary Definition of a live one', () => {
     const copy = parsed(record('w_fx0002', { id: 'w_fx0009', retired: true }));
     expect(check(fixtureSet({}, [copy]))).toEqual([]);
+  });
+
+  it('names the unknown Word a Retired Word is replaced by, and passes a live and a Retired one', () => {
+    const copy = (replacedBy: string, id = 'w_fx0009') =>
+      parsed(record('w_fx0002', { id, retired: true, replacedBy }));
+    expect(check(fixtureSet({}, [copy('w_zzzzzz')]))).toEqual([
+      {
+        rule: 'replaced-by',
+        file: 'w_fx0009.json',
+        entryId: 'w_fx0009',
+        field: 'replacedBy',
+        message: 'Unknown Word "w_zzzzzz"',
+      },
+    ]);
+    expect(check(fixtureSet({}, [copy('w_fx0002')]))).toEqual([]);
+    expect(check(fixtureSet({}, [copy('w_fx0002'), copy('w_fx0009', 'w_fx0010')]))).toEqual([]);
   });
 
   it.each([
