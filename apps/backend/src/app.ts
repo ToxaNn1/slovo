@@ -44,7 +44,7 @@ import { requestId, type RequestIdVariables } from 'hono/request-id';
 import type { Logger } from 'pino';
 
 import { createAuthenticator } from './account/authenticator';
-import { adminApp } from './admin/admin-app';
+import { adminApp, privateApiHeaders } from './admin/admin-app';
 import { adminCodeEmail } from './admin/admin-mail';
 import { createAdminStore, createSecretVault, hashToken, hmacSha1 } from './admin/admin-store';
 import { createContentStore } from './content/content-store';
@@ -467,6 +467,10 @@ export function createApp({
     api.handle(request, {
       context: { logger, requestId, reporter, headers: request.headers, ip },
     });
+
+  for (const path of ['/v1/admin/*', '/v1/editions/:editionId/records']) {
+    app.use(path, ...privateApiHeaders);
+  }
 
   // The API contract at `/v1`, its description at `/docs`.
   for (const path of ['/v1/*', '/docs', '/docs/*']) {
