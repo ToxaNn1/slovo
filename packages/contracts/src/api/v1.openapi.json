@@ -1381,11 +1381,22 @@
                     "createdAt": {
                       "type": "string",
                       "format": "date-time"
+                    },
+                    "signInMethods": {
+                      "type": "array",
+                      "items": {
+                        "enum": [
+                          "google",
+                          "apple"
+                        ],
+                        "type": "string"
+                      }
                     }
                   },
                   "required": [
                     "email",
-                    "createdAt"
+                    "createdAt",
+                    "signInMethods"
                   ]
                 }
               }
@@ -1516,7 +1527,7 @@
       "delete": {
         "operationId": "account.delete",
         "summary": "Delete the Session's Account at once and for good",
-        "description": "Its Sessions, sign-in methods and the records Sync keeps of it in every Edition go with it, and so does any Sign-in code waiting for its email. There is no grace period; the same email can sign in again to a new, empty Account.",
+        "description": "Its Sessions, sign-in methods and the records Sync keeps of it in every Edition go with it, and so does any Sign-in code waiting for its email. There is no grace period; the same email can sign in again to a new, empty Account. An Account with Sign in with Apple sends a fresh authorization code from Apple, and the backend revokes SLOVO at Apple with it first; a revocation that fails holds back no deletion.",
         "tags": [
           "account"
         ],
@@ -1526,6 +1537,13 @@
             "application/json": {
               "schema": {
                 "type": "object",
+                "properties": {
+                  "appleAuthorizationCode": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 4096
+                  }
+                },
                 "additionalProperties": false
               }
             }

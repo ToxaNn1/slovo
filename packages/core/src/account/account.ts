@@ -144,7 +144,14 @@ export interface Account {
   signOut(): Promise<void>;
   /** Ends every Session of the Account, this device's too. */
   signOutEverywhere(): Promise<void>;
-  /** Deletes the Account with every Session of it, for good. */
+  /**
+   * Deletes the Account with every Session of it, for good. An Account with
+   * Sign in with Apple first shows Apple's sheet again for a fresh
+   * authorization code, which the backend revokes SLOVO at Apple with (App
+   * Store Review Guideline 5.1.1(v)); the sheet counts as the request in
+   * flight. A sheet the reader cancels keeps the Account, with no problem;
+   * a device with no Apple sheet, or a sheet that fails, deletes without it.
+   */
   delete(): Promise<void>;
   /**
    * Tells the server of the sign-outs it missed, and checks the Session with
@@ -329,15 +336,27 @@ export async function openAccount({
     if (begin(begun)) await complete(call, settle);
   }
 
-  /** The request of the action in flight, from its call to the state it settles in. */
-  async function complete<A extends Answer>(
+  /** The request of the action in flight, from its call, tried again by the rule, to the state it settles in. */
+  function complete<A extends Answer>(
     call: () => Promise<A>,
+    settle: (answer: Exclude<A, Unauthorized>) => AccountState | Promise<AccountState>,
+  ): Promise<void> {
+    return completeSteps(() => retried(call), settle);
+  }
+
+  /**
+   * The steps of the action in flight, each of which tries its own requests
+   * again, from the first to the state their answer settles in; an answer
+   * outdated by a sign-out on the way changes nothing.
+   */
+  async function completeSteps<A extends Answer>(
+    steps: () => Promise<A>,
     settle: (answer: Exclude<A, Unauthorized>) => AccountState | Promise<AccountState>,
   ): Promise<void> {
     const ended = endedSessions;
     let next: AccountState;
     try {
-      const answer = await retried(call);
+      const answer = await steps();
       if (ended !== endedSessions) return;
       next = inSession(answer) ? await settle(answer) : await endSession();
     } catch (error) {
@@ -390,20 +409,59 @@ export async function openAccount({
     return telling;
   }
 
-  /** Ends this device's Session through the server by the action `name`, when the server answers. */
-  async function endThroughServer(
-    name: Extract<AccountRequest, 'signOutEverywhere' | 'delete'>,
-  ): Promise<void> {
+  /** Ends every Session of the Account through the server, this device's too, when the server answers. */
+  async function signOutEverywhere(): Promise<void> {
     const current = token;
     const from = state;
     if (current === undefined || from.status !== 'signed-in') return;
     await request(
-      { ...from, inFlight: name, problem: undefined },
-      () => api[name](current),
-      (answer) =>
-        answer.ok
-          ? endSession({ revoke: name === 'delete' })
-          : { ...from, problem: problemOf(answer.reason) },
+      { ...from, inFlight: 'signOutEverywhere', problem: undefined },
+      () => api.signOutEverywhere(current),
+      (answer) => (answer.ok ? endSession() : { ...from, problem: problemOf(answer.reason) }),
+    );
+  }
+
+  /**
+   * The fresh authorization code of Apple's sheet when the Account has Sign
+   * in with Apple; none without it, or when the device has no Apple sheet or
+   * it failed: the deletion goes on without a revocation. A cancelled sheet
+   * cancels the deletion.
+   */
+  async function appleCodeFor(
+    methods: readonly ('google' | 'apple')[],
+  ): Promise<{ readonly cancelled: true } | { readonly cancelled: false; readonly code?: string }> {
+    if (!methods.includes('apple')) return { cancelled: false };
+    const shown = await appleSheet
+      .authorize()
+      .catch(() => ({ ok: false, reason: 'unexpected' }) as const);
+    if (shown.ok) return { cancelled: false, code: shown.authorizationCode };
+    return shown.reason === 'cancelled' ? { cancelled: true } : { cancelled: false };
+  }
+
+  /**
+   * Deletes the Account through the server: reads its sign-in methods, asks
+   * Apple for a fresh authorization code when it has Sign in with Apple, and
+   * sends the deletion with it.
+   */
+  async function deleteAccount(): Promise<void> {
+    const current = token;
+    const from = state;
+    if (current === undefined || from.status !== 'signed-in') return;
+    if (!begin({ ...from, inFlight: 'delete', problem: undefined })) return;
+    const cancelled = { ok: false, reason: 'cancelled' } as const;
+    await completeSteps(
+      async () => {
+        const read = await retried(() => api.me(current));
+        if (!read.ok) return read;
+        const apple = await appleCodeFor(read.signInMethods);
+        if (apple.cancelled || token !== current) return cancelled;
+        return retried(() => api.delete(current, apple.code));
+      },
+      (answer) => {
+        if (answer.ok) return endSession({ revoke: true });
+        if (answer.reason === 'cancelled') return from;
+        return { ...from, problem: problemOf(answer.reason) };
+      },
     );
   }
 
@@ -511,8 +569,8 @@ export async function openAccount({
       change(await endSession());
       await tellSignOuts();
     },
-    signOutEverywhere: () => endThroughServer('signOutEverywhere'),
-    delete: () => endThroughServer('delete'),
+    signOutEverywhere,
+    delete: deleteAccount,
     async refresh() {
       if (untold.length > 0) await tellSignOuts();
       const current = token;

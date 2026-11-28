@@ -52,7 +52,11 @@ describe('answerOf', () => {
       account: {
         me: ({ context }) => {
           sessions.push(context.headers.get('authorization'));
-          return { email: 'anna@example.com', createdAt: '2026-10-17T09:00:00.000Z' };
+          return {
+            email: 'anna@example.com',
+            createdAt: '2026-10-17T09:00:00.000Z',
+            signInMethods: [],
+          };
         },
         requestCode: ({ context }) => {
           sessions.push(context.headers.get('authorization'));

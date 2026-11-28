@@ -485,6 +485,15 @@ describe('the server', { timeout: 30_000 }, () => {
     expect(server.output().stderr).not.toContain('R2_BUCKET');
   });
 
+  it('refuses to start with only some of the Sign in with Apple key, naming the rest', async () => {
+    const server = runServer({ ...VALID_ENV, APPLE_KEY_ID: 'KEY1234567' });
+
+    expect(await server.exited).toBe(1);
+    expect(server.output().stderr).toContain('APPLE_TEAM_ID: is not set');
+    expect(server.output().stderr).toContain('APPLE_PRIVATE_KEY: is not set');
+    expect(server.output().stderr).not.toContain('APPLE_KEY_ID');
+  });
+
   it('starts in production with its ZeptoMail token, sender and Media Store', async () => {
     const server = runServer({
       ...VALID_ENV,
@@ -602,6 +611,30 @@ describe('the server', { timeout: 30_000 }, () => {
     await stopped;
     await expect(database.ping()).rejects.toThrow();
     await expect(fetch(`http://localhost:${String(server.port)}/health`)).rejects.toThrow();
+  });
+});
+
+describe('the Sign in with Apple key', () => {
+  const key = { APPLE_TEAM_ID: 'TEAM123456', APPLE_KEY_ID: 'KEY1234567', APPLE_PRIVATE_KEY: 'pem' };
+
+  it('is read whole, as the revoker takes it', () => {
+    expect(ServerConfigSchema.parse({ ...VALID_ENV, ...key }).appleKey).toEqual({
+      teamId: 'TEAM123456',
+      keyId: 'KEY1234567',
+      privateKey: 'pem',
+    });
+  });
+
+  it('is none while its variables are unset or empty', () => {
+    expect(ServerConfigSchema.parse(VALID_ENV).appleKey).toBeUndefined();
+    expect(
+      ServerConfigSchema.parse({
+        ...VALID_ENV,
+        APPLE_TEAM_ID: '',
+        APPLE_KEY_ID: '',
+        APPLE_PRIVATE_KEY: '',
+      }).appleKey,
+    ).toBeUndefined();
   });
 });
 

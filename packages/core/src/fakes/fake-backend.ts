@@ -107,6 +107,11 @@ export interface FakeBackend {
     readonly accounts: readonly string[];
     /** The tokens of the Sessions there are. */
     readonly sessionTokens: readonly string[];
+    /** The Accounts deleted, in order, with the Apple authorization code each deletion sent, if any. */
+    readonly deletions: readonly {
+      readonly email: string;
+      readonly appleAuthorizationCode: string | undefined;
+    }[];
     /** Lets every Sign-in code sent so far expire. */
     expireCodes(): void;
     /** Ends every Session there is, as signing out everywhere on another device does. */
@@ -230,7 +235,12 @@ export function createFakeBackend({
 
   // The Account.
   const sentCodes: SentCode[] = [];
-  const accounts = new Map<string, { readonly createdAt: string }>();
+  /** Each Account by email: when it was created and the Google and Apple sign-in methods recorded for it. */
+  const accounts = new Map<
+    string,
+    { readonly createdAt: string; readonly signInMethods: Set<'google' | 'apple'> }
+  >();
+  const deletions: { email: string; appleAuthorizationCode: string | undefined }[] = [];
   /** The email of each Session, by token. */
   const sessions = new Map<string, string>();
   /** The live code of each email, with its tries left. */
@@ -328,9 +338,17 @@ export function createFakeBackend({
     return email;
   }
 
-  /** Signs the email in: its Account, created at its first sign-in, gets a new Session. */
-  function startSession(email: string) {
-    if (!accounts.has(email)) accounts.set(email, { createdAt: clock.now().toISOString() });
+  /**
+   * Signs the email in: its Account, created at its first sign-in, gets a new
+   * Session, and records the Google or Apple method that signed it in.
+   */
+  function startSession(email: string, method?: 'google' | 'apple') {
+    const kept = accounts.get(email) ?? {
+      createdAt: clock.now().toISOString(),
+      signInMethods: new Set<'google' | 'apple'>(),
+    };
+    if (method !== undefined) kept.signInMethods.add(method);
+    accounts.set(email, kept);
     sessionCount += 1;
     const token = `session-${String(sessionCount)}`;
     sessions.set(token, email);
@@ -379,18 +397,23 @@ export function createFakeBackend({
         const identity = fakeGoogleIdentityOf(input.idToken);
         if (identity === undefined) throw errors.INVALID_TOKEN();
         if (!identity.verified) throw errors.EMAIL_NOT_VERIFIED();
-        return startSession(identity.email.trim().toLowerCase());
+        return startSession(identity.email.trim().toLowerCase(), 'google');
       },
       async signInWithApple({ input, context, errors }) {
         await arrive('account.signInWithApple', context);
         const identity = fakeAppleIdentityOf(input.idToken);
         if (identity === undefined || identity.expired) throw errors.INVALID_TOKEN();
-        return startSession(identity.email.trim().toLowerCase());
+        return startSession(identity.email.trim().toLowerCase(), 'apple');
       },
       async me({ context }) {
         await arrive('account.me', context);
         const email = sessionOf(context);
-        return { email, createdAt: accounts.get(email)?.createdAt ?? clock.now().toISOString() };
+        const kept = accounts.get(email);
+        return {
+          email,
+          createdAt: kept?.createdAt ?? clock.now().toISOString(),
+          signInMethods: [...(kept?.signInMethods ?? [])],
+        };
       },
       async signOut({ context }) {
         await arrive('account.signOut', context);
@@ -403,9 +426,10 @@ export function createFakeBackend({
         endSessionsOf(sessionOf(context));
         return {};
       },
-      async delete({ context }) {
+      async delete({ input, context }) {
         await arrive('account.delete', context);
         const email = sessionOf(context);
+        deletions.push({ email, appleAuthorizationCode: input?.appleAuthorizationCode });
         endSessionsOf(email);
         accounts.delete(email);
         // The Account's records go with it, as `user_records` cascades; the
@@ -597,6 +621,9 @@ export function createFakeBackend({
       },
       get sessionTokens() {
         return [...sessions.keys()];
+      },
+      get deletions() {
+        return [...deletions];
       },
       expireCodes() {
         codes.clear();

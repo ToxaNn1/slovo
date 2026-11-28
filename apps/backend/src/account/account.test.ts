@@ -29,7 +29,7 @@ describe('signing in with a Sign-in code', () => {
 
     expect(session).toEqual({ token: expect.any(String) as unknown, email });
     const me = await clientOf(session.token).account.me();
-    expect(me).toEqual({ email, createdAt: expect.any(String) as unknown });
+    expect(me).toEqual({ email, createdAt: expect.any(String) as unknown, signInMethods: [] });
     expect(Date.parse(me.createdAt)).toBeGreaterThanOrEqual(before - 1000);
   });
 

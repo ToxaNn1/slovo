@@ -102,6 +102,28 @@ export interface AppleVerifier {
   verify(idToken: string, bundleId: string): Promise<AppleTokenCheck>;
 }
 
+/** What revoking SLOVO at Apple with an authorization code gives. */
+export type AppleRevocation =
+  | { readonly ok: true }
+  /** The backend has no Sign in with Apple key, so it can't ask Apple. */
+  | { readonly ok: false; readonly reason: 'not-configured' }
+  /**
+   * Apple refused the code or the revocation, or could not be reached; the
+   * error says which, with no code, token or other personal data.
+   */
+  | { readonly ok: false; readonly reason: 'failed'; readonly error: Error };
+
+/**
+ * Revokes SLOVO's authorization at Apple when an Account with Sign in with
+ * Apple is deleted (App Store Review Guideline 5.1.1(v)): it exchanges the
+ * app's fresh authorization code for a token at Apple's `/auth/token` and
+ * revokes it at `/auth/revoke`, as the app of the bundle id, SLOVO's client
+ * id at Apple. It keeps no Apple token.
+ */
+export interface AppleRevoker {
+  revoke(authorizationCode: string, bundleId: string): Promise<AppleRevocation>;
+}
+
 /** What a sign-in that proved its identity gives: a new Session of the Account. */
 export interface SignedIn {
   readonly token: string;

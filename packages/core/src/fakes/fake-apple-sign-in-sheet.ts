@@ -1,6 +1,9 @@
 import type { AppleSignInSheet } from '../ports';
 import { createFakeSignInSheet } from './fake-sign-in-sheet';
 
+/** What Apple's sheet answers before a deletion. */
+type Authorization = Awaited<ReturnType<AppleSignInSheet['authorize']>>;
+
 /** The identity a fake Apple identity token names: its email and whether the token still holds. */
 export interface FakeAppleIdentity {
   readonly email: string;
@@ -22,8 +25,9 @@ export function fakeAppleIdentityOf(idToken: string): FakeAppleIdentity | undefi
 }
 
 /**
- * An Apple sign-in sheet for tests: each time it is shown it answers what the
- * test said next, in order, and cancels when the test said nothing.
+ * An Apple sign-in sheet for tests: each time it is shown, to sign in or for
+ * an authorization code, it answers what the test said next for that use, in
+ * order, and cancels when the test said nothing.
  */
 export interface FakeAppleSignInSheet extends AppleSignInSheet {
   /** How many times the sheet was shown. */
@@ -42,10 +46,21 @@ export interface FakeAppleSignInSheet extends AppleSignInSheet {
    * then it answers what the test said next.
    */
   holds(): () => void;
+  /** How many times the sheet was shown for an authorization code, before a deletion. */
+  readonly authorizations: number;
+  /** The next authorization hands out a fresh code, `apple-code:1`, `apple-code:2` and so on. */
+  authorizes(): void;
+  /** The reader dismisses the next authorization sheet. */
+  cancelsAuthorization(): void;
+  /** The next authorization finds no Apple sheet on the device, or fails otherwise. */
+  failsAuthorization(reason: 'unavailable' | 'unexpected'): void;
 }
 
 export function createFakeAppleSignInSheet(): FakeAppleSignInSheet {
   const sheet = createFakeSignInSheet();
+  const authorizations: Authorization[] = [];
+  let authorized = 0;
+  let codes = 0;
   return {
     get shown() {
       return sheet.shown;
@@ -57,5 +72,22 @@ export function createFakeAppleSignInSheet(): FakeAppleSignInSheet {
     fails: sheet.fails,
     holds: sheet.holds,
     signIn: sheet.signIn,
+    get authorizations() {
+      return authorized;
+    },
+    authorizes() {
+      codes += 1;
+      authorizations.push({ ok: true, authorizationCode: `apple-code:${String(codes)}` });
+    },
+    cancelsAuthorization() {
+      authorizations.push({ ok: false, reason: 'cancelled' });
+    },
+    failsAuthorization(reason) {
+      authorizations.push({ ok: false, reason });
+    },
+    authorize() {
+      authorized += 1;
+      return Promise.resolve(authorizations.shift() ?? { ok: false, reason: 'cancelled' });
+    },
   };
 }

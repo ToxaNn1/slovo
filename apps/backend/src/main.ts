@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { openAppConfig, REPO_DIR } from '@slovo/language-pack/edition';
 import { systemClock } from '@slovo/server-core';
 
+import { createAppleRevoker, importAppleKey } from './account/apple-revoker';
 import { createAppleVerifier } from './account/apple-verifier';
 import { createGoogleVerifier } from './account/google-verifier';
 import { createMailer } from './account/mailer';
@@ -34,6 +35,16 @@ const ports = deploymentPorts(config, { clock: systemClock });
 const mailer = createMailer(config.mail);
 // The owner admin app as `pnpm --filter @slovo/admin build` leaves it; `pnpm dev:admin` serves it in Vite.
 const adminDist = join(REPO_DIR, 'apps/admin/dist');
+// Without the Sign in with Apple key a deleted Account stays authorised at Apple.
+if (config.appleKey === undefined) {
+  logger.warn(
+    'APPLE_TEAM_ID, APPLE_KEY_ID and APPLE_PRIVATE_KEY are unset: Sign in with Apple is not revoked when an Account is deleted',
+  );
+}
+const appleRevoker = createAppleRevoker({
+  key: config.appleKey && (await importAppleKey(config.appleKey)),
+  clock: systemClock,
+});
 const app = createApp({
   database,
   clock: systemClock,
@@ -47,6 +58,7 @@ const app = createApp({
   nbu: createNbuClient(),
   google: createGoogleVerifier({ clientIds: config.GOOGLE_CLIENT_IDS, clock: systemClock }),
   apple: createAppleVerifier({ clock: systemClock }),
+  appleRevoker,
   github: createGitHubSource({
     token: config.GITHUB_TOKEN,
     repository: config.GITHUB_REPOSITORY,

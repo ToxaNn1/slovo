@@ -36,6 +36,8 @@ import {
   type Alert,
   type Alerts,
   type AppleIdentity,
+  type AppleRevocation,
+  type AppleRevoker,
   type AppleVerifier,
   type EasSource,
   type Edition,
@@ -501,6 +503,35 @@ export function createFakeApple(): FakeApple {
   };
 }
 
+/** A fake Apple revoker: it keeps each code it revokes and answers what the test said, success unless told. */
+export interface FakeAppleRevoker extends AppleRevoker {
+  readonly revoked: readonly { readonly code: string; readonly bundleId: string }[];
+  /** Every later revocation fails with the message. */
+  fails(message: string): void;
+  /** Every later revocation finds no Sign in with Apple key. */
+  notConfigured(): void;
+}
+
+export function createFakeAppleRevoker(): FakeAppleRevoker {
+  const revoked: { code: string; bundleId: string }[] = [];
+  let answer: AppleRevocation = { ok: true };
+  return {
+    revoked,
+    fails(message) {
+      const error = new Error(message);
+      error.name = 'AppleRevocationError';
+      answer = { ok: false, reason: 'failed', error };
+    },
+    notConfigured() {
+      answer = { ok: false, reason: 'not-configured' };
+    },
+    revoke(code, bundleId) {
+      revoked.push({ code, bundleId });
+      return Promise.resolve(answer);
+    },
+  };
+}
+
 /**
  * An editions folder made for one test, with an Edition for each id: a copy of
  * the UA Edition's config and strings under its own id. `change` changes each
@@ -726,6 +757,7 @@ export function testApp({
   const nbu = createFakeNbu();
   const google = createFakeGoogle(googleClientIds);
   const apple = createFakeApple();
+  const appleRevoker = createFakeAppleRevoker();
   const reports: ErrorReport[] = [];
   const sentry = createFakeSentry();
   const app = createApp({
@@ -741,6 +773,7 @@ export function testApp({
     nbu,
     google: givenGoogle ?? google,
     apple: givenApple ?? apple,
+    appleRevoker,
     authSecret: TEST_AUTH_SECRET,
     // A fake Sentry: it keeps every report.
     reporter: { report: (report) => reports.push(report) },
@@ -814,6 +847,8 @@ export function testApp({
     google,
     /** The fake Apple the backend verifies tokens with, and the tokens its sign-in sheet gives. */
     apple,
+    /** The fake Apple revoker the backend revokes SLOVO at Apple with when an Apple Account is deleted. */
+    appleRevoker,
     /** Every report of an unexpected failure the backend sent, oldest first. */
     reports: reports as readonly ErrorReport[],
     database,

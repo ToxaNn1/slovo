@@ -244,7 +244,19 @@ export interface SignInSheet {
  * authentication module, on iOS only. Apple keeps nothing on the device for
  * SLOVO to forget when the Session ends.
  */
-export type AppleSignInSheet = SignInSheet;
+export interface AppleSignInSheet extends SignInSheet {
+  /**
+   * Shows Apple's sheet again before an Account with Sign in with Apple is
+   * deleted, and answers the fresh authorization code the backend revokes
+   * SLOVO at Apple with (App Store Review Guideline 5.1.1(v)), that the
+   * reader cancelled, that the device has no Apple sheet (Android, a build
+   * without the module), or that it failed otherwise. It never rejects.
+   */
+  authorize(): Promise<
+    | { readonly ok: true; readonly authorizationCode: string }
+    | { readonly ok: false; readonly reason: 'cancelled' | 'unavailable' | 'unexpected' }
+  >;
+}
 
 /** Google's sign-in sheet: the shell implements this port on Google's SDK. */
 export interface GoogleSignInSheet extends SignInSheet {
