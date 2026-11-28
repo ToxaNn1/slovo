@@ -494,6 +494,47 @@ describe('the remote Feature Switches', () => {
     });
   });
 
+  it('tells no change after it is stopped, from an ask under way when it was', async () => {
+    const time = fakeClock();
+    const { schedule, advance } = testSchedule(time);
+    const fake = createFakeBackend({ clock: time.clock });
+    let answer: (() => void) | undefined;
+    const held = new Promise<void>((resolve) => (answer = resolve));
+    const switches = await openRemoteSwitches({
+      edition: editionWithout(),
+      states: switchStatesOf(editionWithout()),
+      facts: readerFacts,
+      backend: {
+        edition: {
+          ...fake.backend.edition,
+          switches: async (input) => {
+            await held;
+            return fake.backend.edition.switches(input);
+          },
+        },
+      },
+      userState: await openUserState({ port: createMemoryUserStatePort() }),
+      schedule,
+      random: randomOf(0.5),
+      clock: time.clock,
+    });
+    let changes = 0;
+    const stop = switches.start(() => {
+      changes += 1;
+    });
+    await advance(SWITCHES_REFRESH_MS);
+    fake.switches.turnOff('game');
+
+    stop();
+    const asked = switches.ask();
+    answer?.();
+
+    await expect(asked).resolves.toBe(true);
+    await settle();
+    expect(switches.edition.isFeatureEnabled('game')).toBe(false);
+    expect(changes).toBe(0);
+  });
+
   it('holds a Rule’s schedule by the backend’s clock, at once and on the next launch', async () => {
     const device = fakeClock('2026-11-08T12:00:00Z');
     const backendTime = fakeClock('2026-11-08T13:00:00Z');

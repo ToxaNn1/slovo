@@ -75,7 +75,8 @@ export interface RemoteSwitches<E extends Pick<Edition, 'id'>> {
   ask(): Promise<boolean>;
   /**
    * Asks every two minutes from now on and tells `onChange` after an ask
-   * that changes an effective value. Returns the call that stops it.
+   * that changes an effective value. Returns the call that stops it, after
+   * which `onChange` is never told, by an ask under way then neither.
    */
   start(onChange: () => void): () => void;
 }
@@ -211,16 +212,19 @@ export async function openRemoteSwitches<E extends Pick<Edition, 'id'>>({
     ask,
     start(onChange) {
       let cancel: () => void = () => undefined;
+      // An ask under way when stopped tells nothing: whoever stopped it follows the change.
+      let stopped = false;
       const next = () => {
         cancel = schedule(() => {
           void ask().then((changed) => {
-            if (changed) onChange();
+            if (changed && !stopped) onChange();
           });
           next();
         }, SWITCHES_REFRESH_MS);
       };
       next();
       return () => {
+        stopped = true;
         cancel();
       };
     },
