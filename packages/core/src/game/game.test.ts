@@ -1849,6 +1849,32 @@ describe('the Knowledge Marks a Game leaves', () => {
     expect(learningOf(app)).toEqual([]);
   });
 
+  it('writes the «Не знаю» mark of a wrong answer whose XP fails to write', async () => {
+    const memory = createMemoryUserStatePort(new Map());
+    let failures = 0;
+    const app = await run({
+      on: ['rarityCeiling', 'knowledge', 'xpLog'],
+      port: {
+        ...memory,
+        write: (changes) => {
+          if (failures === 0) return memory.write(changes);
+          failures -= 1;
+          return Promise.reject(new Error('The disk is full'));
+        },
+      },
+    });
+    await app.game.start('guess-word');
+    const asked = answerOf(current(app).round).id;
+
+    failures = 1;
+    const { round } = current(app);
+    await expect(
+      app.game.answer({ form: 'pick', option: (rightOf(round) + 1) % 4 }),
+    ).rejects.toThrow('The disk is full');
+
+    expect(learningOf(app)).toEqual([[asked, 1]]);
+  });
+
   it('marks nothing with the knowledge Feature Switch off, and keeps the records there are', async () => {
     const records = dueOnThreeDays();
     const app = await run({ records, on: ['rarityCeiling'] });

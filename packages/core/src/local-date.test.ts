@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { localDayOf, untilNextLocalDay } from './index';
+import { todayBounds } from './local-date';
 import { fakeClock } from './test-support';
 
 describe('localDayOf', () => {
@@ -48,5 +49,31 @@ describe('untilNextLocalDay', () => {
     expect(until('2026-03-29T00:30:00+02:00')).toBe(22.5 * HOUR);
     // In Santiago 2026-09-06 starts at 01:00: its midnight never happens.
     expect(until('2026-09-05T12:00:00-04:00', 'America/Santiago')).toBe(12 * HOUR);
+  });
+});
+
+describe('todayBounds', () => {
+  const bounds = (instant: string, timeZone: string) =>
+    todayBounds(fakeClock(instant, timeZone).clock);
+
+  it('starts the day at its first midnight where the clock goes back over midnight', () => {
+    // The Azores go back from 01:00 to 00:00 on 2026-10-25: the day starts at 00:00Z.
+    const start = Date.parse('2026-10-25T00:00:00Z');
+    const end = Date.parse('2026-10-26T01:00:00Z');
+    expect(bounds('2026-10-25T00:30:00Z', 'Atlantic/Azores')).toEqual({ start, end });
+    expect(bounds('2026-10-25T01:11:00Z', 'Atlantic/Azores')).toEqual({ start, end });
+    expect(bounds('2026-10-25T20:00:00Z', 'Atlantic/Azores')).toEqual({ start, end });
+    // Havana does the same on 2026-11-01, from 01:00 CDT to 00:00 CST.
+    expect(bounds('2026-11-01T12:00:00-05:00', 'America/Havana').start).toBe(
+      Date.parse('2026-11-01T00:00:00-04:00'),
+    );
+  });
+
+  it('keeps the day around a daylight-saving change after midnight', () => {
+    // Kyiv turns its clocks back an hour at 04:00 on 2026-10-25, a 25-hour day.
+    expect(bounds('2026-10-25T12:00:00+02:00', 'Europe/Kyiv')).toEqual({
+      start: Date.parse('2026-10-25T00:00:00+03:00'),
+      end: Date.parse('2026-10-26T00:00:00+02:00'),
+    });
   });
 });

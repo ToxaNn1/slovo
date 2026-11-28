@@ -7,6 +7,7 @@ import {
 
 import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
+import type { HiddenEntries } from '../mix/hidden-entries';
 import { createSubscribers } from '../in-turn';
 import type { UserState } from '../user-state/user-state';
 import { dashboardRecords } from './records';
@@ -51,11 +52,13 @@ export async function openCorrectionTypes({
   entries,
   userState,
   seen,
+  hiddenEntries,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   entries: Pick<Entries, 'liveCorrections'>;
   userState: Pick<UserState, 'list' | 'write'>;
   seen: { subscribe(listener: (entryId: string) => unknown): unknown };
+  hiddenEntries: Pick<HiddenEntries, 'subscribe'>;
 }): Promise<CorrectionTypes> {
   const subscribers = createSubscribers();
   const on = edition.isFeatureEnabled('correctionTypes');
@@ -91,11 +94,21 @@ export async function openCorrectionTypes({
   }
 
   // A Seen Word reads nothing; a read that fails here leaves the Correction to its next Seen.
-  if (on)
+  if (on) {
     seen.subscribe(async (entryId) => {
       if (!CorrectionIdSchema.safeParse(entryId).success) return;
       await markWorkedThrough(entryId).catch(() => undefined);
     });
+    // A Hidden Correction leaves its tile and a restored one comes back; a read that fails keeps the tiles.
+    hiddenEntries.subscribe(() => {
+      void tilesOf()
+        .then((next) => {
+          tiles = next;
+          subscribers.tell();
+        })
+        .catch(() => undefined);
+    });
+  }
 
   return {
     get tiles() {

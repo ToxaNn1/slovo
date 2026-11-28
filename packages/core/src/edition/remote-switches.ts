@@ -142,13 +142,15 @@ export async function openRemoteSwitches<E extends Pick<Edition, 'id'>>({
     );
     if (!answer.ok) return answer;
     const { output } = answer;
-    if (output.status === 304) return { ok: true, answer: 'unchanged' } as const;
+    // Every answer, a 304 too, brings the backend's clock (ADR 0089).
     const answered = Date.parse(output.headers.date);
+    const clockOffsetMs = Number.isNaN(answered) ? 0 : answered - clock.now().getTime();
+    if (output.status === 304) return { ok: true, answer: 'unchanged', clockOffsetMs } as const;
     const fresh: RemoteSwitchesAnswer = {
       rules: output.body.rules,
       minimums: output.body.minimums,
       etag: output.headers.etag,
-      clockOffsetMs: Number.isNaN(answered) ? 0 : answered - clock.now().getTime(),
+      clockOffsetMs,
     };
     return { ok: true, answer: fresh } as const;
   }
@@ -164,6 +166,9 @@ export async function openRemoteSwitches<E extends Pick<Edition, 'id'>>({
           JSON.stringify(fresh.minimums) === JSON.stringify(minimumsBefore);
         kept = sameMinimums ? { ...fresh, minimums: minimumsBefore } : fresh;
         // Kept for the next launch; one that fails to be kept is asked again then.
+        await userState.write(record.change(kept)).catch(() => undefined);
+      } else if (reply.ok && kept !== undefined && reply.clockOffsetMs !== kept.clockOffsetMs) {
+        kept = { ...kept, clockOffsetMs: reply.clockOffsetMs };
         await userState.write(record.change(kept)).catch(() => undefined);
       }
     } catch {

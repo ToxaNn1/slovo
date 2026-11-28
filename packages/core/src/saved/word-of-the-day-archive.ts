@@ -1,3 +1,4 @@
+import { LocalDateKeySchema } from '../user-state/user-state-record';
 import type { Edition } from '../edition/edition';
 import { createEntries, EVERYTHING_IN } from '../entries/entries';
 import { createEntryRows, type EntryRowModel } from '../entries/entry-row';
@@ -122,7 +123,8 @@ export async function openWordOfTheDayArchive({
     const days = new Map(
       kept.flatMap(([dateKey, wordId]): [string, WordOfTheDayArchiveDay][] => {
         const row = rowOf.get(wordId);
-        if (row?.kind !== 'word') return [];
+        // A record's id comes from outside too (a Sync pull): one that is no date is left out.
+        if (row?.kind !== 'word' || !LocalDateKeySchema.safeParse(dateKey).success) return [];
         const date = parseLocalDate(dateKey);
         const instant = Date.UTC(date.year, date.month - 1, date.day);
         const dateLabel =

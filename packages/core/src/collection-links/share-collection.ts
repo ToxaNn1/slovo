@@ -58,6 +58,7 @@ export function openCollectionSharing({
   edition,
   schedule,
   random,
+  stopped,
 }: {
   collections: Pick<Collections, 'list' | 'entries'>;
   backend: Pick<Backend, 'collectionLinks'> | undefined;
@@ -67,6 +68,8 @@ export function openCollectionSharing({
   schedule: Schedule | undefined;
   /** What the waits between tries are jittered by. */
   random: Random;
+  /** Settles once the composition closes: a request waiting to try again answers then. */
+  stopped?: Promise<void>;
 }): CollectionSharing {
   const api = backend === undefined ? undefined : collectionLinkRequests(backend);
   return {
@@ -82,7 +85,7 @@ export function openCollectionSharing({
       const create = () => api.create({ edition: edition.id, name: collection.name, entryIds });
       const answer = await (schedule === undefined
         ? create()
-        : withRetries(create, { schedule, random }));
+        : withRetries(create, { schedule, random, stopped }));
       if (answer.ok) {
         const message = fill(strings.message, { name: collection.name, url: answer.url });
         return { ok: true, url: answer.url, message };

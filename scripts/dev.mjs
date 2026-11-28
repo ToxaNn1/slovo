@@ -15,7 +15,7 @@
 // Ctrl-C stops the backend and Metro; Postgres and Mailpit keep running
 // (`docker compose stop` stops them). Settings, all optional:
 // PORT (backend, default 8787) and
-// SLOVO_METRO_PORT (default 8081).
+// SLOVO_METRO_PORT (default 8082, the port `pnpm smoke:halves` expects).
 
 import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -44,7 +44,7 @@ const seed = `editions/${defaultEdition}/seed-snapshot.json`;
 run('pnpm', ['--silent', 'content', 'import', '--edition', defaultEdition, '--snapshot', seed]);
 
 const apiPort = await freePortFrom(Number(process.env.PORT ?? 8787));
-const metroPort = await freePortFrom(Number(process.env.SLOVO_METRO_PORT ?? 8081));
+const metroPort = await freePortFrom(Number(process.env.SLOVO_METRO_PORT ?? 8082));
 const apiUrl = `http://localhost:${apiPort}`;
 
 step(`Starting the backend on ${apiUrl}`);

@@ -341,7 +341,9 @@ describe('The first Word’s step, which opens on its red top over the whole scr
 
   /** How far a view is moved up or down from its place. */
   function shift(testID: string): number {
-    const style = getAnimatedStyle(screen.getByTestId(testID)) as {
+    // Where it sits, whether or not VoiceOver reaches it yet.
+    const view = screen.getByTestId(testID, { includeHiddenElements: true });
+    const style = getAnimatedStyle(view) as {
       transform?: { translateY?: number }[];
     };
     return style.transform?.[0]?.translateY ?? 0;
@@ -359,6 +361,21 @@ describe('The first Word’s step, which opens on its red top over the whole scr
     expect(shift('onboarding-hero')).toBeCloseTo(0);
     expect(shift('onboarding-content')).toBeCloseTo(cover - band);
     expect(screen.getByTestId('onboarding-skip')).toBeTruthy();
+  });
+
+  it('hides the content and the buttons from VoiceOver while the red covers the screen', async () => {
+    await renderIntro();
+    await pass(100);
+
+    expect(screen.queryByText('Card', { includeHiddenElements: false })).toBeNull();
+    expect(screen.queryByText('Take', { includeHiddenElements: false })).toBeNull();
+    expect(screen.getByTestId('onboarding-skip')).toBeTruthy();
+
+    await fireEvent.press(screen.getByTestId('onboarding-intro'));
+    await pass(500 + 50);
+
+    expect(screen.getByText('Card', { includeHiddenElements: false })).toBeTruthy();
+    expect(screen.getByText('Take', { includeHiddenElements: false })).toBeTruthy();
   });
 
   it('gives way to its band once the shout word has flown in and held, the content risen to its place', async () => {

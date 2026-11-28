@@ -156,18 +156,33 @@ describe('applying a Patch', () => {
       '"next"',
     );
 
-    // What the build before reads of a Word: the pack format, its columns by name and its Definitions in order.
-    const db = new DatabaseSync(file, { readOnly: true });
-    const read = <T>(sql: string) => nodePackDatabase(db).getAllAsync<T>(sql, [first.id]);
+    // The statements the build before runs on a Word: its read, and its Patch upsert, which names
+    // 13 columns and not the Short Definition, for a Word the pack has and for a new one.
+    const columns =
+      'id, lemma, part_of_speech, gender, category_id, rarity, etymology, region, history, origin, illustration, retired, needs_new_recording';
+    const upsertBefore = `
+      INSERT INTO words (${columns}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT (id) DO UPDATE SET
+        lemma = excluded.lemma, part_of_speech = excluded.part_of_speech, gender = excluded.gender,
+        category_id = excluded.category_id, rarity = excluded.rarity, etymology = excluded.etymology,
+        region = excluded.region, history = excluded.history, origin = excluded.origin,
+        illustration = excluded.illustration, retired = excluded.retired`;
+    const db = new DatabaseSync(file);
     expect((await pack.metadata()).packFormat).toBe(14);
-    expect(
-      await read(
-        'SELECT lemma, part_of_speech, gender, category_id, rarity, etymology, region, history, origin, illustration, retired FROM words WHERE id = ?',
-      ),
-    ).toEqual([expect.objectContaining({ lemma: first.lemma, retired: 0 })]);
-    expect(await read('SELECT text FROM definitions WHERE word_id = ? ORDER BY position')).toEqual(
-      [first.primaryDefinition, ...first.extraDefinitions].map((text) => ({ text })),
-    );
+    expect(db.prepare('SELECT * FROM words WHERE id = ?').all(first.id)).toEqual([
+      expect.objectContaining({ id: first.id, lemma: first.lemma, retired: 0 }),
+    ]);
+    const row = db.prepare(`SELECT ${columns} FROM words WHERE id = ?`).get(first.id);
+    if (row === undefined) throw new Error('The Word is not in the pack');
+    const values = Object.values(row);
+    const newId = 'w_buildbefore';
+    db.prepare("INSERT INTO entries (id, kind) VALUES (?, 'word')").run(newId);
+
+    expect(() => db.prepare(upsertBefore).run(...values)).not.toThrow();
+    expect(() => db.prepare(upsertBefore).run(newId, ...values.slice(1))).not.toThrow();
+    expect(db.prepare('SELECT short_definition FROM words WHERE id = ?').get(newId)).toEqual({
+      short_definition: null,
+    });
     db.close();
   });
 
