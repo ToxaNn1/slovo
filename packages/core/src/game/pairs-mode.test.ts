@@ -11,8 +11,10 @@ import {
   type Round,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { seededRandom, testEdition, word } from '../test-support';
+import { seededRandom, testComparison, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { entriesIn } from './answer-forms';
+import { pairsMode } from './pairs-mode';
 
 const test: Category = { id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' };
 const crafts: Category = {
@@ -333,6 +335,47 @@ describe('the grids of «Пари»', () => {
 
     expect(leftOut).toEqual([]);
     expect(places.some((place) => place >= 4)).toBe(true);
+  });
+
+  it('keeps in a Game both of two «Не знаю» Words that may not share a grid: synonyms, or homonyms', async () => {
+    const weak = ['w_n02', 'w_n03', 'w_коса1', 'w_коса2'];
+    const leftOut: string[] = [];
+    for (let seed = 1; seed <= 150; seed += 1) {
+      const app = await run({ seed });
+      for (const id of weak) await app.knowledge.tap(id, 'unknown');
+
+      const grids = gridsOf(await playGame(app));
+      const asked = new Set(current(app).played.map(({ entry }) => entry.id));
+
+      for (const id of weak) if (!asked.has(id)) leftOut.push(`seed ${String(seed)}: ${id}`);
+      for (const grid of grids) {
+        const texts = grid.words.map(({ shown: { text } }) => text);
+        expect(['n02', 'n03'].filter((lemma) => texts.includes(lemma)).length).toBeLessThan(2);
+        expect(texts.filter((text) => text === 'коса').length).toBeLessThan(2);
+      }
+    }
+
+    expect(leftOut).toEqual([]);
+  });
+
+  it('gives the place of a «Не знаю» Word that may not sit in the grid to the next one, which leaves it a later grid', () => {
+    const [n01, n02, n03, , , n06, n07, n08] = words;
+    if (!n01 || !n02 || !n03 || !n06 || !n07 || !n08) throw new Error('The pack lost a Word');
+
+    // «n03», due in this grid, is a synonym of its answer «n02»; «n07» is due in a later one.
+    const round = pairsMode.buildRound({
+      answer: n02,
+      eligible: words,
+      next: [n03, n01, n06, n08, n07],
+      weakNext: new Set([n03.id, n07.id]),
+      upTo: GAME_ROUNDS,
+      round: 1,
+      random: seededRandom(1),
+      edition: testEdition(),
+      comparison: testComparison,
+    });
+
+    expect(round && entriesIn(round)).toEqual([n02.id, n07.id, n01.id, n06.id]);
   });
 
   it('keeps the primary Definition of a Word that has a Short Definition (ADR 0211)', async () => {
