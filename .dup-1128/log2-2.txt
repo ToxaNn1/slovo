@@ -1,0 +1,56 @@
+# snapshot content v14160
+BACKFILL галасвіта w_sdke8e v3 content v14163 batch 19eb0dcd-8111-45cb-af67-3660f1b3f61a
+$ pnpm --filter @slovo/content content edit word w_sdke8e /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_sdke8e.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_sdke8e /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_sdke8e.json --edition uk
+BACKFILL гризня w_nufts6 v3 content v14165 batch ba7a6e84-296a-4faa-98b4-948ca03a43ef
+$ pnpm --filter @slovo/content content edit word w_nufts6 /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_nufts6.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_nufts6 /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_nufts6.json --edition uk
+BACKFILL еклектизм w_xvubwg v3 content v14167 batch 6f836ae3-7330-493d-9d92-1414994a6030
+$ pnpm --filter @slovo/content content edit word w_xvubwg /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_xvubwg.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_xvubwg /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_xvubwg.json --edition uk
+BACKFILL займище w_bjhwgl v2 content v14170 batch 3ce80963-bfe4-4725-b84d-2d612c45377a
+$ pnpm --filter @slovo/content content edit word w_bjhwgl /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_bjhwgl.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_bjhwgl /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_bjhwgl.json --edition uk
+BACKFILL пазур w_2wvxor v2 content v14172 batch 66e8adcb-adeb-48dc-bda6-ba77e7633089
+$ pnpm --filter @slovo/content content edit word w_2wvxor /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_2wvxor.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_2wvxor /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_2wvxor.json --edition uk
+BACKFILL паля w_y8tutn v3 content v14174 batch e7a06224-5b31-41c5-8f2b-536c3fb14bad
+$ pnpm --filter @slovo/content content edit word w_y8tutn /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_y8tutn.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_y8tutn /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_y8tutn.json --edition uk
+BACKFILL ремство w_xp5daz v3 content v14176 batch 46bf2b89-7f22-4a70-952a-7e727b342199
+$ pnpm --filter @slovo/content content edit word w_xp5daz /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_xp5daz.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_xp5daz /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_xp5daz.json --edition uk
+BACKFILL рястка w_dw0d52 v3 content v14179 batch 8cd19b3b-0f3f-4e88-8d45-eb6157658ea7
+$ pnpm --filter @slovo/content content edit word w_dw0d52 /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_dw0d52.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_dw0d52 /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_dw0d52.json --edition uk
+BACKFILL садівникувати w_jtwlkp v3 content v14181 batch 09f18566-c91d-43d5-b366-6b47e9a78eee
+$ pnpm --filter @slovo/content content edit word w_jtwlkp /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_jtwlkp.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_jtwlkp /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_jtwlkp.json --edition uk
+BACKFILL себелюбство w_3dz41q v3 content v14183 batch 07c13122-0a67-4b3f-8231-05a0398c4c89
+$ pnpm --filter @slovo/content content edit word w_3dz41q /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_3dz41q.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_3dz41q /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_3dz41q.json --edition uk
+BACKFILL скотобоєць w_d5ntov v4 content v14185 batch 6f0ea3f5-eafd-406a-b3e7-400f5758ae51
+$ pnpm --filter @slovo/content content edit word w_d5ntov /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_d5ntov.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_d5ntov /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_d5ntov.json --edition uk
+BACKFILL смиренник w_ci199b v4 content v14188 batch d88df467-ffc8-4b69-95f5-7d2f8ffbbd51
+$ pnpm --filter @slovo/content content edit word w_ci199b /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_ci199b.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_ci199b /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_ci199b.json --edition uk
+BACKFILL сочити w_5e40dr v3 content v14190 batch 57847a5a-6b0a-4fc5-bae9-83d64972070d
+$ pnpm --filter @slovo/content content edit word w_5e40dr /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_5e40dr.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_5e40dr /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_5e40dr.json --edition uk
+BACKFILL сполячувати w_96vijn v3 content v14192 batch 5b8461f4-6c85-4c6f-b525-98f4522ccddd
+$ pnpm --filter @slovo/content content edit word w_96vijn /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_96vijn.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_96vijn /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_96vijn.json --edition uk
+BACKFILL сьогочасний w_ue1agd v3 content v14194 batch 238dd4bf-5330-484e-8228-3673757e9d95
+$ pnpm --filter @slovo/content content edit word w_ue1agd /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_ue1agd.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_ue1agd /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_ue1agd.json --edition uk
+BACKFILL убуток w_qdhxy8 v3 content v14197 batch 3706df7c-fd12-42e9-b96b-3932df0619d6
+$ pnpm --filter @slovo/content content edit word w_qdhxy8 /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_qdhxy8.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_qdhxy8 /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_qdhxy8.json --edition uk
+BACKFILL шанцевий w_x7es0d v3 content v14199 batch b6f96207-79e5-4687-bd00-4fe07c4dbe43
+$ pnpm --filter @slovo/content content edit word w_x7es0d /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_x7es0d.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_x7es0d /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_x7es0d.json --edition uk
+BACKFILL шапірограф w_e24to6 v3 content v14201 batch c6a82b41-769c-43d0-bc12-b708b69a4e35
+$ pnpm --filter @slovo/content content edit word w_e24to6 /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_e24to6.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_e24to6 /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_e24to6.json --edition uk
+# backfill {'backfills': 18, 'edits': 18, 'already': 0, 'skips': 0, 'refusals': 0}

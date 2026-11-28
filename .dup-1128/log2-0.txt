@@ -1,0 +1,16 @@
+# snapshot content v13446
+NOEDIT 0 бузинник
+RETIRE 0 бузинник w_59k9ej v2 content v13447 batch 26756ebc-041f-4cb0-bd8c-944834f9e781
+$ pnpm --filter @slovo/content content retire word w_59k9ej --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_59k9ej --edition uk
+EDIT 1 буран w_3g6lry v2 content v13448 batch 441e88e0-25f8-4ab1-954b-9498cce3a02f
+$ pnpm --filter @slovo/content content edit word w_3g6lry /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_3g6lry.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_3g6lry /tmp/claude-0/-home-user-slovo/33eadfb3-965b-5346-b8c6-2b15a204c8af/scratchpad/edits2/w_3g6lry.json --edition uk
+RETIRE 1 буран w_p8s4u8 v2 content v13449 batch 1bf3aacf-433b-473f-9987-b316da7f6e10
+$ pnpm --filter @slovo/content content retire word w_p8s4u8 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_p8s4u8 --edition uk
+NOEDIT 2 бушель
+RETIRE 2 бушель w_ar5td8 v2 content v13450 batch 2db0a541-c7a5-4876-8947-a1074ed36794
+$ pnpm --filter @slovo/content content retire word w_ar5td8 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ar5td8 --edition uk
+# groups {'groups': 3, 'ok': 3, 'edits': 1, 'noedit': 2, 'retires': 3, 'skips': 0, 'refusals': 0}

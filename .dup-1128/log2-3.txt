@@ -1,0 +1,4 @@
+# snapshot content v14209
+# checked groups 233; problems 2; Lemmas live twice or more 48
+BAD ратиця: examples differs
+BAD ратиця: w_ojmygi not retired
