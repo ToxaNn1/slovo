@@ -1,0 +1,3731 @@
+{
+ "contentVersion": 13397,
+ "groups": [
+  {
+   "lemma": "бузинник",
+   "keep": "w_9kk86u",
+   "retire": [
+    "w_59k9ej"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "буран",
+   "keep": "w_3g6lry",
+   "retire": [
+    "w_p8s4u8"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Буран замів степову дорогу, і машини простояли на узбіччі аж до ранку."
+    },
+    {
+     "text": "Чабани загнали отару в кошару ще до того, як налетів буран."
+    },
+    {
+     "text": "У степу буран налітає раптово: щойно ясніло небо, а вже за два кроки нічого не видно."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "бушель",
+   "keep": "w_esrgki",
+   "retire": [
+    "w_ar5td8"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "буян",
+   "keep": "w_ksqur9",
+   "retire": [
+    "w_nal0ri"
+   ],
+   "synonyms": [
+    "розбишака",
+    "бешкетник",
+    "забіяка",
+    "задирака"
+   ],
+   "examples": [
+    {
+     "text": "І дійсно, через тиждень Ілько вже сидів у камері «срочних» між дрібними злодіями і буянами.",
+     "author": "В. Винниченко"
+    },
+    {
+     "text": "Того буяна знало все село: жодне весілля не минало без його бійки."
+    },
+    {
+     "text": "Сусідський буян знову перекинув лавку біля під’їзду й накричав на перехожих."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "бігос",
+   "keep": "w_gzg79y",
+   "retire": [
+    "w_nnzhti"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гакаборт",
+   "keep": "w_9bzxqk",
+   "retire": [
+    "w_y8o7lo"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": "Запозичено з голландської мови морських майстрів.",
+   "section": "1"
+  },
+  {
+   "lemma": "гарус",
+   "keep": "w_7t2a0b",
+   "retire": [
+    "w_q98p8t"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гарцівник",
+   "keep": "w_9kz8us",
+   "retire": [
+    "w_0tk8h6"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гафель",
+   "keep": "w_kc2je3",
+   "retire": [
+    "w_wm9k6m"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гелер",
+   "keep": "w_etbkoy",
+   "retire": [
+    "w_jombsi"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "За кілька гелерів у Відні можна було купити свіжу булку."
+    },
+    {
+     "text": "Чеські гелери вийшли з обігу, бо стали надто дрібними."
+    },
+    {
+     "text": "Бабуся зберігала в скриньці кілька мідних гелерів ще з австрійських часів."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "геліогравюра",
+   "keep": "w_r10ks6",
+   "retire": [
+    "w_worwwv"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": "Складено з грецького слова «сонце» і французького «гравюра».",
+   "section": "1"
+  },
+  {
+   "lemma": "гептаметр",
+   "keep": "w_i6ta9i",
+   "retire": [
+    "w_j8w3sc"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Поет спробував написати поему гептаметром, але рядки виходили задовгими."
+    },
+    {
+     "text": "Античні автори зрідка вдавалися до гептаметра."
+    },
+    {
+     "text": "На уроці ми порахували стопи й переконалися, що вірш написано гептаметром."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гепіди",
+   "keep": "w_v4uyc0",
+   "retire": [
+    "w_xy18ks"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Гепіди якийсь час жили по сусідству з готами на Дунаї."
+    },
+    {
+     "text": "Про гепідів відомо переважно з творів візантійських істориків."
+    },
+    {
+     "text": "Після смерті Аттіли гепіди повстали проти гунів і здобули собі землі над Дунаєм."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "герма",
+   "keep": "w_h9vu0y",
+   "retire": [
+    "w_kwf7uu"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": "Назва походить від давньогрецького бога Гермеса, чиї голови ставили на таких стовпах біля доріг.",
+   "section": "1"
+  },
+  {
+   "lemma": "глаголити",
+   "keep": "w_8ruu42",
+   "retire": [
+    "w_6uyd63"
+   ],
+   "synonyms": [
+    "говорити",
+    "казати",
+    "мовити",
+    "промовляти"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "глаголиця",
+   "keep": "w_8w7nks",
+   "retire": [
+    "w_bsy26o"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "У музеї ми бачили сторінку, списану глаголицею, і не впізнали жодної літери."
+    },
+    {
+     "text": "Учений довго розшифровував напис, зроблений глаголицею."
+    },
+    {
+     "text": "Літери глаголиці вигадливіші за кириличні й нагадують маленькі візерунки."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "глетчер",
+   "keep": "w_20j0qi",
+   "retire": [
+    "w_0ffhs5"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Туристи довго йшли кам’янистою стежкою, аж поки перед ними не заблищав синюватий глетчер."
+    },
+    {
+     "text": "Через потепління цей глетчер щороку відступає на кілька метрів."
+    },
+    {
+     "text": "Туристи піднялися до глетчера і почули, як під кригою дзюрчить вода."
+    }
+   ],
+   "etymology": "Запозичено з німецької мови, куди слово потрапило зі швейцарських говірок.",
+   "section": "1"
+  },
+  {
+   "lemma": "гліптотека",
+   "keep": "w_lx6voq",
+   "retire": [
+    "w_z344yc"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гномічний",
+   "keep": "w_b1oogr",
+   "retire": [
+    "w_r0ycd6"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гнідко",
+   "keep": "w_6qgic5",
+   "retire": [
+    "w_hkdjut"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гоже",
+   "keep": "w_x25qg5",
+   "retire": [
+    "w_4ak3nh"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": "Споріднене з дієсловом «годитися»: гоже те, що годиться.",
+   "section": "1"
+  },
+  {
+   "lemma": "гожість",
+   "keep": "w_l6fc00",
+   "retire": [
+    "w_vkzwl4"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Усі на весіллі милувалися гожістю молодої."
+    },
+    {
+     "text": "Перед засівом господар перевіряв гожість зерна."
+    },
+    {
+     "text": "Майстер оглянув дошки й похвалив їхню гожість для нового столу."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гойність",
+   "keep": "w_g001k6",
+   "retire": [
+    "w_tgz8p8"
+   ],
+   "synonyms": [
+    "щедрість",
+    "пишнота",
+    "розкіш",
+    "багатство"
+   ],
+   "examples": [
+    {
+     "text": "Коли вже деякі кланяються перед батьком за його широку гойність і благородність душі, то, певно, — ще більше матері за її характерність і працьовитість.",
+     "author": "О. Кобилянська"
+    },
+    {
+     "text": "Гості довго згадували гойність господарів, які не шкодували для них нічого."
+    },
+    {
+     "text": "Гойність осіннього саду вразила гостей: гілки аж гнулися від яблук."
+    }
+   ],
+   "etymology": "Утворене від прикметника «гойний» — щедрий, рясний.",
+   "section": "1"
+  },
+  {
+   "lemma": "голець",
+   "keep": "w_qrewyf",
+   "retire": [
+    "w_59cmhy"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "У холодних річках Камчатки рибалки ловлять лосося, а часом і гольця."
+    },
+    {
+     "text": "Під камінням у прозорому струмку ховався маленький голець, слизький, мов в’юн."
+    },
+    {
+     "text": "У гірській річці рибалка спіймав сріблястого гольця з рожевими цятками на боках."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "голосільниця",
+   "keep": "w_7n6omt",
+   "retire": [
+    "w_xoh82n"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гольтіпа",
+   "keep": "w_gtht3t",
+   "retire": [
+    "w_9elf6w"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "голярня",
+   "keep": "w_l0knu2",
+   "retire": [
+    "w_viusor"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гонвед",
+   "keep": "w_i8vkz4",
+   "retire": [
+    "w_agosgp"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Старий розповідав, як у молодості служив гонведом."
+    },
+    {
+     "text": "Восени 1938 року угорський гонвед увійшов у Закарпаття."
+    },
+    {
+     "text": "Гонведи в синіх мундирах крокували вулицями Будапешта."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гончак",
+   "keep": "w_6lnu9r",
+   "retire": [
+    "w_8o3z17"
+   ],
+   "synonyms": [
+    "гонча",
+    "гончий пес",
+    "гончий"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гопліт",
+   "keep": "w_5l5h2c",
+   "retire": [
+    "w_riowf1"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Гопліти йшли в бій щільним строєм, прикриваючись великими щитами."
+    },
+    {
+     "text": "Головною зброєю гопліта були спис, щит і короткий меч."
+    },
+    {
+     "text": "Гопліти зімкнули щити й рушили на ворога щільною фалангою."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "горлань",
+   "keep": "w_8sb0c0",
+   "retire": [
+    "w_xv34sn"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "горниця",
+   "keep": "w_ony72m",
+   "retire": [
+    "w_u8qu0q"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "горничка",
+   "keep": "w_4equ2r",
+   "retire": [
+    "w_yht3ux"
+   ],
+   "synonyms": [
+    "світлиця",
+    "світличка",
+    "кімнатка"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "грабштихель",
+   "keep": "w_gqej5n",
+   "retire": [
+    "w_7bmg9r"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Майстер узяв грабштихель і обережно вирізав на обручці дату весілля."
+    },
+    {
+     "text": "У скриньці гравера лежали грабштихелі різної товщини."
+    },
+    {
+     "text": "Без доброго грабштихеля не вийде ні дрібного візерунка, ні чіткого підпису на печатці."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гребти",
+   "keep": "w_ey10ib",
+   "retire": [
+    "w_scjpw4"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "громило",
+   "keep": "w_6tza3c",
+   "retire": [
+    "w_vi6w22"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Двоє громил висадили двері корчми й перевернули всі столи."
+    },
+    {
+     "text": "На вигляд він був справжній громило, а говорив тихо й лагідно."
+    },
+    {
+     "text": "Біля корчми якийсь громило перекинув стіл і погрожував кожному, хто підійде."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "груда",
+   "keep": "w_ukmf4i",
+   "retire": [
+    "w_yc7wtf"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "грюндерство",
+   "keep": "w_2xhv2l",
+   "retire": [
+    "w_pzri9g"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Епоха грюндерства в Німеччині закінчилася гучним біржовим крахом."
+    },
+    {
+     "text": "На початку дев’яностих багато хто згадував слово «грюндерство», дивлячись на нові фірми-одноденки."
+    },
+    {
+     "text": "Газети висміювали грюндерство спритників, що засновували банки на порожньому місці."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гугенотство",
+   "keep": "w_6jaw13",
+   "retire": [
+    "w_t6bc6k"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гузно",
+   "keep": "w_a2ts0x",
+   "retire": [
+    "w_9gtfqj"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Цілий день просидів на лаві, аж гузно затерпло."
+    },
+    {
+     "text": "Хлопчак упав з воза просто на гузно й засміявся."
+    },
+    {
+     "text": "Курка обтрусилася, розпушила гузно і вмостилася на гнізді."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гульбище",
+   "keep": "w_79gdt3",
+   "retire": [
+    "w_w7qh1a"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гуслярство",
+   "keep": "w_5vpffz",
+   "retire": [
+    "w_wbrap7"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Гуслярство передавалося від батька до сина разом зі старими піснями."
+    },
+    {
+     "text": "Дослідники записували старовинні думи, щоб гуслярство не зникло безслідно."
+    },
+    {
+     "text": "Етнограф записав кілька пісень, що збереглися від старого гуслярства."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гібон",
+   "keep": "w_10ysq7",
+   "retire": [
+    "w_65kq6g"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Гібон перелітав з гілки на гілку так легко, ніби руки в нього були з пружин."
+    },
+    {
+     "text": "Щоранку над лісом лунав дзвінкий спів гібонів, що перегукувалися зі своєю зграйкою."
+    },
+    {
+     "text": "У зоопарку гібон гойдався на довгих руках і за мить перелетів на іншу гілку."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "гінекей",
+   "keep": "w_4eo5ey",
+   "retire": [
+    "w_lyyfce"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "джезва",
+   "keep": "w_qn3px1",
+   "retire": [
+    "w_kbx8qo"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Бабуся поставила мідну джезву на гарячий пісок, і кава ледь не збігла."
+    },
+    {
+     "text": "Справжню каву по-турецьки варять у джезві, а не в чашці."
+    },
+    {
+     "text": "У джезві кава збігла саме тоді, коли я відвернувся до дверей."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "дискос",
+   "keep": "w_e0g1ic",
+   "retire": [
+    "w_667jcy"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Священник обережно поставив дискос поруч із чашею і накрив його вишитим покровцем."
+    },
+    {
+     "text": "У музеї зберігається срібний дискос сімнадцятого століття, оздоблений тонким гравіюванням."
+    },
+    {
+     "text": "Старовинний позолочений дискос із візерунком по краю тепер зберігають у музеї."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "диспут",
+   "keep": "w_rogda6",
+   "retire": [
+    "w_k8uz7b"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Поки йшли шумні диспути про етимологію і фонетику, о. Зварич мовчав.",
+     "author": "І. Франко"
+    },
+    {
+     "text": "Після лекції в університетській залі розгорівся гострий диспут про долю старих рукописів."
+    },
+    {
+     "text": "На диспут у ратуші зійшлися студенти й професори, щоб почути, чиї докази переконають зал."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "днина",
+   "keep": "w_k91js1",
+   "retire": [
+    "w_ew2m6h"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "добряк",
+   "keep": "w_jj7we0",
+   "retire": [
+    "w_04dqkf"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Наш сусід — справжній добряк: нікому не відмовить і завжди поділиться врожаєм."
+    },
+    {
+     "text": "Хоч він і здається суворим, насправді це великий добряк."
+    },
+    {
+     "text": "Його вважали добряком, тож кожен, у кого траплявся клопіт, ішов саме до нього."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "дотеп",
+   "keep": "w_ujrwoa",
+   "retire": [
+    "w_qx3doz"
+   ],
+   "synonyms": [
+    "жарт",
+    "гострота",
+    "каламбур",
+    "дотепність"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "едикула",
+   "keep": "w_wnti9s",
+   "retire": [
+    "w_9pwedn"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "екер",
+   "keep": "w_vcal5k",
+   "retire": [
+    "w_kyk9af"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "еон",
+   "keep": "w_3ten3e",
+   "retire": [
+    "w_z6xd21"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "ефа",
+   "keep": "w_ijg4v5",
+   "retire": [
+    "w_igejhg"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Ефа зарилася в пісок, і над ним видніла тільки її голова."
+    },
+    {
+     "text": "Укус ефи дуже небезпечний, тож провідник звелів дивитися під ноги."
+    },
+    {
+     "text": "У тераріумі ефу тримають за товстим склом, бо її отрута небезпечна для людини."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "жниварка",
+   "keep": "w_z1vwka",
+   "retire": [
+    "w_ojf5gq"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Дід першим у селі купив жниварку, і сусіди сходилися подивитися, як вона працює."
+    },
+    {
+     "text": "Жниварка йшла полем, лишаючи за собою рівні покоси пшениці."
+    },
+    {
+     "text": "Дід згадував, як уперше побачив на ниві кінну жниварку замість серпів."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "жниво",
+   "keep": "w_8qwxcz",
+   "retire": [
+    "w_q02iyh"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "жонкіль",
+   "keep": "w_aocdsz",
+   "retire": [
+    "w_yebl9g"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Навесні на клумбі першими розквітли жонкілі, і повітря запахло медом."
+    },
+    {
+     "text": "Парфумерка додала до аромату краплю жонкілі, щоб він звучав тепліше."
+    },
+    {
+     "text": "Садівник висадив жонкілі вздовж доріжки, щоб у квітні вона засяяла жовтим."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "забаляндрасити",
+   "keep": "w_cxrl1g",
+   "retire": [
+    "w_6v7v8m"
+   ],
+   "synonyms": [
+    "розбалакатися",
+    "защебетати",
+    "заторохтіти",
+    "забалакати"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "забара",
+   "keep": "w_8yw0h4",
+   "retire": [
+    "w_52iqc1"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "заболонь",
+   "keep": "w_bjm05z",
+   "retire": [
+    "w_jw597l"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Навесні діти здирали з молодої сосни заболонь і ласували солодкуватими стружками."
+    },
+    {
+     "text": "Стовп швидко загнив, бо тесля не зняв із нього м’якої заболоні."
+    },
+    {
+     "text": "Столяр зрізав м’яку заболонь, щоб лишити на дошку тверде темне ядро."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "завечоріти",
+   "keep": "w_iki2vr",
+   "retire": [
+    "w_xjgtty"
+   ],
+   "synonyms": [
+    "звечоріти",
+    "повечоріти",
+    "смеркнути",
+    "стемніти"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "завзятець",
+   "keep": "w_gxxu53",
+   "retire": [
+    "w_rjbm5b"
+   ],
+   "synonyms": [
+    "сміливець",
+    "відчайдух",
+    "заповзятець",
+    "молодець"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "загніт",
+   "keep": "w_jycy26",
+   "retire": [
+    "w_0vy5x8"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "загонич",
+   "keep": "w_edpox7",
+   "retire": [
+    "w_x8q2zg"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "задруга",
+   "keep": "w_fhj7vi",
+   "retire": [
+    "w_300jpc"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Така сім’яна община, чи задруга, є ще в Сербії, але вона там уже розпадається, бо сини, а більше того, невістки не можуть знести батьківського деспотизму.",
+     "author": "І. Нечуй-Левицький"
+    },
+    {
+     "text": "У задрузі старійшина розподіляв роботу між усіма родинами."
+    },
+    {
+     "text": "У задрузі спільними були земля, худоба й навіть хліб на столі."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "замазурка",
+   "keep": "w_tlzgz5",
+   "retire": [
+    "w_aevcev"
+   ],
+   "synonyms": [
+    "замурзанка",
+    "замазура",
+    "нечепура",
+    "нечупара"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "заступець",
+   "keep": "w_b92293",
+   "retire": [
+    "w_wbli7y"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Увійшло їх двоє в святочних одежах. Присяжний Гнилько і заступець.",
+     "author": "Б. Лепкий"
+    },
+    {
+     "text": "Емансипація народу має за себе в тих журналах заступців.",
+     "author": "І. Нечуй-Левицький"
+    },
+    {
+     "text": "Громада обрала його своїм заступцем перед паном."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "зачванитися",
+   "keep": "w_9vleux",
+   "retire": [
+    "w_rkdgl3"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "зачинальник",
+   "keep": "w_49dpwx",
+   "retire": [
+    "w_vfujr8"
+   ],
+   "synonyms": [
+    "зачинатель",
+    "ініціатор",
+    "засновник",
+    "застрільник"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "збіса",
+   "keep": "w_3yf7f4",
+   "retire": [
+    "w_kc7uel"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "зверхництво",
+   "keep": "w_h4w7yb",
+   "retire": [
+    "w_c6x99o"
+   ],
+   "synonyms": [
+    "панування",
+    "влада",
+    "верховенство",
+    "зверхність"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "звитяжець",
+   "keep": "w_5rlyyv",
+   "retire": [
+    "w_85q7nc"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Звитяжців зустрічали на майдані з хлібом і квітами."
+    },
+    {
+     "text": "Після важкої зими поле знову зазеленіло, і старий хлібороб почувався справжнім звитяжцем."
+    },
+    {
+     "text": "Після довгої облоги звитяжці підняли свій прапор над фортецею."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "зганити",
+   "keep": "w_erskoh",
+   "retire": [
+    "w_k10jbn"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "землемірство",
+   "keep": "w_gy1npa",
+   "retire": [
+    "w_52cb2e"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "зичити",
+   "keep": "w_bwisxx",
+   "retire": [
+    "w_1at3ua"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "змилостивитися",
+   "keep": "w_avb0z6",
+   "retire": [
+    "w_ntu7jp"
+   ],
+   "synonyms": [
+    "змилуватися",
+    "зглянутися",
+    "зжалитися",
+    "пожаліти"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "золотарство",
+   "keep": "w_g6qe6l",
+   "retire": [
+    "w_sydndu"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "золотуха",
+   "keep": "w_aswedt",
+   "retire": [
+    "w_sigvsl"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Колись на золотуху хворіли діти з бідних родин, яким бракувало доброї їжі й сонця."
+    },
+    {
+     "text": "Знахарка порадила купати хлопчика в настої череди, щоб зійшла золотуха."
+    },
+    {
+     "text": "Бабуся лікувала онука від золотухи відваром череди."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "зурочити",
+   "keep": "w_5agp74",
+   "retire": [
+    "w_du9p4j"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "зухвалець",
+   "keep": "w_msr6tj",
+   "retire": [
+    "w_2gpixf"
+   ],
+   "synonyms": [
+    "нахаба",
+    "нахабник",
+    "безчельник",
+    "сміливець"
+   ],
+   "examples": [
+    {
+     "text": "— Ви скажіть сьому зухвальцю, Що тепер настав день суду.",
+     "author": "Леся Українка"
+    },
+    {
+     "text": "Якийсь зухвалець проштовхався повз чергу й першим сунув гроші касирці."
+    },
+    {
+     "text": "Малий зухвалець перебив учителя й заявив, що задача розв’язана неправильно."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "зяблик",
+   "keep": "w_8lfe2e",
+   "retire": [
+    "w_vnkj1m"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Ще лежав сніг по ярах, а зяблик уже виспівував на голій березі."
+    },
+    {
+     "text": "Зяблик розміром трохи менший за горобця, але куди яскравіший."
+    },
+    {
+     "text": "Ранньої весни в саду першим озвався зяблик."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "казуар",
+   "keep": "w_27oglf",
+   "retire": [
+    "w_7uy77w"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": "Назва прийшла з малайської мови.",
+   "section": "1"
+  },
+  {
+   "lemma": "казуїст",
+   "keep": "w_c2qvmx",
+   "retire": [
+    "w_rvrr90"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Психологія казуїстів і книжкових законників очевидно припускала, що назва може зв’язати, зобов’язати й перевернути дійсну суть справи.",
+     "author": "В. Винниченко"
+    },
+    {
+     "text": "Адвокат був справжнім казуїстом: знаходив у законі шпарину там, де інші бачили глухий мур."
+    },
+    {
+     "text": "Не сперечайся з ним, він казуїст і доведе тобі, що біле насправді чорне."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "кайданник",
+   "keep": "w_wzixeg",
+   "retire": [
+    "w_km3ptn"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "калан",
+   "keep": "w_9i42zv",
+   "retire": [
+    "w_8cn8bf"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "каліграф",
+   "keep": "w_ojio2c",
+   "retire": [
+    "w_20fcca"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Каліграф вивів на грамоті заголовок червоними літерами з візерунками."
+    },
+    {
+     "text": "У старих канцеляріях каліграфи переписували начисто кожен важливий указ."
+    },
+    {
+     "text": "Грамоту переписав найкращий каліграф канцелярії, і кожна літера в ній була мов намальована."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "камарилья",
+   "keep": "w_6g2kpf",
+   "retire": [
+    "w_w22s43"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Придворна камарилья нашіптувала королеві, кого відправити у відставку."
+    },
+    {
+     "text": "Реформу поховала камарилья, якій вона загрожувала втратою влади."
+    },
+    {
+     "text": "Поки камарилья ділила посади, у державній скарбниці не лишилося ні гроша."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "камлот",
+   "keep": "w_ql1861",
+   "retire": [
+    "w_z3oy3u"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "У скрині лежала бабусина спідниця з камлоту, ще міцна, хоч і вицвіла."
+    },
+    {
+     "text": "Купець привіз із ярмарку сувій камлоту на свиту для старшого сина."
+    },
+    {
+     "text": "Кравець запевняв, що пальто з камлоту не боїться ні вітру, ні мряки."
+    }
+   ],
+   "etymology": "Слово прийшло з французької мови; спершу так називали тканину з вовни верблюдів або ангорських кіз.",
+   "section": "1"
+  },
+  {
+   "lemma": "каня",
+   "keep": "w_2x31iv",
+   "retire": [
+    "w_rp2d6a"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "капуцин",
+   "keep": "w_mebxol",
+   "retire": [
+    "w_lhe1l3"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "карагана",
+   "keep": "w_bfxvnm",
+   "retire": [
+    "w_1hznkn"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "карагач",
+   "keep": "w_x6c2q5",
+   "retire": [
+    "w_plejma"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "На краю степового села ріс старий карагач, і в його тіні влітку відпочивали чабани."
+    },
+    {
+     "text": "Карагач не боїться спеки, тому його здавна садять уздовж південних доріг."
+    },
+    {
+     "text": "Старий карагач біля криниці пережив і посуху, і морози."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "каракурт",
+   "keep": "w_108mqr",
+   "retire": [
+    "w_0rn9ie"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Каракурт плете павутину низько, серед сухої степової трави."
+    },
+    {
+     "text": "Чабан вчасно помітив каракурта під каменем і відігнав отару вбік."
+    },
+    {
+     "text": "Чабани остерігалися ночувати просто на землі, бо в траві міг сховатися каракурт."
+    }
+   ],
+   "etymology": "Запозичено з тюркських мов, де назва означає «чорний черв'як».",
+   "section": "1"
+  },
+  {
+   "lemma": "каретник",
+   "keep": "w_k33wwi",
+   "retire": [
+    "w_kd1szy"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Пан замовив у міського каретника нову карету з гербом на дверцятах."
+    },
+    {
+     "text": "Каретник перевірив кожну спицю, перш ніж поставити колесо на вісь."
+    },
+    {
+     "text": "Каретник довго припасовував дверцята, щоб карета не торохтіла в дорозі."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "картяр",
+   "keep": "w_aiid64",
+   "retire": [
+    "w_ftony4"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "кастет",
+   "keep": "w_d3wujo",
+   "retire": [
+    "w_t4mkz1"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "У кишені затриманого поліцейські знайшли важкий кастет."
+    },
+    {
+     "text": "Хуліган стиснув кастет у кулаці, але вчасно отямився й утік."
+    },
+    {
+     "text": "Чесний боєць виходить на кулаки, а не з кастетом у руці."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "кашпо",
+   "keep": "w_gw0vvq",
+   "retire": [
+    "w_881782"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Бабуся поставила вазон з фіалкою в розписане кашпо."
+    },
+    {
+     "text": "Зайва вода збирається на дні кашпо, тож квітку треба поливати обережно."
+    },
+    {
+     "text": "На підвіконні стояли три білі кашпо з геранню."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "каюк",
+   "keep": "w_vbattt",
+   "retire": [
+    "w_q0v3uk"
+   ],
+   "synonyms": [
+    "капут",
+    "кінець",
+    "амба",
+    "амінь"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "кепкун",
+   "keep": "w_vwswrj",
+   "retire": [
+    "w_349ox0"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Наш сусід — відомий кепкун: жодного перехожого не пропустить без дотепу."
+    },
+    {
+     "text": "Кепкун сміявся з усіх, а сам образився на перший жарт про себе."
+    },
+    {
+     "text": "Кепкун так дошкулив новенькому своїми жартами, що той ледь не розплакався."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "кесар",
+   "keep": "w_reyx98",
+   "retire": [
+    "w_os12jx"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "ключар",
+   "keep": "w_0o8k9o",
+   "retire": [
+    "w_2sw2jy"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "коала",
+   "keep": "w_r5oey0",
+   "retire": [
+    "w_h8t100"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Коала цілий день дрімала в розвилці гілок, міцно вчепившись у стовбур."
+    },
+    {
+     "text": "Малюк коали перші місяці живе в материній сумці."
+    },
+    {
+     "text": "У зоопарку діти найдовше стояли біля вольєра, де сонна коала повільно жувала листя."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "козуля",
+   "keep": "w_ptg966",
+   "retire": [
+    "w_576fey"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "копач",
+   "keep": "w_hlxjae",
+   "retire": [
+    "w_m63r9g"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "корольок",
+   "keep": "w_76rkba",
+   "retire": [
+    "w_buk5h1"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Всі сусідні корольки пішли в поход з своїм народом.",
+     "author": "І. Котляревський"
+    },
+    {
+     "text": "У густих смереках метушився корольок, ледве більший за наперсток."
+    },
+    {
+     "text": "У ялиннику тоненько попискував корольок, перелітаючи з гілки на гілку."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "косатка",
+   "keep": "w_gpz51q",
+   "retire": [
+    "w_kqk7xp"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Зграя косаток оточила косяк оселедців і по черзі пірнала в його гущу."
+    },
+    {
+     "text": "Високий спинний плавець косатки видно над хвилями здалеку."
+    },
+    {
+     "text": "З борту човна ми побачили, як над хвилями виріс високий плавець косатки."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "креатура",
+   "keep": "w_9fxah6",
+   "retire": [
+    "w_9cf67a"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "крильчатка",
+   "keep": "w_947ce1",
+   "retire": [
+    "w_mzczhy"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "крутійство",
+   "keep": "w_3yecla",
+   "retire": [
+    "w_whin38"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "курбет",
+   "keep": "w_ectgrn",
+   "retire": [
+    "w_k1rl6y"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "куховарня",
+   "keep": "w_6cfa5z",
+   "retire": [
+    "w_l3z59y"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "лахтак",
+   "keep": "w_dd0g0f",
+   "retire": [
+    "w_z7jl8l"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "лужити",
+   "keep": "w_hzmn90",
+   "retire": [
+    "w_k3hhtb"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "лутига",
+   "keep": "w_kog8sb",
+   "retire": [
+    "w_f04j8g"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Покинутий город за літо заріс лутигою по пояс."
+    },
+    {
+     "text": "Лутига добре почувається на солончаках, де інші трави гинуть."
+    },
+    {
+     "text": "Уздовж польової дороги розрослася сіра лутига."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "мастихін",
+   "keep": "w_ol469t",
+   "retire": [
+    "w_tks24r"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": "Від італійського mestichino — «шпатель».",
+   "section": "1"
+  },
+  {
+   "lemma": "міріада",
+   "keep": "w_9xd4sx",
+   "retire": [
+    "w_h6giu0"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "мітенка",
+   "keep": "w_6tc9bb",
+   "retire": [
+    "w_n197dk"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Пані в мереживних мітенках обережно взяла філіжанку."
+    },
+    {
+     "text": "Узимку продавчиня на базарі носила вовняні мітенки, щоб легше рахувати гроші."
+    },
+    {
+     "text": "До сукні в стилі ретро вона дібрала мереживні мітенки."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "навіч",
+   "keep": "w_n1bf8x",
+   "retire": [
+    "w_88l6jp"
+   ],
+   "synonyms": [
+    "наочно",
+    "особисто",
+    "очевидно",
+    "на власні очі"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "назвисько",
+   "keep": "w_gt3ldy",
+   "retire": [
+    "w_iqp3gf"
+   ],
+   "synonyms": [
+    "прізвисько",
+    "кличка",
+    "наймення",
+    "ім’я"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "найпаче",
+   "keep": "w_bxek5y",
+   "retire": [
+    "w_5kwn9l"
+   ],
+   "synonyms": [
+    "особливо",
+    "найбільше",
+    "понад усе",
+    "передусім"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "нанка",
+   "keep": "w_zndben",
+   "retire": [
+    "w_4ctaz2"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "нірка",
+   "keep": "w_w3wtr4",
+   "retire": [
+    "w_z0qhgr"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "огріх",
+   "keep": "w_mzfmvl",
+   "retire": [
+    "w_xfkcy3"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "олеандр",
+   "keep": "w_yar3e6",
+   "retire": [
+    "w_j5vjlp"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Коло ґанку рядком стояли чотири здорові вазони старих олеандрів, рясно обсипаних важкими китицями ясно-рожевих квіток.",
+     "author": "І. Нечуй-Левицький"
+    },
+    {
+     "text": "Узимку бабуся заносить олеандр у хату, бо мороз його вбиває."
+    },
+    {
+     "text": "Уздовж набережної цвіли олеандри, і їхній солодкий запах стелився аж до моря."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "орчик",
+   "keep": "w_cndsg5",
+   "retire": [
+    "w_wclvoa"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Дід приладнав посторонки до орчика й легенько торкнув коня віжками."
+    },
+    {
+     "text": "Коли зламався орчик, візникові довелося нашвидку вистругати новий із ясенової палиці."
+    },
+    {
+     "text": "Дід прикрутив до воза новий орчик, і кінь рушив рівніше."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "остюк",
+   "keep": "w_h8isey",
+   "retire": [
+    "w_uc7s6w"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "пагін",
+   "keep": "w_2ni02f",
+   "retire": [
+    "w_u8trtv"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "падуб",
+   "keep": "w_ssbgqh",
+   "retire": [
+    "w_8bqw73"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "парастас",
+   "keep": "w_rll15a",
+   "retire": [
+    "w_p5ku6r"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "почивальня",
+   "keep": "w_dpi3ib",
+   "retire": [
+    "w_32y5a0"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Іде султан, покинувши в дивані Башів та візирів широкомовних, І до Марусиної почивальні Шле наперед рабинь своїх безмовних.",
+     "author": "П. Куліш"
+    },
+    {
+     "text": "Із почивальні княгині вікна виходили просто на сад."
+    },
+    {
+     "text": "Князь звелів прибрати почивальню для гостей і запалити там свічки."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "ралити",
+   "keep": "w_jf76rt",
+   "retire": [
+    "w_qwrgmx"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "рантух",
+   "keep": "w_jo6jsg",
+   "retire": [
+    "w_q3vwdy"
+   ],
+   "synonyms": [
+    "намітка",
+    "покривало",
+    "хустка"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "ратиця",
+   "keep": "w_0s7z3u",
+   "retire": [
+    "w_ojmygi"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Після дощу на стежці лишилися глибокі сліди коров’ячих ратиць."
+    },
+    {
+     "text": "Ветеринар оглянув ратиці корови й знайшов скалку, через яку вона кульгала."
+    },
+    {
+     "text": "На вологій стежці чітко відбилися ратиці кози, яка втекла з двору."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "ратоборство",
+   "keep": "w_cbs5l9",
+   "retire": [
+    "w_16a7lq"
+   ],
+   "synonyms": [
+    "битва",
+    "бій",
+    "звитяга",
+    "січа"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "репетувати",
+   "keep": "w_ma41u9",
+   "retire": [
+    "w_ipco6n"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "реченець",
+   "keep": "w_ssrasu",
+   "retire": [
+    "w_qu90cc"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "ридикюль",
+   "keep": "w_k7g9mm",
+   "retire": [
+    "w_xjvkej"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "ринути",
+   "keep": "w_9eev6f",
+   "retire": [
+    "w_iqzzks"
+   ],
+   "synonyms": [
+    "кинутися",
+    "хлинути",
+    "линути",
+    "сунути"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "родоніт",
+   "keep": "w_1q2k1m",
+   "retire": [
+    "w_xri0d6"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "розбубнявіти",
+   "keep": "w_nej36c",
+   "retire": [
+    "w_070ypo"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "розкаряка",
+   "keep": "w_110emb",
+   "retire": [
+    "w_icle9s"
+   ],
+   "synonyms": [
+    "розчепіра",
+    "кривоніжка"
+   ],
+   "examples": [
+    {
+     "text": "Стара груша-розкаряка тягнулася гілками аж на сусідський двір."
+    },
+    {
+     "text": "Малий ішов по льоду такою розкарякою, що всі покотилися зі сміху."
+    },
+    {
+     "text": "Ну й розкаряка: став посеред стежки, ноги розчепірив, ні пройти, ні проїхати!"
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "розсильний",
+   "keep": "w_lw2ij5",
+   "retire": [
+    "w_noq8gp"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "розстрига",
+   "keep": "w_gywxtz",
+   "retire": [
+    "w_dskttx"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Та що це ви? Хіба ви розстрига, чи як?",
+     "author": "М. Кропивницький"
+    },
+    {
+     "text": "Розстригу вигнали з монастиря, і він подався мандрувати світом."
+    },
+    {
+     "text": "Про нового вчителя в селі шепотілися, що він розстрига, бо колись правив службу."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "ронити",
+   "keep": "w_w2yzym",
+   "retire": [
+    "w_subrxq"
+   ],
+   "synonyms": [
+    "губити",
+    "упускати",
+    "втрачати",
+    "скидати"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "ропак",
+   "keep": "w_46w3a8",
+   "retire": [
+    "w_yu22zd"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "росянка",
+   "keep": "w_gi5xni",
+   "retire": [
+    "w_pv3n87"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "На торф’яному болоті ми знайшли росянку, до листка якої прилипла мушка."
+    },
+    {
+     "text": "Краплини на листках росянки блищать, як роса, але для комах це пастка."
+    },
+    {
+     "text": "Росянка живиться комахами, бо на бідних болотних ґрунтах їй бракує поживи."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "рінистий",
+   "keep": "w_8zitvg",
+   "retire": [
+    "w_kwjnkh"
+   ],
+   "synonyms": [
+    "кам’янистий",
+    "гравійний",
+    "галечний"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "свідкувати",
+   "keep": "w_977xtb",
+   "retire": [
+    "w_u0j08u"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "сеймувати",
+   "keep": "w_fg2gsh",
+   "retire": [
+    "w_f341l6",
+    "w_ndfjil"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Шляхта сеймувала кілька тижнів, але так і не ухвалила нового податку."
+    },
+    {
+     "text": "Посли з усіх воєводств з’їхалися до Варшави сеймувати."
+    },
+    {
+     "text": "Шляхтичі тижнями сеймували у Варшаві, а справи в маєтках тим часом занепадали."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "скупник",
+   "keep": "w_zp5caz",
+   "retire": [
+    "w_rqhrlk"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Восени по селах їздили скупники й брали яблука за безцінь."
+    },
+    {
+     "text": "Скупник продав куплене зерно в місті з великим зиском."
+    },
+    {
+     "text": "Скупник довго крутив у руках срібну ложку, а тоді назвав смішну ціну."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "сопун",
+   "keep": "w_gsldkh",
+   "retire": [
+    "w_52tpla",
+    "w_g1db5p"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Сусід по купе виявився страшним сопуном, і ми до ранку не склепили очей."
+    },
+    {
+     "text": "Ану не сопи, сопуне, кажи вже, що сталося!"
+    },
+    {
+     "text": "Старий сопун задрімав на печі й засопів на всю хату."
+    }
+   ],
+   "etymology": "Утворено від дієслова «сопіти».",
+   "section": "1"
+  },
+  {
+   "lemma": "сороковини",
+   "keep": "w_cerzgv",
+   "retire": [
+    "w_hb2mii"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": "Від числівника «сорок»: за народним повір'ям, саме на сороковий день душа остаточно прощається із земним світом.",
+   "section": "1"
+  },
+  {
+   "lemma": "спитлювати",
+   "keep": "w_142mlc",
+   "retire": [
+    "w_7ffscb",
+    "w_g0euw1"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": "Від слова «питель», як звали дрібне сито на млині; воно прийшло до нас із німецької через польську.",
+   "section": "1"
+  },
+  {
+   "lemma": "спиця",
+   "keep": "w_srp5hs",
+   "retire": [
+    "w_hitm56"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "сподіяти",
+   "keep": "w_uxhovz",
+   "retire": [
+    "w_xkm4mr",
+    "w_54uaga"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "— Що ти сподіяв! — говорю йому. — А що я сподіяв? Будеш вільна, — от що!",
+     "author": "Марко Вовчок"
+    },
+    {
+     "text": "Ніхто не знав, що він сподіяв, але вся родина відтоді з ним не віталася."
+    },
+    {
+     "text": "Хлопці не встигли й озирнутися, як сподіяли шкоду в сусідському садку."
+    }
+   ],
+   "etymology": "Від давнього «діяти», тобто робити.",
+   "section": "1"
+  },
+  {
+   "lemma": "спрощенство",
+   "keep": "w_efnqrn",
+   "retire": [
+    "w_h8ixg1",
+    "w_woqwrx"
+   ],
+   "synonyms": [
+    "примітивізм",
+    "спрощеність",
+    "поверховість"
+   ],
+   "examples": [
+    {
+     "text": "Критик закинув авторові спрощенство: усі герої роману або святі, або негідники."
+    },
+    {
+     "text": "Його спрощенство в побуті дивувало гостей: стіл, лава й полиця з книжками."
+    },
+    {
+     "text": "Спрощенство в розмові про історію шкодить більше, ніж просте незнання."
+    }
+   ],
+   "etymology": "Від слова «спрощений».",
+   "section": "1"
+  },
+  {
+   "lemma": "співомовка",
+   "keep": "w_gb1cl2",
+   "retire": [
+    "w_eqard3",
+    "w_pxwyvx"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Степан Руданський написав сотні співомовок, і читачі досі сміються з них."
+    },
+    {
+     "text": "Дід знав напам’ять кілька співомовок і завжди веселив ними гостей."
+    },
+    {
+     "text": "На шкільному вечорі читали співомовки Руданського, і зала сміялася до сліз."
+    }
+   ],
+   "etymology": "Складене зі «спів» і «мовити»; так назвав свої гумористичні вірші Степан Руданський.",
+   "section": "1"
+  },
+  {
+   "lemma": "сталити",
+   "keep": "w_arfqmf",
+   "retire": [
+    "w_kadlz1",
+    "w_vpjw3r"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "старообрядництво",
+   "keep": "w_amubaf",
+   "retire": [
+    "w_tqtdy4",
+    "w_6n7wzc"
+   ],
+   "synonyms": [
+    "старовірство",
+    "розкольництво"
+   ],
+   "examples": null,
+   "etymology": "Складене зі слів «старий» і «обряд».",
+   "section": "1"
+  },
+  {
+   "lemma": "стлумити",
+   "keep": "w_3ifqex",
+   "retire": [
+    "w_bfy1fq",
+    "w_s91fg0"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": "Споріднене з давнім «тлумити», тобто глушити, придушувати.",
+   "section": "1"
+  },
+  {
+   "lemma": "стожильний",
+   "keep": "w_3cpluh",
+   "retire": [
+    "w_17dq6x",
+    "w_z7nqtm"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "схмеліти",
+   "keep": "w_j1vbtu",
+   "retire": [
+    "w_ie5gsf",
+    "w_y97av5"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": "Від слова «хміль»: із шишок цієї рослини варять пиво.",
+   "section": "1"
+  },
+  {
+   "lemma": "талина",
+   "keep": "w_m36id2",
+   "retire": [
+    "w_3zu01s"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Сани застрягли на талині, і коням довелося тягнути їх по голій землі."
+    },
+    {
+     "text": "Перші проліски виглянули саме на талині під старим дубом."
+    },
+    {
+     "text": "Навесні на пагорбах першими з’являються талини."
+    }
+   ],
+   "etymology": "Від дієслова танути, від якого походить і слово талий.",
+   "section": "1"
+  },
+  {
+   "lemma": "тамтам",
+   "keep": "w_s306bb",
+   "retire": [
+    "w_q40sta"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "таньга",
+   "keep": "w_f37spl",
+   "retire": [
+    "w_gavknh"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "У скарбі знайшли кілька таньг з арабськими написами."
+    },
+    {
+     "text": "За одну таньгу купець продав мандрівникові жменю родзинок."
+    },
+    {
+     "text": "За одну таньгу на базарі в Бухарі можна було купити хліба на цілий тиждень."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "тельбушити",
+   "keep": "w_kxvebn",
+   "retire": [
+    "w_otodjn"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "теситура",
+   "keep": "w_e9a0i8",
+   "retire": [
+    "w_m5n69d"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "тильда",
+   "keep": "w_5q966q",
+   "retire": [
+    "w_47zbix"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "В іспанській мові тильду ставлять над однією з літер, щоб позначити м’який звук."
+    },
+    {
+     "text": "У математиці тильдою інколи позначають приблизну рівність."
+    },
+    {
+     "text": "На клавіатурі тильда зазвичай ховається на клавіші ліворуч від цифри 1."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "тимократія",
+   "keep": "w_tbb5f5",
+   "retire": [
+    "w_re8lr6"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Солон запровадив в Афінах тимократію: права громадянина залежали від того, скільки зерна давала його земля."
+    },
+    {
+     "text": "За тимократії бідняк міг бути вільним, але до влади його не допускали."
+    },
+    {
+     "text": "Реформи Солона часто наводять як приклад тимократії."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "титарювати",
+   "keep": "w_29l9dg",
+   "retire": [
+    "w_ldkrtt"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Багато років дід титарював у сільській церкві й дбав про свічки та ключі."
+    },
+    {
+     "text": "Хто титарював, той мав за честь стояти біля церковної скарбнички."
+    },
+    {
+     "text": "Хто титарює, той і свічки купує, і про дах над храмом турбується."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "тканиця",
+   "keep": "w_glg42y",
+   "retire": [
+    "w_32p054"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "томпак",
+   "keep": "w_kl2w0b",
+   "retire": [
+    "w_ckb24m"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Ґудзики на мундирі були з томпаку, але блищали, як золоті."
+    },
+    {
+     "text": "Майстер штампував із томпаку дешеві обручки для ярмарку."
+    },
+    {
+     "text": "Ярмарковий перстень виявився не золотим, а з томпаку."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "топчило",
+   "keep": "w_7ta9pn",
+   "retire": [
+    "w_czrauq"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "торботряс",
+   "keep": "w_oynmlc",
+   "retire": [
+    "w_r52whh"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": "Складене зі слів торба і трясти: той, хто трясе торбою, випрошуючи.",
+   "section": "1"
+  },
+  {
+   "lemma": "треста",
+   "keep": "w_0idfuk",
+   "retire": [
+    "w_psnexj"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "тріумвір",
+   "keep": "w_d808ax",
+   "retire": [
+    "w_qrroxm"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Цезар, Помпей і Красс уклали союз, і кожен із них став тріумвіром."
+    },
+    {
+     "text": "Невдовзі тріумвіри посварилися, і спільне правління обернулося громадянською війною."
+    },
+    {
+     "text": "Після вбивства Цезаря новими тріумвірами стали Октавіан, Антоній і Лепід."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "турель",
+   "keep": "w_8hqok0",
+   "retire": [
+    "w_9ulamx"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "туриця",
+   "keep": "w_1wqwwt",
+   "retire": [
+    "w_p8z7f2"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Туриця з малим туреням паслася на узліссі, пильно дослухаючись до кожного шелесту."
+    },
+    {
+     "text": "Остання відома туриця загинула 1627 року в лісі біля польського Якторова, і тури зникли назавжди."
+    },
+    {
+     "text": "Останніх турів і туриць винищили ще в сімнадцятому столітті."
+    }
+   ],
+   "etymology": "Утворено від слова тур.",
+   "section": "1"
+  },
+  {
+   "lemma": "увізвати",
+   "keep": "w_g39aj4",
+   "retire": [
+    "w_1umu4m"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "уловистий",
+   "keep": "w_yr19u9",
+   "retire": [
+    "w_pmqju3"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "умишляти",
+   "keep": "w_2bpdbb",
+   "retire": [
+    "w_o8bgv7"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "ундина",
+   "keep": "w_j5sbc6",
+   "retire": [
+    "w_ml4udx"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "У казці ундина виринала з озера й кликала рибалку на глибину."
+    },
+    {
+     "text": "Художник намалював ундину з довгим зеленкуватим волоссям, що зливалося з хвилями."
+    },
+    {
+     "text": "Здавалося, з місячної доріжки на озері ось-ось вийде ундина."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "упадливий",
+   "keep": "w_hc3gaz",
+   "retire": [
+    "w_i60zsg"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Славна в мене, Дмитре, дочка: і хороша, і моторна, і упадлива.",
+     "author": "М. Старицький"
+    },
+    {
+     "text": "Упадлива господиня встигала й город прополоти, й обід зварити до полудня."
+    },
+    {
+     "text": "Нова помічниця була упадлива: усе робила швидко й охоче."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "упряж",
+   "keep": "w_5k46le",
+   "retire": [
+    "w_wqyhb5"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "урвистий",
+   "keep": "w_luzmor",
+   "retire": [
+    "w_6augnp"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "урема",
+   "keep": "w_6092nr",
+   "retire": [
+    "w_s4s1kb"
+   ],
+   "synonyms": [
+    "плавні",
+    "заплавний ліс",
+    "лозняк"
+   ],
+   "examples": [
+    {
+     "text": "Улітку в уремі над річкою пахне вербою й вогкою травою."
+    },
+    {
+     "text": "Пастухи гнали череду крізь густу урему до водопою."
+    },
+    {
+     "text": "За селом уздовж річки темніла урема, повна пташиного гомону."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "усобник",
+   "keep": "w_hvu51n",
+   "retire": [
+    "w_r6g63v"
+   ],
+   "synonyms": [
+    "заколотник",
+    "бунтар",
+    "призвідник"
+   ],
+   "examples": [
+    {
+     "text": "Князі-усобники ділили землі, поки їх руйнували чужі орди."
+    },
+    {
+     "text": "Літописець докоряє усобникам, що через їхні чвари слабшала держава."
+    },
+    {
+     "text": "Старий гетьман знав: найнебезпечніший ворог не чужинець, а свій усобник."
+    }
+   ],
+   "etymology": "Утворене від слова «усобиця», тобто чвари й війни між своїми.",
+   "section": "1"
+  },
+  {
+   "lemma": "усправжки",
+   "keep": "w_uivp0d",
+   "retire": [
+    "w_yu40w4"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Я думала, він жартує, а він усправжки зібрав валізу й поїхав до моря."
+    },
+    {
+     "text": "Не бійся, то не вовк усправжки, а сусідський пес у темряві."
+    },
+    {
+     "text": "Діти гралися у війну, але посварилися вже усправжки."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "уторник",
+   "keep": "w_cp90y1",
+   "retire": [
+    "w_pd9fup"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "утямити",
+   "keep": "w_8jjd0c",
+   "retire": [
+    "w_g5ck4f"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "уцяцьковувати",
+   "keep": "w_7ujk5l",
+   "retire": [
+    "w_bf0lk1"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": "Походить від слова «цяцька», тобто іграшка або дрібна прикраса.",
+   "section": "1"
+  },
+  {
+   "lemma": "учта",
+   "keep": "w_n9l6fv",
+   "retire": [
+    "w_roshmu"
+   ],
+   "synonyms": [
+    "бенкет",
+    "банкет",
+    "гостина",
+    "пир"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "фарандола",
+   "keep": "w_7ia5b0",
+   "retire": [
+    "w_oqvfxz"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Під тамбурини на майдані закрутилася фарандола, і ланцюжок танцівників обвив увесь фонтан."
+    },
+    {
+     "text": "Учителька показала дітям фарандолу, веселий танець із Провансу."
+    },
+    {
+     "text": "На святі в провансальському містечку всі, від дітей до дідусів, закрутилися у фарандолі."
+    }
+   ],
+   "etymology": "Від провансальського farandoulo.",
+   "section": "1"
+  },
+  {
+   "lemma": "флюгер",
+   "keep": "w_p6l88t",
+   "retire": [
+    "w_b97yb8"
+   ],
+   "synonyms": [
+    "вітрівник",
+    "пристосуванець",
+    "вітрогон",
+    "хамелеон"
+   ],
+   "examples": [
+    {
+     "text": "Залізний півник-флюгер на дзвіниці повернувся на північ, і всі зрозуміли, що йде похолодання."
+    },
+    {
+     "text": "Такого флюгера в раді не поважали: сьогодні він за одних, завтра — за інших."
+    },
+    {
+     "text": "Над старою ратушею скрипів залізний флюгер у формі півня."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "фільдеперс",
+   "keep": "w_4bbdro",
+   "retire": [
+    "w_ld1nqd"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "хлястик",
+   "keep": "w_gya145",
+   "retire": [
+    "w_b3xjrn"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "ходики",
+   "keep": "w_91pd3i",
+   "retire": [
+    "w_8n4nie"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "хосен",
+   "keep": "w_47zzov",
+   "retire": [
+    "w_aw1xcm"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "цикля",
+   "keep": "w_3mgzf1",
+   "retire": [
+    "w_yqb58f"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Майстер пройшовся циклею по паркету, і старі дошки знову засвітилися."
+    },
+    {
+     "text": "Столяр нагострив циклю й зняв із дошки тонесеньку стружку."
+    },
+    {
+     "text": "Старий паркет спершу зачистили циклею, а тоді вкрили лаком."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "чемерник",
+   "keep": "w_83w83j",
+   "retire": [
+    "w_42va6o"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "черсак",
+   "keep": "w_cprgg7",
+   "retire": [
+    "w_igkfdj"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "чинар",
+   "keep": "w_j76b6l",
+   "retire": [
+    "w_x0j0sr"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "чорнорясник",
+   "keep": "w_orss57",
+   "retire": [
+    "w_rmfnyz"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "чорнотроп",
+   "keep": "w_0t40sr",
+   "retire": [
+    "w_tueb2l"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": "Складене зі слів «чорний» і «тропа»: стежка ще чорна, а не біла від снігу.",
+   "section": "1"
+  },
+  {
+   "lemma": "чортопхайка",
+   "keep": "w_i3vx7y",
+   "retire": [
+    "w_pvqbmo"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": "Жартівливе складне слово зі слів «чорт» і «пхати».",
+   "section": "1"
+  },
+  {
+   "lemma": "чубарка",
+   "keep": "w_qpprsg",
+   "retire": [
+    "w_zt6nen"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Біля воріт порпалася в пилюці рябенька чубарка."
+    },
+    {
+     "text": "Найменша з курей, чубарка, завжди першою прибігала на поклик господині."
+    },
+    {
+     "text": "Чубарка злетіла на тин і звідти пильно стежила за котом."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "шабельник",
+   "keep": "w_kteuvi",
+   "retire": [
+    "w_x3bgf5"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Старий шабельник довго гартував клинок, поки той не задзвенів, як струна."
+    },
+    {
+     "text": "У місті шабельники мали свій цех, і учень роками чекав права ставити власне клеймо."
+    },
+    {
+     "text": "У старому місті був цілий куток, де жили ковалі й шабельники."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "шандал",
+   "keep": "w_ncs003",
+   "retire": [
+    "w_la6ls3"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "шансонетка",
+   "keep": "w_mgyohm",
+   "retire": [
+    "w_kh6f2o"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "шахівниця",
+   "keep": "w_t2ijzg",
+   "retire": [
+    "w_rgxsv4"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "шибздик",
+   "keep": "w_jnk10a",
+   "retire": [
+    "w_vb1yjw"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Цей шибздик ледь діставав до прилавка, але торгувався, як справжній купець."
+    },
+    {
+     "text": "Не дивись, що він шибздик: у бійці його ще ніхто не подолав."
+    },
+    {
+     "text": "Той шибздик виявився найспритнішим гравцем у команді."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "широкораменний",
+   "keep": "w_afls60",
+   "retire": [
+    "w_wea8ku"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "шлафрок",
+   "keep": "w_gw9smy",
+   "retire": [
+    "w_bjf1ew"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "шлягер",
+   "keep": "w_492m5i",
+   "retire": [
+    "w_6tlydc"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Того літа з кожного вікна лунав той самий шлягер, і навіть діти знали його напам’ять."
+    },
+    {
+     "text": "Нова настільна гра стала справжнім шлягером сезону: її розкупили ще до свят."
+    },
+    {
+     "text": "На вечорі ветерани співали шлягери своєї молодості, і зал підспівував їм."
+    }
+   ],
+   "etymology": "Від німецького слова, яке буквально означає щось таке, що вражає, влучає.",
+   "section": "1"
+  },
+  {
+   "lemma": "шпеник",
+   "keep": "w_884otx",
+   "retire": [
+    "w_sn844a"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "шулик",
+   "keep": "w_urlyzx",
+   "retire": [
+    "w_xz270u"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Восени на грядці лишилося кілька шуликів, і їх віддали кролям."
+    },
+    {
+     "text": "Через посуху половина капусти пішла в шулики."
+    },
+    {
+     "text": "Шулики не годяться на квашення, тож їх віддали худобі."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "єдиноутробний",
+   "keep": "w_6g40ls",
+   "retire": [
+    "w_dm2x7y"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "єфимок",
+   "keep": "w_n1rl3n",
+   "retire": [
+    "w_uwmfn8"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "іредента",
+   "keep": "w_s8gd6l",
+   "retire": [
+    "w_rvuf4z"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Угорська іредента в Словаччині живе здебільшого вздовж Дунаю."
+    },
+    {
+     "text": "Коли проводили нові кордони, дипломати мусили зважати на іреденту по обидва боки."
+    },
+    {
+     "text": "На відміну від далекої діаспори, іредента живе поруч із кордоном своєї етнічної батьківщини."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "іудин",
+   "keep": "w_nc3qpv",
+   "retire": [
+    "w_tu33n7"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Після того іудиного поцілунку вона вже нікому в селі не вірила."
+    },
+    {
+     "text": "Він отримав свої іудині срібняки, але спокою за них так і не купив."
+    },
+    {
+     "text": "Він уклав іудину угоду й продав побратимів за жменю срібла."
+    }
+   ],
+   "etymology": null,
+   "section": "1"
+  },
+  {
+   "lemma": "казарка",
+   "keep": "w_mkvg9v",
+   "retire": [
+    "w_2s698p"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "2A"
+  },
+  {
+   "lemma": "казарка",
+   "keep": "w_z4dy5w",
+   "retire": [
+    "w_8ttqcj"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "2A"
+  },
+  {
+   "lemma": "канатник",
+   "keep": "w_eify8d",
+   "retire": [
+    "w_yfcle3"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Канатник довгими рядами натягував конопляні пасма через увесь двір."
+    },
+    {
+     "text": "У портовому місті канатники мали свою вулицю поблизу причалів."
+    },
+    {
+     "text": "Канатник сукав пеньку на довгому подвір’ї, бо в майстерні канат не вміщався."
+    }
+   ],
+   "etymology": null,
+   "section": "2A"
+  },
+  {
+   "lemma": "каурі",
+   "keep": "w_nhgg3y",
+   "retire": [
+    "w_6b2m33"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "2A"
+  },
+  {
+   "lemma": "укоїти",
+   "keep": "w_8rffd8",
+   "retire": [
+    "w_ph31hn"
+   ],
+   "synonyms": [
+    "заспокоїти",
+    "угамувати",
+    "утішити",
+    "втихомирити"
+   ],
+   "examples": null,
+   "etymology": null,
+   "categoryId": "emotions-character",
+   "section": "2A"
+  },
+  {
+   "lemma": "укоїти",
+   "keep": "w_r66bhh",
+   "retire": [
+    "w_eiz4qy"
+   ],
+   "synonyms": [
+    "накоїти",
+    "скоїти",
+    "вчинити",
+    "заподіяти"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "2A"
+  },
+  {
+   "lemma": "ухибити",
+   "keep": "w_7m8rm1",
+   "retire": [
+    "w_dh7z6v"
+   ],
+   "synonyms": [
+    "схибити",
+    "помилитися",
+    "прогадати",
+    "прорахуватися"
+   ],
+   "examples": [
+    {
+     "text": "— Поможи мені ще вирватися з сеї западні, щоб я міг хоч раз дихнути свобідно, про направу того, що я ухибив цілим своїм життям!",
+     "author": "І. Франко"
+    },
+    {
+     "text": "Тесля боявся ухибити бодай на волосину, тому міряв дошку тричі."
+    },
+    {
+     "text": "Хто поспішає, той легко ухибить."
+    }
+   ],
+   "etymology": null,
+   "section": "2A"
+  },
+  {
+   "lemma": "ухибити",
+   "keep": "w_bmg0dp",
+   "retire": [
+    "w_nqrqz8"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "2A"
+  },
+  {
+   "lemma": "рунистий",
+   "keep": "w_igouuw",
+   "retire": [
+    "w_jomhv7"
+   ],
+   "synonyms": [
+    "густий",
+    "буйний",
+    "рясний",
+    "вовнистий"
+   ],
+   "examples": [
+    {
+     "text": "Дихнув вітерець — і ожив стародавній той город: завештались люди, верблюди ревуть, голосить руниста отара.",
+     "author": "Дніпрова Чайка"
+    },
+    {
+     "text": "Після теплих дощів жито зійшло рунисте, аж синє."
+    },
+    {
+     "text": "По рунистій траві коса йшла важко, зате копиці виросли високі."
+    }
+   ],
+   "etymology": "Від слова «руно» — так називають густу вовну вівці.",
+   "extraDefinitions": [
+    "Про овець: з густою й довгою вовною."
+   ],
+   "section": "2B"
+  },
+  {
+   "lemma": "урочний",
+   "keep": "w_nsp0qc",
+   "retire": [
+    "w_dt8vb9"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "2B"
+  },
+  {
+   "lemma": "ходак",
+   "keep": "w_8x5dbf",
+   "retire": [
+    "w_xlmli9"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "2B"
+  },
+  {
+   "lemma": "крейцер",
+   "keep": "w_xfkmri",
+   "retire": [
+    "w_gl4u1s"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Набій застряг у стволі, і стрілець дістав крейцер, щоб його витягти."
+    },
+    {
+     "text": "Крейцер нагвинчували на кінець шомпола, наче штопор."
+    },
+    {
+     "text": "Після осічки мисливець накрутив на шомпол крейцер і витяг із дула вологу кулю."
+    }
+   ],
+   "etymology": "З німецької: Krätzer означає «скребачка», від дієслова «шкребти».",
+   "section": "2C"
+  },
+  {
+   "lemma": "роз'юшити",
+   "keep": "w_02n88k",
+   "retire": [
+    "w_6gs70k"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Вона молилася, щоби найяснішого тата ніхто не роз’юшив.",
+     "author": "Марко Черемшина"
+    },
+    {
+     "text": "Несправедливий докір так роз’юшив старого, що той грюкнув дверима й пішов."
+    },
+    {
+     "text": "Не дражни собаку палицею, бо роз’юшиш, і тоді вже не втечеш."
+    }
+   ],
+   "etymology": null,
+   "section": "2C"
+  }
+ ],
+ "batch1EtymologyBackfill": [
+  {
+   "id": "w_sdke8e",
+   "lemma": "галасвіта",
+   "etymology": "Злилося зі сполучення «гала світа», де давнє «гал» означало «кінець», тобто «на край світу»."
+  },
+  {
+   "id": "w_nufts6",
+   "lemma": "гризня",
+   "etymology": "Утворене від дієслова «гризти», яке має спільне праслов'янське коріння з литовським словом того самого значення."
+  },
+  {
+   "id": "w_xvubwg",
+   "lemma": "еклектизм",
+   "etymology": "Від грецького слова «вибираю»."
+  },
+  {
+   "id": "w_bjhwgl",
+   "lemma": "займище",
+   "etymology": "Утворене від дієслова «займати»: місце, яке хтось зайняв."
+  },
+  {
+   "id": "w_2wvxor",
+   "lemma": "пазур",
+   "etymology": "Давнє слов'янське слово неясного походження; його пов'язують зі словом «паз» або вважають скороченням від давнього «пазноготь», тобто ніготь."
+  },
+  {
+   "id": "w_y8tutn",
+   "lemma": "паля",
+   "etymology": "Слово прийшло через польську мову з латини, де воно означало кілок або стовп."
+  },
+  {
+   "id": "w_xp5daz",
+   "lemma": "ремство",
+   "etymology": "Давнє слово того самого кореня, що й «ремствувати», тобто нарікати."
+  },
+  {
+   "id": "w_dw0d52",
+   "lemma": "рястка",
+   "etymology": "Пов'язане зі словом «ряст», спорідненим з «рости» і «рясний»."
+  },
+  {
+   "id": "w_jtwlkp",
+   "lemma": "садівникувати",
+   "etymology": "Від слова «садівник»."
+  },
+  {
+   "id": "w_3dz41q",
+   "lemma": "себелюбство",
+   "etymology": "Складене зі слів «себе» і «любити»."
+  },
+  {
+   "id": "w_d5ntov",
+   "lemma": "скотобоєць",
+   "etymology": "Складене зі слів «скот» і «бити»."
+  },
+  {
+   "id": "w_ci199b",
+   "lemma": "смиренник",
+   "etymology": "Від слова «смирний», тобто тихий і покірний."
+  },
+  {
+   "id": "w_5e40dr",
+   "lemma": "сочити",
+   "etymology": "Давнє слов'янське слово, споріднене з «сік» і «сочитися»."
+  },
+  {
+   "id": "w_96vijn",
+   "lemma": "сполячувати",
+   "etymology": "Утворене від слова «поляк»."
+  },
+  {
+   "id": "w_ue1agd",
+   "lemma": "сьогочасний",
+   "etymology": "Складене з давнього «сього», тобто цього, та слова «час»."
+  },
+  {
+   "id": "w_qdhxy8",
+   "lemma": "убуток",
+   "etymology": "Утворене від дієслова «убувати», тобто меншати."
+  },
+  {
+   "id": "w_x7es0d",
+   "lemma": "шанцевий",
+   "etymology": "Від слова «шанець», тобто окоп, яке прийшло з німецької мови через польську."
+  },
+  {
+   "id": "w_e24to6",
+   "lemma": "шапірограф",
+   "etymology": "Назва походить від прізвища винахідника Шапіро і грецького кореня «граф», що означає «писати»."
+  }
+ ]
+}
