@@ -93,10 +93,12 @@ export function noticesOf(content: FeedNoticeContent): readonly FeedNotice[] {
 
 /**
  * What gives the Feed Notices another feature makes for a local day, in any
- * order. It only reads.
+ * order. `forDay` only reads; `shown`, if any, keeps that one of them came
+ * on screen on its local day, such as an offer that spends its day there.
  */
 export interface FeedNotices {
   forDay(day: LocalDate): Promise<readonly FeedNoticeContent[]>;
+  shown?(content: FeedNoticeContent, day: LocalDate): Promise<void>;
 }
 
 /** No Feed Notice on any day, as long as no feature makes one. */
@@ -117,7 +119,10 @@ export interface FeedNoticeQueue {
     day: LocalDate,
     inSession: ReadonlySet<FeedNotice>,
   ): Promise<FeedNoticeContent | undefined>;
-  /** Keeps that `content` of the local day `day` came on screen: the offer to save progress counts its day. */
+  /**
+   * Keeps that `content` of the local day `day` came on screen: the offer to
+   * save progress counts its day, and each source of Feed Notices is told.
+   */
   shown(content: FeedNoticeContent, day: LocalDate): Promise<void>;
   /**
    * The change that closes `content` for the local day `date`
@@ -418,6 +423,7 @@ export function openFeedNotices({
       return { ...first, yesterday };
     },
     async shown(content, day) {
+      await Promise.all(sources.map((source) => source.shown?.(content, day) ?? Promise.resolve()));
       if (content.notice !== 'saveProgress') return;
       const date = dateKeyOf(day);
       const offered = (await userState.read(saveProgressOffered)) ?? [];

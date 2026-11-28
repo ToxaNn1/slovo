@@ -187,6 +187,21 @@ describe('the notification explainer', () => {
     expect(await askIn(await run({ records, date: '2026-10-20' }))).toBe('notificationReask');
   });
 
+  it('spends its day only once on screen: got ready behind a first card on one day, it comes on the next, the re-ask too', async () => {
+    const records = new Map([onboarded]);
+    const unseen = async (date: string) => {
+      const app = await run({ records, date });
+      await app.feed.show(0);
+      return app.feed.cards.some((card) => card.kind === 'notice');
+    };
+
+    expect(await unseen('2026-10-13')).toBe(true);
+    expect(await askIn(await run({ records, date: '2026-10-14' }))).toBe('notificationExplainer');
+    expect(await unseen('2026-10-21')).toBe(true);
+    expect(await askIn(await run({ records, date: '2026-10-22' }))).toBe('notificationReask');
+    expect(await asksOn(records, ['2026-10-23', '2026-11-30'])).toEqual([undefined, undefined]);
+  });
+
   it('asks no more once the reader answered the device', async () => {
     const records = new Map([onboarded]);
     const app = await run({ records, date: '2026-10-13', answer: 'denied' });
