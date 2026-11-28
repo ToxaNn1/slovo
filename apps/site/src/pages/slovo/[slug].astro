@@ -4,6 +4,7 @@ import { renderStress, type Word } from '@slovo/contracts';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import Base from '../../layouts/Base.astro';
+import { jsonLd } from '../../json-ld';
 import { landingEdition } from '../../landing-edition';
 import { sitePath } from '../../site-path';
 import { siteWords, wordPagePath } from '../../site-words';
@@ -42,7 +43,7 @@ const description = metaDescription(word);
 const url = new URL(`/slovo/${slug}`, Astro.site).href;
 const home = new URL('/', Astro.site).href;
 // The Word as a term of SLOVO's dictionary, and where its page stands.
-const structuredData = JSON.stringify({
+const structuredData = jsonLd({
   '@context': 'https://schema.org',
   '@graph': [
     {

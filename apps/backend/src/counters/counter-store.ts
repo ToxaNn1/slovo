@@ -1,6 +1,8 @@
 import type { CounterStore } from '@slovo/server-core';
-import { and, asc, between, desc, eq, gt, inArray, sql } from 'drizzle-orm';
+import { and, asc, between, desc, eq, exists, gt, inArray, or, sql, type SQL } from 'drizzle-orm';
+import type { PgColumn } from 'drizzle-orm/pg-core';
 
+import { ENTRY_KINDS, TABLES } from '../content/content-records';
 import type { Database } from '../database/database';
 import {
   communityCounters,
@@ -18,8 +20,45 @@ import {
  * `content_words`.
  */
 export function createCounterStore({ db }: Database): CounterStore {
+  /** Whether the id the column holds is a live Entry of the Edition, of any kind. */
+  const liveEntry = (editionId: string, entryId: PgColumn | SQL): SQL =>
+    or(
+      ...ENTRY_KINDS.map((kind) => {
+        const table = TABLES[kind];
+        return exists(
+          db
+            .select({ one: sql`1` })
+            .from(table)
+            .where(
+              and(eq(table.editionId, editionId), eq(table.id, entryId), eq(table.retired, false)),
+            ),
+        );
+      }),
+    ) ?? sql`false`;
+
+  /** The ids that are live Entries of the Edition: a device counts nothing else. */
+  async function liveIds(editionId: string, entryIds: readonly string[]) {
+    const ids = sql.join(
+      entryIds.map((id) => sql`(${id}::text)`),
+      sql`, `,
+    );
+    const asked = sql`asked.id`;
+    const rows = await db.execute<{ id: string }>(
+      sql`select asked.id from (values ${ids}) as asked (id) where ${liveEntry(editionId, asked)}`,
+    );
+    return new Set(rows.rows.map(({ id }) => id));
+  }
+
   return {
-    async add(editionId, events, week) {
+    async add(editionId, given, week) {
+      // An id that is no live Entry of the Edition counts nothing, so no one
+      // can fill the tables or steer the Community Word with made-up ids.
+      const live = await liveIds(
+        editionId,
+        given.map(({ entryId }) => entryId),
+      );
+      const events = given.filter(({ entryId }) => live.has(entryId));
+      if (events.length === 0) return;
       // Every batch writes its Entries in the order of their ids, so two
       // batches with the same Entries never wait on each other in a circle.
       const sorted = [...events].sort((a, b) => (a.entryId < b.entryId ? -1 : 1));
@@ -87,7 +126,14 @@ export function createCounterStore({ db }: Database): CounterStore {
       const [mostAdded] = await db
         .select({ entryId: favoritesAdds.entryId, adds: favoritesAdds.adds })
         .from(favoritesAdds)
-        .where(and(eq(favoritesAdds.editionId, editionId), eq(favoritesAdds.week, week)))
+        .where(
+          and(
+            eq(favoritesAdds.editionId, editionId),
+            eq(favoritesAdds.week, week),
+            // An Entry retired since its adds is no Community Word.
+            liveEntry(editionId, favoritesAdds.entryId),
+          ),
+        )
         // The "C" collation compares code points, whatever the database's locale.
         .orderBy(desc(favoritesAdds.adds), asc(sql`${favoritesAdds.entryId} collate "C"`))
         .limit(1);

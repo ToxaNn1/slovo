@@ -134,6 +134,7 @@ export {
   type Actor,
   type LoggedAction,
   type AccessResult,
+  type LastOwner,
   type AccessWrite,
   type AddAgentResult,
   type AgentToken,

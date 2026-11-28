@@ -1,16 +1,20 @@
 import { randomUUID } from 'node:crypto';
 
 import { systemClock } from '@slovo/server-core';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
+import { createDatabase } from '../database/database';
 import { createEditions } from '../edition/editions';
 import { runSwitchesCommand } from '../edition/switches-command';
 import {
   adminHeaders,
+  createTestDatabase,
   passTime,
   signedInAdmin,
   signInAdmin,
+  silentLogger,
   testApp,
+  testDatabaseUrl,
   testEditions,
 } from '../test-support';
 import { createAdminStore } from './admin-store';
@@ -140,6 +144,46 @@ describe('people and access', () => {
       code: 'CONFLICT',
       data: { refusal: 'unknown' },
     });
+  });
+
+  it('keeps one active Власник when two demote or remove each other at once', async () => {
+    // A database of the test's own: the file's has the Власники of other tests.
+    const own = await createTestDatabase(testDatabaseUrl());
+    onTestFinished(() => own.drop());
+    const database = createDatabase(own.url, silentLogger);
+    onTestFinished(() => database.close());
+    const app = testApp({ database });
+    const first = await signedInAdmin(app, 'owner');
+    const second = await signedInAdmin(app, 'owner');
+    const activeOwners = async () =>
+      (await createAdminStore(database).adminUsers()).filter(({ role }) => role === 'owner');
+
+    const demotions = await Promise.allSettled([
+      first.client.admin.setRole({ email: second.email, role: 'admin', reason: 'x' }),
+      second.client.admin.setRole({ email: first.email, role: 'admin', reason: 'x' }),
+    ]);
+
+    expect(demotions.filter(({ status }) => status === 'fulfilled')).toHaveLength(1);
+    expect(demotions.find(({ status }) => status === 'rejected')).toMatchObject({
+      reason: { code: 'PRECONDITION_FAILED' },
+    });
+    expect(await activeOwners()).toHaveLength(1);
+
+    // Two Власники again, each removing the other.
+    const [owner] = await activeOwners();
+    const demoted = owner?.email === first.email ? second : first;
+    const keeper = demoted === first ? second : first;
+    await keeper.client.admin.setRole({ email: demoted.email, role: 'owner', reason: 'x' });
+    const removals = await Promise.allSettled([
+      first.client.admin.removePerson({ email: second.email, reason: 'x' }),
+      second.client.admin.removePerson({ email: first.email, reason: 'x' }),
+    ]);
+
+    expect(removals.filter(({ status }) => status === 'fulfilled')).toHaveLength(1);
+    expect(removals.find(({ status }) => status === 'rejected')).toMatchObject({
+      reason: { code: 'PRECONDITION_FAILED' },
+    });
+    expect(await activeOwners()).toHaveLength(1);
   });
 
   it('sends one invitation for two invites of the same email at once', async () => {

@@ -2384,6 +2384,66 @@
               }
             }
           },
+          "409": {
+            "description": "409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "defined": {
+                          "const": true
+                        },
+                        "code": {
+                          "const": "CONFLICT"
+                        },
+                        "status": {
+                          "const": 409
+                        },
+                        "message": {
+                          "type": "string",
+                          "default": "The TOTP cannot be read here: a server command resets it"
+                        },
+                        "data": {}
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "defined": {
+                          "const": false
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "number"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "data": {}
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
           "429": {
             "description": "429",
             "content": {
@@ -2777,6 +2837,66 @@
                         "message": {
                           "type": "string",
                           "default": "Not found"
+                        },
+                        "data": {}
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "defined": {
+                          "const": false
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "number"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "data": {}
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "defined": {
+                          "const": true
+                        },
+                        "code": {
+                          "const": "CONFLICT"
+                        },
+                        "status": {
+                          "const": 409
+                        },
+                        "message": {
+                          "type": "string",
+                          "default": "The TOTP cannot be read here: a server command resets it"
                         },
                         "data": {}
                       },
@@ -5628,6 +5748,66 @@
                 }
               }
             }
+          },
+          "412": {
+            "description": "412",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "defined": {
+                          "const": true
+                        },
+                        "code": {
+                          "const": "PRECONDITION_FAILED"
+                        },
+                        "status": {
+                          "const": 412
+                        },
+                        "message": {
+                          "type": "string",
+                          "default": "The last active Власник keeps their role and access"
+                        },
+                        "data": {}
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "defined": {
+                          "const": false
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "number"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "data": {}
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
           }
         }
       }
@@ -5977,6 +6157,66 @@
                         "status",
                         "message",
                         "data"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "defined": {
+                          "const": false
+                        },
+                        "code": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "number"
+                        },
+                        "message": {
+                          "type": "string"
+                        },
+                        "data": {}
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message"
+                      ]
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "412": {
+            "description": "412",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "defined": {
+                          "const": true
+                        },
+                        "code": {
+                          "const": "PRECONDITION_FAILED"
+                        },
+                        "status": {
+                          "const": 412
+                        },
+                        "message": {
+                          "type": "string",
+                          "default": "The last active Власник keeps their role and access"
+                        },
+                        "data": {}
+                      },
+                      "required": [
+                        "defined",
+                        "code",
+                        "status",
+                        "message"
                       ]
                     },
                     {
@@ -38146,7 +38386,7 @@
       "post": {
         "operationId": "counters.send",
         "summary": "Count the changes of marks and Favorites a device made",
-        "description": "Each event names an Entry once and changes its known, unknown and saved counts by −1, 0 or +1; a saved +1 also adds to the Entry’s Favorites adds of the current ISO week (UTC). A request names 1 to 100 Entries and is counted whole or not at all. The backend keeps the totals only: no Account, no device id, no IP address.",
+        "description": "Each event names an Entry once and changes its known, unknown and saved counts by −1, 0 or +1; a saved +1 also adds to the Entry’s Favorites adds of the current ISO week (UTC). A request names 1 to 100 Entries and is counted whole or not at all, except that an id that is no live Entry of the Edition counts nothing. The backend keeps the totals only: no Account, no device id, no IP address.",
         "tags": [
           "counters"
         ],
@@ -38661,7 +38901,7 @@
       "get": {
         "operationId": "counters.communityWord",
         "summary": "The Community Word of the last ISO week",
-        "description": "The Entry most added to Favorites in the last full ISO week (UTC), with its adds, the lower Entry id winning a tie; none when nobody added anything.",
+        "description": "The live Entry most added to Favorites in the last full ISO week (UTC), with its adds, the lower Entry id winning a tie; none when nobody added anything.",
         "tags": [
           "counters"
         ],

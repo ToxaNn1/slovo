@@ -38,6 +38,16 @@ updates:
       - dependency-name: 'react-native-*'
       - dependency-name: '@react-native/*'
 
+  # The Node base image of Dockerfile and recordings.Dockerfile, pinned by
+  # digest; Node stays on 22 (.nvmrc).
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    ignore:
+      - dependency-name: node
+        update-types: ['version-update:semver-major']
+
   - package-ecosystem: github-actions
     directory: /
     schedule:

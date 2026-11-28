@@ -56,6 +56,7 @@ const app = createApp({
   authSecret: config.AUTH_SECRET,
   reporter: await createSentryReporter(config.SENTRY_DSN, ports.sentryEnvironment),
   trustedProxyHops: config.TRUSTED_PROXY_HOPS,
+  edgeSecret: config.EDGE_SECRET,
   adminDist: existsSync(join(adminDist, 'index.html')) ? adminDist : undefined,
   sentry: sentryOf(config, systemClock),
   // «Сервіси» reads usage with the keys Якість and the Аналітика already hold.

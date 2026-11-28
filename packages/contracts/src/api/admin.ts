@@ -201,7 +201,11 @@ export const WrongCodeSchema = z.object({ attemptsLeft: z.number().int().min(0) 
 /** The data of a blocked sign-in email: how long it stays blocked. */
 export const SignInBlockedSchema = z.object({ retryAfterSeconds: z.number().int().positive() });
 
-/** What a sign-in step may refuse with: a wrong code with the attempts left, or the email blocked. */
+/**
+ * What a sign-in step may refuse with: a wrong code with the attempts left,
+ * the email blocked, or a TOTP that is on but that this Deployment's
+ * `AUTH_SECRET` does not open, which only `pnpm admin totp reset` sets up again.
+ */
 const SIGN_IN_ERRORS = {
   NOT_FOUND: ADMIN_ERRORS.NOT_FOUND,
   FORBIDDEN: ADMIN_ERRORS.FORBIDDEN,
@@ -210,6 +214,7 @@ const SIGN_IN_ERRORS = {
     message: 'Too many failed attempts: the email is blocked for a while',
     data: SignInBlockedSchema,
   },
+  CONFLICT: { message: 'The TOTP cannot be read here: a server command resets it' },
 } as const;
 
 const EmailSchema = z.string().trim().max(320).pipe(z.email());
@@ -237,6 +242,15 @@ export const AccessRefusalSchema = z.object({
 const ACCESS_WRITE_ERRORS = {
   ...ADMIN_ERRORS,
   CONFLICT: { message: 'The write is refused', data: AccessRefusalSchema },
+} as const;
+
+/**
+ * The errors of a change of a person's role or access: those of every
+ * Безпека write, and the one active Власник left, whom no one demotes or removes.
+ */
+const OWNER_WRITE_ERRORS = {
+  ...ACCESS_WRITE_ERRORS,
+  PRECONDITION_FAILED: { message: 'The last active Власник keeps their role and access' },
 } as const;
 
 /** An Агент's name: lower-case letters, digits and hyphens. */
@@ -267,7 +281,7 @@ const FlaggableKindSchema = ContentRecordKindSchema.exclude(['crosswordDay']);
 
 /** What every content procedure can be refused with. */
 const contentProcedure = procedure.errors({
-  /** No Власник yet, an Edition the backend doesn't serve, or an unknown batch or record. */
+  /** No Власник yet, an Edition the backend doesn't serve, or an unknown or reviewed batch, or an unknown record. */
   NOT_FOUND: { message: 'Not found' },
   /** No Агент token, an unknown or revoked one, or the app's Session. */
   UNAUTHORIZED: { message: 'Content is written by an Агент token or an admin session' },
@@ -1217,7 +1231,7 @@ export const adminContract = {
       description: 'Refused with `self` for the caller, `unknown` for an email with no access.',
       tags: ['admin'],
     })
-    .errors(ACCESS_WRITE_ERRORS)
+    .errors(OWNER_WRITE_ERRORS)
     .input(z.strictObject({ email: EmailSchema, role: AdminRoleSchema, reason: ReasonSchema }))
     .output(z.object({ changed: z.literal(true) })),
 
@@ -1229,7 +1243,7 @@ export const adminContract = {
       description: 'Refused with `self` for the caller, `unknown` for an email with no access.',
       tags: ['admin'],
     })
-    .errors(ACCESS_WRITE_ERRORS)
+    .errors(OWNER_WRITE_ERRORS)
     .input(z.strictObject({ email: EmailSchema, reason: ReasonSchema }))
     .output(z.object({ removed: z.literal(true) })),
 

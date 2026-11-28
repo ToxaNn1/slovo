@@ -1,13 +1,16 @@
 import { randomUUID } from 'node:crypto';
 
-import { totpOf } from '@slovo/server-core';
-import { describe, expect, it } from 'vitest';
+import { createAdminAccess, systemClock, totpOf } from '@slovo/server-core';
+import { pino } from 'pino';
+import { describe, expect, it, vi } from 'vitest';
 
 import { eq } from 'drizzle-orm';
 
 import { adminUsers } from '../database/schema';
-import { adminHeaders, passTime, signedInAdmin, testApp } from '../test-support';
-import { createAdminStore, createSecretVault, hmacSha1 } from './admin-store';
+import { systemRandom } from '../random';
+import { adminCommandDeps, adminHeaders, passTime, signedInAdmin, testApp } from '../test-support';
+import { runAdminCommand } from './admin-command';
+import { createAdminStore, createSecretVault, hashToken, hmacSha1 } from './admin-store';
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -61,6 +64,22 @@ describe('the admin sign-in', () => {
     expect(set).toContain('Secure');
     expect(set).toContain('SameSite=Strict');
     expect(cookie).toMatch(/^slovo_admin_session=.+/);
+  });
+
+  it('answers an Admin user the same when the code email fails, and logs the failure', async () => {
+    const lines: string[] = [];
+    const logger = pino({ level: 'error' }, { write: (line: string) => lines.push(line) });
+    const backend = testApp({ logger });
+    const { email } = await signedInAdmin(backend, 'owner');
+    backend.mailer.failNext();
+
+    await expect(backend.clientWith(adminHeaders()).admin.requestCode({ email })).resolves.toEqual({
+      sent: true,
+    });
+    await vi.waitFor(() => {
+      expect(lines.join('')).toContain('admin sign-in code not sent');
+    });
+    expect(lines.join('')).not.toContain(email);
   });
 
   it('answers the same for an email with no Admin user, and sends it nothing', async () => {
@@ -230,44 +249,80 @@ describe('the admin sign-in', () => {
     );
   });
 
-  it('sets up the TOTP again once the secret it was sealed under is rotated', async () => {
+  it('refuses a sign-in whose TOTP the vault no longer opens, until a server command resets it', async () => {
     const backend = await adminOn();
     const { email, enrolment } = await signedInAdmin(backend, 'admin');
-    // The TOTP as sealed under the `AUTH_SECRET` before the rotation.
+    const [recoveryCode] = enrolment.recoveryCodes;
+    if (recoveryCode === undefined) throw new Error('no recovery code shown');
+    // The TOTP as sealed under another `AUTH_SECRET`: rotated, or another Deployment's.
     await backend.database.db
       .update(adminUsers)
       .set({ totpSecret: createSecretVault('the secret before').seal(enrolment.secret) })
       .where(eq(adminUsers.email, email));
     await backend.anonymous.admin.requestCode({ email });
     const code = backend.mailer.codeSentTo(email);
+    const signInWith = (factor: object) =>
+      backend.request('/v1/admin/sign-in', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', ...adminHeaders() },
+        body: JSON.stringify({ email, code, factor }),
+      });
 
-    const stale = await backend.request('/v1/admin/sign-in', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', ...adminHeaders() },
-      body: JSON.stringify({
-        email,
-        code,
-        factor: { kind: 'totp', totp: totpOf(hmacSha1, enrolment.secret, new Date()) },
-      }),
+    // The emailed code alone never sets up a new TOTP in place of one that is on.
+    await expect(backend.anonymous.admin.verifyCode({ email, code })).rejects.toMatchObject({
+      code: 'CONFLICT',
     });
-    const set = await backend.anonymous.admin.verifyCode({ email, code });
+    const totp = totpOf(hmacSha1, enrolment.secret, new Date(Date.now() + 30_000));
+    expect((await signInWith({ kind: 'totp', totp })).status).toBe(409);
+    expect((await signInWith({ kind: 'recovery', recoveryCode })).status).toBe(409);
 
-    expect(stale.status).toBe(401);
-    expect(set).toMatchObject({ next: 'enrol' });
+    const admin = createAdminAccess({
+      store: createAdminStore(backend.database),
+      clock: systemClock,
+      random: systemRandom,
+      hash: hashToken,
+    });
+    const out: string[] = [];
+    const reset = await runAdminCommand(
+      ['totp', 'reset', email.toUpperCase()],
+      adminCommandDeps(admin, backend.database),
+      { out: (line) => out.push(line), err: (line) => out.push(line) },
+    );
+
+    expect(reset).toBe(0);
+    expect(await admin.actions()).toContainEqual(
+      expect.objectContaining({
+        who: { kind: 'command', command: 'pnpm admin totp reset' },
+        what: 'admin.user.totp-reset',
+        before: { email, role: 'admin' },
+      }),
+    );
+    const set = await backend.anonymous.admin.verifyCode({ email, code });
     if (set.next !== 'enrol') throw new Error('no TOTP set-up shown');
     expect(set.secret).not.toBe(enrolment.secret);
-    const signIn = await backend.request('/v1/admin/sign-in', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json', ...adminHeaders() },
-      body: JSON.stringify({
-        email,
-        code,
-        factor: { kind: 'totp', totp: totpOf(hmacSha1, set.secret, new Date()) },
-      }),
+    expect(
+      (await signInWith({ kind: 'totp', totp: totpOf(hmacSha1, set.secret, new Date()) })).status,
+    ).toBe(200);
+  });
+
+  it('resets the TOTP only of an active Admin user', async () => {
+    const backend = await adminOn();
+    const admin = createAdminAccess({
+      store: createAdminStore(backend.database),
+      clock: systemClock,
+      random: systemRandom,
+      hash: hashToken,
     });
-    expect(signIn.status).toBe(200);
-    const next = totpOf(hmacSha1, set.secret, new Date(Date.now() + 30_000));
-    expect((await signInAgain(backend, email, { kind: 'totp', totp: next })).status).toBe(200);
+    const err: string[] = [];
+
+    const reset = await runAdminCommand(
+      ['totp', 'reset', `nobody-${randomUUID()}@example.com`],
+      adminCommandDeps(admin, backend.database),
+      { out: () => undefined, err: (line) => err.push(line) },
+    );
+
+    expect(reset).toBe(1);
+    expect(err).toHaveLength(1);
   });
 
   it('refuses a write without the admin header', async () => {

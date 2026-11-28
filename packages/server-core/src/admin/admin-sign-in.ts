@@ -29,8 +29,17 @@ const CODE_REQUESTS_PER_IP = { requests: 20, windowSeconds: 10 * 60 } as const;
 const LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const BASE32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 
-/** A refusal of a sign-in step: a wrong or expired code with the attempts left, or the email blocked. */
+/**
+ * A refusal of a sign-in step: a wrong or expired code with the attempts
+ * left, the email blocked, or a TOTP that is on but that the vault does not
+ * open (`AUTH_SECRET` rotated, or the row came from another Deployment), which
+ * only a server command resets.
+ */
 export type SignInRefused =
+  AttemptRefused | { readonly ok: false; readonly reason: 'totp-unreadable' };
+
+/** A wrong or expired code or TOTP with the attempts left, or the email blocked. */
+export type AttemptRefused =
   | { readonly ok: false; readonly reason: 'wrong-code'; readonly attemptsLeft: number }
   | TooManyRequests;
 
@@ -86,7 +95,7 @@ export interface AdminSignIn {
    * Checks a fresh TOTP of a signed-in Admin user again, as the Vault unlock
    * asks, and spends it; wrong ones count against their own limit.
    */
-  confirmTotp(email: string, totp: string): Promise<{ readonly ok: true } | SignInRefused>;
+  confirmTotp(email: string, totp: string): Promise<{ readonly ok: true } | AttemptRefused>;
   /** Ends every session of the token's Admin user, and of no one else. */
   signOutEverywhere(token: string): Promise<void>;
 }
@@ -103,6 +112,7 @@ export function createAdminSignIn({
   hmacSha1,
   vault,
   codeEmail,
+  onCodeNotSent,
 }: {
   store: AdminStore;
   clock: Clock;
@@ -117,6 +127,8 @@ export function createAdminSignIn({
   vault: SecretVault;
   /** The email that carries a sign-in code, in the admin's language. */
   codeEmail: (code: string) => Omit<Mail, 'to'>;
+  /** Told of a code email that failed, which the request never waits for. */
+  onCodeNotSent: (error: unknown) => void;
 }): AdminSignIn {
   const letters = (length: number, alphabet = LETTERS) =>
     Array.from({ length }, () => alphabet.charAt(random.int(alphabet.length))).join('');
@@ -130,14 +142,24 @@ export function createAdminSignIn({
     now: clock.now(),
   });
 
-  /** Whether the TOTP is the user's, of a step newer than the last that signed in, which it spends. */
   /**
    * The user's TOTP secret; undefined when there is none, or when the vault
-   * no longer opens it because `AUTH_SECRET` was rotated: then it counts as none.
+   * does not open it because it was sealed under another `AUTH_SECRET`.
    */
   const totpSecretOf = (user: AdminUser) =>
     user.totp.state === 'none' ? undefined : vault.open(user.totp.sealedSecret);
 
+  /**
+   * Whether the user's TOTP is on but unreadable: the emailed code alone must
+   * never set up another in its place, so the sign-in stops until `pnpm admin
+   * totp reset` clears it.
+   */
+  const totpUnreadable = (user: AdminUser) =>
+    user.totp.state === 'on' && totpSecretOf(user) === undefined;
+
+  const unreadable = { ok: false, reason: 'totp-unreadable' } as const;
+
+  /** Whether the TOTP is the user's, of a step newer than the last that signed in, which it spends. */
   async function spendTotp(user: AdminUser, totp: string, at: Date): Promise<boolean> {
     const secret = totpSecretOf(user);
     if (secret === undefined) return false;
@@ -166,7 +188,7 @@ export function createAdminSignIn({
   }
 
   /** Answers the refusal a wrong attempt, already taken, earns. */
-  async function failed(email: string, key = failuresKey(email)): Promise<SignInRefused> {
+  async function failed(email: string, key = failuresKey(email)): Promise<AttemptRefused> {
     const result = await attemptFailed(rateLimits, key, attemptLimit());
     return 'attemptsLeft' in result
       ? { ok: false, reason: 'wrong-code', attemptsLeft: result.attemptsLeft }
@@ -177,7 +199,7 @@ export function createAdminSignIn({
    * The user whose emailed code is right, with an attempt taken that a right
    * sign-in clears or gives back; a refusal when it isn't or the email is blocked.
    */
-  async function withCode(email: string, code: string): Promise<AdminUser | SignInRefused> {
+  async function withCode(email: string, code: string): Promise<AdminUser | AttemptRefused> {
     const blocked = await takeAttempt(rateLimits, failuresKey(email), attemptLimit());
     if (blocked !== undefined) return blocked;
     const [user, kept] = await Promise.all([
@@ -223,7 +245,9 @@ export function createAdminSignIn({
         codeHash: codeHashOf(email, code),
         expiresAt: new Date(clock.now().getTime() + CODE_LIFETIME_MS),
       });
-      await mailer.send({ to: email, ...codeEmail(code) });
+      // Not awaited: an email that exists would otherwise answer later, or
+      // fail where an unknown one never does, and tell that it exists.
+      mailer.send({ to: email, ...codeEmail(code) }).catch(onCodeNotSent);
     },
 
     async verifyCode(given, code) {
@@ -232,9 +256,8 @@ export function createAdminSignIn({
       if ('ok' in user) return user;
       // The code is checked, not spent: its attempt is not one of the failures.
       await giveBackAttempt(rateLimits, failuresKey(email));
-      if (user.totp.state === 'on' && totpSecretOf(user) !== undefined) {
-        return { ok: true, next: 'totp' };
-      }
+      if (totpUnreadable(user)) return unreadable;
+      if (user.totp.state === 'on') return { ok: true, next: 'totp' };
       const secret = await pendingSecret(user);
       const recoveryCodes = recoveryCodesOf(hmacSha1, secret);
       const label = encodeURIComponent(`SLOVO admin:${email}`);
@@ -251,6 +274,10 @@ export function createAdminSignIn({
       const email = normalized(given);
       const user = await withCode(email, code);
       if ('ok' in user) return user;
+      if (totpUnreadable(user)) {
+        await giveBackAttempt(rateLimits, failuresKey(email));
+        return unreadable;
+      }
       const now = clock.now();
       const passed =
         factor.kind === 'totp'

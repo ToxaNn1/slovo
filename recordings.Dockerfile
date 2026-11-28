@@ -3,7 +3,8 @@
 # It is the backend's image (`Dockerfile`) plus the Recordings generator: the
 # locked Python 3.10 environment, ffmpeg and the checked model files. They stay out of the backend's own image, which they would grow by
 # gigabytes. `.railway/railway.ts` names its hourly command.
-FROM node:22.23.4-bookworm-slim AS base
+# The tag names the version; the digest pins the image, which Dependabot moves.
+FROM node:22.23.4-bookworm-slim@sha256:5ec23b7c622b00547753bc6ffd78085dd868a68aeb41c8e0a1418f033e13d96d AS base
 ENV NODE_ENV=production \
     COREPACK_HOME=/usr/local/share/corepack \
     COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \

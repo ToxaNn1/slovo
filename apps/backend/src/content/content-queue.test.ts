@@ -239,6 +239,56 @@ describe('the Content queue', () => {
     expect((await adminUser.admin.contentQueue.batches({})).batches).toEqual([]);
   });
 
+  it('refuses an Агент write or flag into its batch once the batch is reviewed or rolled back', async () => {
+    const { client, agent, owner } = await queueBackend();
+    const reviewed = await agentBatch(client, agent);
+    await owner.admin.contentQueue.review({ batchId: reviewed.batchId, reason: 'Переглянуто' });
+    const third = (await snapshotOf(client)).words.filter((word) => !word.retired)[2];
+    if (third === undefined) throw new Error('too few Words');
+    const rolledBack = {
+      ...(await agent.admin.content.openBatch({ editionId: 'uk' })),
+      first: third,
+    };
+    await agent.admin.content.edit({
+      editionId: 'uk',
+      kind: 'word',
+      id: third.id,
+      batchId: rolledBack.batchId,
+      recordVersion: 1,
+      fields: { ...third, primaryDefinition: `Змінено: ${third.primaryDefinition}` },
+    });
+    await owner.admin.contentQueue.rollback({ batchId: rolledBack.batchId, reason: 'Погана' });
+    const before = await snapshotOf(client);
+
+    // Each Word is at its latest record version: a refusal is not a stale write.
+    for (const { batchId, first, recordVersion } of [
+      { ...reviewed, recordVersion: 2 },
+      { ...rolledBack, recordVersion: 3 },
+    ]) {
+      const current = await wordOf(client, first.id);
+      await expect(
+        agent.admin.content.edit({
+          editionId: 'uk',
+          kind: 'word',
+          id: first.id,
+          batchId,
+          recordVersion,
+          fields: { ...current, primaryDefinition: 'Після перегляду.' },
+        }),
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+      await expect(
+        agent.admin.content.flag({
+          editionId: 'uk',
+          kind: 'word',
+          id: first.id,
+          batchId,
+          reason: 'Після перегляду',
+        }),
+      ).rejects.toMatchObject({ code: 'NOT_FOUND' });
+    }
+    expect((await snapshotOf(client)).contentVersion).toBe(before.contentVersion);
+  });
+
   it('reviews a batch while a write holding the Edition lock reads the batch row, with no deadlock', async () => {
     const { client, agent, adminUser, database } = await queueBackend();
     const { batchId } = await agentBatch(client, agent);

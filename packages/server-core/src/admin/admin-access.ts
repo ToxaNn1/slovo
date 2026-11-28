@@ -60,6 +60,11 @@ export interface AdminStore {
   /** Turns the pending TOTP on: it has signed in once. */
   confirmTotp(adminUserId: string, at: Date): Promise<void>;
   /**
+   * Clears the user's TOTP and recovery codes and ends their sessions, so the
+   * next sign-in sets the TOTP up afresh.
+   */
+  clearTotp(adminUserId: string): Promise<void>;
+  /**
    * Spends the TOTP step: keeps it as the user's last; `false` when the last
    * step that signed in is this one or later.
    */
@@ -89,10 +94,17 @@ export interface AdminStore {
   }): Promise<'added' | 'taken'>;
   /** The active Admin users, by email. */
   adminUsers(): Promise<readonly AdminUser[]>;
-  /** Sets the role of an active Admin user. */
-  setAdminRole(adminUserId: string, role: AdminRole): Promise<void>;
-  /** Removes the Admin user's access: their state turns `removed` and their sessions end. */
-  removeAdminUser(adminUserId: string): Promise<void>;
+  /**
+   * Sets the role of an active Admin user; `last-owner`, changing nothing,
+   * when it would leave no active Власник.
+   */
+  setAdminRole(adminUserId: string, role: AdminRole): Promise<'done' | 'last-owner'>;
+  /**
+   * Removes the Admin user's access: their state turns `removed` and their
+   * sessions end; `last-owner`, changing nothing, when they are the one
+   * active Власник left.
+   */
+  removeAdminUser(adminUserId: string): Promise<'done' | 'last-owner'>;
   /**
    * Gives a removed Admin user of the email access again under the role, with
    * no TOTP and no recovery codes, so they set them up afresh; `false` when
@@ -140,6 +152,12 @@ export type AddAgentResult =
 export type AccessResult =
   { readonly ok: true } | { readonly ok: false; readonly reason: 'taken' | 'self' | 'unknown' };
 
+/** A change refused because it would leave no active Власник. */
+export interface LastOwner {
+  readonly ok: false;
+  readonly reason: 'last-owner';
+}
+
 /** Who wrote a change of Безпека, and why. */
 export interface AccessWrite {
   readonly who: Actor;
@@ -172,10 +190,22 @@ export interface AdminAccess {
     write: AccessWrite,
     announce: (email: string) => Promise<void>,
   ): Promise<AccessResult>;
-  /** Changes the role of a person other than the writer, and logs it. */
-  setRole(email: string, role: AdminRole, write: AccessWrite): Promise<AccessResult>;
-  /** Removes the access of a person other than the writer, ending their sessions, and logs it. */
-  remove(email: string, write: AccessWrite): Promise<AccessResult>;
+  /**
+   * Changes the role of a person other than the writer, and logs it; never
+   * the role of the one active Власник left.
+   */
+  setRole(email: string, role: AdminRole, write: AccessWrite): Promise<AccessResult | LastOwner>;
+  /**
+   * Removes the access of a person other than the writer, ending their
+   * sessions, and logs it; never the access of the one active Власник left.
+   */
+  remove(email: string, write: AccessWrite): Promise<AccessResult | LastOwner>;
+  /**
+   * Clears an active Admin user's TOTP, recovery codes and sessions by a
+   * server command, and logs it: the one way to set up a TOTP again once it is
+   * on; `false` when the email has no active Admin user.
+   */
+  resetTotp(email: string, command: string): Promise<boolean>;
   /** Every Агент token by name, revoked or not. */
   agents(): Promise<readonly AgentToken[]>;
   /** Issues an Агент token, answered once and kept as its hash, and logs it. */
@@ -258,7 +288,9 @@ export function createAdminAccess({
       if (isWriter(write.who, normalized)) return { ok: false, reason: 'self' };
       const user = await store.adminUserByEmail(normalized);
       if (user === undefined) return { ok: false, reason: 'unknown' };
-      await store.setAdminRole(user.id, role);
+      if ((await store.setAdminRole(user.id, role)) === 'last-owner') {
+        return { ok: false, reason: 'last-owner' };
+      }
       await logBy(
         write,
         'admin.user.role',
@@ -276,9 +308,25 @@ export function createAdminAccess({
       if (isWriter(write.who, normalized)) return { ok: false, reason: 'self' };
       const user = await store.adminUserByEmail(normalized);
       if (user === undefined) return { ok: false, reason: 'unknown' };
-      await store.removeAdminUser(user.id);
+      if ((await store.removeAdminUser(user.id)) === 'last-owner') {
+        return { ok: false, reason: 'last-owner' };
+      }
       await logBy(write, 'admin.user.remove', { email: normalized, role: user.role }, null);
       return { ok: true };
+    },
+
+    async resetTotp(email, command) {
+      const normalized = normal(email);
+      const user = await store.adminUserByEmail(normalized);
+      if (user === undefined) return false;
+      await store.clearTotp(user.id);
+      await logBy(
+        { who: { kind: 'command', command }, reason: null },
+        'admin.user.totp-reset',
+        { email: normalized, role: user.role },
+        { email: normalized, role: user.role },
+      );
+      return true;
     },
 
     agents: () => store.agentTokens(),

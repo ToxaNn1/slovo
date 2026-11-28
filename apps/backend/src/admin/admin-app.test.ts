@@ -60,6 +60,32 @@ describe('the owner admin app at /admin', () => {
     }
   });
 
+  it('is never framed, sniffed or kept, and runs only its own scripts', async () => {
+    const backend = await adminOn();
+    for (const path of ['/admin/', '/admin/words', '/admin/assets/main.js']) {
+      const { headers } = await get(backend, path);
+      const policy = headers.get('content-security-policy') ?? '';
+      expect(policy, path).toContain("frame-ancestors 'none'");
+      expect(policy, path).toContain("script-src 'self'");
+      expect(policy, path).not.toContain('unsafe-inline');
+      expect(headers.get('x-content-type-options'), path).toBe('nosniff');
+      expect(headers.get('x-frame-options'), path).toBe('DENY');
+      expect(headers.get('strict-transport-security'), path).toMatch(/max-age=\d+/);
+    }
+  });
+
+  it('answers the admin API and the Sync records with the same headers, never kept', async () => {
+    const backend = await adminOn();
+    for (const path of ['/v1/admin/status', '/v1/admin/me', '/v1/editions/uk/records']) {
+      const { headers } = await get(backend, path);
+      expect(headers.get('cache-control'), path).toBe('no-store');
+      expect(headers.get('x-content-type-options'), path).toBe('nosniff');
+      expect(headers.get('content-security-policy') ?? '', path).toContain(
+        "frame-ancestors 'none'",
+      );
+    }
+  });
+
   it('is not served without a built admin', async () => {
     expect((await get(testApp(), '/admin/')).status).toBe(404);
   });

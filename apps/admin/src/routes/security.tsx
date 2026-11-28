@@ -17,7 +17,7 @@ import { useAdminWrite } from '../components/admin-write';
 import { ConfirmDialog, type PendingWrite } from '../components/confirm-dialog';
 import { Pager } from '../components/pager';
 import { Button } from '../components/ui/button';
-import { refusalData, useSignedInAdmin } from '../session';
+import { codeOf, refusalData, useSignedInAdmin } from '../session';
 import { formatMoment } from '../format';
 
 export const Route = createFileRoute('/security')({
@@ -40,6 +40,9 @@ const inputClass = 'h-9 rounded-lg border border-border bg-background px-3 text-
 
 /** What the Власник reads of a refused write. */
 function refusalOf(error: unknown): string {
+  if (codeOf(error) === 'PRECONDITION_FAILED') {
+    return 'Це останній Власник: спершу зробіть Власником когось іншого.';
+  }
   const refused = AccessRefusalSchema.safeParse(refusalData(error)).data;
   return refused === undefined ? 'Не вдалося. Спробуйте ще раз.' : REFUSALS[refused.refusal];
 }

@@ -46,6 +46,13 @@ describe('the staging deploy inputs', () => {
     }
   });
 
+  it("refuses a pull request's ref, whose code is anyone's, not the repository's", () => {
+    for (const ref of ['refs/pull/12/head', 'refs/pull/12/merge', 'pull/12/head']) {
+      expect(checkRef(ref).ok, ref).toBe(false);
+    }
+    expect(checkRef('feat/pull/12').ok).toBe(true);
+  });
+
   it("takes the Railway file's staging environment: the backend alone, asleep, its variables kept", async () => {
     const checked = checkStagingDefinition(await projectIn('staging'));
     if (!checked.ok) throw new Error(checked.reason);

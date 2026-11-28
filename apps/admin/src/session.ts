@@ -99,6 +99,8 @@ export function refusalText(error: unknown): string {
         SignInBlockedSchema.safeParse(refusalData(error)).data?.retryAfterSeconds ?? 60;
       return `Забагато невдалих спроб. Спробуйте за ${String(Math.ceil(seconds / 60))} хв.`;
     }
+    case 'CONFLICT':
+      return 'TOTP не читається на цьому сервері. Його скидає Власник командою pnpm admin totp reset.';
     default:
       return 'Не вдалося. Спробуйте ще раз.';
   }

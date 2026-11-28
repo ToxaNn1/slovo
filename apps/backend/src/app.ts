@@ -31,6 +31,7 @@ import {
   type UsagePort,
   type ServiceVault,
 } from '@slovo/server-core';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { BlockList, isIPv4, isIPv6 } from 'node:net';
 
 import type { HttpBindings } from '@hono/node-server';
@@ -43,7 +44,7 @@ import { requestId, type RequestIdVariables } from 'hono/request-id';
 import type { Logger } from 'pino';
 
 import { createAuthenticator } from './account/authenticator';
-import { adminApp } from './admin/admin-app';
+import { adminApp, privateApiHeaders } from './admin/admin-app';
 import { adminCodeEmail } from './admin/admin-mail';
 import { createAdminStore, createSecretVault, hashToken, hmacSha1 } from './admin/admin-store';
 import { createContentStore } from './content/content-store';
@@ -116,6 +117,12 @@ export interface AppDependencies {
    * whose addresses it trusts: 0 when nothing is in front of it.
    */
   readonly trustedProxyHops: number;
+  /**
+   * The value of the `X-Slovo-Edge-Secret` header the app's own Cloudflare
+   * zone sets on every request; with two hops and this set, only a request
+   * that carries it has its client trusted. Unset trusts any Cloudflare hop.
+   */
+  readonly edgeSecret: string | undefined;
   /** Where Якість reads Sentry's numbers. */
   readonly sentry: SentryReader;
   /** Where «Сервіси» reads each Service's usage, by the Service's name. */
@@ -193,6 +200,17 @@ function isCloudflare(address: string): boolean {
   return isIPv6(address) && CLOUDFLARE.check(address, 'ipv6');
 }
 
+/** The header the app's own Cloudflare zone sets, with `edgeSecret` as its value. */
+const EDGE_SECRET_HEADER = 'x-slovo-edge-secret';
+
+const digest = (value: string) => createHash('sha256').update(value).digest();
+
+/** Whether the request carries the zone's secret, compared in constant time. */
+function fromOwnZone(given: string | undefined, edgeSecret: string | undefined): boolean {
+  if (edgeSecret === undefined) return true;
+  return given !== undefined && timingSafeEqual(digest(given), digest(edgeSecret));
+}
+
 /**
  * The IP address the request came from (ADR 0030). With no trusted proxy
  * hop, the address of its connection. Behind Railway's proxy, the last
@@ -200,14 +218,18 @@ function isCloudflare(address: string): boolean {
  * before it, the client wrote itself. With two hops, Cloudflare in front,
  * the address before the last counts only when the last is Cloudflare's:
  * a request sent straight to Railway's domain has its caller last, and the
- * forged address before it is ignored. A header with no address did not come
- * through the proxy, so its connection counts. Node gives every request its
- * connection; a request made in process without one has none.
+ * forged address before it is ignored. Any Cloudflare zone or Worker can send
+ * from Cloudflare's addresses, so with `edgeSecret` set the address before
+ * the last counts only when the request also carries the header the app's
+ * own zone sets; else Cloudflare's hop counts. A header with no address did
+ * not come through the proxy, so its connection counts. Node gives every
+ * request its connection; a request made in process without one has none.
  */
 function clientIp(
   bindings: Partial<HttpBindings> | undefined,
   forwardedFor: string | undefined,
   trustedProxyHops: number,
+  edge: { readonly given: string | undefined; readonly secret: string | undefined },
 ): string | undefined {
   const connection = bindings?.incoming?.socket.remoteAddress;
   if (trustedProxyHops === 0 || forwardedFor === undefined) return connection;
@@ -218,6 +240,7 @@ function clientIp(
   const last = forwarded.at(-1);
   if (last === undefined) return connection;
   if (trustedProxyHops === 1 || !isCloudflare(last)) return last;
+  if (!fromOwnZone(edge.given, edge.secret)) return last;
   return forwarded.at(-2) ?? last;
 }
 
@@ -243,6 +266,7 @@ export function createApp({
   authSecret,
   reporter,
   trustedProxyHops,
+  edgeSecret,
   adminDist,
   sentry,
   usage,
@@ -308,6 +332,9 @@ export function createApp({
     hmacSha1,
     vault: createSecretVault(authSecret),
     codeEmail: adminCodeEmail,
+    onCodeNotSent: (error) => {
+      logger.error({ err: error }, 'admin sign-in code not sent');
+    },
   });
   const adminAnalytics = createAdminAnalytics({
     posthog,
@@ -391,7 +418,10 @@ export function createApp({
   // Every request has the IP address of its client, which the limits per IP
   // count (ADR 0030); one without is a broken invariant.
   app.use(async (c, next) => {
-    const ip = clientIp(c.env, c.req.header('x-forwarded-for'), trustedProxyHops);
+    const ip = clientIp(c.env, c.req.header('x-forwarded-for'), trustedProxyHops, {
+      given: c.req.header(EDGE_SECRET_HEADER),
+      secret: edgeSecret,
+    });
     if (ip === undefined) throw new Error('the request came on no connection');
     c.set('ip', ip);
     await next();
@@ -440,6 +470,10 @@ export function createApp({
     api.handle(request, {
       context: { logger, requestId, reporter, headers: request.headers, ip },
     });
+
+  for (const path of ['/v1/admin/*', '/v1/editions/:editionId/records']) {
+    app.use(path, ...privateApiHeaders);
+  }
 
   // The API contract at `/v1`, its description at `/docs`.
   for (const path of ['/v1/*', '/docs', '/docs/*']) {

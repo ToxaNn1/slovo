@@ -6,7 +6,8 @@ name: Staging reset
 # hand only: Actions → Staging reset → Run workflow. No push trigger and no
 # schedule (cost rule); the owner can run the same command on the laptop.
 #
-# Repository secrets: NEON_API_KEY, NEON_PROJECT_ID, NEON_STAGING_BRANCH_ID.
+# Secrets of the GitHub environment `staging`: NEON_API_KEY, NEON_PROJECT_ID,
+# NEON_STAGING_BRANCH_ID.
 on:
   workflow_dispatch:
     inputs:
@@ -26,6 +27,7 @@ jobs:
     name: Reset staging from production
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    environment: staging
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

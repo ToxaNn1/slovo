@@ -52,7 +52,7 @@ import {
   type UsagePort,
   type ServiceVault,
 } from '@slovo/server-core';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import pg from 'pg';
 import { pino, type Logger } from 'pino';
 import { afterAll, afterEach, beforeAll, beforeEach, onTestFinished, vi } from 'vitest';
@@ -68,7 +68,7 @@ import { createDatabase, type Database } from './database/database';
 import { migrateDatabase } from './database/migrate';
 import { createMediaRows } from './content/media-rows';
 import { createContentStore } from './content/content-store';
-import { accounts, sessions, signInMethods } from './database/schema';
+import { accounts, contentBatches, contentWords, sessions, signInMethods } from './database/schema';
 import { readEditions } from './edition/edition-folders';
 import { createEditions } from './edition/editions';
 import { systemRandom } from './random';
@@ -676,6 +676,8 @@ interface TestAppOptions {
   readonly random?: Random;
   /** How many proxies in front of the backend it trusts; none unless given. */
   readonly trustedProxyHops?: number;
+  /** The secret header value the app's Cloudflare zone sets; none unless given. */
+  readonly edgeSecret?: string | undefined;
   /** The built owner admin app's folder; none unless given. */
   readonly adminDist?: string;
   /** GitHub, for Розробка; a fake GitHub unless given. */
@@ -708,6 +710,7 @@ export function testApp({
   apple: givenApple,
   random = systemRandom,
   trustedProxyHops = 0,
+  edgeSecret,
   adminDist,
   github = createFakeGitHub(),
   eas = createFakeEas(),
@@ -742,6 +745,7 @@ export function testApp({
     // A fake Sentry: it keeps every report.
     reporter: { report: (report) => reports.push(report) },
     trustedProxyHops,
+    edgeSecret,
     adminDist,
     github,
     eas,
@@ -918,6 +922,42 @@ export const adminHeaders = (cookie?: string): Record<string, string> => ({
   [ADMIN_WRITE_HEADER]: '1',
   ...(cookie === undefined ? {} : { cookie }),
 });
+
+/**
+ * Makes the ids Words of the Edition in its content tables, live or retired,
+ * each with its id for its Lemma and no other field: what a Community
+ * Counter takes (ADR 0090). An id already there is left as it is.
+ */
+export async function contentWordsOf(
+  { db }: Database,
+  editionId: string,
+  ids: readonly string[],
+  { retired = false }: { readonly retired?: boolean } = {},
+): Promise<void> {
+  if (ids.length === 0) return;
+  const [batch] = await db
+    .insert(contentBatches)
+    .values({ editionId, changedBy: 'agent:test', createdAt: new Date() })
+    .returning({ id: contentBatches.id });
+  if (batch === undefined) throw new Error('the batch was not written');
+  await db
+    .insert(contentWords)
+    .values(
+      ids.map((id) => ({
+        editionId,
+        id,
+        fields: sql`jsonb_build_object('lemma', ${id}::text)`,
+        recordVersion: 1,
+        contentVersion: 1,
+        retired,
+        changedBy: 'agent:test' as const,
+        changedAt: new Date(),
+        batchId: batch.id,
+        needsNewRecording: false,
+      })),
+    )
+    .onConflictDoNothing();
+}
 
 /** The `name=value` of the admin session cookie an answer sets. */
 export function adminCookieOf(response: Response): string {

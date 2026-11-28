@@ -33,7 +33,8 @@ const NEON_API = 'https://console.neon.tech/api/v2';
 /**
  * A branch, tag or commit to deploy: the characters `git check-ref-format`
  * allows in practice, no `..`, no leading `-` (which a command would read as
- * an option), no `@{`, and no `/` or `.lock` at an end.
+ * an option), no `@{`, no `/` or `.lock` at an end, and no pull request's
+ * ref (`refs/pull/…`).
  */
 export function checkRef(ref: string): Checked<string> {
   const refused = (why: string): Checked<string> => ({
@@ -47,6 +48,9 @@ export function checkRef(ref: string): Checked<string> {
   if (ref.includes('..') || ref.includes('//')) return refused('holds ".." or "//"');
   if (/(^[/.]|[/.]$|\.lock$|\/\.)/.test(ref))
     return refused('starts or ends with "/" or ".", or ends with ".lock"');
+  // A pull request's ref holds the code of whoever opened it, which the
+  // deploy would run with the staging token.
+  if (/^(refs\/)?pull\//.test(ref)) return refused("is a pull request's ref");
   return { ok: true, value: ref };
 }
 
@@ -190,6 +194,8 @@ const VARIABLE_HINTS: Record<string, string> = {
     'DSN проєкту бекенду в Sentry, той самий, що в production (звіти підуть з environment staging)',
   MEDIA_BASE: 'те саме, що в production: staging лише читає медіа',
   TRUSTED_PROXY_HOPS: 'те саме, що в production (Cloudflare перед Railway)',
+  EDGE_SECRET:
+    'НОВЕ значення (openssl rand -hex 32), те саме, що ставить Transform Rule зони Cloudflare для staging; порожнє вимикає перевірку',
 };
 
 /**
