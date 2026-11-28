@@ -292,9 +292,15 @@ function closable({
   userState: UserState;
   scheduling: NotificationScheduling | undefined;
   schedule: Schedule | undefined;
+  /** Settles once the composition closes, so a request waiting to try again answers. */
+  stopped: Promise<void>;
   close: () => Promise<void>;
 } {
   let closed = false;
+  let stop: () => void = () => undefined;
+  const stopped = new Promise<void>((resolve) => {
+    stop = resolve;
+  });
   const underWay = new Set<Promise<void>>();
   const waiting = new Set<() => void>();
   /** Runs `change` unless the composition is closed, and keeps it under way until it ends. */
@@ -329,8 +335,10 @@ function closable({
           cancel();
         };
       }),
+    stopped,
     async close() {
       closed = true;
+      stop();
       for (const cancel of waiting) cancel();
       waiting.clear();
       await Promise.allSettled(underWay);
@@ -425,7 +433,7 @@ export async function openComposition({
    */
   signedIn?: () => boolean;
 }): Promise<Composition> {
-  const { userState, scheduling, schedule, close } = closable(ports);
+  const { userState, scheduling, schedule, stopped, close } = closable(ports);
   /** The Edition's text comparison, built once and handed to every module that compares text. */
   const comparison = createTextComparison(edition);
   // The named subjects the modules link through, made before any
@@ -785,6 +793,7 @@ export async function openComposition({
       collections,
       schedule,
       random,
+      stopped,
     }),
     collectionSharing: openCollectionSharing({
       backend,
@@ -792,6 +801,7 @@ export async function openComposition({
       collections,
       schedule,
       random,
+      stopped,
     }),
     history,
     dataExport: () => buildDataExport({ userState, clock, edition, rows }),
