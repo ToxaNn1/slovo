@@ -1,5 +1,5 @@
 'use no memo';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   ReduceMotion,
@@ -60,15 +60,19 @@ const POP_UP = {
  * white cells with their numbers and letters, the current Word's cells
  * highlighted and a solved Word's cells red, with a short pop as they turn,
  * calmed under Reduce Motion. A tap on a white cell asks `onSelect`; the grid
- * holds no rules.
+ * holds no rules. Its cell is the board's, or less to fit the `room` its owner
+ * gives it, but never below the smallest cell that keeps its letter legible.
  */
 export function CrossingGrid({
   cells,
   onSelect,
+  room,
   testID,
 }: {
   cells: readonly (readonly CrossingGridCell[])[];
   onSelect: (place: CrosswordPlace) => void;
+  /** The most the grid may take; the board's cell while it is unknown. */
+  room?: { readonly width: number; readonly height: number } | undefined;
   testID: string;
 }) {
   const { colors, radii } = useTokens();
@@ -80,65 +84,64 @@ export function CrossingGrid({
     onSelectRef.current(place);
   }, []);
   const columns = Math.max(0, ...cells.map((row) => row.length));
-  const { cell: boardCell, minCell, cellGap } = crossingCrosswordLayout;
-  // A white cell stands on its tile's edge, so each row is that much taller than its cells.
-  const edge = offsetShadow.rest.depth;
-  const [room, setRoom] = useState<{ width: number; height: number }>();
-  // The board's cell, or less when the room left between the header and the Letter Wheel is
-  // smaller, but never below the smallest cell that keeps its letter legible.
-  const side =
-    room === undefined
-      ? boardCell
-      : Math.max(
-          minCell,
-          Math.min(
-            boardCell,
-            (room.height - (cells.length - 1) * cellGap) / Math.max(cells.length, 1) - edge,
-            (room.width - (columns - 1) * cellGap) / Math.max(columns, 1),
-          ),
-        );
-  const span = (cell: number) => cells.length * (cell + edge) + (cells.length - 1) * cellGap;
+  const side = crossingCellSide(room, cells.length, columns);
   const size = { width: side, height: side };
   return (
-    <View
-      testID={`${testID}-room`}
-      onLayout={({ nativeEvent: { layout } }) => {
-        setRoom({ width: layout.width, height: layout.height });
-      }}
-      style={[styles.room, { flexBasis: span(boardCell), minHeight: span(minCell) }]}
-    >
-      <View testID={testID} style={styles.grid}>
-        {cells.map((row, r) => (
-          <View key={r} style={styles.row}>
-            {row.map((cell, c) =>
-              cell.kind === 'block' ? (
-                <View
-                  key={c}
-                  testID={`${testID}-${String(r)}-${String(c)}-block`}
-                  accessibilityElementsHidden
-                  importantForAccessibility="no-hide-descendants"
-                  style={[
-                    styles.cell,
-                    size,
-                    { backgroundColor: colors.silhouette, borderRadius: radii.tile },
-                  ]}
-                />
-              ) : (
-                <Cell
-                  key={c}
-                  testID={`${testID}-${String(r)}-${String(c)}`}
-                  cell={cell}
-                  side={side}
-                  row={r}
-                  column={c}
-                  onSelect={select}
-                />
-              ),
-            )}
-          </View>
-        ))}
-      </View>
+    <View testID={testID} style={styles.grid}>
+      {cells.map((row, r) => (
+        <View key={r} style={styles.row}>
+          {row.map((cell, c) =>
+            cell.kind === 'block' ? (
+              <View
+                key={c}
+                testID={`${testID}-${String(r)}-${String(c)}-block`}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                style={[
+                  styles.cell,
+                  size,
+                  { backgroundColor: colors.silhouette, borderRadius: radii.tile },
+                ]}
+              />
+            ) : (
+              <Cell
+                key={c}
+                testID={`${testID}-${String(r)}-${String(c)}`}
+                cell={cell}
+                side={side}
+                row={r}
+                column={c}
+                onSelect={select}
+              />
+            ),
+          )}
+        </View>
+      ))}
     </View>
+  );
+}
+
+/**
+ * A grid cell's side in `room` for `rows` rows of `columns` cells: the
+ * board's, or less when the room is smaller, but never below the smallest
+ * legible cell. A white cell stands on its tile's edge, so each row is that
+ * much taller than its cells.
+ */
+export function crossingCellSide(
+  room: { readonly width: number; readonly height: number } | undefined,
+  rows: number,
+  columns: number,
+): number {
+  const { cell: boardCell, minCell, cellGap } = crossingCrosswordLayout;
+  if (room === undefined) return boardCell;
+  const edge = offsetShadow.rest.depth;
+  return Math.max(
+    minCell,
+    Math.min(
+      boardCell,
+      (room.height - (rows - 1) * cellGap) / Math.max(rows, 1) - edge,
+      (room.width - (columns - 1) * cellGap) / Math.max(columns, 1),
+    ),
   );
 }
 

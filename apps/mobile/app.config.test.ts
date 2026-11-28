@@ -1018,7 +1018,7 @@ describe('app config', () => {
       });
     });
 
-    it('gives every build profile the config Metro gets, so the fingerprint matches on the laptop and on EAS', () => {
+    it('gives every release profile the config the laptop gets, so the fingerprint matches on the laptop and on EAS', () => {
       vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
       const repo = repoWithCertificate();
       // The fingerprint hashes the config as JSON, so the mods' functions drop out.
@@ -1027,12 +1027,43 @@ describe('app config', () => {
         return JSON.parse(JSON.stringify(appConfig(repo))) as unknown;
       };
 
-      const metro = fingerprinted(undefined);
+      const laptop = fingerprinted(undefined);
 
-      expect(metro).toHaveProperty(['updates', 'enabled'], true);
-      expect(fingerprinted('development-simulator')).toEqual(metro);
-      expect(fingerprinted('beta')).toEqual(metro);
-      expect(fingerprinted('production')).toEqual(metro);
+      expect(laptop).toHaveProperty(
+        ['updates', 'codeSigningCertificate'],
+        './certs/certificate.pem',
+      );
+      expect(fingerprinted('beta')).toEqual(laptop);
+      expect(fingerprinted('production')).toEqual(laptop);
+    });
+
+    it('leaves code signing out of a development build and the development server, which no key signs for', () => {
+      vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
+      const repo = repoWithCertificate();
+      const read = (profile: string | undefined) => {
+        vi.stubEnv('EAS_BUILD_PROFILE', profile);
+        return JSON.parse(JSON.stringify(appConfig(repo))) as Record<string, unknown>;
+      };
+      const laptop = read(undefined);
+      const { codeSigningCertificate, codeSigningMetadata, ...unsignedUpdates } = laptop[
+        'updates'
+      ] as Record<string, unknown>;
+      const unsigned = { ...laptop, updates: unsignedUpdates };
+
+      expect(codeSigningCertificate).toBe('./certs/certificate.pem');
+      expect(codeSigningMetadata).toEqual({ keyid: 'main', alg: 'rsa-v1_5-sha256' });
+      expect(read('development-simulator')).toEqual(unsigned);
+
+      const argv = process.argv;
+      try {
+        process.argv = [argv[0] ?? 'node', 'expo', 'start', '--dev-client'];
+        expect(read(undefined)).toEqual(unsigned);
+        // `expo config`, which the fingerprint reads, keeps the release's signing.
+        process.argv = [argv[0] ?? 'node', 'expo', 'config', '--json'];
+        expect(read(undefined)).toEqual(laptop);
+      } finally {
+        process.argv = argv;
+      }
     });
 
     it('leaves the generated native folders out of the fingerprint', () => {

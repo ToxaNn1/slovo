@@ -261,6 +261,16 @@ function currentBuild(): Build {
 }
 
 /**
+ * Whether this config is read by the development server, `expo start`, which
+ * serves development builds; `expo config`, `expo export` and eas-cli read the
+ * release's config. Expo CLI runs its command as its first argument.
+ */
+function servesDevelopment(): boolean {
+  const command = process.argv.slice(2).find((argument) => !argument.startsWith('-'));
+  return command === 'start';
+}
+
+/**
  * Refuses a release build that would talk to localhost or over plain HTTP:
  * a release must carry an `https://` API address. Development builds and
  * Metro outside EAS keep the localhost fallback.
@@ -340,18 +350,23 @@ const UPDATES_CERTIFICATE = './certs/certificate.pem';
  * code (the fingerprint runtime version). A release refuses to build without
  * the certificate.
  *
- * The block is the same for every build, so the fingerprint eas-cli computes
- * on the laptop, where no `EAS_BUILD_PROFILE` is set, matches the one the EAS
- * build computes (#1498). A development build names no channel and takes
- * no update: its Debug configuration loads the bundle from Metro through the
- * development client.
+ * The block is the same for every release build and outside an EAS build, so
+ * the fingerprint eas-cli computes on the laptop, where no `EAS_BUILD_PROFILE`
+ * is set, matches the one the EAS release build computes (#1498). A
+ * development build names no channel and takes no update: its Debug
+ * configuration loads the bundle from Metro through the development client.
+ * So a development build and the development server (`expo start`) carry no
+ * code signing: a development build with the certificate asks Metro for a
+ * signed manifest, which only the private key could sign, and that key lives
+ * in GitHub alone.
  */
 function updates(
   build: Build,
   projectRoot: string,
 ): Pick<ExpoConfig, 'runtimeVersion' | 'updates'> {
   const certificate = join(projectRoot, UPDATES_CERTIFICATE);
-  const signed = existsSync(certificate);
+  const unsigned = build.kind === 'development' || (build.kind === 'metro' && servesDevelopment());
+  const signed = !unsigned && existsSync(certificate);
   if (!signed && build.kind === 'release') {
     throw new Error(
       `The release build "${build.profile}" has no code-signing certificate for OTA updates: expected ${certificate}`,
