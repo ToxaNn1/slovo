@@ -29,6 +29,7 @@ import { StyleSheet, View } from 'react-native';
 import { edition, editionStrings } from '@/edition/edition';
 import { useEntrySlots } from '@/entries/entry-actions';
 import { useOpenScreen } from '@/use-open-screen';
+import { useOpenEntry } from '@/entry-ahead';
 import { deviceClock } from '@/device/device-clock';
 import { useFeed } from '@/feed/feed';
 import { useSettings } from '@/settings/settings';
@@ -126,14 +127,10 @@ function FeedScreen() {
       restoreWeeklyRecap,
     ],
   );
-  const onIndexChange = useCallback(
-    (position: number) => {
-      onCardChange(position);
-      // The undo toast of a side swipe goes once the reader moves on to another card.
-      closeUndoToast();
-    },
-    [onCardChange, closeUndoToast],
-  );
+  // The undo toast of a side swipe goes once the reader moves on to another card.
+  const onIndexChange = useCallback(() => {
+    closeUndoToast();
+  }, [closeUndoToast]);
 
   if (cards.length === 0)
     return <Placeholder message={editionStrings.noWords[mixPlaceOf(inEffect)]} />;
@@ -151,6 +148,8 @@ function FeedScreen() {
               initialIndex={feed.startPosition}
               renderPage={renderPage}
               onIndexChange={onIndexChange}
+              // The reader's place hears of a turn once the page rests (27.11 pass).
+              onIndexSettled={onCardChange}
               turnActionLabels={turnActionLabels}
             />
           </ShownCardFeatures>
@@ -220,7 +219,7 @@ const FeedPage = memo(function FeedPage({
   /** «Повернути» of the Weekly Recap folded this session. */
   onRestoreWeeklyRecap: () => void;
 }) {
-  const openScreen = useOpenScreen();
+  const openEntryScreen = useOpenEntry();
   if (card.kind === 'quick-question')
     return (
       // In the Word card's frame, so both cards are the same height (owner 16.11).
@@ -275,7 +274,7 @@ const FeedPage = memo(function FeedPage({
           card={card}
           // A member opens its Word over the Feed, Hidden or out of the Mix alike.
           onOpenWord={(wordId) => {
-            openScreen(`/entry/${wordId}`);
+            openEntryScreen(wordId, `/entry/${wordId}`);
           }}
           page={page}
         />
@@ -290,7 +289,7 @@ const FeedPage = memo(function FeedPage({
         }}
         // The row the Word is a member of opens over the Feed, as a member opens its Word.
         onOpenSynonymRow={(synonymRowId) => {
-          openScreen(`/entry/${synonymRowId}`);
+          openEntryScreen(synonymRowId, `/entry/${synonymRowId}`);
         }}
         page={page}
       />
@@ -341,6 +340,7 @@ function NoticePage({
 }) {
   const streak = useFirstWeekStreak();
   const openScreen = useOpenScreen();
+  const openEntryScreen = useOpenEntry();
   const { askPermission } = useNotificationsChanges();
   const page = (layout: FeedPageLayout, content: ReactNode) => (
     <FeedPageFrame position={position} header={header} layout={layout}>
@@ -402,7 +402,7 @@ function NoticePage({
           row={card.row}
           adds={card.adds}
           onOpen={() => {
-            openScreen(`/entry/${card.row.entryId}`);
+            openEntryScreen(card.row.entryId, `/entry/${card.row.entryId}`);
           }}
         />,
       );

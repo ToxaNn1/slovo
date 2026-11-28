@@ -1,5 +1,5 @@
 'use no memo';
-import { useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   ReduceMotion,
@@ -72,6 +72,13 @@ export function CrossingGrid({
   testID: string;
 }) {
   const { colors, radii } = useTokens();
+  // One callback for every cell, so a cell whose look is unchanged skips the render a trace's
+  // every letter brings (27.11 pass: each letter re-rendered the whole grid).
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
+  const select = useCallback((place: CrosswordPlace) => {
+    onSelectRef.current(place);
+  }, []);
   const columns = Math.max(0, ...cells.map((row) => row.length));
   const { cell: boardCell, minCell, cellGap } = crossingCrosswordLayout;
   // A white cell stands on its tile's edge, so each row is that much taller than its cells.
@@ -122,9 +129,9 @@ export function CrossingGrid({
                   testID={`${testID}-${String(r)}-${String(c)}`}
                   cell={cell}
                   side={side}
-                  onPress={() => {
-                    onSelect({ row: r, column: c });
-                  }}
+                  row={r}
+                  column={c}
+                  onSelect={select}
                 />
               ),
             )}
@@ -142,19 +149,18 @@ function scaledRole(role: TypeRole, side: number) {
   return { fontSize: fontSize * ratio, lineHeight: lineHeight * ratio };
 }
 
-/** A white cell: a tile that pops once as its Word is solved. */
-function Cell({
-  testID,
-  cell,
-  side,
-  onPress,
-}: {
+/** A white cell: a tile that pops once as its Word is solved; drawn again only when its props change. */
+interface CellProps {
   testID: string;
   cell: Extract<CrossingGridCell, { kind: 'cell' }>;
   /** The cell's side: the board's, or less to fit the screen. */
   side: number;
-  onPress: () => void;
-}) {
+  row: number;
+  column: number;
+  onSelect: (place: CrosswordPlace) => void;
+}
+
+const Cell = memo(function Cell({ testID, cell, side, row, column, onSelect }: CellProps) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
@@ -190,7 +196,9 @@ function Cell({
         {...slop}
         accessibilityLabel={cell.label}
         accessibilityState={{ selected: cell.current }}
-        onPress={onPress}
+        onPress={() => {
+          onSelect({ row, column });
+        }}
         faceStyle={[
           styles.cell,
           { width: side, height: side },
@@ -225,6 +233,25 @@ function Cell({
         </Text>
       </PressedTile>
     </Animated.View>
+  );
+}, sameCell);
+
+/**
+ * Whether a cell draws as before: its owner builds the grid's cells anew at
+ * each play, so they are compared by what they draw, not by identity.
+ */
+function sameCell(before: CellProps, after: CellProps) {
+  return (
+    before.testID === after.testID &&
+    before.side === after.side &&
+    before.row === after.row &&
+    before.column === after.column &&
+    before.onSelect === after.onSelect &&
+    before.cell.letter === after.cell.letter &&
+    before.cell.number === after.cell.number &&
+    before.cell.current === after.cell.current &&
+    before.cell.solved === after.cell.solved &&
+    before.cell.label === after.cell.label
   );
 }
 

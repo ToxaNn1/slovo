@@ -183,9 +183,11 @@ export function GoalReachedCard({
       transform: [{ translateY: shift + covered(clock.value) * height }],
     };
   });
-  // Over the frame's straight top, a wedge of the page's colour cuts its edge slanted.
+  // Over the frame's straight top, a wedge of the page's colour cuts its edge
+  // slanted. It stands the card's height and is squeezed from the top, so the
+  // frames move it on the UI thread with no layout (27.11 pass).
   const cutStyle = useAnimatedStyle(() => ({
-    height: (covered(clock.value, 'left') - covered(clock.value)) * height,
+    transform: [{ scaleY: covered(clock.value, 'left') - covered(clock.value) }],
   }));
   const bandStyle = useAnimatedStyle(() => {
     const eased = bandEase(through(clock.value, enter.band.delay, enter.band.duration));
@@ -387,7 +389,7 @@ export function GoalReachedCard({
         <Animated.View
           testID="goal-reached-cut"
           pointerEvents="none"
-          style={[styles.cut, cutStyle]}
+          style={[styles.cut, { height }, cutStyle]}
         >
           <Svg
             width="100%"
@@ -547,7 +549,7 @@ const styles = StyleSheet.create({
   inside: { flex: 1, overflow: 'hidden' },
   layer: { position: 'absolute', left: 0, top: 0, transformOrigin: 'left top' },
   unsized: { right: 0, bottom: 0 },
-  cut: { position: 'absolute', left: 0, right: 0, top: 0 },
+  cut: { position: 'absolute', left: 0, right: 0, top: 0, transformOrigin: 'top' },
   padded: {
     paddingTop: card.padding.top,
     paddingHorizontal: card.padding.horizontal,

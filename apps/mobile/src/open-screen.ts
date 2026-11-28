@@ -17,18 +17,20 @@ export interface ScreenRouter {
  * has not settled, further taps open nothing, on this row or any other. The
  * navigator reports `settled` when the transition ends, so the wait follows
  * the device's speed instead of a fixed time. A screen that never reports, or
- * a clock set back, ends the wait after `SCREEN_OPEN_TIMEOUT_MS`.
+ * a clock set back, ends the wait after `SCREEN_OPEN_TIMEOUT_MS`. `open`
+ * returns whether it opened the screen.
  */
 export function createScreenOpener(clock: Clock) {
   let openedAt: number | undefined;
   return {
-    open: (router: ScreenRouter, href: string) => {
+    open: (router: ScreenRouter, href: string): boolean => {
       const now = clock.now().getTime();
       if (openedAt !== undefined && now >= openedAt && now - openedAt < SCREEN_OPEN_TIMEOUT_MS) {
-        return;
+        return false;
       }
       openedAt = now;
       router.push(href);
+      return true;
     },
     /** The screen last opened has finished its transition. */
     settled: () => {

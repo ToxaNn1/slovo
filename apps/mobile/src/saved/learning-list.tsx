@@ -14,7 +14,7 @@ import { useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { editionStrings } from '@/edition/edition';
-import { useOpenScreen } from '@/use-open-screen';
+import { useOpenEntry } from '@/entry-ahead';
 import type { ListHeader } from '@/saved/list-header';
 import { useDueQuiz } from '@/saved/due-quiz';
 import { useLearningList } from '@/saved/learning';
@@ -40,7 +40,7 @@ export function LearningList({ header }: { header: ListHeader }) {
 
 function Learning({ header }: { header: ListHeader }) {
   const list = useLearningList();
-  const openScreen = useOpenScreen();
+  const openEntry = useOpenEntry();
   const scroll = useListScroll<FlatList<(typeof list)[number]>>();
   const { list: listRef, onScroll: onListScroll } = scroll;
   const dueQuiz = useDueQuiz();
@@ -66,7 +66,7 @@ function Learning({ header }: { header: ListHeader }) {
           <LearningRow
             entry={entry}
             onPress={() => {
-              openScreen(`/saved/learning/${entry.entryId}`);
+              openEntry(entry.entryId, `/saved/learning/${entry.entryId}`);
             }}
           />
         )}

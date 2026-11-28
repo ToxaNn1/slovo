@@ -10,6 +10,7 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import Svg, { Polygon } from 'react-native-svg';
 
 import { useReduceMotion } from '../providers/useReduceMotion';
@@ -27,11 +28,17 @@ const fadeEasing = Easing.bezier(...motion.reduceMotion.easing);
  */
 export function ScreenEnter({
   focused,
+  onEntered,
   testID,
   children,
 }: {
   /** Whether the screen is the one shown; it enters each time this turns on. */
   focused: boolean;
+  /**
+   * Called on the JS thread each time the entrance comes to rest, not when focus
+   * cuts it short. Keep it one function: a new one starts the entrance again.
+   */
+  onEntered?: () => void;
   testID?: string;
   children: ReactNode;
 }) {
@@ -50,27 +57,39 @@ export function ScreenEnter({
       swept.value = 0;
       return;
     }
+    const atRest = (finished?: boolean) => {
+      'worklet';
+      if (finished === true && onEntered !== undefined) scheduleOnRN(onEntered);
+    };
     // The hook already reads the system's Reduce Motion and «Менше руху».
     if (reduceMotion) {
-      entered.value = withTiming(1, {
-        duration: motion.reduceMotion.duration,
-        easing: fadeEasing,
-        reduceMotion: ReduceMotion.Never,
-      });
+      entered.value = withTiming(
+        1,
+        {
+          duration: motion.reduceMotion.duration,
+          easing: fadeEasing,
+          reduceMotion: ReduceMotion.Never,
+        },
+        atRest,
+      );
       swept.value = 1;
       return;
     }
-    entered.value = withTiming(1, {
-      duration: motion.screen.duration,
-      easing: screenEasing,
-      reduceMotion: ReduceMotion.Never,
-    });
+    entered.value = withTiming(
+      1,
+      {
+        duration: motion.screen.duration,
+        easing: screenEasing,
+        reduceMotion: ReduceMotion.Never,
+      },
+      atRest,
+    );
     swept.value = withTiming(1, {
       duration: motion.sweep.duration,
       easing: sweepEasing,
       reduceMotion: ReduceMotion.Never,
     });
-  }, [focused, reduceMotion, entered, swept]);
+  }, [focused, reduceMotion, entered, swept, onEntered]);
 
   const contentStyle = useAnimatedStyle(() =>
     reduceMotion

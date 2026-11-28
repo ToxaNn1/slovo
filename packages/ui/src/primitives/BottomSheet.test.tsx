@@ -64,13 +64,22 @@ async function renderSheet({ closesOnAsk = false }: { closesOnAsk?: boolean } = 
     />
   );
   await render(owner(true));
+  await layOut();
   const close = async () => {
     await screen.rerender(owner(false));
   };
   const open = async () => {
     await screen.rerender(owner(true));
+    await layOut();
   };
   return { onClose, onDismissed, close, open };
+}
+
+/** Lays out the sheet's panel, as the native side does once it is on screen; Jest measures nothing. */
+async function layOut() {
+  await fireEvent(screen.getByTestId('sheet-panel'), 'layout', {
+    nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 400 } },
+  });
 }
 
 /** Where the sheet is: how far down from its place, and how opaque. */
@@ -132,6 +141,29 @@ describe('BottomSheet', () => {
     await pass(120);
 
     expect(sheetNow()).toEqual({ down: 0, opacity: 1 });
+  });
+
+  it('waits below until its panel is laid out, then slides up', async () => {
+    await render(sheet(true, jest.fn(), jest.fn()));
+    await pass(450);
+
+    expect(sheetNow().down).toBeGreaterThan(0);
+
+    await layOut();
+    await pass(450);
+
+    expect(sheetNow()).toEqual({ down: 0, opacity: 1 });
+  });
+
+  it('is gone when closed before its panel is laid out, though the layout lands after', async () => {
+    const onDismissed = jest.fn();
+    await render(sheet(true, jest.fn(), onDismissed));
+    await screen.rerender(sheet(false, jest.fn(), onDismissed));
+    await layOut();
+    await pass(450);
+
+    expect(screen.queryByText('Content')).toBeNull();
+    expect(onDismissed).toHaveBeenCalledTimes(1);
   });
 
   it('fades in place, with Reduce Motion', async () => {

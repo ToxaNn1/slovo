@@ -36,6 +36,44 @@ describe('the sound engine', () => {
     expect(audio.createAudioPlayer).toHaveBeenCalledTimes(2);
   });
 
+  it('loads the player of each sound the Edition has ahead, and plays them with no new load', () => {
+    const { audio, played } = mockAudio();
+    const engine = createSoundEngine(audio, { right: 2, tap: 4 });
+
+    engine.preload();
+    expect(audio.createAudioPlayer).toHaveBeenCalledTimes(2);
+    engine.preload();
+    engine.play('tap');
+    engine.play('right');
+
+    expect(played).toEqual([4, 2]);
+    expect(audio.createAudioPlayer).toHaveBeenCalledTimes(2);
+  });
+
+  it('tries every file ahead though one does not load, and tries a failed one again when played', () => {
+    const { audio } = mockAudio({ failToLoad: true });
+    const engine = createSoundEngine(audio, { right: 2, tap: 4 });
+
+    expect(() => {
+      engine.preload();
+    }).not.toThrow();
+    expect(audio.createAudioPlayer.mock.calls).toEqual([[2], [4]]);
+
+    engine.play('tap');
+
+    expect(audio.createAudioPlayer.mock.calls).toEqual([[2], [4], [4]]);
+  });
+
+  it('sets the audio mode before it loads the first player ahead', () => {
+    const { audio } = mockAudio();
+    createSoundEngine(audio, sources).preload();
+
+    expect(audio.setAudioModeAsync).toHaveBeenCalledTimes(1);
+    const [modeSet] = audio.setAudioModeAsync.mock.invocationCallOrder;
+    const [firstLoad] = audio.createAudioPlayer.mock.invocationCallOrder;
+    expect(modeSet).toBeLessThan(firstLoad ?? 0);
+  });
+
   it('stays silent with the ring switch off, mixes with other audio and keeps out of the background', () => {
     const { audio } = mockAudio();
 

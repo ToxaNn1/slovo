@@ -1,9 +1,18 @@
 import { loadDecor, type Decor } from '@slovo/core';
 import type { MascotState } from '@slovo/contracts';
-import { coreTokens, DecorProvider, EditionProvider, Mascot, TokensProvider } from '@slovo/ui';
+import {
+  coreTokens,
+  DecorProvider,
+  EditionProvider,
+  HapticsProvider,
+  Mascot,
+  TokensProvider,
+  usePageTurnActions,
+  VerticalPager,
+} from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, render, screen } from '@testing-library/react-native';
-import { AccessibilityInfo, StyleSheet } from 'react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { AccessibilityInfo, StyleSheet, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
 
@@ -50,6 +59,19 @@ const { light } = coreTokens.colors;
 
 /** A `#RRGGBB` colour as react-native-svg hands it to the native side. */
 const argb = (hex: string) => parseInt(`FF${hex.slice(1)}`, 16);
+
+/** A page the pager turns from with its VoiceOver action. */
+function FirstPage() {
+  return <Text {...usePageTurnActions()}>First</Text>;
+}
+
+const haptics = {
+  selection: jest.fn(),
+  impactLight: jest.fn(),
+  impactMedium: jest.fn(),
+  success: jest.fn(),
+  warning: jest.fn(),
+};
 
 async function renderMascot(
   state: MascotState,
@@ -224,6 +246,38 @@ describe('Mascot', () => {
     await pass(1200);
 
     expect(figureNow().up).toBeCloseTo(5, 0);
+  });
+
+  it('stands still on a Feed page waiting off screen, and bobs once the page is turned to', async () => {
+    await render(
+      <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
+        <DecorProvider decor={withMascot}>
+          <HapticsProvider haptics={haptics}>
+            <VerticalPager
+              testID="pager"
+              items={['first', 'second']}
+              initialIndex={0}
+              onIndexChange={jest.fn()}
+              renderPage={(page) =>
+                page === 'second' ? <Mascot state="waits" line="A line" /> : <FirstPage />
+              }
+              turnActionLabels={{ next: 'Next page', previous: 'Previous page' }}
+            />
+          </HapticsProvider>
+        </DecorProvider>
+      </EditionProvider>,
+    );
+    await fireEvent(screen.getByTestId('pager'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 400, height: 800 } },
+    });
+    await pass(1200);
+    expect(figureNow().moving).toBe(false);
+
+    await fireEvent(screen.getByText('First'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'next' },
+    });
+    await pass(2000);
+    expect(figureNow().moving).toBe(true);
   });
 
   it('hops to the top of its jump at the frame the design sets, every cycle', async () => {

@@ -6,6 +6,7 @@ import { router, useIsFocused } from 'expo-router';
 import { useState, useSyncExternalStore, type ReactNode } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
+import { motion } from '@slovo/ui/tokens';
 
 import { ScreenStack } from '../entries/screen-stack';
 import { screenSettled } from '../use-open-screen';
@@ -488,7 +489,7 @@ describe('a tab out of sight (memory pass, 19.11)', () => {
     }
     await renderTabs('/saved', edition, { 'saved/index': SavedReading });
     await settle(() => fireEvent.press(screen.getByText(tabs.profile)));
-    // The Saved goes into hiding a frame after it lost focus.
+    // The Saved goes into hiding once the Profile has entered.
     await settle(() => undefined);
 
     const before = renders;
@@ -500,6 +501,35 @@ describe('a tab out of sight (memory pass, 19.11)', () => {
 
     await settle(() => fireEvent.press(screen.getByText(tabs.saved)));
     expect(screen.getByText('Saved 2')).toBeVisible();
+  });
+
+  it('stays in sight until the screen that took its place has entered (27.11 pass)', async () => {
+    const source = counterSource();
+    let renders = 0;
+    function SavedReading() {
+      renders += 1;
+      const value = useSyncExternalStore(source.subscribe, source.read);
+      return <Text>{`Saved ${String(value)}`}</Text>;
+    }
+    await renderTabs('/saved', edition, { 'saved/index': SavedReading });
+    await act(async () => {
+      await fireEvent.press(screen.getByText(tabs.profile));
+      await jest.advanceTimersByTimeAsync(motion.screen.duration / 2);
+    });
+
+    const midway = renders;
+    await act(async () => {
+      source.bump();
+      await jest.advanceTimersByTimeAsync(0);
+    });
+    expect(renders).toBeGreaterThan(midway);
+
+    await settle(() => undefined);
+    const atRest = renders;
+    await settle(() => {
+      source.bump();
+    });
+    expect(renders).toBe(atRest);
   });
 
   it('learns it is out of sight before it stays still', async () => {

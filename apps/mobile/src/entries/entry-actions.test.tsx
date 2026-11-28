@@ -18,11 +18,13 @@ import {
 import { CardFeaturesProvider, EntryCard, noCardFeatures, UndoToastProvider } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { State } from 'react-native-gesture-handler';
+import { getAnimatedStyle } from 'react-native-reanimated';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 
 import { activeEditionFiles } from '../edition/edition';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { renderApp } from '../shell/test-app';
+import { layOutSheets } from '../shell/test-render';
 import { useEntrySlots } from './entry-actions';
 
 const { config } = activeEditionFiles;
@@ -491,6 +493,21 @@ async function pass(ms: number) {
 async function openMenu() {
   await fireEvent.press(screen.getByRole('button', { name: 'Більше дій' }));
   await settle();
+  await layOutSheets();
+  await settle();
+}
+
+/**
+ * Waits until the «⋯» sheet has begun to rise. A press before its first frame
+ * finds nothing to slide away, so the sheet leaves at once, as it should.
+ */
+async function menuRising() {
+  await waitFor(() => {
+    const { transform } = getAnimatedStyle(screen.getByTestId('entry-menu-panel')) as {
+      transform: [{ translateY: number }];
+    };
+    expect(transform[0].translateY).toBeLessThan(400);
+  });
 }
 
 /** Presses an item of the «⋯» sheet. */
@@ -593,6 +610,7 @@ describe('the corner of an Entry card', () => {
   it('opens the Share Card once the sheet has slid away', async () => {
     await renderSlotted('w_test');
     await openMenu();
+    await menuRising();
     await fireEvent.press(
       within(screen.getByTestId('entry-menu')).getByRole('button', { name: 'Поділитися' }),
     );

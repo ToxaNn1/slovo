@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { FlatList, StyleSheet } from 'react-native';
 
 import { editionStrings } from '@/edition/edition';
-import { useOpenScreen } from '@/use-open-screen';
+import { useOpenEntry } from '@/entry-ahead';
 import { dayChip } from '@/saved/added-on';
 import { useFavorite, useFavoriteList } from '@/saved/favorites';
 import type { ListHeader } from '@/saved/list-header';
@@ -16,13 +16,13 @@ const { favorites: strings } = editionStrings;
 /** A row of Favorites: a tap opens the Entry screen, the swipe action takes the Entry out. */
 function FavoriteRow({ favorite: { entryId, row, addedAt } }: { favorite: Favorite }) {
   const { remove } = useFavorite(entryId);
-  const openScreen = useOpenScreen();
+  const openEntry = useOpenEntry();
   return (
     <EntryRow
       row={row}
       day={dayChip(addedAt)}
       onPress={() => {
-        openScreen(`/saved/favorites/${entryId}`);
+        openEntry(entryId, `/saved/favorites/${entryId}`);
       }}
       actions={[
         {

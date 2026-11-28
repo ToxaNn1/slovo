@@ -6,7 +6,7 @@ import { FlatList, StyleSheet, Text, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 
 import type { ListScroll } from '../primitives/ScrollToTop';
-import { useCascade } from '../primitives/useCascade';
+import { CascadeList, useCascade } from '../primitives/useCascade';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { categoryGrid as place, typeStyle } from '../tokens';
@@ -77,47 +77,49 @@ export function CategoryGrid({
   const { colors } = useTokens();
   const width = columnWidth[columns];
   return (
-    <FlatList<GridTile>
-      showsVerticalScrollIndicator={false}
-      showsHorizontalScrollIndicator={false}
-      ref={scroll?.list}
-      onScroll={scroll?.onScroll}
-      testID={testID}
-      data={tiles}
-      keyExtractor={({ id }) => id}
-      numColumns={columns}
-      key={columns}
-      ListHeaderComponent={
-        <>
-          {header !== undefined && <View style={styles.header}>{header}</View>}
-          <GridTitle testID={`${testID}-title`} title={title} count={count} />
-        </>
-      }
-      ListEmptyComponent={empty}
-      // A header may hold a text field and its submit: a tap lands on the first
-      // try, and the header moves over the keyboard.
-      keyboardShouldPersistTaps="handled"
-      automaticallyAdjustKeyboardInsets
-      renderItem={({ item: { id, name, accessibilityLabel, count: line, mark }, index }) => (
-        <Cascade testID={`${testID}-${id}-cascade`} index={index} stagger={stagger} width={width}>
-          <CategoryTile
-            testID={`${testID}-${id}`}
-            name={name}
-            accessibilityLabel={accessibilityLabel ?? name}
-            count={line}
-            mark={mark}
-            tone={toneAt(index)}
-            shapes={typeof shapes === 'function' ? shapes(index) : shapeAt(shapes, index)}
-            box={box}
-            onPress={() => {
-              onOpen(id);
-            }}
-          />
-        </Cascade>
-      )}
-      contentContainerStyle={styles.content}
-      style={{ backgroundColor: colors.background }}
-    />
+    <CascadeList>
+      <FlatList<GridTile>
+        showsVerticalScrollIndicator={false}
+        showsHorizontalScrollIndicator={false}
+        ref={scroll?.list}
+        onScroll={scroll?.onScroll}
+        testID={testID}
+        data={tiles}
+        keyExtractor={({ id }) => id}
+        numColumns={columns}
+        key={columns}
+        ListHeaderComponent={
+          <>
+            {header !== undefined && <View style={styles.header}>{header}</View>}
+            <GridTitle testID={`${testID}-title`} title={title} count={count} />
+          </>
+        }
+        ListEmptyComponent={empty}
+        // A header may hold a text field and its submit: a tap lands on the first
+        // try, and the header moves over the keyboard.
+        keyboardShouldPersistTaps="handled"
+        automaticallyAdjustKeyboardInsets
+        renderItem={({ item: { id, name, accessibilityLabel, count: line, mark }, index }) => (
+          <Cascade testID={`${testID}-${id}-cascade`} index={index} stagger={stagger} width={width}>
+            <CategoryTile
+              testID={`${testID}-${id}`}
+              name={name}
+              accessibilityLabel={accessibilityLabel ?? name}
+              count={line}
+              mark={mark}
+              tone={toneAt(index)}
+              shapes={typeof shapes === 'function' ? shapes(index) : shapeAt(shapes, index)}
+              box={box}
+              onPress={() => {
+                onOpen(id);
+              }}
+            />
+          </Cascade>
+        )}
+        contentContainerStyle={styles.content}
+        style={{ backgroundColor: colors.background }}
+      />
+    </CascadeList>
   );
 }
 

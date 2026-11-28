@@ -273,8 +273,8 @@ describe('a long Tip title', () => {
     await fireEvent(line, 'layout', { nativeEvent: { layout: { width: 301 } } });
     const words = () => screen.getByTestId('tip-title-words', { includeHiddenElements: true });
     // Every word measured on its own line: at the title's size the widest is too wide, a step lower it fits.
-    await fireEvent(words(), 'textLayout', { nativeEvent: { lines: [{ width: 330 }] } });
-    await fireEvent(words(), 'textLayout', { nativeEvent: { lines: [{ width: 300 }] } });
+    await fireEvent(words(), 'textLayout', { nativeEvent: { lines: [{ width: 320 }] } });
+    await fireEvent(words(), 'textLayout', { nativeEvent: { lines: [{ width: 295 }] } });
     await fireEvent(
       screen.getByTestId('tip-title-lines', { includeHiddenElements: true }),
       'textLayout',

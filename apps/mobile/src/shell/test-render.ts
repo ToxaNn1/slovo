@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals';
-import { render } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import type * as ExpoLinkingModule from 'expo-linking';
 import { renderRouter } from 'expo-router/testing-library';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -11,6 +11,24 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 /** Renders a screen or component with React Native Testing Library. */
 export function renderInGestureRoot(...[ui, options]: Parameters<typeof render>) {
   return render(ui, { wrapper: GestureHandlerRootView, ...options });
+}
+
+/**
+ * Lays out the panel of every open sheet, as the native side does once a sheet
+ * is on screen: Jest measures nothing, and a sheet slides in only once its
+ * panel is laid out.
+ */
+export async function layOutSheets(): Promise<void> {
+  const panels = screen
+    .queryAllByTestId(/-panel$/)
+    .filter(
+      ({ props }) => (props as { accessibilityViewIsModal?: boolean }).accessibilityViewIsModal,
+    );
+  for (const panel of panels) {
+    await fireEvent(panel, 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 400 } },
+    });
+  }
 }
 
 /** Renders a route map with Expo Router's test renderer. */

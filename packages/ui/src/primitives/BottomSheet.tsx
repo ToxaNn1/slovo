@@ -143,25 +143,44 @@ export function BottomSheet({
     onDismissedRef.current?.();
   };
 
+  /** Whether the panel of this mount has laid out, so its height is known. */
+  const laidOut = useRef(false);
+  /** Whether an open waits for the panel's first layout to start its slide. */
+  const slidePending = useRef(false);
+  const slideIn = useCallback(() => {
+    progress.value = reduceMotion
+      ? withTiming(1, REDUCED_FADE)
+      : withSequence(
+          withTiming(1 + motion.sheet.overshoot.distance / height.value, {
+            ...SLIDE_IN,
+            duration: SLIDE_IN.duration * motion.sheet.overshoot.share,
+          }),
+          withTiming(1, {
+            ...SLIDE_IN,
+            duration: SLIDE_IN.duration * (1 - motion.sheet.overshoot.share),
+          }),
+        );
+  }, [progress, height, reduceMotion]);
+  const unmount = () => {
+    laidOut.current = false;
+    slidePending.current = false;
+    setMounted(false);
+  };
+
   useEffect(() => {
     if (shown) {
       setMounted(true);
       flick.current = undefined;
       drag.value = 0;
-      progress.value = reduceMotion
-        ? withTiming(1, REDUCED_FADE)
-        : withSequence(
-            withTiming(1 + motion.sheet.overshoot.distance / height.value, {
-              ...SLIDE_IN,
-              duration: SLIDE_IN.duration * motion.sheet.overshoot.share,
-            }),
-            withTiming(1, {
-              ...SLIDE_IN,
-              duration: SLIDE_IN.duration * (1 - motion.sheet.overshoot.share),
-            }),
-          );
+      // A sheet that opens anew slides once its panel is on screen and
+      // measured, not while the Modal still mounts (27.11 pass: the first
+      // frames ran unseen, so the sheet showed up partway, its overshoot cut).
+      if (laidOut.current) slideIn();
+      else slidePending.current = true;
       wasVisible.current = true;
     } else {
+      // A sheet closed before its panel laid out has no slide in to start.
+      slidePending.current = false;
       // Nothing to slide out unless it was open: a slide-out started on mount
       // would unmount a sheet that opens before it ends.
       if (!wasVisible.current) return;
@@ -171,7 +190,7 @@ export function BottomSheet({
       const gone = (finished?: boolean) => {
         'worklet';
         if (finished !== true) return;
-        scheduleOnRN(setMounted, false);
+        scheduleOnRN(unmount);
         scheduleOnRN(dismissed);
       };
       // A drag that closed it carries on down from where the finger left it,
@@ -188,7 +207,7 @@ export function BottomSheet({
     }
     // The shared values are stable, so only `shown` starts a slide; a change
     // of Reduce Motion runs it again towards the same end, which moves nothing.
-  }, [shown, reduceMotion, drag, progress, height]);
+  }, [shown, reduceMotion, drag, progress, height, slideIn]);
 
   const closable = onClose !== undefined;
   // Stable, so the memoised configs below change only with what they draw on.
@@ -275,6 +294,10 @@ export function BottomSheet({
       testID={testID}
       onHeight={(measured) => {
         height.value = measured;
+        laidOut.current = true;
+        if (!slidePending.current) return;
+        slidePending.current = false;
+        slideIn();
       }}
       sheetStyle={sheetStyle}
       strip={strip}

@@ -4,6 +4,7 @@ import type { ListRenderItem } from 'react-native';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import type { ListScroll } from '../primitives/ScrollToTop';
+import { CascadeList } from '../primitives/useCascade';
 import { useTokens } from '../providers/TokensProvider';
 import { railScreen as place } from '../tokens';
 import { RailScreenCard } from './RailScreenCard';
@@ -107,21 +108,23 @@ export function RailList<Item>({
   const { colors } = useTokens();
   return (
     <View testID={testID} style={[styles.screen, { backgroundColor: colors.background }]}>
-      <FlatList
-        showsVerticalScrollIndicator={false}
-        showsHorizontalScrollIndicator={false}
-        ref={scroll?.list}
-        onScroll={scroll?.onScroll}
-        data={items}
-        keyExtractor={keyOf}
-        renderItem={renderItem}
-        ListHeaderComponent={hero}
-        ListHeaderComponentStyle={styles.hero}
-        ItemSeparatorComponent={() => <View style={{ height: gap }} />}
-        keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets
-        contentContainerStyle={styles.content}
-      />
+      <CascadeList>
+        <FlatList
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          ref={scroll?.list}
+          onScroll={scroll?.onScroll}
+          data={items}
+          keyExtractor={keyOf}
+          renderItem={renderItem}
+          ListHeaderComponent={hero}
+          ListHeaderComponentStyle={styles.hero}
+          ItemSeparatorComponent={() => <View style={{ height: gap }} />}
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+          contentContainerStyle={styles.content}
+        />
+      </CascadeList>
       {corner}
     </View>
   );

@@ -306,7 +306,11 @@ describe('the goal-reached card', () => {
     await renderFeed({ goal: 3, words: ['dawn'], streak: 4 });
     await layOut('goal-reached', 351, 487);
     const cut = () =>
-      (getAnimatedStyle(screen.getByTestId('goal-reached-cut')) as { height: number }).height;
+      (
+        getAnimatedStyle(screen.getByTestId('goal-reached-cut')) as {
+          transform: [{ scaleY: number }];
+        }
+      ).transform[0].scaleY;
     await wait(100);
     expect(cut()).toBeGreaterThan(0);
 

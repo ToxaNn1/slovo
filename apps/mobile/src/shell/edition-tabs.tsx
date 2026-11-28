@@ -6,8 +6,8 @@ import {
   Activity,
   createContext,
   use,
-  useEffect,
   useState,
+  useSyncExternalStore,
   type ComponentProps,
   type ReactNode,
 } from 'react';
@@ -168,23 +168,44 @@ export function useTabBarRoom(): number {
 }
 
 /**
- * Whether a screen out of focus goes into hiding: a frame after it lost focus,
- * so it learns it is out of sight (and stops what runs only in sight) first.
- * It comes out in the same render that gives it focus back.
+ * The entrances of the tabs' screens that came to rest, counted, so a screen
+ * out of focus waits for the screen that took its place.
+ */
+function entrancesAtRest() {
+  let count = 0;
+  const listeners = new Set<() => void>();
+  return {
+    subscribe: (listener: () => void) => {
+      listeners.add(listener);
+      return () => {
+        listeners.delete(listener);
+      };
+    },
+    count: () => count,
+    rested: () => {
+      count += 1;
+      for (const listener of listeners) listener();
+    },
+  };
+}
+
+const EntrancesAtRest = createContext(entrancesAtRest());
+
+/**
+ * Whether a screen out of focus goes into hiding: once the screen that took its
+ * place has entered (27.11 pass). Hiding drops the screen's native views, a
+ * commit as large as the screen, so it never lands in the middle of an entrance;
+ * the screen learns it is out of sight (and stops what runs only in sight)
+ * first. It comes out in the same render that gives it focus back.
  */
 function useHiddenOutOfFocus(focused: boolean): boolean {
-  const [settledOut, setSettledOut] = useState(false);
-  if (focused && settledOut) setSettledOut(false);
-  useEffect(() => {
-    if (focused) return;
-    const frame = requestAnimationFrame(() => {
-      setSettledOut(true);
-    });
-    return () => {
-      cancelAnimationFrame(frame);
-    };
-  }, [focused]);
-  return !focused && settledOut;
+  const entrances = use(EntrancesAtRest);
+  const rested = useSyncExternalStore(entrances.subscribe, entrances.count);
+  // How many entrances had rested when the screen lost focus.
+  const [leftAt, setLeftAt] = useState<number | undefined>(undefined);
+  if (focused && leftAt !== undefined) setLeftAt(undefined);
+  if (!focused && leftAt === undefined) setLeftAt(rested);
+  return !focused && leftAt !== undefined && rested > leftAt;
 }
 
 /**
@@ -199,8 +220,9 @@ function useHiddenOutOfFocus(focused: boolean): boolean {
 function FocusedEnter({ route, children }: Pick<ScreenLayoutProps, 'route' | 'children'>) {
   const focused = useIsFocused();
   const hidden = useHiddenOutOfFocus(focused);
+  const entrances = use(EntrancesAtRest);
   return (
-    <ScreenEnter focused={focused} testID={`${route.name}-enter`}>
+    <ScreenEnter focused={focused} onEntered={entrances.rested} testID={`${route.name}-enter`}>
       <Activity mode={hidden ? 'hidden' : 'visible'}>{children}</Activity>
     </ScreenEnter>
   );
@@ -235,85 +257,88 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
     name === 'mix' || name === 'saved' || name === 'settings' || (name === 'game' && !gameOn)
       ? barHeight
       : 0;
+  const [entrances] = useState(entrancesAtRest);
   return (
-    <Tabs
-      screenOptions={{ ...screenOptions, tabBarStyle }}
-      // The way back leads to the screen opened before, as a Word of a Category leads back to
-      // its Category; by default the tabs lead every screen no tab leads to back to the Dashboard.
-      backBehavior="history"
-      screenLayout={({ route, children }) => (
-        <FocusedEnter route={route}>
-          <TabBarRoom value={roomOf(route.name)}>{children}</TabBarRoom>
-        </FocusedEnter>
-      )}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{ ...options.home, ...bar.shown, ...underBar }}
-        listeners={{
-          tabPress: (event) => {
-            // The Dashboard stays the home at launch; its tab opens the Feed.
-            if (!inEffect.isFeatureEnabled('feedTab')) return;
-            event.preventDefault();
-            router.navigate('/feed');
-          },
-        }}
-      />
-      <Tabs.Screen
-        name="game"
-        options={({ route }) => ({ ...options.game, ...barOn(atRoot(route) && !gameOn) })}
-      />
-      <Tabs.Screen
-        name="mix"
-        options={({ route }) => ({ ...options.mix, ...barOn(atRoot(route)) })}
-      />
-      <Tabs.Screen
-        name="saved"
-        options={({ route }) => ({ ...options.saved, ...barOn(atRoot(route)) })}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={({ route }) => ({
-          ...options.settings,
-          ...barOn(atRoot(route, inEffect.isFeatureEnabled('profile') ? 'profile' : 'index')),
-        })}
-        listeners={{
-          tabPress: (event) => {
-            // The stack is built on the Profile (`settings/_layout`'s anchor). While the Profile
-            // is off the tab is Settings, which opens over it.
-            if (inEffect.isFeatureEnabled('profile')) return;
-            event.preventDefault();
-            router.navigate('/settings');
-          },
-        }}
-      />
-      {/* An Entry opened from a link, such as a notification's; no tab leads to it. */}
-      <Tabs.Screen name="entry" options={offTabs} />
-      {/* The recipient sheet of a Collection Link opened from outside; no tab leads to it. */}
-      <Tabs.Screen name="c/[linkId]" options={offTabs} />
-      {/* The Feed, from the Dashboard. */}
-      <Tabs.Screen name="feed" options={{ ...noTabButton, ...bar.shown, ...underBar }} />
-      {/* A Correction Type's screen, from its tile on the Dashboard; no tab leads to it. */}
-      <Tabs.Screen name="correction-type/[type]" options={offTabs} />
-      {/* A Curated Collection's screen, from its card on the Dashboard; no tab leads to it. */}
-      <Tabs.Screen name="curated-collection/[collectionId]" options={offTabs} />
-      {/* All Curated Collections, from «SLOVO пропонує»; no tab leads to them. */}
-      <Tabs.Screen name="curated-collections" options={offTabs} />
-      {/* A Curated Collection's Feed, from a Word of its screen; no tab leads to it. */}
-      <Tabs.Screen name="curated-collection-feed/[collectionId]" options={offTabs} />
-      {/*
+    <EntrancesAtRest value={entrances}>
+      <Tabs
+        screenOptions={{ ...screenOptions, tabBarStyle }}
+        // The way back leads to the screen opened before, as a Word of a Category leads back to
+        // its Category; by default the tabs lead every screen no tab leads to back to the Dashboard.
+        backBehavior="history"
+        screenLayout={({ route, children }) => (
+          <FocusedEnter route={route}>
+            <TabBarRoom value={roomOf(route.name)}>{children}</TabBarRoom>
+          </FocusedEnter>
+        )}
+      >
+        <Tabs.Screen
+          name="index"
+          options={{ ...options.home, ...bar.shown, ...underBar }}
+          listeners={{
+            tabPress: (event) => {
+              // The Dashboard stays the home at launch; its tab opens the Feed.
+              if (!inEffect.isFeatureEnabled('feedTab')) return;
+              event.preventDefault();
+              router.navigate('/feed');
+            },
+          }}
+        />
+        <Tabs.Screen
+          name="game"
+          options={({ route }) => ({ ...options.game, ...barOn(atRoot(route) && !gameOn) })}
+        />
+        <Tabs.Screen
+          name="mix"
+          options={({ route }) => ({ ...options.mix, ...barOn(atRoot(route)) })}
+        />
+        <Tabs.Screen
+          name="saved"
+          options={({ route }) => ({ ...options.saved, ...barOn(atRoot(route)) })}
+        />
+        <Tabs.Screen
+          name="settings"
+          options={({ route }) => ({
+            ...options.settings,
+            ...barOn(atRoot(route, inEffect.isFeatureEnabled('profile') ? 'profile' : 'index')),
+          })}
+          listeners={{
+            tabPress: (event) => {
+              // The stack is built on the Profile (`settings/_layout`'s anchor). While the Profile
+              // is off the tab is Settings, which opens over it.
+              if (inEffect.isFeatureEnabled('profile')) return;
+              event.preventDefault();
+              router.navigate('/settings');
+            },
+          }}
+        />
+        {/* An Entry opened from a link, such as a notification's; no tab leads to it. */}
+        <Tabs.Screen name="entry" options={offTabs} />
+        {/* The recipient sheet of a Collection Link opened from outside; no tab leads to it. */}
+        <Tabs.Screen name="c/[linkId]" options={offTabs} />
+        {/* The Feed, from the Dashboard. */}
+        <Tabs.Screen name="feed" options={{ ...noTabButton, ...bar.shown, ...underBar }} />
+        {/* A Correction Type's screen, from its tile on the Dashboard; no tab leads to it. */}
+        <Tabs.Screen name="correction-type/[type]" options={offTabs} />
+        {/* A Curated Collection's screen, from its card on the Dashboard; no tab leads to it. */}
+        <Tabs.Screen name="curated-collection/[collectionId]" options={offTabs} />
+        {/* All Curated Collections, from «SLOVO пропонує»; no tab leads to them. */}
+        <Tabs.Screen name="curated-collections" options={offTabs} />
+        {/* A Curated Collection's Feed, from a Word of its screen; no tab leads to it. */}
+        <Tabs.Screen name="curated-collection-feed/[collectionId]" options={offTabs} />
+        {/*
         The Categories (k1, k2) and a Category's screen (k3), from the Dashboard; no tab
         leads to them. A route left out here would be a hidden tab that sends its focus
         back to the Dashboard (Expo Router 58), so its tile would open nothing.
       */}
-      <Tabs.Screen name="categories" options={offTabs} />
-      <Tabs.Screen name="category/[categoryId]" options={offTabs} />
-      {/* A Category's Feed, from a Word of its screen; no tab leads to it. */}
-      <Tabs.Screen name="category-feed/[categoryId]" options={offTabs} />
-      <Tabs.Screen name="correction-categories" options={offTabs} />
-      <Tabs.Screen name="correction-category/[categoryId]" options={offTabs} />
-      {/* Search, from the magnifier of the «Стрічка» header; no tab leads to it. */}
-      <Tabs.Screen name="search" options={offTabs} />
-    </Tabs>
+        <Tabs.Screen name="categories" options={offTabs} />
+        <Tabs.Screen name="category/[categoryId]" options={offTabs} />
+        {/* A Category's Feed, from a Word of its screen; no tab leads to it. */}
+        <Tabs.Screen name="category-feed/[categoryId]" options={offTabs} />
+        <Tabs.Screen name="correction-categories" options={offTabs} />
+        <Tabs.Screen name="correction-category/[categoryId]" options={offTabs} />
+        {/* Search, from the magnifier of the «Стрічка» header; no tab leads to it. */}
+        <Tabs.Screen name="search" options={offTabs} />
+      </Tabs>
+    </EntrancesAtRest>
   );
 }

@@ -1246,6 +1246,23 @@ describe('GameRound', () => {
       expect(step(life(4), 'scale')).not.toBe(1);
     });
 
+    it('slides the answer banner in once it is measured, so its slab rises with its text', async () => {
+      const shown = answeredPick(first, { form: 'pick', option: CORRECT });
+      if (shown.status !== 'answered') throw new Error('Not answered');
+      await renderRound(jest.fn(), jest.fn(), { ...shown, banner: true });
+      const banner = () => styleOf(screen.getByTestId('game-answer-banner')).translateY;
+      const below = banner();
+      expect(below).toBeGreaterThan(0);
+
+      await wait(1000);
+      expect(banner()).toBe(below);
+      await fireEvent(screen.getByTestId('game-answer-banner'), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 240 } },
+      });
+      await wait(1000);
+      expect(banner()).toBe(0);
+    });
+
     describe('with Reduce Motion', () => {
       beforeEach(() => {
         jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);

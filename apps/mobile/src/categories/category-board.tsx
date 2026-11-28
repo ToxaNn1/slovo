@@ -1,6 +1,7 @@
 import { fill, type Category } from '@slovo/contracts';
 import type { CategoryKind } from '@slovo/core';
 import {
+  CascadeList,
   categoryGrid,
   correctionGrid,
   knownShare,
@@ -142,41 +143,43 @@ function QuietBoard({ of, category }: { of: CategoryKind; category: Category }) 
     );
   return (
     <View testID="category" style={[styles.screen, { backgroundColor: colors.background }]}>
-      <FlatList
-        showsVerticalScrollIndicator={false}
-        showsHorizontalScrollIndicator={false}
-        ref={listRef}
-        onScroll={onListScroll}
-        data={cards ?? []}
-        keyExtractor={({ entryId }) => entryId}
-        renderItem={({ item: { entryId, row }, index }) => (
-          <QuietScreenRow
-            testID={`category-entry-${entryId}`}
-            row={row}
-            index={index}
-            onPress={() => {
-              openEntry(entryId);
-            }}
-          />
-        )}
-        ListHeaderComponent={
-          <QuietScreenHero
-            id="category-quiet"
-            label={dashboard.category.quiet}
-            title={category.displayName}
-            description={category.description}
-            back={{
-              testID: 'category-back',
-              label: editionStrings.back,
-              onPress: () => {
-                router.back();
-              },
-            }}
-          />
-        }
-        ListHeaderComponentStyle={styles.hero}
-        contentContainerStyle={styles.content}
-      />
+      <CascadeList>
+        <FlatList
+          showsVerticalScrollIndicator={false}
+          showsHorizontalScrollIndicator={false}
+          ref={listRef}
+          onScroll={onListScroll}
+          data={cards ?? []}
+          keyExtractor={({ entryId }) => entryId}
+          renderItem={({ item: { entryId, row }, index }) => (
+            <QuietScreenRow
+              testID={`category-entry-${entryId}`}
+              row={row}
+              index={index}
+              onPress={() => {
+                openEntry(entryId);
+              }}
+            />
+          )}
+          ListHeaderComponent={
+            <QuietScreenHero
+              id="category-quiet"
+              label={dashboard.category.quiet}
+              title={category.displayName}
+              description={category.description}
+              back={{
+                testID: 'category-back',
+                label: editionStrings.back,
+                onPress: () => {
+                  router.back();
+                },
+              }}
+            />
+          }
+          ListHeaderComponentStyle={styles.hero}
+          contentContainerStyle={styles.content}
+        />
+      </CascadeList>
       <ListTopButton scroll={scroll} />
     </View>
   );

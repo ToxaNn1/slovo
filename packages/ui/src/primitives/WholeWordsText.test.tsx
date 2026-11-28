@@ -158,6 +158,28 @@ describe('WholeWordsText', () => {
     expect(word.props).toMatchObject({ numberOfLines: 1 });
   });
 
+  it('jumps to the step its widest word fits at in one measure, not a pass per step (27.11 pass)', async () => {
+    await render(
+      <WholeWordsText
+        testID="word"
+        text="Synchrophasotronically"
+        typeRole="heroWord"
+        lines={2}
+        stepped
+        style={typeStyle('heroWord', coreTokens)}
+      />,
+    );
+    await layOut('word', 300);
+    // At 44 the word takes 560: it fits at 300 / 560 × 44 = 23.6 or less, so at 22.
+    await measureWords('word', 560);
+    expect(screen.getByTestId('word')).toHaveStyle({ fontSize: 22, opacity: 0 });
+    await measureWords('word', 280);
+
+    const word = screen.getByTestId('word');
+    expect(word).toHaveStyle({ fontSize: 22 });
+    expect(word).not.toHaveStyle({ opacity: 0 });
+  });
+
   it('takes the steps of the scale at the in-app text size', async () => {
     // At the larger ladder step every step is 51 / 44 of its size at M, as the Lemma grows.
     await render(

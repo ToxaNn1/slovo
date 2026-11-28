@@ -5,7 +5,7 @@ import { FlatList, StyleSheet } from 'react-native';
 
 import { deviceClock } from '@/device/device-clock';
 import { editionStrings } from '@/edition/edition';
-import { useOpenScreen } from '@/use-open-screen';
+import { useOpenEntry } from '@/entry-ahead';
 import type { ListHeader } from '@/saved/list-header';
 import { useWordOfTheDayArchive } from '@/saved/word-of-the-day-archive';
 import { ListTopButton } from '@/shell/list-top';
@@ -20,7 +20,7 @@ const { wordOfTheDayArchive: strings } = editionStrings;
  */
 export function WordOfTheDayArchiveList({ header }: { header: ListHeader }) {
   const days = useWordOfTheDayArchive();
-  const openScreen = useOpenScreen();
+  const openEntry = useOpenEntry();
   const today = dateKeyOf(todayDate(deviceClock));
   const scroll = useListScroll<FlatList<WordOfTheDayArchiveDay>>();
   const { list: listRef, onScroll: onListScroll } = scroll;
@@ -40,7 +40,7 @@ export function WordOfTheDayArchiveList({ header }: { header: ListHeader }) {
             row={item.row}
             day={{ label: item.dateLabel, today: dateKeyOf(item.date) === today }}
             onPress={() => {
-              openScreen(`/saved/words-of-the-day/${item.row.entryId}`);
+              openEntry(item.row.entryId, `/saved/words-of-the-day/${item.row.entryId}`);
             }}
             testID={`words-of-the-day-row-${dateKeyOf(item.date)}`}
           />

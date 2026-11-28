@@ -11,6 +11,7 @@ import { editionAtLaunch as edition } from '../edition/edition-at-launch';
 import { handDeleteUndo } from './collection-undo';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { renderApp } from '../shell/test-app';
+import { layOutSheets } from '../shell/test-render';
 import { screenSettled } from '../use-open-screen';
 
 /** The composition the screen reads, opened afresh for each test. */
@@ -147,6 +148,7 @@ describe('Collections', () => {
     await renderScreen();
 
     await fireEvent.press(screen.getByTestId('collections-add'));
+    await layOutSheets();
     await settle();
     await fireEvent.changeText(screen.getByTestId('collections-name-input'), 'Весна');
     await fireEvent.press(screen.getByTestId('collections-name-submit'));
@@ -168,9 +170,11 @@ describe('Collections', () => {
     await renderScreen();
 
     await longPress(autumn);
+    await layOutSheets();
     await fireEvent.press(screen.getByTestId('collections-menu-rename'));
     // The menu slides away first, then the name sheet slides in.
     await settle();
+    await layOutSheets();
     await settle();
     const input = screen.getByTestId('collections-name-input');
     expect(input).toHaveDisplayValue('Осінь');

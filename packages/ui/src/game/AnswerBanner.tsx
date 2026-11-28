@@ -82,21 +82,24 @@ export function AnswerBanner({
   const reduceMotion = useReduceMotionKnown();
   const { height } = useWindowDimensions();
   const rise = useSharedValue(reduceMotion === true ? 0 : height);
+  const [size, setSize] = useState<{ width: number; height: number } | undefined>(undefined);
+  // The slide starts once the banner is measured, so its slab rises with its text (27.11 pass).
+  const measured = size !== undefined;
   useEffect(() => {
     if (reduceMotion === undefined) return;
     if (reduceMotion) {
       rise.value = 0;
       return;
     }
+    if (!measured) return;
     rise.value = withTiming(0, {
       duration: motion.toast.duration,
       easing: bezier(motion.toast.easing),
       reduceMotion: ReduceMotion.Never,
     });
-  }, [reduceMotion, rise]);
+  }, [reduceMotion, rise, measured]);
   const slide = useAnimatedStyle(() => ({ transform: [{ translateY: rise.value }] }));
 
-  const [size, setSize] = useState<{ width: number; height: number } | undefined>(undefined);
   const insets = useSafeAreaInsets();
   const right = answered.kind === 'right';
   const { colors } = useTokens();

@@ -3,7 +3,7 @@ import { ClearHistoryButton, EmptyState, EntryRow, space, useListScroll } from '
 import { FlatList, StyleSheet } from 'react-native';
 
 import { editionStrings } from '@/edition/edition';
-import { useOpenScreen } from '@/use-open-screen';
+import { useOpenEntry } from '@/entry-ahead';
 import { useClearHistory, useHistoryRows, type HistoryRow } from '@/saved/history';
 import type { ListHeader } from '@/saved/list-header';
 import { ListTopButton } from '@/shell/list-top';
@@ -19,7 +19,7 @@ const { history: strings } = editionStrings;
 export function HistoryList({ header }: { header: ListHeader }) {
   const rows = useHistoryRows();
   const clear = useClearHistory();
-  const openScreen = useOpenScreen();
+  const openEntry = useOpenEntry();
   const scroll = useListScroll<FlatList<HistoryRow>>();
   const { list: listRef, onScroll: onListScroll } = scroll;
 
@@ -42,7 +42,7 @@ export function HistoryList({ header }: { header: ListHeader }) {
             row={item.row}
             day={item.day}
             onPress={() => {
-              openScreen(`/saved/history/${item.entryId}`);
+              openEntry(item.entryId, `/saved/history/${item.entryId}`);
             }}
             testID={`history-row-${item.entryId}`}
           />
