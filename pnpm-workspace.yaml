@@ -47,6 +47,9 @@ overrides:
   uuid@<11.1.1: ^11.1.1
   glob@>=9 <14.0.2: ^14.0.2
   minimatch@>=7 <11.0.1: ^11.0.1
+  # qs 6.15.1 under Stryker's typed-rest-client (dev-only) carries the
+  # advisories behind Dependabot alerts 11-14; 6.16.1 is patched.
+  qs: ^6.16.1
 
 # High advisories with no patched release yet, reachable only through
 # build-time tooling (Expo CLI code signing, Metro's file watcher) and never
