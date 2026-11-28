@@ -17,6 +17,7 @@ import {
   createServiceMoneyBook,
   createUsdRates,
   type Alerts,
+  type AppleRevoker,
   type AppleVerifier,
   type Clock,
   type EasSource,
@@ -104,6 +105,8 @@ export interface AppDependencies {
   readonly google: GoogleVerifier;
   /** Verifies the Apple identity tokens of Apple sign-ins, for the app's bundle id. */
   readonly apple: AppleVerifier;
+  /** Revokes SLOVO at Apple when an Account with Sign in with Apple is deleted. */
+  readonly appleRevoker: AppleRevoker;
   /** The repository on GitHub, read for Розробка. */
   readonly github: GitHubSource;
   /** The app's builds on EAS, read for Розробка. */
@@ -261,6 +264,7 @@ export function createApp({
   nbu,
   google,
   apple,
+  appleRevoker,
   github,
   eas,
   authSecret,
@@ -284,6 +288,7 @@ export function createApp({
     authenticator,
     google,
     apple,
+    appleRevoker,
     bundleId: appConfig.bundleId,
     mailer,
     rateLimits,

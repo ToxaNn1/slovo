@@ -144,6 +144,12 @@ export const accountContract = {
         email: z.string(),
         /** When the Account was created. */
         createdAt: z.iso.datetime(),
+        /**
+         * The Google and Apple sign-in methods recorded for the Account; a
+         * Sign-in code reaches every Account. The app asks Apple for a fresh
+         * authorization code before it deletes an Account with `apple`.
+         */
+        signInMethods: z.array(z.enum(['google', 'apple'])),
       }),
     ),
 
@@ -174,9 +180,16 @@ export const accountContract = {
       path: '/account/me',
       summary: "Delete the Session's Account at once and for good",
       description:
-        'Its Sessions, sign-in methods and the records Sync keeps of it in every Edition go with it, and so does any Sign-in code waiting for its email. There is no grace period; the same email can sign in again to a new, empty Account.',
+        'Its Sessions, sign-in methods and the records Sync keeps of it in every Edition go with it, and so does any Sign-in code waiting for its email. There is no grace period; the same email can sign in again to a new, empty Account. An Account with Sign in with Apple sends a fresh authorization code from Apple, and the backend revokes SLOVO at Apple with it first; a revocation that fails holds back no deletion.',
       tags: ['account'],
     })
-    .input(NoInputSchema)
+    .input(
+      z
+        .strictObject({
+          /** A fresh authorization code from Apple's sheet, used once to revoke SLOVO at Apple and never kept. */
+          appleAuthorizationCode: z.string().min(1).max(4096).optional(),
+        })
+        .optional(),
+    )
     .output(z.object({})),
 };

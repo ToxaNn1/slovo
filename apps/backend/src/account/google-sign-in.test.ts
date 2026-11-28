@@ -46,7 +46,11 @@ describe('signing in with a Google identity token', () => {
 
     expect(session).toEqual({ token: expect.any(String) as unknown, email });
     const me = await clientOf(session.token).account.me();
-    expect(me).toEqual({ email, createdAt: expect.any(String) as unknown });
+    expect(me).toEqual({
+      email,
+      createdAt: expect.any(String) as unknown,
+      signInMethods: ['google'],
+    });
     expect(Date.parse(me.createdAt)).toBeGreaterThanOrEqual(before - 1000);
     const rows = await rowsOf(email);
     expect(rows.sessions).toHaveLength(1);
@@ -74,7 +78,7 @@ describe('one email reaches one Account (ADR 0047)', () => {
 
     const byGoogle = await signInWithGoogle(email);
 
-    await expect(byGoogle.me()).resolves.toEqual(codeMade);
+    await expect(byGoogle.me()).resolves.toEqual({ ...codeMade, signInMethods: ['google'] });
     expect(await rowsOf(email)).toMatchObject({
       accountRows: 1,
       sessions: [{}, {}],
@@ -357,7 +361,7 @@ describe('an Account Google made', () => {
     const byCode = await (await signInWithCode(email)).me();
     const byGoogle = await (await signInWithGoogle(email)).me();
 
-    expect(byGoogle).toEqual(byCode);
+    expect(byGoogle).toEqual({ ...byCode, signInMethods: ['google'] });
     expect(Date.parse(byCode.createdAt)).toBeGreaterThan(deleted.account?.createdAt.getTime() ?? 0);
     const created = await rowsOf(email);
     expect(created.accountRows).toBe(1);

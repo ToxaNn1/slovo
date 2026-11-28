@@ -88,6 +88,17 @@ const ServerVariablesSchema = z.object({
         .map((id) => id.trim())
         .filter((id) => id !== ''),
     ),
+  // SLOVO's Sign in with Apple key from the Apple Developer portal: the team
+  // id, the key id and the .p8 file's contents. The backend revokes SLOVO at
+  // Apple with it when an Account with Apple is deleted (App Store Review
+  // Guideline 5.1.1(v)). All three or none; unset, nothing is revoked.
+  APPLE_TEAM_ID: unsetWhenEmpty(
+    z.string().regex(/^[A-Z0-9]{10}$/, 'must be the 10-character team id'),
+  ),
+  APPLE_KEY_ID: unsetWhenEmpty(
+    z.string().regex(/^[A-Z0-9]{10}$/, 'must be the 10-character key id'),
+  ),
+  APPLE_PRIVATE_KEY: unsetWhenEmpty(z.string().min(1)),
   // Where the backend reports its unexpected failures (spec #603). Empty, or
   // unset, reports nothing; the repository holds no real DSN. Only https://,
   // so no report crosses the network in the clear.
@@ -197,6 +208,32 @@ const R2_VARIABLES = [
   'R2_ACCESS_KEY_ID',
   'R2_SECRET_ACCESS_KEY',
 ] as const;
+
+const APPLE_KEY_VARIABLES = ['APPLE_TEAM_ID', 'APPLE_KEY_ID', 'APPLE_PRIVATE_KEY'] as const;
+
+type AppleKeyVariables = Partial<Record<(typeof APPLE_KEY_VARIABLES)[number], string | undefined>>;
+
+/** Names each variable of the Apple key that is unset while another one is set. */
+function refineAppleKey(variables: AppleKeyVariables, context: z.RefinementCtx): void {
+  const unset = APPLE_KEY_VARIABLES.filter((name) => variables[name] === undefined);
+  if (unset.length === APPLE_KEY_VARIABLES.length) return;
+  for (const name of unset) {
+    context.addIssue({
+      code: 'custom',
+      path: [name],
+      message: 'is required with the other Apple key variables',
+    });
+  }
+}
+
+/** The Sign in with Apple key, not yet imported, or none while its variables are unset. */
+function appleKeyOf({ APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY }: AppleKeyVariables) {
+  return APPLE_TEAM_ID === undefined ||
+    APPLE_KEY_ID === undefined ||
+    APPLE_PRIVATE_KEY === undefined
+    ? undefined
+    : { teamId: APPLE_TEAM_ID, keyId: APPLE_KEY_ID, privateKey: APPLE_PRIVATE_KEY };
+}
 
 /** Where a development backend serves its Media Store from, MEDIA_BASE unset. */
 const DEVELOPMENT_MEDIA_BASE = 'http://localhost:8787/media';
@@ -335,6 +372,7 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
     });
   }
   refineVaultKey(variables, context);
+  refineAppleKey(variables, context);
   if (variables.DEPLOYMENT === 'staging') {
     // It reads the Media Store's public URLs only, so it needs no R2 keys.
     for (const name of STAGING_REFUSED_VARIABLES) {
@@ -367,9 +405,13 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
     RAILWAY_READ_TOKEN,
     RAILWAY_PROJECT_ID,
     RAILWAY_ENVIRONMENT_ID,
+    APPLE_TEAM_ID,
+    APPLE_KEY_ID,
+    APPLE_PRIVATE_KEY,
     ...rest
   }) => ({
     ...rest,
+    appleKey: appleKeyOf({ APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY }),
     railway: railwayOf({ RAILWAY_READ_TOKEN, RAILWAY_PROJECT_ID, RAILWAY_ENVIRONMENT_ID }),
     posthog: posthogOf({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST }),
     mediaBase: MEDIA_BASE ?? DEVELOPMENT_MEDIA_BASE,

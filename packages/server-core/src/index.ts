@@ -69,6 +69,8 @@ export {
   type PostHogPort,
   type AppleIdentity,
   type AppleTokenCheck,
+  type AppleRevocation,
+  type AppleRevoker,
   type AppleVerifier,
   type CiJob,
   type CiRun,

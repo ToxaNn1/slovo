@@ -1,6 +1,8 @@
 import { apiContract } from '@slovo/contracts/api';
-import type { Accounts } from '@slovo/server-core';
+import type { Accounts, AppleRevocation } from '@slovo/server-core';
+import type { Logger } from 'pino';
 
+import { reportOf, type ErrorReporter } from '../error-reporter';
 import { retryAfter } from '../retry-after';
 import { sessionGate, signedInRouter } from './session-gate';
 
@@ -11,6 +13,26 @@ interface AccountContext {
   readonly ip: string;
   /** The headers the answer gets (oRPC's `ResponseHeadersPlugin`). */
   readonly resHeaders?: Headers;
+  /** The request's logger, which carries its request id. */
+  readonly logger: Logger;
+  readonly requestId: string;
+  /** Where a failed Apple revocation is reported. */
+  readonly reporter: ErrorReporter;
+}
+
+/**
+ * Tells of an Apple revocation that did not happen, which held back no
+ * deletion: a warning without a Sign in with Apple key, and a report to
+ * Sentry of Apple's failure, naming no code, token or Account.
+ */
+function tellRevocation(revocation: AppleRevocation | undefined, context: AccountContext): void {
+  if (revocation === undefined || revocation.ok) return;
+  if (revocation.reason === 'not-configured') {
+    context.logger.warn('the Apple revocation was skipped: no Sign in with Apple key');
+    return;
+  }
+  context.logger.warn({ err: revocation.error }, 'the Apple revocation failed');
+  context.reporter.report(reportOf(revocation.error, context.requestId));
 }
 
 /** The Account procedures of the contract, over the server Core's Accounts. */
@@ -94,9 +116,10 @@ export function accountProcedures(accounts: Accounts) {
       }
     }),
 
-    me: account.me.use(signedIn).handler(({ context: { session } }) => ({
+    me: account.me.use(signedIn).handler(async ({ context: { session } }) => ({
       email: session.account.email,
       createdAt: session.account.createdAt.toISOString(),
+      signInMethods: [...(await accounts.signInMethodsOf(session))],
     })),
 
     signOut: account.signOut.use(signedIn).handler(async ({ context }) => {
@@ -109,8 +132,11 @@ export function accountProcedures(accounts: Accounts) {
       return {};
     }),
 
-    delete: account.delete.use(signedIn).handler(async ({ context }) => {
-      await accounts.delete(context.session);
+    delete: account.delete.use(signedIn).handler(async ({ input, context }) => {
+      tellRevocation(
+        await accounts.delete(context.session, input?.appleAuthorizationCode),
+        context,
+      );
       return {};
     }),
   });

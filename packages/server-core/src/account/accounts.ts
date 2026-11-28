@@ -6,6 +6,9 @@ import type { EditionRegistry, NotServing } from '../edition/edition-registry';
 import type {
   AccountRecord,
   AccountsPage,
+  AppleRevocation,
+  AppleRevoker,
+  RecordedSignInMethod,
   AppleVerifier,
   Authenticator,
   Clock,
@@ -119,6 +122,8 @@ export interface Accounts {
   session(
     token: string | undefined,
   ): Promise<{ readonly ok: true; readonly session: Session } | Unauthorized>;
+  /** The Google and Apple sign-in methods recorded for the Session's Account. */
+  signInMethodsOf(session: Session): Promise<readonly RecordedSignInMethod[]>;
   /** Ends the Session; the Account's other Sessions go on. */
   signOut(session: Session): Promise<void>;
   /** Ends every Session of the Session's Account, its own included. */
@@ -127,9 +132,11 @@ export interface Accounts {
    * Deletes the Session's Account at once and for good, with its Sessions,
    * sign-in methods, the records Sync keeps of it in every Edition and the
    * Sign-in codes waiting for its email. The email may then sign in to a
-   * new, empty Account.
+   * new, empty Account. With Apple's fresh authorization code it first
+   * revokes SLOVO at Apple and answers how that went; a revocation that
+   * fails holds back no deletion. Without a code it answers none.
    */
-  delete(session: Session): Promise<void>;
+  delete(session: Session, appleAuthorizationCode?: string): Promise<AppleRevocation | undefined>;
   /**
    * One page from 1 of every Account, newest first, for the owner admin alone,
    * which names Accounts other than the Session's own; a `search`
@@ -179,6 +186,7 @@ export function createAccounts({
   authenticator,
   google,
   apple,
+  appleRevoker,
   bundleId,
   mailer,
   rateLimits,
@@ -189,6 +197,8 @@ export function createAccounts({
   authenticator: Authenticator;
   google: GoogleVerifier;
   apple: AppleVerifier;
+  /** Revokes SLOVO at Apple when an Account with Sign in with Apple is deleted. */
+  appleRevoker: AppleRevoker;
   /** The app's bundle id, SLOVO's client id at Apple (ADR 0047), from the AppConfig. */
   bundleId: string;
   mailer: Mailer;
@@ -271,11 +281,27 @@ export function createAccounts({
       return { ok: true, session: { ...found, token } as Session };
     },
 
+    signInMethodsOf: async ({ account }) =>
+      (await authenticator.accountById(account.id))?.signInMethods ?? [],
+
     signOut: ({ token }) => authenticator.revoke(token),
 
     signOutEverywhere: ({ account }) => authenticator.revokeAll(account.id),
 
-    delete: ({ account }) => authenticator.delete(account),
+    async delete({ account }, appleAuthorizationCode) {
+      const revocation =
+        appleAuthorizationCode === undefined
+          ? undefined
+          : await appleRevoker
+              .revoke(appleAuthorizationCode, bundleId)
+              .catch((error: unknown): AppleRevocation => ({
+                ok: false,
+                reason: 'failed',
+                error: error instanceof Error ? error : new Error('The Apple revocation failed'),
+              }));
+      await authenticator.delete(account);
+      return revocation;
+    },
 
     list: ({ page, search }) =>
       authenticator.accounts({

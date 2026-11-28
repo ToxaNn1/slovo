@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
+import { Writable } from 'node:stream';
 
 import { describe, expect, it } from 'vitest';
 
+import { createLogger } from '../logger';
 import { passTime, testApp, testAppConfig, testEditions, UK_BUNDLE_ID } from '../test-support';
 
 const MINUTE = 60 * 1000;
@@ -13,8 +15,8 @@ const newEmail = () => `reader-${randomUUID()}@example.com`;
 const newRelayEmail = () => `${randomUUID().slice(0, 12)}@privaterelay.appleid.com`;
 
 /** The backend, and the ways of signing an email in: with Apple, with Google, or with a Sign-in code. */
-function signingIn() {
-  const backend = testApp();
+function signingIn(options: Parameters<typeof testApp>[0] = {}) {
+  const backend = testApp(options);
   const { client, clientOf, apple, google, mailer } = backend;
   const appleToken = async (email: string) =>
     (await client.account.signInWithApple({ idToken: apple.token({ email }), editionId: 'uk' }))
@@ -51,7 +53,11 @@ describe('signing in with an Apple identity token', () => {
 
     expect(session).toEqual({ token: expect.any(String) as unknown, email });
     const me = await clientOf(session.token).account.me();
-    expect(me).toEqual({ email, createdAt: expect.any(String) as unknown });
+    expect(me).toEqual({
+      email,
+      createdAt: expect.any(String) as unknown,
+      signInMethods: ['apple'],
+    });
     expect(Date.parse(me.createdAt)).toBeGreaterThanOrEqual(before - 1000);
     const rows = await rowsOf(email);
     expect(rows.sessions).toHaveLength(1);
@@ -96,7 +102,7 @@ describe('one email reaches one Account (ADR 0047)', () => {
 
     const byApple = await signInWithApple(email);
 
-    await expect(byApple.me()).resolves.toEqual(codeMade);
+    await expect(byApple.me()).resolves.toEqual({ ...codeMade, signInMethods: ['apple'] });
     expect(await rowsOf(email)).toMatchObject({
       accountRows: 1,
       sessions: [{}, {}],
@@ -127,8 +133,14 @@ describe('one email reaches one Account (ADR 0047)', () => {
     const byGoogle = await signInWithGoogle(email);
     const byAppleAgain = await signInWithApple(email);
 
-    await expect(byGoogle.me()).resolves.toEqual(appleMade);
-    await expect(byAppleAgain.me()).resolves.toEqual(appleMade);
+    // The methods come in no set order.
+    const sorted = async ({ me }: typeof byGoogle) => {
+      const account = await me();
+      return { ...account, signInMethods: [...account.signInMethods].sort() };
+    };
+    const both = { ...appleMade, signInMethods: ['apple', 'google'] };
+    expect(await sorted(byGoogle)).toEqual(both);
+    expect(await sorted(byAppleAgain)).toEqual(both);
     expect(await rowsOf(email)).toMatchObject({
       accountRows: 1,
       sessions: [{}, {}, {}],
@@ -321,5 +333,94 @@ describe('an Account Apple made', () => {
 
     expect(await rowsOf(email)).toMatchObject({ accountRows: 0, sessions: [], signInMethods: [] });
     await expect(again.me()).rejects.toMatchObject(unauthorized);
+  });
+});
+
+/** A logger that keeps what it writes, one JSON object per line. */
+function keptLogs() {
+  const lines: Record<string, unknown>[] = [];
+  const destination = new Writable({
+    write(chunk: Buffer, _encoding, done) {
+      lines.push(JSON.parse(chunk.toString()) as Record<string, unknown>);
+      done();
+    },
+  });
+  return { lines, logger: createLogger(destination) };
+}
+
+describe('deleting an Account with Sign in with Apple (App Store Review Guideline 5.1.1(v))', () => {
+  it('me names the Apple and Google sign-in methods of the Account, and none for a Sign-in code', async () => {
+    const { signInWithApple, signInWithGoogle, signInWithCode } = signingIn();
+    const email = newEmail();
+    const coded = newEmail();
+
+    await signInWithApple(email);
+    const both = await signInWithGoogle(email);
+
+    expect((await both.me()).signInMethods.toSorted()).toEqual(['apple', 'google']);
+    expect((await (await signInWithCode(coded)).me()).signInMethods).toEqual([]);
+  });
+
+  it("revokes SLOVO at Apple with the app's fresh authorization code, then deletes the Account", async () => {
+    const { signInWithApple, rowsOf, appleRevoker, reports } = signingIn();
+    const email = newEmail();
+    const phone = await signInWithApple(email);
+
+    await expect(phone.delete({ appleAuthorizationCode: 'fresh-code' })).resolves.toEqual({});
+
+    expect(appleRevoker.revoked).toEqual([{ code: 'fresh-code', bundleId: UK_BUNDLE_ID }]);
+    expect(await rowsOf(email)).toMatchObject({ accountRows: 0, sessions: [], signInMethods: [] });
+    expect(reports).toEqual([]);
+  });
+
+  it('deletes the Account when Apple refuses the code, and reports it with no personal data', async () => {
+    const { signInWithApple, rowsOf, appleRevoker, reports } = signingIn();
+    const email = newEmail();
+    const phone = await signInWithApple(email);
+    appleRevoker.fails("Apple's token endpoint answered 400 invalid_grant");
+
+    await expect(phone.delete({ appleAuthorizationCode: 'spent-code' })).resolves.toEqual({});
+
+    expect((await rowsOf(email)).accountRows).toBe(0);
+    expect(reports).toMatchObject([
+      {
+        name: 'AppleRevocationError',
+        message: "Apple's token endpoint answered 400 invalid_grant",
+      },
+    ]);
+    const reported = JSON.stringify(reports);
+    expect(reported).not.toContain('spent-code');
+    expect(reported).not.toContain(email);
+  });
+
+  it('deletes the Account with a warning when the backend has no Sign in with Apple key', async () => {
+    const { lines, logger } = keptLogs();
+    const { signInWithApple, rowsOf, appleRevoker, reports } = signingIn({ logger });
+    const email = newEmail();
+    const phone = await signInWithApple(email);
+    appleRevoker.notConfigured();
+
+    await expect(phone.delete({ appleAuthorizationCode: 'fresh-code' })).resolves.toEqual({});
+
+    expect((await rowsOf(email)).accountRows).toBe(0);
+    expect(reports).toEqual([]);
+    expect(lines).toContainEqual(
+      expect.objectContaining({
+        level: 40,
+        msg: 'the Apple revocation was skipped: no Sign in with Apple key',
+      }),
+    );
+    expect(JSON.stringify(lines)).not.toContain('fresh-code');
+  });
+
+  it('deletes an Account with no code as before, and asks Apple nothing', async () => {
+    const { signInWithCode, rowsOf, appleRevoker } = signingIn();
+    const email = newEmail();
+    const phone = await signInWithCode(email);
+
+    await expect(phone.delete()).resolves.toEqual({});
+
+    expect(appleRevoker.revoked).toEqual([]);
+    expect((await rowsOf(email)).accountRows).toBe(0);
   });
 });
