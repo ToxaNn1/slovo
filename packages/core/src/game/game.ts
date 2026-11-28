@@ -421,8 +421,9 @@ export async function openGame({
         try {
           await next();
         } catch {
-          // The write failed and the Round stays answered: «Далі» tries again.
-          changeCurrent({ ...game, banner: false });
+          // The write failed and the Round stays answered: «Далі» tries again,
+          // unless the Game was left meanwhile.
+          if (state.current === game) changeCurrent({ ...game, banner: false });
         }
       }),
   });
