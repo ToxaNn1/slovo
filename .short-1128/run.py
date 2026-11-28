@@ -60,7 +60,7 @@ def main():
             say('STUCK: needs new Recording'); sys.exit(2)
         if code != 0:
             say(f'REFUSED {n} {p["id"]}')
-            if 'shortDefinition' in text or 'nrecognized' in text or 'nknown' in text:
+            if 'shortDefinition' in text and ('nrecognized' in text or 'nknown' in text) and 'REFUSED ' not in text:
                 say('STUCK: shortDefinition looks unknown to the backend'); sys.exit(2)
 
 

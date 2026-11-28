@@ -189,3 +189,4 @@ EDIT 1686 w_mnb63h сироїдіння [0] w_mnb63h v2 content v17120 batch 517
 EDIT 1687 w_mnogvb курсистка [1] $ pnpm --filter @slovo/content content edit word w_mnogvb /home/user/slovo/.short-1128/edits/w_mnogvb.json --edition uk | $ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_mnogvb /home/user/slovo/.short-1128/edits/w_mnogvb.json --edition uk | w_mnogvb: REFUSED mixed-script (w_mnogvb shortDefinition): The word "і" stands in Cyrillic between Latin words ("і" U+0456): write each word in one script | [ELIFECYCLE] Command failed with exit code 1. | Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL |  |   × "pnpm recursive run" failed in /home/user/slovo/tools/content |  | [ELIFECYCLE] Command failed with exit code 1.
 REFUSED 1687 w_mnogvb
 STUCK: shortDefinition looks unknown to the backend
+# resumed: the stop above was a content refusal (mixed-script), not an unknown field
