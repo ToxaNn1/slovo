@@ -12,10 +12,11 @@ import Promo from '../components/Promo.astro';
 import Screens from '../components/Screens.astro';
 import WordOfDay from '../components/WordOfDay.astro';
 import Base from '../layouts/Base.astro';
+import { jsonLd } from '../json-ld';
 
 const description = 'Спочатку було слово. Потім його забули. Повертаємо.';
 // Who the site belongs to, for search engines.
-const structuredData = JSON.stringify({
+const structuredData = jsonLd({
   '@context': 'https://schema.org',
   '@graph': [
     {
