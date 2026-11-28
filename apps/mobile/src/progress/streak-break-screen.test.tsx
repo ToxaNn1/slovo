@@ -73,7 +73,7 @@ describe('the Break screen', () => {
     // 13 and 14 October, today included.
     expect(screen.getByTestId('streak-break-days-left')).toHaveTextContent('Лишилося 2 дні.');
     expect(screen.getByText('Перерва триває до 14 жовтня включно.')).toBeOnTheScreen();
-    expect(screen.getByText('Наступну перерву можна почати з 11 листопада.')).toBeOnTheScreen();
+    expect(screen.getByText('Наступну перерву можна почати з 15 жовтня.')).toBeOnTheScreen();
     expect(screen.queryByText(strings.explanation)).not.toBeOnTheScreen();
     expect(screen.queryByTestId('streak-break-waiting')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('streak-break-days')).not.toBeOnTheScreen();

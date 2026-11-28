@@ -61,7 +61,7 @@ const playing = [
   correction('c_russian01', {
     correctionType: 'russianism',
     nonStandardForm: 'приймати міри',
-    standardEquivalents: ['вживати заходів'],
+    standardEquivalents: ['вживати заходів', 'вжити заходів'],
     sentence: 'Місто Приймати Міри не поспішає.',
   }),
 ];
@@ -259,6 +259,19 @@ describe('a Round of «Впиши слово»', () => {
     await app.game.answer({ form: 'typed', text: ' ПІ́Р’Я ' });
 
     expect(current(app).round.answer).toMatchObject({ right: true });
+    expect(current(app).lives).toBe(3);
+  });
+
+  it("takes the Correction's other standard equivalent typed and shows its main one", async () => {
+    const app = await startAt('c_russian01');
+
+    await app.game.answer({ form: 'typed', text: 'Вжити заходів' });
+
+    expect(current(app).round.answer).toMatchObject({
+      typed: 'Вжити заходів',
+      expected: 'вживати заходів',
+      right: true,
+    });
     expect(current(app).lives).toBe(3);
   });
 

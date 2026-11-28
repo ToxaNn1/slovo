@@ -160,6 +160,27 @@ describe('The Correction Types', () => {
     expect(row).toMatchObject({ correction: { id: 'c_one' }, workedThrough: true });
   });
 
+  it('keeps «розібрано» of a Correction Seen while `correctionTypes` is off, for when it turns on', async () => {
+    const records = new Map<string, string>();
+    const { app, time } = await run({ records, on: ['wordOfTheDay', 'corrections'] });
+    while (!app.feed.cards.some(({ entryId }) => entryId === 'w_one')) await app.feed.next();
+    const wordAt = app.feed.cards.findIndex(({ entryId }) => entryId === 'w_one');
+    const position = await app.feed.openLinkedCorrection(wordAt, 'c_one');
+    if (position === undefined) throw new Error('The Correction did not open');
+
+    await app.feed.show(position);
+    time.advance(SEEN_DWELL_MS);
+    await app.feed.show(undefined);
+    await settle();
+    expect(app.correctionTypes.tiles).toEqual([]);
+
+    const { app: later } = await run({ records });
+    expect(later.correctionTypes.tiles).toEqual([
+      { type: 'surzhyk', total: 1, workedThrough: 1 },
+      { type: 'calque', total: 2, workedThrough: 0 },
+    ]);
+  });
+
   it('reads nothing when a Word is Seen, and a failed read when a Correction is Seen stays inside', async () => {
     const memory = createMemoryUserStatePort();
     let reads = 0;

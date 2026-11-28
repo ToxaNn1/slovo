@@ -144,14 +144,14 @@ export function createRoundPlanner({
     const eligible = ofKind.entries;
     const met = new Set(history.list.map(({ entryId }) => entryId));
     const inHistory = eligible.filter((entry) => met.has(entry.id));
-    /** Whether the mode can ask about the Entry: it makes a Round of it. */
+    /** Whether the mode can ask about the Entry: it makes a Round of it, every other eligible Entry free to share it. */
     const askable = (answer: AskableEntry) =>
       mode.buildRound({
         answer,
         eligible,
-        next: [],
+        next: eligible.filter((entry) => entry !== answer),
         weakNext: new Set(),
-        upTo: 1,
+        upTo: count,
         round: from,
         random,
         edition,

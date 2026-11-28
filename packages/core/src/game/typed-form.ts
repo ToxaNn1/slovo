@@ -6,6 +6,11 @@ export interface TypedContent {
   /** The text to type, compared by its Comparison Key as a typed answer. */
   readonly expected: string;
   /**
+   * Other texts that are right too when typed, such as a Correction's other
+   * standard equivalents; none when left out. The Round still shows `expected`.
+   */
+  readonly alsoRight?: readonly string[];
+  /**
    * Whether the text shows as blanks, one per character, which «Відкрити
    * літеру» opens; the places of the characters that stay in place, such
    * as an apostrophe, show them from the start. No blanks when left out.
@@ -53,7 +58,7 @@ const isEmpty = (blank: RoundBlank) => !('mark' in blank) && blank.letter === un
 const canOpenLetterIn = (blanks: readonly RoundBlank[] | undefined) =>
   blanks !== undefined && blanks.filter(isEmpty).length > 1;
 
-/** The typed text: any text that compares as the answer is right. */
+/** The typed text: any text that compares as the answer, or as one also right, is right. */
 export const typedForm: AnswerForm<TypedContent, TypedRound, TypedGiven, TypedAnswer> = {
   bannerAfterAnswer: true,
   wellFormed: ({ expected }) => expected.length > 0,
@@ -68,13 +73,13 @@ export const typedForm: AnswerForm<TypedContent, TypedRound, TypedGiven, TypedAn
       );
     return { form: 'typed', blanks, canOpenLetter: canOpenLetterIn(blanks) };
   },
-  judge({ expected, sheet }, _shown, { text }, comparison) {
+  judge({ expected, alsoRight = [], sheet }, _shown, { text }, comparison) {
     return {
       answer: {
         form: 'typed',
         typed: text,
         expected,
-        right: comparison.same(text, expected, 'typedAnswer'),
+        right: [expected, ...alsoRight].some((one) => comparison.same(text, one, 'typedAnswer')),
         sheet,
       },
     };

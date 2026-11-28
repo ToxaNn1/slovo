@@ -378,6 +378,34 @@ describe('the grids of «Пари»', () => {
     expect(round && entriesIn(round)).toEqual([n02.id, n07.id, n01.id, n06.id]);
   });
 
+  it('never builds a grid of fewer than 2 pairs, nor one that leaves a single Round', () => {
+    const [n01, n02, n03, n04, n05, n06] = words;
+    if (!n01 || !n02 || !n03 || !n04 || !n05 || !n06) throw new Error('The pack lost a Word');
+    const gridAbout = (next: readonly Word[], upTo: number) => {
+      const round = pairsMode.buildRound({
+        answer: n01,
+        eligible: words,
+        next,
+        weakNext: new Set(),
+        upTo,
+        round: 1,
+        random: seededRandom(1),
+        edition: testEdition(),
+        comparison: testComparison,
+      });
+      return round && entriesIn(round);
+    };
+
+    // One Round left, or no Word that may share the grid: no grid of one pair.
+    expect(gridAbout([n02, n06], 1)).toBeUndefined();
+    expect(gridAbout([], GAME_ROUNDS)).toBeUndefined();
+    // Five Rounds left: a grid of 3, so that the last grid holds 2.
+    expect(gridAbout([n02, n04, n06, n03], 5)).toEqual([n01.id, n02.id, n04.id]);
+    // Three Rounds left and only one Word to share the grid: it would leave one Round.
+    expect(gridAbout([n02], 3)).toBeUndefined();
+    expect(gridAbout([n02], 2)).toEqual([n01.id, n02.id]);
+  });
+
   it('keeps the primary Definition of a Word that has a Short Definition (ADR 0211)', async () => {
     const short = words.map((entry) => ({
       ...entry,

@@ -387,7 +387,8 @@ describe('the Break', () => {
       kind: 'running',
       firstDay: '2026-10-28',
       lastDay: '2026-11-01',
-      nextStart: '2026-11-27',
+      // The day after it: 5 Break days leave 2 in the 30 days.
+      nextStart: '2026-11-02',
       // 30 October to 1 November, today included.
       daysLeft: 3,
     });
@@ -440,7 +441,7 @@ describe('the Break', () => {
     expect(reset.app.progress.state).toMatchObject({ streak: 0, bestStreak: 4 });
   });
 
-  it('refuses a second Break within 30 days once its 7 days are spent and allows one from the 30th day', async () => {
+  it('refuses a second Break within 30 days once its 7 days are spent and allows one as the first days leave the 30 days', async () => {
     const records = earned(new Map<string, string>(), 5, ...october(10, 13));
     await (await openOn(records, '2026-10-14', BREAK_ON)).app.streakBreak.start(3);
     await (await openOn(records, '2026-10-20', BREAK_ON)).app.streakBreak.start(4);
@@ -458,10 +459,38 @@ describe('the Break', () => {
     expect(running.app.streakBreak.state).toMatchObject({ kind: 'running', lastDay: '2026-10-16' });
     expect(await running.app.streakBreak.start(1)).toBe('refused');
 
+    // 14 October has left the 30 days; 15, 16 and 20 to 23 October leave them as a Break of 3 runs.
     const later = await openOn(records, '2026-11-13', BREAK_ON);
-    expect(later.app.streakBreak.state).toEqual({ kind: 'available', longest: 7 });
+    expect(later.app.streakBreak.state).toEqual({ kind: 'available', longest: 3 });
+    expect(await later.app.streakBreak.start(4)).toBe('refused');
     expect(await later.app.streakBreak.start(1)).toBe('started');
     expect(breaks(records)).toHaveLength(3);
+  });
+
+  it('holds 7 Break days in any 30 days in a row, so a Break across the 30 days from the first one runs no further', async () => {
+    const records = earned(new Map<string, string>(), 5, ...october(10, 13));
+    await (await openOn(records, '2026-10-14', BREAK_ON)).app.streakBreak.start(1);
+    // The 30th day from the first Break: 14 October is out of the 30 days that end on the Break's last day.
+    const edge = await openOn(records, '2026-11-12', BREAK_ON);
+    expect(edge.app.streakBreak.state).toEqual({ kind: 'available', longest: 7 });
+    expect(await edge.app.streakBreak.start(6)).toBe('started');
+
+    const running = await openOn(records, '2026-11-13', BREAK_ON);
+    // The next Break can start the day after this one, not inside it.
+    expect(running.app.streakBreak.state).toMatchObject({
+      kind: 'running',
+      lastDay: '2026-11-17',
+      nextStart: '2026-11-18',
+    });
+
+    // 12 to 17 November are 6 of the 30 days that end on 18 November: one day is left.
+    const after = await openOn(records, '2026-11-18', BREAK_ON);
+    expect(after.app.streakBreak.state).toEqual({ kind: 'available', longest: 1 });
+    expect(await after.app.streakBreak.start(2)).toBe('refused');
+    expect(await after.app.streakBreak.start(1)).toBe('started');
+
+    const spent = await openOn(records, '2026-11-19', BREAK_ON);
+    expect(spent.app.streakBreak.state).toEqual({ kind: 'waiting', nextStart: '2026-12-12' });
   });
 
   // «Завершити перерву» ends it early and its unused days come back.

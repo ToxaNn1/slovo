@@ -13,11 +13,11 @@ import type { XpLog } from './xp-log';
 export type BreakState =
   /** The XP log or the `streakBreak` Feature Switch is off: no Break starts. */
   | { readonly kind: 'off' }
-  /** A Break of 1 to `longest` days, the Break days left in the 30 days, can start today. */
+  /** A Break of 1 to `longest` days can start today: the most that keeps every 30 days in a row at 7 Break days. */
   | { readonly kind: 'available'; readonly longest: number }
   /**
-   * A Break runs from `firstDay` up to and with `lastDay`, and the 30 days
-   * of its allowance end before `nextStart`, all `YYYY-MM-DD`; `daysLeft`
+   * A Break runs from `firstDay` up to and with `lastDay`, and the next
+   * Break can start on `nextStart`, a day after it, all `YYYY-MM-DD`; `daysLeft`
    * counts its days from today to `lastDay`, both included; `strip` holds
    * the 14 days ending the day after it (board 10, p1).
    */
@@ -29,16 +29,16 @@ export type BreakState =
       readonly daysLeft: number;
       readonly strip: readonly CalendarDay[];
     }
-  /** The Break days of the 30 days are spent; the next Break can start on `nextStart`, `YYYY-MM-DD`. */
+  /** The Break days of the 30 days that end today are spent; the next Break can start on `nextStart`, `YYYY-MM-DD`. */
   | { readonly kind: 'waiting'; readonly nextStart: string };
 
 /**
  * The Break (ADR 0066): the reader pauses the Streak from today, free,
- * for up to 7 Break days in the 30 days from the first Break of them, and may
- * end it early. Starting one appends a Break-started record to the XP log;
+ * for up to 7 Break days in any 30 days in a row, so no Break runs past them
+ * across the edge of a month's allowance, and may end it early. Starting one appends a Break-started record to the XP log;
  * its days keep the Streak and add nothing to it. Ending one appends a
  * Break-ended record: today and the days after it count again, and the days
- * not used come back for a later Break in the same 30 days.
+ * not used come back for a later Break.
  */
 export interface StreakBreak {
   /** Whether a Break can start today, on today's local date. */
@@ -80,38 +80,44 @@ export function openStreakBreak({
     const today = parseLocalDate(todayKey(clock));
     const todayNumber = dayNumber(today);
     const after = (days: number) => dateKeyOf(localDateAfter(today, days));
-    // The Breaks in order, each 30 days of allowance opened by the first Break after the last ones.
     const ordered = [...xpLog.days.breaks]
       .map(([start, days]) => ({ start: dayNumber(parseLocalDate(start)), days }))
-      .filter(({ start }) => Number.isFinite(start))
-      .sort((one, other) => one.start - other.start);
-    let window: { start: number; used: number } | undefined;
-    /** The first day of the 30 days each Break counts in, in the order of `ordered`. */
-    const windowStarts: number[] = [];
-    for (const { start, days } of ordered) {
-      if (window === undefined || start >= window.start + BREAK_INTERVAL_DAYS) {
-        window = { start, used: 0 };
+      .filter(({ start }) => Number.isFinite(start));
+    const breakDays = new Set(
+      ordered.flatMap(({ start, days }) => Array.from({ length: days }, (_, day) => start + day)),
+    );
+    if (breakDays.size === 0) return { kind: 'available', longest: BREAK_DAYS_AT_MOST };
+    /** Whether a Break of `days` from the day keeps every 30 days in a row at `BREAK_DAYS_AT_MOST` Break days at most. */
+    function fits(first: number, days: number): boolean {
+      for (let from = first - BREAK_INTERVAL_DAYS + 1; from < first + days; from += 1) {
+        let count = 0;
+        for (let day = from; day < from + BREAK_INTERVAL_DAYS; day += 1) {
+          if (breakDays.has(day) || (day >= first && day < first + days)) count += 1;
+        }
+        if (count > BREAK_DAYS_AT_MOST) return false;
       }
-      window.used += days;
-      windowStarts.push(window.start);
+      return true;
     }
-    if (window === undefined) return { kind: 'available', longest: BREAK_DAYS_AT_MOST };
-    const nextStartOf = (windowStart: number) =>
-      after(windowStart + BREAK_INTERVAL_DAYS - todayNumber);
-    const covering = ordered.findIndex(
+    const lastBreakDay = Math.max(...breakDays);
+    /** The first day from `from` on which a Break of one day fits: 30 days after the last Break day at the latest. */
+    function nextStartFrom(from: number): string {
+      let day = from;
+      while (breakDays.has(day) || !fits(day, 1)) day += 1;
+      return after(day - todayNumber);
+    }
+    const running = ordered.find(
       ({ start, days }) => todayNumber >= start && todayNumber < start + days,
     );
-    const running = ordered[covering];
-    const runningWindow = windowStarts[covering];
-    if (running !== undefined && runningWindow !== undefined) {
+    if (running !== undefined) {
       const { active, frozen, breaks } = xpLog.days;
-      const last = after(running.start + running.days - 1 - todayNumber);
+      const lastDayNumber = running.start + running.days - 1;
+      const last = after(lastDayNumber - todayNumber);
       return {
         kind: 'running',
         firstDay: after(running.start - todayNumber),
         lastDay: last,
-        nextStart: nextStartOf(runningWindow),
-        daysLeft: running.start + running.days - todayNumber,
+        nextStart: nextStartFrom(lastDayNumber + 1),
+        daysLeft: lastDayNumber + 1 - todayNumber,
         strip: breakStrip({
           activeDays: active,
           frozen,
@@ -121,14 +127,14 @@ export function openStreakBreak({
         }),
       };
     }
-    const nextStart = nextStartOf(window.start);
-    // A Break that starts after today, from a clock that moved back, waits like a spent allowance.
-    if (ordered.some(({ start }) => start > todayNumber)) return { kind: 'waiting', nextStart };
-    if (todayNumber >= window.start + BREAK_INTERVAL_DAYS) {
-      return { kind: 'available', longest: BREAK_DAYS_AT_MOST };
-    }
-    const left = BREAK_DAYS_AT_MOST - window.used;
-    return left > 0 ? { kind: 'available', longest: left } : { kind: 'waiting', nextStart };
+    // A Break that starts after today, from a clock that moved back, waits for the day after it.
+    if (lastBreakDay > todayNumber)
+      return { kind: 'waiting', nextStart: nextStartFrom(lastBreakDay + 1) };
+    let longest = 0;
+    while (longest < BREAK_DAYS_AT_MOST && fits(todayNumber, longest + 1)) longest += 1;
+    return longest > 0
+      ? { kind: 'available', longest }
+      : { kind: 'waiting', nextStart: nextStartFrom(todayNumber + 1) };
   }
 
   async function start(days: number): Promise<'started' | 'refused'> {

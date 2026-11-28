@@ -88,8 +88,10 @@ describe('opening an Entry from the widget', () => {
 
     expect(card).toMatchObject({ kind: 'correction' });
     expect(card?.entryId).toBe('c_one');
+    // A Seen Correction is «розібрано» too, whatever the `correctionTypes` switch.
     expect(keysSince(writes, before)).toEqual([
       ['activeDays.2026-10-12', 'feed.seen.c_one', 'history.c_one'],
+      ['correctionsWorkedThrough.c_one'],
     ]);
     expect(app.history.list.map(({ entryId, wordOfTheDay }) => [entryId, wordOfTheDay])).toEqual([
       ['c_one', false],
