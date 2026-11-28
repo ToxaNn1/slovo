@@ -23,6 +23,7 @@ import type { XpLog } from '../progress/xp-log';
 import {
   sharesStatistics,
   statisticsConsentPending,
+  statisticsGoverned,
   type StatisticsConsent,
 } from '../statistics/statistics-consent';
 import {
@@ -234,6 +235,7 @@ export async function openOnboarding({
   const statisticsLine =
     !asksConsent &&
     edition.isFeatureEnabled('statisticsConsent') &&
+    statisticsGoverned(edition) &&
     (await sharesStatistics(userState, consent));
   const steps = STEPS.filter((kind) => {
     const feature = STEP_SWITCH[kind];

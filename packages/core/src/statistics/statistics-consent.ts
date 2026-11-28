@@ -42,6 +42,15 @@ export function statisticsConsentFor(
 }
 
 /**
+ * Whether anything «Ділитися анонімною статистикою» governs is on: Analytics
+ * or the Community Counters (ADR 0068). Without either, «Конфіденційність»
+ * shows no switch and nothing points the reader at it.
+ */
+export function statisticsGoverned(edition: Pick<Edition, 'isFeatureEnabled'>): boolean {
+  return edition.isFeatureEnabled('analytics') || edition.isFeatureEnabled('communityCounters');
+}
+
+/**
  * Whether «Ділитися анонімною статистикою» is on in effect, the one answer
  * every sender of statistics asks (ADR 0068, 0210): the reader's choice, else
  * off for a reader to ask and on for any other. Without a `consent` no one is

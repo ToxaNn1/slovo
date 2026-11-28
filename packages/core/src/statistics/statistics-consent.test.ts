@@ -310,4 +310,23 @@ describe('Statistics consent', () => {
 
     expect(statisticsLine(reader)).toBe(false);
   });
+
+  it('says nothing of the statistics on the welcome while nothing it governs is on', async () => {
+    const reader = await run({
+      region: 'UA',
+      on: ALL_ON.filter((feature) => feature !== 'analytics' && feature !== 'communityCounters'),
+    });
+
+    expect(statisticsLine(reader)).toBe(false);
+  });
+
+  it.each(['analytics', 'communityCounters'] as const)(
+    'keeps the line on the welcome while only %s of what it governs is on',
+    async (kept) => {
+      const gone = kept === 'analytics' ? 'communityCounters' : 'analytics';
+      const reader = await run({ region: 'UA', on: ALL_ON.filter((feature) => feature !== gone) });
+
+      expect(statisticsLine(reader)).toBe(true);
+    },
+  );
 });
