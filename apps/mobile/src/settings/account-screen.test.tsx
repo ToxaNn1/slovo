@@ -355,6 +355,7 @@ describe('«Увійти через Apple» on the SLOVO ID screen', () => {
         shown += 1;
         return new Promise(() => undefined);
       },
+      authorize: () => Promise.resolve({ ok: false, reason: 'unavailable' }),
     };
     await renderScreen({ appleSheet });
 

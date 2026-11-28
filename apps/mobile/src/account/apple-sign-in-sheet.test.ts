@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { createAppleSignInSheet, type AppleAuthenticationModule } from './apple-sign-in-sheet';
+import {
+  createAppleSignInSheet,
+  noAppleSignInSheet,
+  type AppleAuthenticationModule,
+} from './apple-sign-in-sheet';
 
 /** A rejection of Expo's Apple authentication module, with the code it names. */
 const moduleError = (code: string) => Object.assign(new Error(code), { code });
@@ -62,6 +66,65 @@ describe("Apple's own sign-in sheet behind «Увійти через Apple»", (
     await expect(createAppleSignInSheet(module).signIn()).resolves.toEqual({
       ok: false,
       reason: 'unexpected',
+    });
+  });
+});
+
+describe("Apple's sheet again before an Account with Apple is deleted", () => {
+  it("hands the Account Apple's fresh authorization code, asking for nothing more", async () => {
+    const { module, asked } = appleModule(() =>
+      Promise.resolve({
+        user: '001234.abc',
+        identityToken: 'token',
+        authorizationCode: 'fresh-code',
+      }),
+    );
+
+    await expect(createAppleSignInSheet(module).authorize()).resolves.toEqual({
+      ok: true,
+      authorizationCode: 'fresh-code',
+    });
+    expect(asked).toEqual([{ requestedScopes: [] }]);
+  });
+
+  it('answers cancelled when the reader dismisses the sheet', async () => {
+    const { module } = appleModule(() => Promise.reject(moduleError('ERR_REQUEST_CANCELED')));
+
+    await expect(createAppleSignInSheet(module).authorize()).resolves.toEqual({
+      ok: false,
+      reason: 'cancelled',
+    });
+  });
+
+  it('answers unavailable on a device with no Apple sheet', async () => {
+    const { module } = appleModule(() => Promise.reject(moduleError('ERR_UNAVAILABLE')));
+
+    await expect(createAppleSignInSheet(module).authorize()).resolves.toEqual({
+      ok: false,
+      reason: 'unavailable',
+    });
+  });
+
+  it('answers unexpected when the sheet fails otherwise, or Apple hands out no code', async () => {
+    const failing = appleModule(() => Promise.reject(moduleError('ERR_REQUEST_FAILED')));
+    const codeless = appleModule(() =>
+      Promise.resolve({ user: '001234.abc', identityToken: 'token', authorizationCode: null }),
+    );
+
+    await expect(createAppleSignInSheet(failing.module).authorize()).resolves.toEqual({
+      ok: false,
+      reason: 'unexpected',
+    });
+    await expect(createAppleSignInSheet(codeless.module).authorize()).resolves.toEqual({
+      ok: false,
+      reason: 'unexpected',
+    });
+  });
+
+  it('answers unavailable in a build without the module', async () => {
+    await expect(noAppleSignInSheet.authorize()).resolves.toEqual({
+      ok: false,
+      reason: 'unavailable',
     });
   });
 });
