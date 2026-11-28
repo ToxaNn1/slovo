@@ -21,19 +21,33 @@ const mayPass: ReadonlySet<string> = new Set<RequestFailure['reason']>(['offline
  * tries it again, at most `REQUEST_RETRIES` times, and answers the last
  * answer. The waits back off exponentially with jitter: before the nth try
  * again it waits between half and all of 1 s times 2ⁿ⁻¹, drawn from `random`,
- * through `schedule`. Any other answer comes back at once.
+ * through `schedule`. Any other answer comes back at once. Once `stopped`
+ * settles, as a closed composition's does, a wait ends and the last answer
+ * comes back: a `schedule` that stops never runs what waits on it.
  */
 export async function withRetries<A extends Answer>(
   request: () => Promise<A>,
-  { schedule, random }: { schedule: Schedule; random: Random },
+  {
+    schedule,
+    random,
+    stopped,
+  }: { schedule: Schedule; random: Random; stopped?: Promise<void> | undefined },
 ): Promise<A> {
+  const ended = stopped?.then(() => 'stopped' as const);
   for (let retry = 0; ; retry += 1) {
     const answer = await request();
     const reply: Answer = answer;
     if (reply.ok || !mayPass.has(reply.reason) || retry === REQUEST_RETRIES) return answer;
     const longest = FIRST_RETRY_DELAY * 2 ** retry;
-    await new Promise<void>((resolve) => {
-      schedule(resolve, (longest * (1 + random.next())) / 2);
+    const waited = new Promise<'waited'>((resolve) => {
+      schedule(
+        () => {
+          resolve('waited');
+        },
+        (longest * (1 + random.next())) / 2,
+      );
     });
+    if ((await (ended === undefined ? waited : Promise.race([waited, ended]))) === 'stopped')
+      return answer;
   }
 }

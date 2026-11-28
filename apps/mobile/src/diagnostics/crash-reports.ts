@@ -48,8 +48,9 @@ function loadSentry(): CrashReportsSdk {
  * Starts reporting crashes and unhandled errors to Sentry, once, at launch.
  * Without a DSN (`EXPO_PUBLIC_SENTRY_DSN` in the build's environment) it
  * starts nothing and the app runs as before. Sentry gets no personal data: no
- * default PII, user, IP address, email or Account id, no breadcrumbs, and no
- * performance tracing or session replay.
+ * default PII, user, IP address, email or Account id, no breadcrumbs, no
+ * release-health sessions (a launch ping per install), and no performance
+ * tracing or session replay.
  */
 export function startCrashReports(dsn: string | undefined, load = loadSentry): void {
   if (dsn === undefined || dsn === '') return;
@@ -60,6 +61,7 @@ export function startCrashReports(dsn: string | undefined, load = loadSentry): v
     sendDefaultPii: false,
     maxBreadcrumbs: 0,
     beforeBreadcrumb: () => null,
+    enableAutoSessionTracking: false,
     enableAutoPerformanceTracing: false,
     enableUserInteractionTracing: false,
     attachScreenshot: false,

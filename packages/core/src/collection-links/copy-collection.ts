@@ -63,6 +63,7 @@ export function createCollectionLinkCopy({
   collections,
   schedule,
   random,
+  stopped,
 }: {
   backend: Pick<Backend, 'collectionLinks'> | undefined;
   /** The Edition as the app runs it, with each Feature Switch at its effective value. */
@@ -71,6 +72,8 @@ export function createCollectionLinkCopy({
   collections: Pick<Collections, 'createCopy'>;
   schedule: Schedule | undefined;
   random: Random;
+  /** Settles once the composition closes: a request waiting to try again answers then. */
+  stopped?: Promise<void>;
 }): CollectionLinkCopy {
   const api = backend === undefined ? undefined : collectionLinkRequests(backend);
   return {
@@ -82,7 +85,7 @@ export function createCollectionLinkCopy({
       const read = () => api.read(id.data);
       const answer = await (schedule === undefined
         ? read()
-        : withRetries(read, { schedule, random }));
+        : withRetries(read, { schedule, random, stopped }));
       if (!answer.ok)
         return offlineFor.has(answer.reason) ? { ok: false, reason: 'offline' } : UNAVAILABLE;
       const { link } = answer;

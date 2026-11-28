@@ -92,6 +92,13 @@ describe('The Word of the Day archive', () => {
     expect(seenWrite?.get('wordOfTheDayArchive.2026-10-26')).toBe(JSON.stringify(today));
   });
 
+  it('opens, leaving out a kept record whose id is no date', async () => {
+    const records = new Map([['wordOfTheDayArchive.oops', JSON.stringify('w_one')]]);
+    const { app } = await run({ records });
+
+    expect(app.wordOfTheDayArchive.list).toEqual([]);
+  });
+
   it('keeps nothing before the card is Seen', async () => {
     const time = fakeClock('2026-10-26T09:00:00+03:00');
     const { app, records } = await run({ clock: time.clock });

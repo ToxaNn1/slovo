@@ -80,7 +80,7 @@ _Avoid_: Inbox, moderation queue
 
 **Batch** («пачка»):
 The records one `pnpm content add|edit|flag` run adds or edits, published at once and reviewed afterwards in the Content queue; «Відкотити пачку» reverts it whole, new records to Retired and edits to their previous versions, skipping a record anyone changed after the batch (ADR 0090).
-_Avoid_: Wave (that is a retired repo process, replaced by ADR 0090), PR, commit
+_Avoid_: Wave (a content wave is many Batches, one per implementer: `docs/agents/content-wave.md`), PR, commit
 
 **Owner check**:
 A manual check the owner ticks in the Owner admin, kept in the database per version; agents add one through a command (ADR 0088).

@@ -30,16 +30,21 @@ export interface StatisticsConsent {
   asks(): boolean;
 }
 
+/** A country's two-letter code; a locale may name another region, such as `150` for Europe. */
+const COUNTRY_CODE = /^[A-Z]{2}$/;
+
 /**
  * The Statistics consent of a phone of `region`, the region the Feature
  * Switch Rules read (ADR 0089): its two-letter code, or nothing where the
- * locale names none, which counts as the EEA.
+ * locale names none. A region that is no country code is unknown, and an
+ * unknown region counts as the EEA (ADR 0210).
  */
 export function statisticsConsentFor(
   edition: Pick<Edition, 'isFeatureEnabled'>,
   region: string | undefined,
 ): StatisticsConsent {
-  const inEea = region === undefined || EEA_REGIONS.has(region.toUpperCase());
+  const code = region?.toUpperCase();
+  const inEea = code === undefined || !COUNTRY_CODE.test(code) || EEA_REGIONS.has(code);
   return { asks: () => inEea && edition.isFeatureEnabled('statisticsConsent') };
 }
 

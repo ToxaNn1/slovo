@@ -162,6 +162,15 @@ describe('Statistics consent', () => {
     expect(reader.sent()).toEqual(NOTHING);
   });
 
+  it('treats a region that is no country code as unknown, so as the EEA (ADR 0210)', async () => {
+    for (const region of ['150', '001', '419', '', 'EUR']) {
+      const reader = await run({ region });
+      expect(await steps(reader), region).toContain('statisticsConsent');
+    }
+    const outside = await run({ region: 'us' });
+    expect(await steps(outside)).not.toContain('statisticsConsent');
+  });
+
   it('turns the switch on when the reader allows, and sends from then on', async () => {
     const reader = await run({ region: 'DE' });
     await reader.app.onboarding.next();
@@ -231,6 +240,40 @@ describe('Statistics consent', () => {
 
     expect(later.sent()).toEqual(NOTHING);
     expect((await later.settings.read()).shareCounters).toBe(false);
+  });
+
+  it('keeps the switch off for a reader who left without a choice, when the switch or the region change later', async () => {
+    const leaves = {
+      'skips on the welcome': async (device: Awaited<ReturnType<typeof run>>) => {
+        await device.app.onboarding.finish();
+      },
+      'skips on the step': async (device: Awaited<ReturnType<typeof run>>) => {
+        await device.app.onboarding.next();
+        await device.app.onboarding.finish();
+      },
+      'goes on from the step': async (device: Awaited<ReturnType<typeof run>>) => {
+        await device.app.onboarding.next();
+        await device.app.onboarding.next();
+        await device.app.onboarding.finish();
+      },
+    };
+    for (const [how, leave] of Object.entries(leaves)) {
+      const records = new Map<string, string>();
+      await leave(await run({ region: 'DE', records }));
+
+      const switchedOff = await run({
+        region: 'DE',
+        records,
+        on: ALL_ON.filter((feature) => feature !== 'statisticsConsent'),
+      });
+      await switchedOff.use();
+      const moved = await run({ region: 'UA', records });
+      await moved.use();
+
+      expect(switchedOff.sent(), how).toEqual(NOTHING);
+      expect(moved.sent(), how).toEqual(NOTHING);
+      expect((await moved.settings.read()).shareCounters, how).toBe(false);
+    }
   });
 
   it('does not ask a reader outside the EEA: the switch is on and the device sends from the start', async () => {
@@ -329,4 +372,14 @@ describe('Statistics consent', () => {
       expect(statisticsLine(reader)).toBe(true);
     },
   );
+  it('does not ask an EEA reader while nothing it governs is on', async () => {
+    const nothingGoverned = ALL_ON.filter(
+      (feature) => feature !== 'analytics' && feature !== 'communityCounters',
+    );
+
+    expect(await steps(await run({ region: 'DE', on: nothingGoverned }))).not.toContain(
+      'statisticsConsent',
+    );
+    expect(await steps(await run({ region: 'DE' }))).toContain('statisticsConsent');
+  });
 });
