@@ -113,6 +113,7 @@ const wordShape = (
     .refine(hasNoRepeats, 'Linked Correction ids must not repeat')
     .default([]),
   retired: z.boolean().default(false),
+  replacedBy: WordIdSchema.optional(),
 });
 
 const wordRules = (
@@ -130,6 +131,20 @@ const wordRules = (
       code: 'custom',
       path: ['region'],
       message: 'Only a dialect Word, with the dialectal register label, carries a region',
+    });
+  }
+  if (word.replacedBy !== undefined && !word.retired) {
+    context.addIssue({
+      code: 'custom',
+      path: ['replacedBy'],
+      message: 'Only a Retired Word names the Word that replaces it',
+    });
+  }
+  if (word.replacedBy === word.id) {
+    context.addIssue({
+      code: 'custom',
+      path: ['replacedBy'],
+      message: 'A Word is not replaced by itself',
     });
   }
 };
@@ -164,6 +179,10 @@ const wordRules = (
  * is a bare file name, never a path, so it can't point outside that folder.
  *
  * `correctionIds` links the Corrections the Word is the standard form for.
+ *
+ * `replacedBy` names the Word that replaces a Retired Word, another Word of
+ * the Edition, so the reader's records move to it (ADR 0212); only a Retired
+ * Word carries one.
  *
  * List fields default to empty and `retired` to false, so authored content
  * only spells out what the sources provide. `kind` tells Entries apart;

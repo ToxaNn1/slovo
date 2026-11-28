@@ -19906,6 +19906,10 @@
                     "maximum": 9007199254740991,
                     "exclusiveMinimum": 0
                   },
+                  "replacedBy": {
+                    "type": "string",
+                    "pattern": "^w_[a-z0-9]+$"
+                  },
                   "reason": {
                     "type": "string",
                     "minLength": 1,
@@ -35949,6 +35953,10 @@
                                   "retired": {
                                     "type": "boolean",
                                     "default": false
+                                  },
+                                  "replacedBy": {
+                                    "type": "string",
+                                    "pattern": "^w_[a-z0-9]+$"
                                   }
                                 },
                                 "required": [
@@ -37141,6 +37149,10 @@
                           "retired": {
                             "type": "boolean",
                             "default": false
+                          },
+                          "replacedBy": {
+                            "type": "string",
+                            "pattern": "^w_[a-z0-9]+$"
                           }
                         },
                         "required": [

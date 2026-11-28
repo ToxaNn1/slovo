@@ -423,6 +423,8 @@ export function countingReads(content: ContentReadPort): {
     );
   }
   const counting: ContentReadPort = {
+    // Read once as the composition opens, before any feature: not one of a feature's reads.
+    listReplacedWords: () => content.listReplacedWords(),
     listCategories: () => counted(content.listCategories()),
     listCorrectionCategories: () => counted(content.listCorrectionCategories()),
     listIds,

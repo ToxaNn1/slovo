@@ -78,7 +78,8 @@ export interface KnowledgeState {
   // With the `confirmedEntries` Feature Switch off the confirmed counts are 0 and nothing is confirmed.
   /**
    * The Entries due for Review today, in no set order, for the Feed to bring
-   * back, the Game to ask and Progress to count.
+   * back, the Game to ask and Progress to count. A Retired Entry is never
+   * among them, as nothing brings it back (ADR 0212).
    */
   readonly due: readonly string[];
   /**
@@ -250,11 +251,16 @@ export async function openKnowledge({
   /** The row of each marked or confirmed Entry the Language Pack has, so the state needs no read. */
   const rowOf = new Map(await rows.rows([...records.keys(), ...confirmed.keys()]));
 
+  /** The marked Entries that are Retired: none of them is ever due for Review (ADR 0212). */
+  const retired = new Set(await rows.retired(records.keys()));
+
   /** Reads the Entry's row, once. */
   async function readRow(entryId: string): Promise<void> {
     if (rowOf.has(entryId)) return;
     const row = await rows.row(entryId);
-    if (row !== undefined) rowOf.set(entryId, row);
+    if (row === undefined) return;
+    rowOf.set(entryId, row);
+    if ((await rows.retired([entryId])).has(entryId)) retired.add(entryId);
   }
 
   /** The confirmed-Entry counts, keeping the object `had` while they are the same. */
@@ -289,7 +295,7 @@ export async function openKnowledge({
       shown.set(entryId, shownMark(record, today) ?? 'review');
       if (hiddenEntries.has(entryId)) continue;
       if (record.reviewDay !== null) reviews.push({ entryId, reviewDay: record.reviewDay });
-      if (isDue(record, today)) due.push(entryId);
+      if (isDue(record, today) && !retired.has(entryId)) due.push(entryId);
     }
     const learning = reviews
       .sort((a, b) => a.reviewDay.localeCompare(b.reviewDay))

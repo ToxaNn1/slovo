@@ -45,6 +45,7 @@ import { openHistory, type History } from './saved/history';
 import { openWordOfTheDayArchive, type WordOfTheDayArchive } from './saved/word-of-the-day-archive';
 import { openDueQuiz, type DueQuiz } from './knowledge/due-quiz';
 import { openKnowledge, type Knowledge } from './knowledge/knowledge';
+import { moveToReplacingWords } from './replaced-words/replaced-words';
 import { seededRandomOf } from './game/seeded-random';
 import { openBadges, type Badges } from './progress/badges';
 import {
@@ -436,6 +437,10 @@ export async function openComposition({
   const opened: Subject<OpenedEntry> = createSubject();
   const dayTurned: Subject<LocalDate> = createSubject();
   const returned: Subject<void> = createSubject();
+  // Before any module reads the user state: the records of a Retired Word move
+  // to the Word that replaces it (ADR 0212). The composition opens after the
+  // pack does, after each Patch and after each sync that wrote, so each runs it.
+  await moveToReplacingWords({ content, userState });
   // The Entries read the reader's choices live; the Mix opens before the
   // Feed, whose turns follow its kind weights.
   const { entries, rows, mix, rarityRange, hiddenEntries } = await openEligibility({
