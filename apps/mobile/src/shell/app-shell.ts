@@ -206,8 +206,12 @@ export function createShell(
     // The opening that failed under it has logged why.
     { onError: () => undefined },
   );
-  // The same region the Rules read; none counts as the EEA (ADR 0210).
-  const consent = statisticsConsentFor(editionInEffect, phoneRegion());
+  // The same region the Rules read, none counting as the EEA (ADR 0210), and the
+  // time zone the device is in (ADR 0212); both stay on the phone.
+  const consent = statisticsConsentFor(editionInEffect, {
+    region: phoneRegion(),
+    timeZone: sources.clock.timeZone(),
+  });
   const ports = openOnce<DevicePorts>(
     async () => {
       // Without the Install id there are no Analytics.

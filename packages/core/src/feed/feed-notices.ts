@@ -93,12 +93,10 @@ export function noticesOf(content: FeedNoticeContent): readonly FeedNotice[] {
 
 /**
  * What gives the Feed Notices another feature makes for a local day, in any
- * order, for the card after the Entry `after`, if one comes before it: the
- * reader reaches that card only by leaving the Entry, which so becomes Seen.
- * It only reads.
+ * order. It only reads.
  */
 export interface FeedNotices {
-  forDay(day: LocalDate, after?: string): Promise<readonly FeedNoticeContent[]>;
+  forDay(day: LocalDate): Promise<readonly FeedNoticeContent[]>;
 }
 
 /** No Feed Notice on any day, as long as no feature makes one. */
@@ -110,13 +108,13 @@ export const noFeedNotices: FeedNotices = { forDay: () => Promise.resolve([]) };
  */
 export interface FeedNoticeQueue {
   /**
-   * The first Feed Notice of the local day `day`, for the card after the
-   * Entry `after`, that is neither closed for the day nor among `inSession`,
-   * the Feed Notices of the day the Feed shows already. It only reads.
+   * The first Feed Notice of the local day `day` that is neither closed for
+   * the day nor among `inSession`, the Feed Notices of the day the Feed shows
+   * already. It reads what is Seen so far and predicts nothing: the Entry on
+   * screen counts once the reader leaves it Seen. It only reads.
    */
   nextFor(
     day: LocalDate,
-    after: string | undefined,
     inSession: ReadonlySet<FeedNotice>,
   ): Promise<FeedNoticeContent | undefined>;
   /** Keeps that the Feed shows `content` on the local day `day`: the offer to save progress counts its day. */
@@ -158,11 +156,8 @@ const GOAL_REACHED_WORDS = 3;
 /** The most days the save-progress Feed Notice comes on. */
 const SAVE_PROGRESS_MOST_DAYS = 2;
 
-/** A Feed Notice the Core makes: what it shows on the local day `day` for the card after the Entry `after`, if it comes. */
-type NoticeRule = (
-  day: LocalDate,
-  after: string | undefined,
-) => Promise<FeedNoticeContent | undefined>;
+/** A Feed Notice the Core makes: what it shows on the local day `day`, if it comes. */
+type NoticeRule = (day: LocalDate) => Promise<FeedNoticeContent | undefined>;
 
 /** The change that keeps the Feed Notices closed on the local day `date` as `update` leaves them. */
 async function closedChange(
@@ -349,10 +344,10 @@ export function openFeedNotices({
 
   /**
    * «Може, на сьогодні досить?» (ADR 0066): once the distinct Entries Seen on
-   * the local day, the Word of the Day and the Entry the card follows
-   * included, reach 50. It has no setting and never locks the Feed.
+   * the local day, the Word of the Day included, reach 50. It has no setting
+   * and never locks the Feed.
    */
-  const enoughForToday: NoticeRule = (day, after) => {
+  const enoughForToday: NoticeRule = (day) => {
     if (!on('enoughForToday')) return Promise.resolve(undefined);
     const date = dateKeyOf(day);
     const seen = new Set(
@@ -360,35 +355,27 @@ export function openFeedNotices({
         dateKeyOf(localDayOf(seenAt, clock).date) === date ? [entryId] : [],
       ),
     );
-    if (after !== undefined) seen.add(after);
     return Promise.resolve(
       seen.size >= ENOUGH_FOR_TODAY_SEEN ? { notice: 'enoughForToday' } : undefined,
     );
   };
 
   /**
-   * «Ціль дня виконано!»: once today's Daily Goal is met, or is
-   * met by the Word the card follows, which the reader leaves to reach it;
-   * closed, it is gone for the day, and the goal is met once a day. None
-   * while the reader hides the counters («Без лічильників», ADR 0066).
+   * «Ціль дня виконано!»: once today's Daily Goal is met; closed, it is gone
+   * for the day, and the goal is met once a day. None while the reader hides
+   * the counters («Без лічильників», ADR 0066).
    */
-  const goalReached: NoticeRule = async (day, after) => {
+  const goalReached: NoticeRule = async (day) => {
     const goal = xpLog.state.dailyGoal;
     if (!on('goalReachedCard') || goal === null) return undefined;
-    if ((await userState.read(noCounters)) === true) return undefined;
+    if (!goal.met || (await userState.read(noCounters)) === true) return undefined;
     const date = dateKeyOf(day);
     const today = history.list
       .filter(({ seenAt }) => dateKeyOf(localDayOf(seenAt, clock).date) === date)
       .sort((one, other) => one.seenAt.getTime() - other.seenAt.getTime())
       .map(({ entryId }) => entryId);
-    const next = after === undefined || today.includes(after) ? undefined : after;
-    const metNext =
-      next !== undefined &&
-      goal.seen + 1 >= goal.goal &&
-      (await entries.get(next))?.kind === 'word';
-    if (!goal.met && !metNext) return undefined;
     const words: string[] = [];
-    for (const id of next === undefined ? today : [...today, next]) {
+    for (const id of today) {
       if (words.length === GOAL_REACHED_WORDS) break;
       const entry = await entries.get(id);
       if (entry?.kind === 'word') words.push(entry.lemma);
@@ -407,10 +394,10 @@ export function openFeedNotices({
   ];
 
   return {
-    async nextFor(day, after, inSession) {
+    async nextFor(day, inSession) {
       const [made, given, closed] = await Promise.all([
-        Promise.all(rules.map((rule) => rule(day, after))),
-        Promise.all(sources.map((source) => source.forDay(day, after))),
+        Promise.all(rules.map((rule) => rule(day))),
+        Promise.all(sources.map((source) => source.forDay(day))),
         userState.read(feedNoticesClosed),
       ]);
       const date = dateKeyOf(day);

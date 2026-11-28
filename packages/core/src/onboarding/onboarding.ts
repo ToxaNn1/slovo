@@ -177,7 +177,28 @@ export interface Onboarding {
   subscribe(listener: () => void): () => void;
 }
 
-const { onboardingFinished, firstWeekFrom, shareCounters } = userStateRecords;
+const { onboardingFinished, firstWeekFrom, shareCounters, statisticsConsentDue } = userStateRecords;
+
+/**
+ * Settles once the Statistics consent of a reader who finished the onboarding
+ * before ADR 0210 with no choice kept (ADR 0212): one this device would ask
+ * keeps «Ділитися анонімною статистикою» off until they turn it on in
+ * «Конфіденційність»; any other keeps the switch on, as before. The mark goes
+ * either way, so a later trip changes nothing.
+ */
+async function settleStatisticsConsent(
+  userState: UserState,
+  consent: StatisticsConsent | undefined,
+): Promise<void> {
+  if ((await userState.read(statisticsConsentDue)) !== true) return;
+  const keptOff = consent?.asks() === true && (await userState.read(shareCounters)) === undefined;
+  await userState.write(
+    new Map([
+      ...statisticsConsentDue.change(undefined),
+      ...(keptOff ? shareCounters.change(false) : []),
+    ]),
+  );
+}
 
 /**
  * Opens the onboarding over the user state, for the Core composition, once
@@ -221,6 +242,7 @@ export async function openOnboarding({
 }): Promise<Onboarding> {
   const subscribers = createSubscribers();
   const finished = await userState.read(onboardingFinished);
+  await settleStatisticsConsent(userState, consent);
   const { questionnaire, onboardingNotificationTimes } = edition;
   const offeredTimes = OFFERED.map((bucket) => onboardingNotificationTimes[bucket]);
   /** The bucket a time chosen on «Коли нагадати?» is counted in; nothing is `none`. */

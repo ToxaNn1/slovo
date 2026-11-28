@@ -399,7 +399,7 @@ export async function openFeed({
         card.kind === 'notice' && dateKeyOf(card.day) === date ? noticesOf(card) : [],
       ),
     );
-    const content = await notices.nextFor(day, session.cards.at(-1)?.entryId, inSession);
+    const content = await notices.nextFor(day, inSession);
     if (content === undefined) return undefined;
     await notices.shown(content, day);
     const card: FeedCard = { ...content, kind: 'notice', day };

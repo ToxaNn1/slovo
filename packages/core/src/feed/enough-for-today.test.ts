@@ -62,17 +62,33 @@ async function readOn(
 
 // Spec #1358, ticket #1369, ADR 0066: «Може, на сьогодні досить?» after 50 distinct Entries Seen on the local day.
 describe('«Може, на сьогодні досить?»', () => {
-  it('comes as the card after the 50th distinct Entry Seen today, the Word of the Day included', async () => {
+  it('comes one card after the 50th distinct Entry Seen today, the Word of the Day included', async () => {
     const app = await run({ at: dayOne });
 
-    // 49 cards on screen, the Word of the Day first: 48 Seen, the 49th on screen.
-    expect(await readOn(app, 0, 49)).toBeUndefined();
+    // 50 cards on screen, the Word of the Day first: 49 Seen, the 50th on screen.
+    expect(await readOn(app, 0, 50)).toBeUndefined();
     const cards = app.feed.cards;
     expect(cards[0]?.kind === 'word' && cards[0].wordOfTheDay !== undefined).toBe(true);
 
-    // The 50th on screen: the card after it is the Feed Notice.
+    // Leaving the 50th makes it Seen: the card after the one now on screen is the Feed Notice.
+    await app.feed.show(50);
+    expect(app.feed.cards.findIndex(isEnough)).toBe(51);
+  });
+
+  it('never counts an Entry swiped away before it is Seen', async () => {
+    const app = await run({ at: dayOne });
+    expect(await readOn(app, 0, 49)).toBeUndefined();
+
+    // The 50th swiped away after 100 ms: still 49 Seen.
     await app.feed.show(49);
-    expect(app.feed.cards.findIndex(isEnough)).toBe(50);
+    app.advance(100);
+    await app.feed.show(50);
+    expect(app.feed.cards.findIndex(isEnough)).toBe(-1);
+
+    // The next one read and left is the 50th Seen.
+    app.advance(1000);
+    await app.feed.show(51);
+    expect(app.feed.cards.findIndex(isEnough)).toBe(52);
   });
 
   it('counts an Entry Seen again today once', async () => {
@@ -84,22 +100,22 @@ describe('«Може, на сьогодні досить?»', () => {
     const seen = app.feed.cards[3]?.entryId;
     expect(seen).toBeDefined();
     await app.openedFromNotification(seen ?? '');
-    expect(await readOn(app, 48, 1)).toBeUndefined();
+    expect(await readOn(app, 48, 2)).toBeUndefined();
 
-    // The 50th distinct one brings it as the card after it.
-    await app.feed.show(49);
-    expect(app.feed.cards.findIndex(isEnough)).toBe(50);
+    // The 50th distinct one, left, brings it one card after it.
+    await app.feed.show(50);
+    expect(app.feed.cards.findIndex(isEnough)).toBe(51);
   });
 
   it('never locks the Feed: the cards go on after it, and it is gone for the day once turned past', async () => {
     const records = new Map<string, string>();
     const app = await run({ records, at: dayOne });
-    expect(await readOn(app, 0, 50)).toBe(50);
+    expect(await readOn(app, 0, 51)).toBe(51);
 
     // Turning past it shows Entries again, and it does not come twice that day.
-    expect(await readOn(app, 50, 10)).toBe(50);
+    expect(await readOn(app, 51, 10)).toBe(51);
     expect(app.feed.cards.filter(isEnough)).toHaveLength(1);
-    const after = app.feed.cards.slice(51, 60);
+    const after = app.feed.cards.slice(52, 61);
     expect(after).toHaveLength(9);
     expect(after.every((card) => card.kind === 'word')).toBe(true);
 
@@ -107,23 +123,22 @@ describe('«Може, на сьогодні досить?»', () => {
     expect(await readOn(later, 0, 15)).toBeUndefined();
 
     const tomorrow = await run({ records: new Map(records), at: dayTwo });
-    expect(await readOn(tomorrow, 0, 49)).toBeUndefined();
-    expect(await readOn(tomorrow, 49, 1)).toBe(50);
+    expect(await readOn(tomorrow, 0, 50)).toBeUndefined();
+    expect(await readOn(tomorrow, 50, 1)).toBe(51);
   });
 
-  it('counts no Entry for the card right after another Feed Notice, which follows no Entry', async () => {
+  it('comes after «Ціль дня виконано!» when both are due on the same card', async () => {
     const app = await run({
       at: dayOne,
       switches: ['enoughForToday', 'xpLog', 'dailyGoal', 'seenWordXp', 'goalReachedCard'],
     });
     await app.xpLog.setDailyGoal(50);
 
-    // The 50th Word on screen meets the goal: «Ціль дня виконано!» comes right after it, then an Entry.
-    expect(await readOn(app, 0, 50)).toBeUndefined();
+    // Leaving the 50th Word meets the goal and the limit: one card after it «Ціль дня виконано!»
+    // comes first, in the order of the Feed Notices, and «Може, на сьогодні досить?» right after.
+    expect(await readOn(app, 0, 51)).toBe(52);
     const kinds = app.feed.cards.map((card) => (card.kind === 'notice' ? card.notice : card.kind));
-    expect(kinds.slice(49, 52)).toEqual(['word', 'goalReached', 'word']);
-
-    expect(await readOn(app, 50, 2)).toBe(52);
+    expect(kinds.slice(49, 53)).toEqual(['word', 'word', 'goalReached', 'enoughForToday']);
   });
 
   it('never comes while its Feature Switch is off', async () => {
