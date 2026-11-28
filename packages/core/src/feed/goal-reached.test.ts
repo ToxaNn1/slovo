@@ -64,28 +64,51 @@ const lemmasOf = (app: App, from: number, to: number) =>
 
 // Owner 14.11: «Ціль дня виконано!», a Feed Notice once the Daily Goal is met.
 describe('«Ціль дня виконано!»', () => {
-  it('comes as the card after the Word that meets the Daily Goal, with the goal and the first Words Seen today', async () => {
+  it('comes one card after the Word that meets the Daily Goal, with the goal and the first Words Seen today', async () => {
     const app = await run({ at: dayOne });
     await app.xpLog.setDailyGoal(3);
 
-    // Two Words Seen, the third on screen: the card after it is the Feed Notice.
-    expect(await readOn(app, 0, 2)).toBeUndefined();
-    await app.feed.show(2);
-    expect(app.feed.cards.findIndex(isGoalReached)).toBe(3);
+    // Three Words on screen, the third not left yet: the goal is not met, so no card is got ready for it.
+    expect(await readOn(app, 0, 3)).toBeUndefined();
+    // Leaving the third Word meets the goal: the card after the one now on screen is the Feed Notice.
+    await app.feed.show(3);
+    expect(app.xpLog.state.dailyGoal?.met).toBe(true);
+    expect(app.feed.cards.findIndex(isGoalReached)).toBe(4);
 
-    const card = app.feed.cards[3];
+    const card = app.feed.cards[4];
     expect(card?.kind === 'notice' && card.notice === 'goalReached' && card).toMatchObject({
       goal: 3,
       words: lemmasOf(app, 0, 3),
     });
   });
 
+  it('never comes for a Word swiped away before it is Seen, and comes once the goal is really met', async () => {
+    const records = new Map<string, string>();
+    const app = await run({ records, at: dayOne });
+    await app.xpLog.setDailyGoal(3);
+
+    // Two Words Seen, the third swiped away after 100 ms: still two Seen.
+    expect(await readOn(app, 0, 2)).toBeUndefined();
+    await app.feed.show(2);
+    app.advance(100);
+    await app.feed.show(3);
+    expect(app.xpLog.state.dailyGoal).toMatchObject({ met: false, seen: 2 });
+    expect(app.feed.cards.findIndex(isGoalReached)).toBe(-1);
+    expect(records.has('feed.noticesClosed')).toBe(false);
+
+    // The next Word read and left meets the goal: the card comes one card after it.
+    app.advance(1000);
+    await app.feed.show(4);
+    expect(app.xpLog.state.dailyGoal).toMatchObject({ met: true, seen: 3 });
+    expect(app.feed.cards.findIndex(isGoalReached)).toBe(5);
+  });
+
   it('names at most three Words, the first Seen today', async () => {
     const app = await run({ at: dayOne });
     await app.xpLog.setDailyGoal(5);
 
-    expect(await readOn(app, 0, 5)).toBe(5);
-    const card = app.feed.cards[5];
+    expect(await readOn(app, 0, 6)).toBe(6);
+    const card = app.feed.cards[6];
     expect(card?.kind === 'notice' && card.notice === 'goalReached' && card).toMatchObject({
       goal: 5,
       words: lemmasOf(app, 0, 3),
@@ -96,17 +119,17 @@ describe('«Ціль дня виконано!»', () => {
     const records = new Map<string, string>();
     const app = await run({ records, at: dayOne });
     await app.xpLog.setDailyGoal(3);
-    expect(await readOn(app, 0, 3)).toBe(3);
+    expect(await readOn(app, 0, 5)).toBe(4);
 
-    expect(await readOn(app, 3, 6)).toBe(3);
+    expect(await readOn(app, 5, 6)).toBe(4);
     expect(app.feed.cards.filter(isGoalReached)).toHaveLength(1);
 
     const later = await run({ records: new Map(records), at: '2026-10-11T20:00:00+03:00' });
     expect(await readOn(later, 0, 6)).toBeUndefined();
 
     const tomorrow = await run({ records: new Map(records), at: dayTwo });
-    expect(await readOn(tomorrow, 0, 2)).toBeUndefined();
-    expect(await readOn(tomorrow, 2, 1)).toBe(3);
+    expect(await readOn(tomorrow, 0, 3)).toBeUndefined();
+    expect(await readOn(tomorrow, 3, 2)).toBe(4);
   });
 
   it('never comes without a Daily Goal', async () => {
@@ -131,7 +154,7 @@ describe('«Ціль дня виконано!»', () => {
     expect(await readOn(off, 0, 8)).toBeUndefined();
   });
 
-  it('is met only by a Word: a Correction or a Tip on screen brings no card after it', async () => {
+  it('is met only by Words: a Correction or a Tip Seen does not count', async () => {
     const app = await run({
       at: dayOne,
       switches: [...goalSwitches, 'goalReachedCard', 'corrections', 'tips'],
@@ -140,21 +163,22 @@ describe('«Ціль дня виконано!»', () => {
 
     const at = await readOn(app, 0, 13);
 
-    // Eight Words Seen with a Correction and a Tip between them: the Word after the Tip meets the goal.
+    // Eight Words Seen with a Correction and a Tip between them: the Word after the Tip meets the
+    // goal, and the card comes one card after it.
     const kinds = app.feed.cards.map((card) => card.kind);
     expect(kinds.slice(0, 11).filter((kind) => kind === 'word')).toHaveLength(8);
-    expect(kinds.slice(9, 11)).toEqual(['correction', 'tip']);
-    expect(at).toBe(12);
+    expect(kinds.slice(9, 12)).toEqual(['correction', 'tip', 'word']);
+    expect(at).toBe(13);
   });
 
   describe('in a later app run of the day the goal was met, before the card was turned past', () => {
-    /** Meets a Daily Goal of `goal` on day one, ending on the Feed Notice, and returns the records and the Lemmas named. */
+    /** Meets a Daily Goal of `goal` on day one, ending on the Feed Notice, and returns the records and the first three Lemmas Seen. */
     async function metAndLeft(goal: number) {
       const records = new Map<string, string>();
       const app = await run({ records, at: dayOne });
       await app.xpLog.setDailyGoal(goal);
-      expect(await readOn(app, 0, goal + 1)).toBe(goal);
-      return { records, lemmas: lemmasOf(app, 0, goal) };
+      expect(await readOn(app, 0, goal + 2)).toBe(goal + 1);
+      return { records, lemmas: lemmasOf(app, 0, goal + 1).slice(0, 3) };
     }
 
     const goalCardOf = async (records: Map<string, string>) => {
@@ -164,7 +188,7 @@ describe('«Ціль дня виконано!»', () => {
       return card?.kind === 'notice' && card.notice === 'goalReached' ? card : undefined;
     };
 
-    it('names each Word once, though the card follows a Word Seen today', async () => {
+    it('names each Word Seen today once', async () => {
       const { records, lemmas } = await metAndLeft(2);
 
       expect((await goalCardOf(records))?.words).toEqual(lemmas);

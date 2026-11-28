@@ -81,6 +81,16 @@ describe('crash reports', () => {
     expect(sent?.contexts?.device?.model).toBe('iPhone17,3');
   });
 
+  it('tracks no sessions, so no launch is counted per install (ADR 0048 covers crash reports only)', () => {
+    const sentry = fakeSentry();
+
+    startCrashReports('https://key@o1.ingest.sentry.io/1', sentry.load);
+
+    expect(sentry.init).toHaveBeenCalledWith(
+      expect.objectContaining({ enableAutoSessionTracking: false }),
+    );
+  });
+
   it('keeps no breadcrumbs', () => {
     const sentry = fakeSentry();
 

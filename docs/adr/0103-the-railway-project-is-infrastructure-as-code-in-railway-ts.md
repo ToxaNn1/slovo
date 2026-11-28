@@ -1,5 +1,5 @@
 ---
-summary: The Railway project (backend and the alerts, quote-check and Recordings Cron services, EU West Amsterdam, one replica, no source) is Infrastructure as Code in `.railway/railway.ts` with the pinned `railway` package; secrets are `preserve()`, the Cron services reference the backend's variables.
+summary: The Railway project (backend and the alerts, quote-check and Recordings Cron services, plus the `staging` environment of ADR 0168, EU West Amsterdam, one replica, no source) is Infrastructure as Code in `.railway/railway.ts` with the pinned `railway` package; secrets are `preserve()`, the Cron services reference the backend's variables.
 ---
 
 # The Railway project is Infrastructure as Code in `.railway/railway.ts`
@@ -10,8 +10,9 @@ Railway no longer takes Config as Code (`railway.json` and the per-service JSON 
 
 - **One TypeScript file.** It uses `railway/iac` from the npm package `railway`, pinned to an exact version in the root `package.json`, and `pnpm typecheck` checks it (`.railway/tsconfig.json`). It declares project `slovo` with four services: `backend`, `alerts`, `quote-check` and `recordings`, with the Dockerfile, command, release (pre-deploy) command, health check, Cron schedule and restart policy the JSON files held. The DSL's `build` and `deploy` take Railway's raw build and deploy settings (`dockerfilePath`, `cronSchedule`, `restartPolicyType`), which it has no shorthand for.
 - **EU West, one replica.** Every service runs in `europe-west4-drams3a` (Amsterdam), one replica, near Neon in Frankfurt (ADR 0099).
+- **Staging.** The file also declares the `staging` environment: the backend alone (ADR 0168).
 - **No source.** No service names a repository: a deploy is `railway up` with a project token, so nothing ties the project to a person's GitHub account.
-- **Secrets stay in Railway.** Every secret, and every value that belongs to SLOVO's accounts, is `preserve()`: Railway keeps what is set in its variables. The Cron services reference the backend's variables, so each secret is set once. Even `TRUSTED_PROXY_HOPS` is preserved, since it changes from `1` to `2` once Cloudflare is in front (ADR 0099).
+- **Secrets stay in Railway.** Every secret, and every value that belongs to SLOVO's accounts, is `preserve()`: Railway keeps what is set in its variables. The Cron services reference the backend's variables, so each secret is set once. Even `TRUSTED_PROXY_HOPS` is preserved, since it changes from `1` to `2` once Cloudflare is in front (ADR 0125).
 
 ## Considered Options
 

@@ -94,7 +94,7 @@ Write everything in the repo in English: code, comments, tests, docs, commit mes
 
 Cost = context size × steps × model price. `.claude/hooks/token-budget.mjs` enforces the hard parts in every session, local and cloud; never work around a block, follow its message.
 
-- Context limits: every session, the coordinator included, and every subagent, local and cloud, 200k soft, 230k hard. Hand off near the soft limit and only between tasks, never mid-task. At the hard limit only git and writing a handoff (≤ 2 KB) run: hand off to a fresh session. Never `/compact`.
+- Context limits: every session, the coordinator included, and every subagent, local and cloud, 200k soft, 230k hard. Hand off near the soft limit and only between tasks, never mid-task. At the hard limit only git and writing a handoff (≤ 2 KB) run: hand off to a fresh session. The session that hands off opens the fresh session itself (in T3 Code a new thread pointed at the handoff file) and renames both: the old one «[СТАРИЙ, можна закрити] <name>», the new one «[ПРОДОВЖЕННЯ] <name>»; the owner never opens it by hand. Never `/compact`.
 - A handoff is rewritten whole each time: the current state and the next steps only. History lives in git and the PRs; never append to an old handoff.
 - Subagents: a fresh agent with a brief of at most 1.5 KB (goal, what is ruled out, files by path, result format). No fork once the context is over 60k. Long results go to a file; the reply is 5–10 lines. Use `Explore` for searches.
 - Models: code on Opus; Fable only for Core logic, sync, architecture, specs, the version review and proofreading; the coordinator and questions on Opus; Sonnet for bumps, renames and docs-only.

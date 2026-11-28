@@ -18,28 +18,60 @@ const EEA_REGIONS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * The Statistics consent as one device reads it (ADR 0210): whether its
+ * The time zones of the EEA as a phone names them (ADR 0212): those of the
+ * states of `EEA_REGIONS`, and of the parts of an EU state with a time zone of
+ * their own (Büsingen, Åland, the Canary Islands, Ceuta, Madeira, the Azores,
+ * the French overseas regions).
+ */
+// prettier-ignore
+const EEA_TIME_ZONES: ReadonlySet<string> = new Set([
+  'Europe/Vienna', 'Europe/Brussels', 'Europe/Sofia', 'Europe/Zagreb', 'Asia/Nicosia',
+  'Europe/Nicosia', 'Asia/Famagusta', 'Europe/Prague', 'Europe/Copenhagen', 'Europe/Tallinn',
+  'Europe/Helsinki', 'Europe/Mariehamn', 'Europe/Paris', 'Europe/Berlin', 'Europe/Busingen',
+  'Europe/Athens', 'Europe/Budapest', 'Europe/Dublin', 'Europe/Rome', 'Europe/Riga',
+  'Europe/Vilnius', 'Europe/Luxembourg', 'Europe/Malta', 'Europe/Amsterdam', 'Europe/Warsaw',
+  'Europe/Lisbon', 'Atlantic/Madeira', 'Atlantic/Azores', 'Europe/Bucharest', 'Europe/Bratislava',
+  'Europe/Ljubljana', 'Europe/Madrid', 'Africa/Ceuta', 'Atlantic/Canary', 'Europe/Stockholm',
+  'Atlantic/Reykjavik', 'Europe/Vaduz', 'Europe/Oslo',
+  'America/Cayenne', 'America/Guadeloupe', 'America/Martinique', 'America/Marigot',
+  'Indian/Mayotte', 'Indian/Reunion',
+]);
+
+/**
+ * The Statistics consent as one device reads it (ADR 0210, 0212): whether its
  * reader is one to ask before anything is sent.
  */
 export interface StatisticsConsent {
   /**
    * Whether the reader is asked: the `statisticsConsent` Feature Switch is on
-   * in effect and the phone's region is in the EEA or unknown. Read at each
-   * call, so a Rule's change shows on the next one.
+   * in effect and the phone's region is in the EEA or unknown, or its time
+   * zone is in the EEA. Read at each call, so a Rule's change shows on the
+   * next one.
    */
   asks(): boolean;
 }
 
+/** A country's two-letter code; a locale may name another region, such as `150` for Europe. */
+const COUNTRY_CODE = /^[A-Z]{2}$/;
+
 /**
  * The Statistics consent of a phone of `region`, the region the Feature
  * Switch Rules read (ADR 0089): its two-letter code, or nothing where the
- * locale names none, which counts as the EEA.
+ * locale names none; and of `timeZone`, the IANA time zone the phone is set
+ * to. A region that is no country code is unknown, and an unknown region
+ * counts as the EEA (ADR 0210); a time zone of the EEA does too, whatever the
+ * region (ADR 0212). Both are read on the phone only; nothing is sent.
  */
 export function statisticsConsentFor(
   edition: Pick<Edition, 'isFeatureEnabled'>,
-  region: string | undefined,
+  { region, timeZone }: { readonly region: string | undefined; readonly timeZone: string },
 ): StatisticsConsent {
-  const inEea = region === undefined || EEA_REGIONS.has(region.toUpperCase());
+  const code = region?.toUpperCase();
+  const inEea =
+    code === undefined ||
+    !COUNTRY_CODE.test(code) ||
+    EEA_REGIONS.has(code) ||
+    EEA_TIME_ZONES.has(timeZone);
   return { asks: () => inEea && edition.isFeatureEnabled('statisticsConsent') };
 }
 

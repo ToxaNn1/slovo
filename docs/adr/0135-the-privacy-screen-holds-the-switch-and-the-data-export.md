@@ -17,7 +17,7 @@ ADR 0068 puts the one privacy switch «Ділитися анонімною ст�
 - **One file.** One versioned, documented, human-readable JSON file. It leaves the device only through the system share window.
 - **What it holds:** the reader's words, progress, settings and name.
 - **What it never holds:** the Session, a token, the Install id, or content the reader did not make; Entries appear by id and Lemma only.
-- **The privacy policy page** (ADR 0049) names the Data export; its text is prominent copy and waits for the owner's approval.
+- **The privacy policy page** (ADR 0049) names the Data export in «Як отримати копію своїх даних»: where to find it, that it is built on the device and leaves only through the share window, and what it holds.
 - Behind its own Feature Switch. Off: the row is absent; the privacy screen still shows the switch.
 
 ## Consequences

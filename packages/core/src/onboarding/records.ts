@@ -1,3 +1,5 @@
+import { z } from 'zod';
+
 import { declareRecord, InstantSchema, LocalDateKeySchema } from '../user-state/user-state-record';
 
 /** The records of the onboarding. */
@@ -15,4 +17,13 @@ export const onboardingRecords = {
    * first week. It stays on the device, like the onboarding finished.
    */
   firstWeekFrom: declareRecord('firstWeek.from', LocalDateKeySchema, { sync: 'device-only' }),
+  /**
+   * That a reader finished the onboarding before ADR 0210 with no choice of
+   * «Ділитися анонімною статистикою» kept, so the onboarding settles it once
+   * on its next opening (ADR 0212): the schema migration of version 10 sets
+   * it, the onboarding removes it. It stays on the device.
+   */
+  statisticsConsentDue: declareRecord('statisticsConsent.due', z.literal(true), {
+    sync: 'device-only',
+  }),
 };

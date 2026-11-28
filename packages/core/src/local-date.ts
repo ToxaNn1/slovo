@@ -153,17 +153,26 @@ function wallClockAt(instant: number, timeZone: string): number {
   );
 }
 
+/** Longer than any daylight-saving change, so an instant this far before one has the offset before it. */
+const BEFORE_A_CHANGE_MS = 3 * 60 * 60 * 1000;
+
 /**
- * The instant a local day starts in the time zone: the instant of its
+ * The instant a local day starts in the time zone: the first instant of its
  * wall-clock `midnight` (counted as if it were UTC), or the daylight-saving
  * change that skips it. `near` is an instant less than a day from it.
  */
 function dayStartAt(midnight: number, near: number, zone: string): number {
+  const atOffsetOf = (instant: number) => midnight - (wallClockAt(instant, zone) - instant);
   // Midnight at the offset from UTC in force at `near`, then at the offset in force by then.
-  const atNearOffset = near + midnight - wallClockAt(near, zone);
-  const atItsOffset = midnight - (wallClockAt(atNearOffset, zone) - atNearOffset);
+  const atNearOffset = atOffsetOf(near);
+  const atItsOffset = atOffsetOf(atNearOffset);
   // When a daylight-saving change skips midnight, the day starts at the change.
-  return wallClockAt(atItsOffset, zone) >= midnight ? atItsOffset : atNearOffset;
+  const start = wallClockAt(atItsOffset, zone) >= midnight ? atItsOffset : atNearOffset;
+  // When the clock goes back over midnight, the wall clock reads it twice: the day starts at the first.
+  const atEarlierOffset = atOffsetOf(start - BEFORE_A_CHANGE_MS);
+  return atEarlierOffset < start && wallClockAt(atEarlierOffset, zone) === midnight
+    ? atEarlierOffset
+    : start;
 }
 
 /** A local day as the instants, in milliseconds, it starts and the next one starts. */

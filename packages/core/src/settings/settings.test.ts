@@ -572,7 +572,7 @@ describe('settings: the three-step text size', () => {
       const settings = await settingsOver(records);
 
       expect(await settings.read(), fontSize).toMatchObject({ textSize });
-      expect(records.get('schema.version')).toBe('9');
+      expect(records.get('schema.version')).toBe('10');
     }
   });
 

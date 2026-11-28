@@ -104,6 +104,12 @@ export interface RoundInput {
    * order, none of them asked yet: where a pairs grid takes its other pairs from.
    */
   readonly next: readonly AskableEntry[];
+  /**
+   * The ids of the Entries of `next` the Game asks because the reader is weak
+   * on them, each at its place there: a Round of several Rounds that reaches
+   * such a place takes its Entry before any other.
+   */
+  readonly weakNext: ReadonlySet<string>;
   /** How many Rounds the content may hold at most, such as the pairs of a grid: the Rounds the Game still plans. */
   readonly upTo: number;
   /** Which Round of the Game the content starts at, from 1, such as a stage of «Вгадай слово». */

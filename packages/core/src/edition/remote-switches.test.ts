@@ -526,6 +526,39 @@ describe('the remote Feature Switches', () => {
     expect((await launch()).edition.isFeatureEnabled('game')).toBe(false);
   });
 
+  it('follows the backend’s clock on an answer that the Rules are unchanged', async () => {
+    const device = fakeClock('2026-11-08T12:00:00Z');
+    const backendTime = fakeClock('2026-11-08T12:00:00Z');
+    const fake = createFakeBackend({ clock: backendTime.clock });
+    fake.switches.setRules([
+      {
+        id: 'later',
+        feature: 'game',
+        verdict: 'off',
+        targets: { schedule: { from: '2026-11-08T12:30:00Z' } },
+      },
+    ]);
+    const switches = await openRemoteSwitches({
+      edition: editionWithout(),
+      states: switchStatesOf(editionWithout()),
+      facts: readerFacts,
+      backend: fake.backend,
+      userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+      schedule: immediateSchedule().schedule,
+      random: randomOf(0.5),
+      clock: device.clock,
+    });
+    await switches.ask();
+    expect(switches.edition.isFeatureEnabled('game')).toBe(true);
+
+    // The device clock stays behind while the backend's goes past the schedule.
+    backendTime.advance(40 * 60 * 1000);
+    await switches.ask();
+
+    expect(fake.switches.asked.at(-1)).toEqual(expect.any(String));
+    expect(switches.edition.isFeatureEnabled('game')).toBe(false);
+  });
+
   it('tells no one when a new answer brings the minimums the app keeps', async () => {
     const app = device();
     app.backend.switches.setMinimums({ ios: { soft: '1.2.0' } });

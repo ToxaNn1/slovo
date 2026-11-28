@@ -27,7 +27,7 @@ const vowels = ['а', 'е', 'є', 'и', 'і', 'ї', 'о', 'у', 'ю', 'я'];
  */
 const playing: readonly { lemma: string; stress: number[]; vowels: number[] }[] = [
   { lemma: 'каганець', stress: [5], vowels: [1, 3, 5] },
-  { lemma: 'завжди', stress: [1, 5], vowels: [1, 5] },
+  { lemma: 'помилка', stress: [1, 3], vowels: [1, 3, 6] },
   { lemma: 'їжак', stress: [2], vowels: [0, 2] },
   { lemma: 'веремія', stress: [5], vowels: [1, 3, 5, 6] },
   { lemma: 'вирій', stress: [1], vowels: [1, 3] },
@@ -265,26 +265,24 @@ describe('a Round of «Наголос»', () => {
           await run({ seed }),
           ({ stress }) => stress[tap] ?? stress[0] ?? -1,
         );
-        twoStress.push(...rounds.filter(({ prompt }) => prompt === 'завжди'));
+        twoStress.push(...rounds.filter(({ prompt }) => prompt === 'помилка'));
       }
     }
 
     expect(twoStress.map(({ answer }) => answer)).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ chosen: 1, right: true }),
-        expect.objectContaining({ chosen: 5, right: true }),
+        expect.objectContaining({ chosen: 3, right: true }),
       ]),
     );
     expect(twoStress[0]?.answer?.sheet.answer).toEqual({
-      text: 'за́вжди́',
-      stressedVowels: ['а', 'и'],
+      text: 'по́ми́лка',
+      stressedVowels: ['о', 'и'],
     });
   });
 
   it('costs a Life for an unstressed vowel, marks the Word «Не знаю» and lists it in the Game Review', async () => {
     const app = await run();
-    // «завжди» has no unstressed vowel to tap.
-    await app.hide({ kind: 'entry', entryId: idOf('завжди') });
     await app.game.start('stress');
     const asked = expectedOf(current(app).round);
     const wrong = asked.vowels.find((place) => !asked.stress.includes(place)) ?? -1;
@@ -394,6 +392,7 @@ describe('the Entries «Наголос» builds no Round for', () => {
       answer,
       eligible: [answer],
       next: [],
+      weakNext: new Set(),
       upTo: 1,
       round: 1,
       random: seededRandom(1),
@@ -404,6 +403,7 @@ describe('the Entries «Наголос» builds no Round for', () => {
   it.each<[string, AskableEntry]>([
     ['a Word with one vowel', word('w_дуб', { lemma: 'дуб', stress: [1] })],
     ['a Word whose Stress falls on no vowel', word('w_кобза', { lemma: 'кобза', stress: [0] })],
+    ['a Word whose every vowel is stressed', word('w_завжди', { lemma: 'завжди', stress: [1, 5] })],
     [
       'a Correction of another Correction Type, its form stressed though',
       correction('c_calque', { standardEquivalents: ['ви́кличе'] }),

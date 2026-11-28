@@ -214,7 +214,7 @@ describe('the Rarity Range', () => {
     expect(records.has('settings.rarityCeiling')).toBe(false);
     expect(records.has('mix.rarityFloor')).toBe(false);
     expect(records.has('mix.rarityCeiling')).toBe(false);
-    expect(records.get('schema.version')).toBe('9');
+    expect(records.get('schema.version')).toBe('10');
   });
 
   it('starts at the Edition default when an early 1.0 app stored no Ceiling, or one that does not read', async () => {

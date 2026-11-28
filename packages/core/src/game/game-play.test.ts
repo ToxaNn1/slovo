@@ -721,6 +721,29 @@ describe('the answer banner', () => {
     expect(await next(game)).toMatchObject({ status: 'won', roundsPassed: 1 });
   });
 
+  it('stays left when the Game is left while the write of its end fails', async () => {
+    let fail: (error: Error) => void = () => undefined;
+    let writing: () => void = () => undefined;
+    const written = new Promise<void>((resolve) => {
+      writing = resolve;
+    });
+    const write = () =>
+      new Promise<void>((_resolve, reject) => {
+        fail = reject;
+        writing();
+      });
+    const { game, advance } = await start(pick, { roundLimit: 1 }, undefined, { write });
+    await game.answer(pickAnswer(true));
+
+    const movingOn = advance(950);
+    await written;
+    game.leave();
+    fail(new Error('disk full'));
+    await movingOn;
+
+    expect(game.state.current).toBeUndefined();
+  });
+
   it('does not move on after the Game is left', async () => {
     const { game, advance } = await start(pick);
     await game.answer(pickAnswer(true));

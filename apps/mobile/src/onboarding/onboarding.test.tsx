@@ -86,6 +86,9 @@ async function settle(action: () => unknown = () => undefined) {
     await action();
     await jest.runAllTimersAsync();
   });
+  // The first Word's red gives way, and lets VoiceOver reach the step, only
+  // once Reduce Motion has answered, which is after the first pass.
+  await act(() => jest.runAllTimersAsync());
 }
 
 const press = (testID: string) => settle(() => fireEvent.press(screen.getByTestId(testID)));
@@ -304,9 +307,12 @@ describe('the Statistics consent', () => {
     isFeatureEnabled: (feature) =>
       feature === 'statisticsConsent' || shipped.isFeatureEnabled(feature),
   };
-  /** Draws the onboarding of a new reader on a phone of `region`, none where the locale names none. */
+  /** Draws the onboarding of a new reader on a phone of `region`, none where the locale names none, in Kyiv time. */
   const onPhoneOf = (region: string | undefined) =>
-    renderOnboarding(consentOn, statisticsConsentFor(consentOn, region));
+    renderOnboarding(
+      consentOn,
+      statisticsConsentFor(consentOn, { region, timeZone: 'Europe/Kyiv' }),
+    );
   const shares = async () =>
     (await createSettings({ userState: readerState, defaults: shipped.userSettingDefaults }).read())
       .shareCounters;

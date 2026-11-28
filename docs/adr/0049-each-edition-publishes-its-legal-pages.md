@@ -1,5 +1,5 @@
 ---
-summary: An Edition's legal pages are Markdown in its folder, published on GitHub Pages at `/<edition>/` on the app's domain.
+summary: An Edition's legal pages are Markdown in its folder, published on GitHub Pages at `/<edition>/` on the app's domain; amended by 0125: Cloudflare splits the domain by path.
 ---
 
 # Each Edition publishes its legal pages

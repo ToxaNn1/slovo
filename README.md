@@ -18,7 +18,7 @@ SLOVO helps people discover, learn and share rare words of a single language. Th
 SLOVO is built as a factory, not as one app.
 
 - The **Core** holds all language-agnostic behaviour and screens. It knows nothing about Ukrainian.
-- An **Edition** is a standalone app for exactly one language. It is the Core plus a **Language Pack** (words, categories, UI strings, language traits), Feature Switches, design tokens and Decor.
+- An **Edition** is one language inside the one SLOVO app (ADR 0065). It is the Core plus a **Language Pack** (words, categories, UI strings, language traits), Feature Switches, design tokens and Decor.
 - A new language means a new Edition folder. The Core does not change. Editions extend the Core only through Feature Switches, Extension Points and Decor ([ADR 0006](docs/adr/0006-editions-extend-core-only-through-extension-points.md)).
 
 The vocabulary used here and in the code is defined in [`CONTEXT.md`](CONTEXT.md).
@@ -27,21 +27,25 @@ The vocabulary used here and in the code is defined in [`CONTEXT.md`](CONTEXT.md
 
 Parts marked as placeholders are reserved and filled by later versions.
 
-| Path                     | Role                                                                                                |
-| ------------------------ | --------------------------------------------------------------------------------------------------- |
-| `apps/mobile`            | One Expo app that builds whichever Edition the environment variable selects.                        |
-| `apps/widget`            | The native SwiftUI home-screen widget, linked into the iOS project at prebuild.                     |
-| `apps/backend`           | The API: the HTTP shell, the adapters and the composition root of the backend.                      |
-| `packages/core`          | Pure TypeScript domain logic (no React, no React Native).                                           |
-| `packages/ui`            | Screens, components, design tokens and Decor.                                                       |
-| `packages/contracts`     | Zod schemas for Entries, the Edition config and the Language Pack.                                  |
-| `packages/server-core`   | The backend's rules and ports (no HTTP, no SQL, no language).                                       |
-| `packages/language-pack` | Builds an Edition's content into a read-only SQLite Language Pack and reads packs back.             |
-| `packages/config`        | Shared TypeScript, ESLint and Prettier configuration.                                               |
-| `editions/<edition>`     | One folder per Edition: configuration, strings, design tokens, Decor, content, assets, legal pages. |
-| `tools/sourcing`         | Dev-only tool that drafts Words from goroh.pp.ua and СУМ-11 for human review.                       |
-| `tools/content`          | Dev-only CLI that drafts Entries in `$EDITOR` and checks an Edition with the build's rules.         |
-| `docs/`                  | Architecture decision records in `docs/adr/` and the design boards in `docs/design/`.               |
+| Path                     | Role                                                                                                      |
+| ------------------------ | --------------------------------------------------------------------------------------------------------- |
+| `apps/mobile`            | The one Expo app; it bundles the AppConfig's `defaultEdition` (`app/app.json`).                           |
+| `apps/widget`            | The native SwiftUI home-screen widget, linked into the iOS project at prebuild.                           |
+| `apps/backend`           | The API: the HTTP shell, the adapters and the composition root of the backend.                            |
+| `apps/site`              | The Astro site on Pages: the landing and the legal pages.                                                 |
+| `apps/admin`             | The Owner admin: a Vite app the backend serves built at `/admin`.                                         |
+| `apps/video`             | The landing's videos, made with Remotion.                                                                 |
+| `packages/core`          | Pure TypeScript domain logic (no React, no React Native).                                                 |
+| `packages/ui`            | Screens, components, design tokens and Decor.                                                             |
+| `packages/contracts`     | Zod schemas for Entries, the Edition config and the Language Pack.                                        |
+| `packages/server-core`   | The backend's rules and ports (no HTTP, no SQL, no language).                                             |
+| `packages/content-rules` | Content rules as pure functions, shared by the build, the CLI and the backend.                            |
+| `packages/language-pack` | Builds an Edition's content into a read-only SQLite Language Pack and reads packs back.                   |
+| `packages/config`        | Shared TypeScript, ESLint and Prettier configuration.                                                     |
+| `editions/<edition>`     | One folder per Edition: configuration, strings, design tokens, Decor, seed snapshot, assets, legal pages. |
+| `tools/sourcing`         | Dev-only tool that drafts Entries from goroh.pp.ua for human review and picks Lemmas (`pnpm source:*`).   |
+| `tools/content`          | Dev-only CLI that writes Entries through the content write API and checks drafts (`pnpm content`).        |
+| `docs/`                  | Architecture decision records in `docs/adr/` and the design boards in `docs/design/`.                     |
 
 ## Documents
 
@@ -51,22 +55,22 @@ Parts marked as placeholders are reserved and filled by later versions.
 - The steps only the owner takes, by version, are the Owner checks in the admin's Розробка; an agent adds one with `pnpm admin check add <version> <text>`.
 - [Master spec, issue #1](https://github.com/ToxaNn1/slovo/issues/1): product vision, every decision so far and the roadmap from 0.1 to 1.0.
 - [0.1 Foundation spec, issue #2](https://github.com/ToxaNn1/slovo/issues/2) and [0.2 Feed spec, issue #51](https://github.com/ToxaNn1/slovo/issues/51): the versions built so far and their tickets.
-- `editions/<edition>/legal/`: the Edition's privacy policy and terms, which the workflow `Pages` publishes to GitHub Pages at `<LEGAL_SITE>/<edition>/<page>` on every change on `main`; the Core constant `LEGAL_SITE` is the one place that names the site's base (ADR 0049). Pages must be on in the repository settings with "GitHub Actions" as its source.
+- `editions/<edition>/legal/`: the Edition's privacy policy and terms, which the workflow `Pages` publishes to GitHub Pages at `https://<domain>/<edition>/<page>`, the AppConfig's `domain`, on every change on `main` (ADR 0065). Pages must be on in the repository settings with "GitHub Actions" as its source.
 - [`CLAUDE.md`](CLAUDE.md): the guide for coding agents (`AGENTS.md` points to it).
 
 ## Run the UA Edition on the simulator
 
 The native app is a development build made in EAS cloud ([ADR 0004](docs/adr/0004-native-builds-in-eas-cloud.md)). The JavaScript runs locally against it, served by Metro with fast refresh, so day-to-day work never waits for a cloud build.
 
-Every build is the one app (ADR 0065) and bundles the AppConfig's default Edition (`defaultEdition` in `app/app.json`); no command names an Edition. The app name, bundle id, icon and splash come from the AppConfig, and the locale, fonts and notification sound from `editions/<edition>/`: the fonts are the Core's (`packages/ui/assets/fonts/`) and every file in the Edition's `assets/fonts/` (ADR 0006), and the native splash is a plain colour per Theme from `decor/splash.json`. An Edition without a splash gets the Core's plain one. Once the JavaScript runs, the app's splash takes over from the native one with the Edition's wordmark and tagline.
+Every build is the one app (ADR 0065) and bundles the AppConfig's default Edition (`defaultEdition` in `app/app.json`); no command names an Edition. The app name, bundle id, icon and splash come from the AppConfig, and the locale, fonts and notification sound from `editions/<edition>/`: the fonts are every file in the Edition's `assets/fonts/`; the Core brings none (ADR 0006), and the native splash is a plain colour per Theme from `decor/splash.json`. An Edition without a splash gets the Core's plain one. Once the JavaScript runs, the app's splash takes over from the native one with the Edition's wordmark and tagline.
 
 You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulator (iOS 17 or later) and membership of the Expo organization `slovo-app`. The commands below run the Expo CLI and `eas-cli` through `npx`, so neither needs a global install.
 
-1. Install the dependencies and build the Language Pack. Rebuild the pack whenever the content changes; Metro picks up the new file. The build prints the content report; the content targets in `editions/<edition>/edition.json` block nothing, the admin shows their misses.
+1. Install the dependencies and build the Language Pack from the backend's content snapshot; with no backend running, `--snapshot editions/uk/seed-snapshot.json` builds it from the seed snapshot (`pnpm dev` does both steps for you). Rebuild the pack whenever the content changes; Metro picks up the new file. The build prints the content report; the content targets in `editions/<edition>/edition.json` block nothing, the admin shows their misses.
 
    ```sh
    pnpm install
-   pnpm build:pack uk
+   pnpm build:pack uk --snapshot editions/uk/seed-snapshot.json
    ```
 
 2. Get the development build. It is needed once, and again only after a native change: a new native module, an Expo SDK upgrade, or a new name, bundle id, icon, font, splash or notification sound. Each build counts against the free tier of 15 iOS builds a month.
@@ -100,16 +104,16 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
    pnpm start
    ```
 
-   The app draws itself with the Edition's design tokens (`editions/<edition>/tokens.json`) and Decor (`editions/<edition>/decor/decor.json`). To check the Core's neutral look instead, start Metro with `SLOVO_CORE_TOKENS=1 SLOVO_EDITION=uk pnpm start --clear`, and drop the variable (with `--clear` again) to go back.
+   The app draws itself with the Edition's design tokens (`editions/<edition>/tokens.json`) and Decor (`editions/<edition>/decor/decor.json`). To check the Core's neutral look instead, start Metro with `SLOVO_CORE_TOKENS=1 pnpm start --clear`, and drop the variable (with `--clear` again) to go back.
 
-4. Check the result. The tabs read Головна, Налаштування, Гра, Збережене (Home, Settings, Game, Saved). Home is the Feed, one card per screen:
+4. Check the result. The tabs read as `tabs.*` in `editions/uk/strings.json` (Стрічка, Теми, Ігри, Збережене, Профіль), each behind its Feature Switch. Home is the Feed, one card per screen:
    - Each local day opens on its Word of the Day, badged «Слово дня · 12 жовтня». Swipe up for the next card and down to go back; a hint says so on the first launch only.
    - A Word card shows the Lemma with its Stress marks, the part of speech, the Definition, an Example, Synonyms, register and Category chips, and «Детальніше» for the rest. The speaker button reads the Lemma aloud with the device's Ukrainian voice, or explains how to get one.
    - About every fifth card is a Correction («Так часто кажуть → Українською краще»), and about every seventh an Idiom («бити байдики» → «ледарювати») or a place name.
    - A card that stays on screen for 0.5 s is Seen and doesn't come back in the same Cycle. Once everything is Seen, the end-of-Cycle card says so, and the next swipe starts a new Cycle. The Feed reopens on the last card the same day.
    - While the Language Pack opens, the Feed shows a skeleton card with the divider being stitched; if the pack can't be opened, a local error state («Нитка урвалася») offers to try again.
 
-   Settings offers the Theme (System, Light or Dark) and the font size (S, M, L, XL) with a live preview. The choices are kept on the device in a user-state database apart from the Language Pack, and System follows the iOS appearance. The Game tab opens the mode screen of the Game: «Вгадай слово» plays 15 Rounds with 5 Lives to a win or a loss.
+   Settings offers the Theme (System, Light or Dark) and the Text size («Як у системі», «Більший», «Найбільший») with a live preview. The choices are kept on the device in a user-state database apart from the Language Pack, and System follows the iOS appearance. The Game tab opens the mode screen of the Game: «Вгадай слово» plays 15 Rounds with 5 Lives to a win or a loss.
 
    With Reduce Motion on (Settings › Accessibility › Motion), the cards cross-fade in 200 ms instead of sliding, and the loading skeleton holds still. With VoiceOver, every card element, chip and button has a label, the Lemma's Stress is spoken («наголос на а»), and the actions «Наступний запис» and «Попередній запис» on the Lemma and the Definition stand in for the swipes. The app needs no network: the Language Pack ships inside the app and is opened read-only. At launch the app checks that the native app, the JavaScript bundle and the Language Pack are of the same Edition, and shows its load-failed screen when they are not. [Verify the app with networking off](#verify-the-app-with-networking-off) by hand once per release candidate.
 
@@ -119,7 +123,7 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
    pnpm test:smoke
    ```
 
-   Every setting of the flow has a default that `-e` overrides: `METRO_URL` (default `http://localhost:8081`, given as a plain URL), `APP_ID` (default `app.slovo.uk`) and `SCHEME` (default `slovo-uk`). For Metro on another port:
+   Every setting of the flow has a default that `-e` overrides: `METRO_URL` (default `http://localhost:8081`, given as a plain URL), `APP_ID` (default `app.slovo.uk`) and `SCHEME` (default `slovo`). For Metro on another port:
 
    ```sh
    pnpm test:smoke -e METRO_URL=http://localhost:8162
@@ -135,7 +139,7 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
    pnpm smoke:halves --device <udid> --device <udid> --api 8795
    ```
 
-   The first `--device` is half 1, the second half 2; the one Metro must already run on port 8082 (`--metro <port>` names another), started with `EXPO_PUBLIC_SLOVO_API_URL` pointing at the backend (`pnpm dev` does that). The script passes `-e METRO_URL=…` and `-e API_URL=…` to Maestro, takes the machine-wide lock `/tmp/slovo-maestro.lock` once for both halves, waits while another run holds it, and ends with a list per half of the flows that passed, the one that failed and the ones not run after it. Its raw Maestro output stays in a temporary folder whose path it prints. It boots and shuts down nothing. `JAVA_HOME` defaults to `/usr/local/opt/openjdk@17` when it is unset and that folder exists.
+   The first `--device` is half 1, the second half 2; the one Metro must already run on port 8082, where `pnpm dev` starts it (`--metro <port>` names another), started with `EXPO_PUBLIC_SLOVO_API_URL` pointing at the backend (`pnpm dev` does that). The script passes `-e METRO_URL=…` and `-e API_URL=…` to Maestro, takes the machine-wide lock `/tmp/slovo-maestro.lock` once for both halves, waits while another run holds it, and ends with a list per half of the flows that passed, the one that failed and the ones not run after it. Its raw Maestro output stays in a temporary folder whose path it prints. It boots and shuts down nothing. `JAVA_HOME` defaults to `/usr/local/opt/openjdk@17` when it is unset and that folder exists.
 
 ## Verify the app with networking off
 
@@ -185,7 +189,7 @@ Atlas also runs beside Metro for a development build: start with `EXPO_ATLAS=tru
 The app signs in with Google through Google's own native sheet ([ADR 0047](docs/adr/0047-one-account-per-email-whatever-the-sign-in-method.md)); the backend verifies the identity token it gets. Both need SLOVO's OAuth client ids at Google, which come from the environment and never the repository. Without them «Увійти через Google» stays hidden and the backend refuses Google sign-ins.
 
 1. In the [Google Cloud console](https://console.cloud.google.com/), pick or create the project for SLOVO and set up its **OAuth consent screen** (Google Auth Platform → Branding): the app's name, a support email, and the privacy policy and terms addresses. While it is in testing, only the test users listed there can sign in; publish it before the beta.
-2. **The iOS client id.** Google Auth Platform → Clients → Create client, type **iOS**, with the Edition's bundle id (`app.slovo.uk` for the UA Edition). Google shows its client id, `…apps.googleusercontent.com`. One per Edition, since each Edition is its own app.
+2. **The iOS client id.** Google Auth Platform → Clients → Create client, type **iOS**, with the Edition's bundle id (`app.slovo.uk` for the UA Edition). Google shows its client id, `…apps.googleusercontent.com`. One for the app's bundle id.
 3. **The Web client id** (optional). Create a client of type **Web application**. The app doesn't use it today: an identity token from the iOS sheet names the iOS client id as its audience. Keep it for a later backend or Android client; add it to `GOOGLE_CLIENT_IDS` only once a client asks for tokens with it.
 4. **The app.** Build with the iOS client id in `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`: as an EAS environment variable of the build's profile, or in the shell for a local build. The app config adds Google's sign-in SDK with its URL scheme, the client id reversed (`com.googleusercontent.apps.…`), and refuses an id that is not one for iOS. A build without it still holds the SDK, but registers no URL scheme and hides the button.
 5. **The backend.** Put the iOS client id, and every other one a client signs in with, in `GOOGLE_CLIENT_IDS`, comma-separated ([Run the backend](#run-the-backend)). The backend refuses a token whose audience is not on the list.
@@ -239,7 +243,7 @@ The backend serves every Edition from one deployment ([ADR 0030](docs/adr/0030-t
    curl -i 'http://localhost:8787/v1/editions/uk/content/latest?packFormat=1'
    ```
 
-   The app reaches the backend at the address in `EXPO_PUBLIC_SLOVO_API_URL`, or at `http://localhost:8787` when it is unset; the iOS Simulator reaches the Mac's localhost. Expo writes the value into the bundle, so set it when you start Metro, e.g. `EXPO_PUBLIC_SLOVO_API_URL=http://localhost:8788 SLOVO_EDITION=uk pnpm start --clear`. A release build, any EAS build profile whose name does not start with `development`, refuses to configure without an `https://` address in `EXPO_PUBLIC_SLOVO_API_URL`. `EXPO_PUBLIC_SENTRY_DSN` is the DSN of the app's project at Sentry, set in the build's environment: the app reports its crashes and unhandled errors there, with no personal data (no user, email, IP address, Account id or breadcrumbs, no tracing or session replay); left unset, it starts no Sentry and reports nothing. The repository holds no real DSN.
+   The app reaches the backend at the address in `EXPO_PUBLIC_SLOVO_API_URL`, or at `http://localhost:8787` when it is unset; the iOS Simulator reaches the Mac's localhost. Expo writes the value into the bundle, so set it when you start Metro, e.g. `EXPO_PUBLIC_SLOVO_API_URL=http://localhost:8788 pnpm start --clear`. A release build, any EAS build profile whose name does not start with `development`, refuses to configure without an `https://` address in `EXPO_PUBLIC_SLOVO_API_URL`. `EXPO_PUBLIC_SENTRY_DSN` is the DSN of the app's project at Sentry, set in the build's environment: the app reports its crashes and unhandled errors there, with no personal data (no user, email, IP address, Account id or breadcrumbs, no tracing or session replay); left unset, it starts no Sentry and reports nothing. The repository holds no real DSN.
 
    To sign in by hand, ask for a Sign-in code, read it in Mailpit at <http://localhost:8025>, then send it back for a Session's token, which `/v1/account/me` takes as `Authorization: Bearer <token>`:
 
@@ -268,7 +272,7 @@ The backend serves every Edition from one deployment ([ADR 0030](docs/adr/0030-t
    curl -i 'http://localhost:8787/v1/editions/uk/content/patch?since=0&patchFormat=1'
    ```
 
-7. Turn a feature off in an Edition remotely, in an emergency, without a build ([ADR 0089](docs/adr/0089-remote-feature-switches-turn-features-on-and-off-by-rules.md)). The Kill switch keeps a Rule that turns the feature off for everyone, with the reason given, in the database `DATABASE_URL` names; the HTML admin (`pnpm admin`) sets the other Rules and the force-update minimums, and removing the Rule there gives the feature back. `edition.switches` serves the Rules and minimums with an ETag and the backend's date. The app asks for them at launch, each time it returns to the foreground and every two minutes while it runs, works out each feature on the device from the first matching Rule, so the feature leaves every screen without a restart, and offline it keeps the last answer it knew. A Rule never turns on a feature the Edition makes unavailable. The command refuses an Edition the backend doesn't find, a feature name the Feature Switches schema doesn't know and no reason.
+7. Turn a feature off in an Edition remotely, in an emergency, without a build ([ADR 0089](docs/adr/0089-remote-feature-switches-turn-features-on-and-off-by-rules.md)). The Kill switch keeps a Rule that turns the feature off for everyone, with the reason given, in the database `DATABASE_URL` names; the Owner admin (`/admin`, «Свічі») sets the other Rules and the force-update minimums, and removing the Rule there gives the feature back. `edition.switches` serves the Rules and minimums with an ETag and the backend's date. The app asks for them at launch, each time it returns to the foreground and every two minutes while it runs, works out each feature on the device from the first matching Rule, so the feature leaves every screen without a restart, and offline it keeps the last answer it knew. A Rule never turns on a feature the Edition makes unavailable. The command refuses an Edition the backend doesn't find, a feature name the Feature Switches schema doesn't know and no reason.
 
    ```sh
    pnpm switches off uk game --reason "The Game crashes on launch"
@@ -281,24 +285,24 @@ The backend serves every Edition from one deployment ([ADR 0030](docs/adr/0030-t
 
 All commands run from the repo root. CI runs `lint`, `typecheck`, `deps` and `test` on every pull request, and `main` takes changes only when they are green. `knip` and `pnpm audit` run once a day on `main` (`housekeeping.yml`), so a new advisory or a stale report never turns a pull request red; Knip only reports.
 
-| Command                        | What it does                                                                                                                                                                                                                                                                                                                                                     |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm dev`                     | Starts the whole project for local work: Docker and the local services, `apps/backend/.env` when missing, the migrations, the Language Pack, then the backend and Metro on the first free ports, with the app pointed at that backend. `PORT` and `SLOVO_METRO_PORT` change the defaults (8787, 8081).                                                           |
-| `pnpm lint`                    | ESLint in every package, then Prettier.                                                                                                                                                                                                                                                                                                                          |
-| `pnpm typecheck`               | TypeScript in every package.                                                                                                                                                                                                                                                                                                                                     |
-| `pnpm deps`                    | dependency-cruiser: the package boundaries the ADRs set, import cycles and orphan modules. Rules and their ADRs are in [`.dependency-cruiser.mjs`](.dependency-cruiser.mjs).                                                                                                                                                                                     |
-| `pnpm knip`                    | Knip: unused files, exports and dependencies, and dependencies used without being listed. A daily report in CI, which does not fail anything. Deliberate exceptions, with reasons, are in [`knip.jsonc`](knip.jsonc).                                                                                                                                            |
-| `pnpm test`                    | Vitest in every package, and Jest for the component tests of `packages/ui`. Turborepo caches results and tracks `editions/` as an input.                                                                                                                                                                                                                         |
-| `pnpm verify`                  | The checks for a change before a pull request: `lint`, `typecheck` and `test` of the packages changed since `origin/main` and the packages that depend on them, then `deps` and Prettier, printing only what fails. CI still runs everything.                                                                                                                    |
-| `pnpm build:pack uk`           | Validates the Edition's content, prints the content report and builds the Language Pack.                                                                                                                                                                                                                                                                         |
-| `pnpm switches off`            | `pnpm switches off uk game --reason <text>` is the Kill switch: a Rule that turns a feature off in an Edition for everyone (ADR 0089). Refuses an Edition the backend doesn't find, an unknown feature and no reason.                                                                                                                                            |
-| `pnpm reports list`            | Prints the Mistake Reports still to check, newest first. `--edition uk` keeps one Edition's, `--since 2026-10-27` those received from that day on (UTC).                                                                                                                                                                                                         |
-| `pnpm reports resolve`         | `pnpm reports resolve <id>` deletes a Mistake Report once checked, so the list no longer prints it; an id it doesn't keep exits non-zero and says so.                                                                                                                                                                                                            |
-| `pnpm collection-links delete` | `pnpm collection-links delete <id>` deletes a Collection Link, so the owner can take down an abusive name; an id it doesn't keep exits non-zero and says so.                                                                                                                                                                                                     |
-| `pnpm smoke:halves`            | The full Maestro smoke as two halves at once on two simulators, with a pass/fail list per half; see [Run the UA Edition on the simulator](#run-the-ukrainian-edition-on-the-simulator).                                                                                                                                                                          |
-| `pnpm source:words`            | Drafts Words for review; see [`tools/sourcing/README.md`](tools/sourcing/README.md).                                                                                                                                                                                                                                                                             |
-| `pnpm content`                 | `pnpm content new word --edition uk` drafts an Entry with a fresh id in `$EDITOR` and records it once it passes; `pnpm content edit <id or text> --edition uk` opens an existing one; `pnpm content retire <id> --edition uk` retires one; `pnpm content check --edition uk` checks the whole Edition. See [`tools/content/README.md`](tools/content/README.md). |
-| `pnpm format`                  | Rewrites files with Prettier.                                                                                                                                                                                                                                                                                                                                    |
+| Command                        | What it does                                                                                                                                                                                                                                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm dev`                     | Starts the whole project for local work: Docker and the local services, `apps/backend/.env` when missing, the migrations, the Language Pack, then the backend and Metro on the first free ports, with the app pointed at that backend. `PORT` and `SLOVO_METRO_PORT` change the defaults (8787, 8082). |
+| `pnpm lint`                    | oxlint, the ADR index check, ESLint in every package, then Prettier.                                                                                                                                                                                                                                   |
+| `pnpm typecheck`               | TypeScript in every package.                                                                                                                                                                                                                                                                           |
+| `pnpm deps`                    | dependency-cruiser: the package boundaries the ADRs set, import cycles and orphan modules. Rules and their ADRs are in [`.dependency-cruiser.mjs`](.dependency-cruiser.mjs).                                                                                                                           |
+| `pnpm knip`                    | Knip: unused files, exports and dependencies, and dependencies used without being listed. A daily report in CI, which does not fail anything. Deliberate exceptions, with reasons, are in [`knip.jsonc`](knip.jsonc).                                                                                  |
+| `pnpm test`                    | Vitest in every package, and Jest for the component tests of `packages/ui` and `apps/mobile`. Turborepo caches results and tracks `editions/` as an input.                                                                                                                                             |
+| `pnpm verify`                  | The checks for a change before a pull request: `lint`, `typecheck` and `test` of the packages changed since `origin/main` and the packages that depend on them, then `deps` and Prettier, printing only what fails. CI runs the test parts the change can affect (all of them on `main`).              |
+| `pnpm build:pack uk`           | Builds the Language Pack from the backend's content snapshot (`EXPO_PUBLIC_SLOVO_API_URL`, or `--snapshot <file>`) and prints the content report.                                                                                                                                                      |
+| `pnpm switches off`            | `pnpm switches off uk game --reason <text>` is the Kill switch: a Rule that turns a feature off in an Edition for everyone (ADR 0089). Refuses an Edition the backend doesn't find, an unknown feature and no reason.                                                                                  |
+| `pnpm reports list`            | Prints the Mistake Reports still to check, newest first. `--edition uk` keeps one Edition's, `--since 2026-10-27` those received from that day on (UTC).                                                                                                                                               |
+| `pnpm reports resolve`         | `pnpm reports resolve <id>` deletes a Mistake Report once checked, so the list no longer prints it; an id it doesn't keep exits non-zero and says so.                                                                                                                                                  |
+| `pnpm collection-links delete` | `pnpm collection-links delete <id>` deletes a Collection Link, so the owner can take down an abusive name; an id it doesn't keep exits non-zero and says so.                                                                                                                                           |
+| `pnpm smoke:halves`            | The full Maestro smoke as two halves at once on two simulators, with a pass/fail list per half; see [Run the UA Edition on the simulator](#run-the-ua-edition-on-the-simulator).                                                                                                                       |
+| `pnpm source:words`            | Drafts Words for review; see [`tools/sourcing/README.md`](tools/sourcing/README.md).                                                                                                                                                                                                                   |
+| `pnpm content`                 | `pnpm content add\|edit\|retire\|flag <kind> …` write through the content write API with the Агент token; `have`, `counts`, `check <kind> <drafts>`, `verify` and `import` as in [`tools/content/README.md`](tools/content/README.md). See [`tools/content/README.md`](tools/content/README.md).       |
+| `pnpm format`                  | Rewrites files with Prettier.                                                                                                                                                                                                                                                                          |
 
 Dependency advisories that have no fix yet are ignored in [`pnpm-workspace.yaml`](pnpm-workspace.yaml) with a review date. Look at that list when you touch dependencies, and drop an entry as soon as a patched release exists.
 

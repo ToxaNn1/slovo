@@ -11,8 +11,10 @@ import {
   type Round,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { seededRandom, testEdition, word } from '../test-support';
+import { seededRandom, testComparison, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { entriesIn } from './answer-forms';
+import { pairsMode } from './pairs-mode';
 
 const test: Category = { id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' };
 const crafts: Category = {
@@ -306,19 +308,74 @@ describe('the grids of «Пари»', () => {
   it('puts the Words the reader marked «Не знаю» in grids drawn anew for each Game, not always the first', async () => {
     const weak = ['w_n03', 'w_n07', 'w_n09'];
     const places: number[] = [];
-    for (const seed of [1, 2, 3, 4]) {
+    const leftOut: string[] = [];
+    // The Words as the fixture lists them, and by id, as a Language Pack reads them.
+    const byId = createMemoryContentPort({
+      categories: [test, crafts],
+      words: words.toSorted((one, other) => (one.id < other.id ? -1 : 1)),
+    });
+    // Past 60, the seeds whose last grid starts with «n02», the synonym of a weak Word due in it.
+    const seeds = [...Array.from({ length: 60 }, (_, index) => index + 1), 134, 144, 151, 166];
+    for (const [order, pack] of [content, byId].entries()) {
+      for (const seed of seeds) {
+        const app = await run({ seed, pack });
+        for (const id of weak) await app.knowledge.tap(id, 'unknown');
+
+        const shown = (await playGame(app)).map((grid) =>
+          grid.words.map(({ shown: { text } }) => text),
+        );
+
+        for (const id of weak) {
+          const place = shown.findIndex((texts) => texts.includes(id.slice(2)));
+          if (place < 0) leftOut.push(`order ${String(order)}, seed ${String(seed)}: ${id}`);
+          places.push(place);
+        }
+      }
+    }
+
+    expect(leftOut).toEqual([]);
+    expect(places.some((place) => place >= 4)).toBe(true);
+  });
+
+  it('keeps in a Game both of two «Не знаю» Words that may not share a grid: synonyms, or homonyms', async () => {
+    const weak = ['w_n02', 'w_n03', 'w_коса1', 'w_коса2'];
+    const leftOut: string[] = [];
+    for (let seed = 1; seed <= 150; seed += 1) {
       const app = await run({ seed });
       for (const id of weak) await app.knowledge.tap(id, 'unknown');
 
-      const shown = (await playGame(app)).map((grid) =>
-        grid.words.map(({ shown: { text } }) => text),
-      );
+      const grids = gridsOf(await playGame(app));
+      const asked = new Set(current(app).played.map(({ entry }) => entry.id));
 
-      places.push(...weak.map((id) => shown.findIndex((texts) => texts.includes(id.slice(2)))));
+      for (const id of weak) if (!asked.has(id)) leftOut.push(`seed ${String(seed)}: ${id}`);
+      for (const grid of grids) {
+        const texts = grid.words.map(({ shown: { text } }) => text);
+        expect(['n02', 'n03'].filter((lemma) => texts.includes(lemma)).length).toBeLessThan(2);
+        expect(texts.filter((text) => text === 'коса').length).toBeLessThan(2);
+      }
     }
 
-    expect(places.every((place) => place >= 0)).toBe(true);
-    expect(places.some((place) => place >= 4)).toBe(true);
+    expect(leftOut).toEqual([]);
+  });
+
+  it('gives the place of a «Не знаю» Word that may not sit in the grid to the next one, which leaves it a later grid', () => {
+    const [n01, n02, n03, , , n06, n07, n08] = words;
+    if (!n01 || !n02 || !n03 || !n06 || !n07 || !n08) throw new Error('The pack lost a Word');
+
+    // «n03», due in this grid, is a synonym of its answer «n02»; «n07» is due in a later one.
+    const round = pairsMode.buildRound({
+      answer: n02,
+      eligible: words,
+      next: [n03, n01, n06, n08, n07],
+      weakNext: new Set([n03.id, n07.id]),
+      upTo: GAME_ROUNDS,
+      round: 1,
+      random: seededRandom(1),
+      edition: testEdition(),
+      comparison: testComparison,
+    });
+
+    expect(round && entriesIn(round)).toEqual([n02.id, n07.id, n01.id, n06.id]);
   });
 
   it('keeps the primary Definition of a Word that has a Short Definition (ADR 0211)', async () => {

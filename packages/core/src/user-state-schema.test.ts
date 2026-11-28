@@ -152,6 +152,7 @@ describe('the 0.8 sync marks', () => {
       'notifications.plan.2026-10-18T09:00',
       'onboarding.finished',
       'firstWeek.from',
+      'statisticsConsent.due',
       'contentUpdate.checkedAt',
       'edition.switches',
       'edition.installId',
@@ -251,7 +252,7 @@ const storedIn1_0: readonly (readonly [
   string,
   string,
 ])[] = [
-  ['schemaVersion', undefined, 'schema.version', '9'],
+  ['schemaVersion', undefined, 'schema.version', '10'],
   ['installed', undefined, 'app.installed', 'true'],
   ['theme', undefined, 'settings.theme', '"dark"'],
   ['fontSize', undefined, 'settings.fontSize', '"L"'],
@@ -354,6 +355,7 @@ const storedIn1_0: readonly (readonly [
   ],
   ['questionnaireAnswers', undefined, 'questionnaire.answers', '{"level":"good","why":"play"}'],
   ['firstWeekFrom', undefined, 'firstWeek.from', '"2026-10-24"'],
+  ['statisticsConsentDue', undefined, 'statisticsConsent.due', 'true'],
   ['contentUpdateCheckedAt', undefined, 'contentUpdate.checkedAt', '"2026-10-30T08:15:00.000Z"'],
   [
     'remoteSwitches',

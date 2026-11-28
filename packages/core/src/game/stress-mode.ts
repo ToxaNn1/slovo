@@ -12,7 +12,7 @@ import type { TextComparison } from '../text/text-comparison';
  * A vowel Round of the text, its Stress set apart: each vowel, by the
  * Edition's vowels, a button, the stressed ones right; nothing when the
  * Edition marks no Stress, or when the text
- * has one vowel or no stressed one, since its Round would be trivial.
+ * has one vowel, no stressed one or no unstressed one, since its Round would be trivial.
  */
 function vowelRound(
   text: string,
@@ -27,7 +27,9 @@ function vowelRound(
     editionVowels.has(comparison.key(character, 'typedAnswer')) ? [place] : [],
   );
   const stressed = stress.filter((place) => vowels.includes(place));
-  if (vowels.length < 2 || stressed.length === 0) return undefined;
+  // Every vowel stressed leaves no wrong tap.
+  if (vowels.length < 2 || stressed.length === 0 || stressed.length === vowels.length)
+    return undefined;
   return { form: 'vowel', prompt: text, vowels, stressed, sheet };
 }
 
@@ -46,8 +48,8 @@ function markedStressOf(text: string): number[] {
  * «Наголос», the Core's Stress mode, on when the Edition marks
  * Stress and turns the mode on: a Round shows a Word's Lemma without Stress,
  * each of its vowels, by the Edition's vowels, a button; any of its stressed
- * vowels is right. A Word with one vowel never plays, since its Round would
- * be trivial. Its sheet shows the Lemma with its Stress and its first
+ * vowels is right. A Word with one vowel, or whose every vowel is stressed,
+ * never plays, since its Round would be trivial. Its sheet shows the Lemma with its Stress and its first
  * Example, if it has one. A stress trap, a `wrongStress` Correction in the
  * Mix, plays too: its main standard equivalent without Stress, the answer
  * that form's Stress, its sheet the form with its Stress and the
