@@ -55,7 +55,7 @@ The Board (the owner calls it «Пульт») is a published artifact with a sha
 
 https://claude.ai/artifact/Sv4ixZ1cei5wUcYJ4M1oVA
 
-Agents read and write it with the `ArtifactData` tool (load it with `ToolSearch` first). When the tool is missing, write the same JSON to `~/Downloads/WORD/office/inbox/<id>.json` and say so in the reply; the CEO uploads the inbox at the next standup.
+Agents read and write it with the `ArtifactData` tool (load it with `ToolSearch` first). When the tool is missing, write the same JSON to `~/projects/WORD/office/inbox/<id>.json` and say so in the reply; the CEO uploads the inbox at the next standup.
 
 | Collection | Document  | Holds                                                           |
 | ---------- | --------- | --------------------------------------------------------------- |
@@ -94,7 +94,7 @@ A card is one decision or one approval. The owner must be able to decide without
 - `id` is `<agent>-<next number>`; list the collection first so the number is free.
 - `priority`: `P0` blocks the release or a goal, `P1` is needed before 15.12, `P2` is later.
 - 2-3 options. A fact carries a `links` or `sources` entry; the rest goes to `assumptions`.
-- `viz` carries 1-2 visuals as plain data (never HTML): `post`, `store`, `screen`, `diff`, `flow`, `bars`, `table`, `code`. Field lists: `~/Downloads/WORD/office/research/BRIEF.md`.
+- `viz` carries 1-2 visuals as plain data (never HTML): `post`, `store`, `screen`, `diff`, `flow`, `bars`, `table`, `code`. Field lists: `~/projects/WORD/office/research/BRIEF.md`.
 - `status`: the agent writes `new`. The owner's buttons write `approved`, `rejected` or `changes` together with `decision: { comment, at }`. The agent that finishes an approved card writes `done`.
 
 Reading decisions: query `cards` where `status` is `approved` or `changes` and `agent` is yours. A `changes` card is reworked and set back to `new`. Pin every write with the `version` you read.
@@ -112,10 +112,10 @@ Reading decisions: query `cards` where `status` is `approved` or `changes` and `
 }
 ```
 
-The document id is `<YYYYMMDD-HHmm>-<agent>-<n>`. The Journal lives in the Board, not in the repo: the repo is public and takes changes through PRs only. At each standup the CEO saves the day's entries to `~/Downloads/WORD/office/journal/<YYYY-MM-DD>.md`, so the owner keeps a copy that outlives the Board.
+The document id is `<YYYYMMDD-HHmm>-<agent>-<n>`. The Journal lives in the Board, not in the repo: the repo is public and takes changes through PRs only. At each standup the CEO saves the day's entries to `~/projects/WORD/office/journal/<YYYY-MM-DD>.md`, so the owner keeps a copy that outlives the Board.
 
 ## Files
 
-- Office files outside the repo go to `~/Downloads/WORD/office/`; a day's posts to `~/Downloads/WORD/smm/<date>/`.
-- The research of 27.11.2026 that the plan stands on: `~/Downloads/WORD/office/research/`.
+- Office files outside the repo go to `~/projects/WORD/office/`; a day's posts to `~/projects/WORD/smm/<date>/`.
+- The research of 27.11.2026 that the plan stands on: `~/projects/WORD/office/research/`.
 - Service keys: `~/projects/SLOVO/.env`, read by variable name, never printed.

@@ -35,7 +35,7 @@ The owner never names the mode. Before any work, pick it from the task and say i
 - Respect every ADR. When a ticket conflicts with the glossary or an ADR, stop and report the conflict to the owner.
 - An ADR that blocks sensible work is never worked around or followed in silence: propose a short superseding ADR to the owner (`docs/agents/domain.md`). The end of every version brings an ADR cleanup.
 - Record a decision as an ADR in the same change only when it is big and global: it touches a lot of the logic or the UI across the app and is worth recording. Never an ADR for a string, a style, a size or one screen.
-- A change that adds, changes or removes a feature updates that feature's page in the owner's handbook `~/Downloads/WORD/handbook/` in the same change: Ukrainian, plain words, the page template from its `README.md`. A new feature gets a new page and a line in that `README.md`. A cloud session, which has no such folder, names the page and what changed in its report.
+- A change that adds, changes or removes a feature updates that feature's page in the owner's handbook `~/projects/WORD/handbook/` in the same change: Ukrainian, plain words, the page template from its `README.md`. A new feature gets a new page and a line in that `README.md`. A cloud session, which has no such folder, names the page and what changed in its report.
 
 ## Tickets
 

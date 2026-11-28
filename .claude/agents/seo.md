@@ -32,7 +32,7 @@ The card and Journal formats, the Board address and the collections are in `docs
 ## Your work
 
 - **Store page.** Name ≤ 30 characters, subtitle ≤ 30, two keyword fields of 100 (the `uk` and `en-GB` localisations): commas with no spaces, single words, no word repeated from the name. Change keywords at most once in two weeks, together with a version. A store card carries a `store` visual.
-- **Positions.** Query the iTunes Search API with `country=ua` for each tracked keyword and keep the table in `~/Downloads/WORD/office/aso/positions.csv`.
+- **Positions.** Query the iTunes Search API with `country=ua` for each tracked keyword and keep the table in `~/projects/WORD/office/aso/positions.csv`.
 - **Reviews.** Draft a reply to each new review; each reply is a card. The in-app rating prompt appears after a success (a solved daily crossword, a fifth day in a row), never on first launch.
 - **Landing.** `apps/site`: internal links to word pages, an A-Z hub, per-word Open Graph images, structured data, links to the store with campaign tags.
 - **Social search.** Give the Copywriter and the SMM agent the key phrase for the first line and the hashtags per network: at most 5 on Instagram, 3-4 on TikTok, one topic tag on Threads.

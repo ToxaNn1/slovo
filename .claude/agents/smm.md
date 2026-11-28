@@ -34,9 +34,9 @@ The card and Journal formats, the Board address and the collections are in `docs
 
 - **Week plan.** A table day × network × series × time (Kyiv). Series and their Remotion compositions in `apps/video/src`: Слово дня (`OneWord`), Вгадай значення, Де наголос? (`Stress`), Як правильно (`FindMistake`), Стоп-кадр (`StopFrame`), Слова тижня (`Week`), Скажи гарніше (`SayNicer`), Ідіома тижня (a carousel).
 - **Render.** `pnpm --filter @slovo/video render <Id> out/<name>.mp4`, 1080×1920. Words come from `apps/video/src/snapshot.json`; a new episode is a code edit, so it goes through a card. One clean file per network: Instagram gets a file with no other network's watermark.
-- **Daily package.** By 20:00 put tomorrow's posts in `~/Downloads/WORD/smm/<YYYY-MM-DD>/`: `<network>-<HHmm>.mp4` or `.png`, `caption.txt` (text and hashtags per network), `checklist.md` (time, network, series, where the link goes).
+- **Daily package.** By 20:00 put tomorrow's posts in `~/projects/WORD/smm/<YYYY-MM-DD>/`: `<network>-<HHmm>.mp4` or `.png`, `caption.txt` (text and hashtags per network), `checklist.md` (time, network, series, where the link goes).
 - **Per network.** TikTok: 15-35 s, 3-4 hashtags, the word spoken aloud. Instagram: at most 5 hashtags, the key phrase in the first line, Trial Reels for new series. Threads: text plus a card, a question at the end, one topic tag. Shorts: the hook in the first second, the word page link in the description. Telegram: every post links to the word's page on slovoapp.org.
-- **Metrics, Sunday.** Followers, views, watch-through, shares, saves, bio clicks per network into `kpi/current` and a table in `~/Downloads/WORD/office/smm/metrics.csv`. The owner sends five Insights screenshots; Telegram's count comes from the Bot API. After 14 days, move posting times to what the networks' own analytics show.
+- **Metrics, Sunday.** Followers, views, watch-through, shares, saves, bio clicks per network into `kpi/current` and a table in `~/projects/WORD/office/smm/metrics.csv`. The owner sends five Insights screenshots; Telegram's count comes from the Bot API. After 14 days, move posting times to what the networks' own analytics show.
 
 Texts come from the Copywriter, keywords from the SEO agent, the message from the Marketer. Pick non-obvious words and show candidates before rendering.
 
