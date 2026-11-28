@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { adminHeaders, passTime, signedInAdmin, testApp } from '../test-support';
 import { pino } from 'pino';
+import { SERVICE_BLOCK } from '@slovo/contracts/admin-api';
 
 import { createFakeUsage } from './fake-usage';
 import { createCloudflareUsage, createGitHubActionsUsage, createNeonUsage } from './usage-sources';
@@ -28,13 +29,24 @@ const ELEVEN = [
   'Zoho Mail',
 ];
 
+/** The five social accounts and where each one's profile is. */
+const ACCOUNTS = [
+  ['Instagram', 'https://instagram.com/slovoapp_official'],
+  ['Threads', 'https://threads.com/@slovoapp_official'],
+  ['TikTok', 'https://tiktok.com/@slovoapp_official'],
+  ['YouTube', 'https://youtube.com/@slovoapp_official'],
+  ['Telegram channel', 'https://t.me/slovoapp_official'],
+] as const;
+
 describe('«Сервіси»', () => {
   it('answers a Власник the eleven known Services with their places and links', async () => {
     const backend = await ownerOn();
 
     const { services } = await backend.owner.client.admin.services.list();
 
-    expect(services.map((service) => service.name)).toEqual(ELEVEN);
+    expect(services.map((service) => service.name)).toEqual(
+      [...ELEVEN, ...ACCOUNTS.map(([name]) => name)].sort(),
+    );
     const byName = new Map(services.map((service) => [service.name, service]));
     const idOf = (name: string) => byName.get(name)?.id;
     expect(byName.get('Railway')).toMatchObject({
@@ -60,7 +72,45 @@ describe('«Сервіси»', () => {
     const places = new Set(
       services.map(({ position }) => `${String(position.x)},${String(position.y)}`),
     );
-    expect(places.size).toBe(11);
+    expect(places.size).toBe(16);
+  });
+
+  it('answers the five social accounts in a column of their own, with their open entries and no usage', async () => {
+    const backend = await ownerOn();
+    const { services } = await backend.owner.client.admin.services.list();
+    const known = services.filter(({ name }) => ELEVEN.includes(name));
+    const right = Math.max(...known.map(({ position }) => position.x)) + SERVICE_BLOCK.width;
+
+    for (const [name, profile] of ACCOUNTS) {
+      const service = services.find((each) => each.name === name);
+      expect(service).toMatchObject({ kind: 'metered', limits: [], links: [], plan: null });
+      expect(service?.position.x).toBeGreaterThan(right);
+      const { entries } = await backend.owner.client.admin.services.entries({
+        serviceId: service?.id ?? '',
+      });
+      expect(entries).toMatchObject([
+        { type: 'link', label: 'Профіль', note: null, value: profile },
+        {
+          type: 'login',
+          label: 'Нік',
+          note: null,
+          value: '@slovoapp_official',
+        },
+        {
+          type: 'login',
+          label: 'Пошта для входу',
+          note: name === 'YouTube' ? 'вхід через Google' : null,
+          value: 'accounts@slovoapp.org',
+        },
+      ]);
+    }
+    const accountIds = new Set(
+      services
+        .filter(({ name }) => ACCOUNTS.some(([account]) => account === name))
+        .map(({ id }) => id),
+    );
+    const { usage } = await backend.owner.client.admin.services.usage();
+    expect(usage.filter(({ serviceId }) => accountIds.has(serviceId))).toEqual([]);
   });
 
   it('refuses an Адмін and an Агент', async () => {

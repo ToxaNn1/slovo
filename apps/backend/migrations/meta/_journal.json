@@ -253,6 +253,13 @@
       "when": 1795262713745,
       "tag": "0035_sign_in_code_keeps_its_edition",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1795859447658,
+      "tag": "0036_social_accounts",
+      "breakpoints": true
     }
   ]
 }
