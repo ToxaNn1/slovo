@@ -1,0 +1,1271 @@
+# snapshot content v14821
+LINK бурозубка w_ypighe -> w_vlrqfu w_ypighe v4 content v14822 batch 682773bb-f17a-4038-9991-6ee427b6c6a7
+$ pnpm --filter @slovo/content content retire word w_ypighe --replaced-by w_vlrqfu --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ypighe --replaced-by w_vlrqfu --edition uk
+LINK бювар w_0h1sxs -> w_hghxnz w_0h1sxs v3 content v14823 batch b51a3e95-dc79-4cf8-8ea7-e2f07067bb06
+$ pnpm --filter @slovo/content content retire word w_0h1sxs --replaced-by w_hghxnz --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_0h1sxs --replaced-by w_hghxnz --edition uk
+LINK бідак w_a1aa6h -> w_85tn7j w_a1aa6h v3 content v14824 batch 9130c980-7a96-46c4-b0d5-a4bfcd88bcad
+$ pnpm --filter @slovo/content content retire word w_a1aa6h --replaced-by w_85tn7j --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_a1aa6h --replaced-by w_85tn7j --edition uk
+LINK галасвіта w_cp5x2r -> w_sdke8e w_cp5x2r v3 content v14825 batch 1147fcce-e8c1-44f5-8f01-0a5c74e6d04c
+$ pnpm --filter @slovo/content content retire word w_cp5x2r --replaced-by w_sdke8e --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_cp5x2r --replaced-by w_sdke8e --edition uk
+LINK гаркебуз w_pyo97d -> w_kfz2o5 w_pyo97d v3 content v14826 batch f2e08fa5-9040-46d2-8597-ea6ad7a0373e
+$ pnpm --filter @slovo/content content retire word w_pyo97d --replaced-by w_kfz2o5 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_pyo97d --replaced-by w_kfz2o5 --edition uk
+LINK гарматник w_788h1r -> w_42hp8l w_788h1r v3 content v14827 batch c8cce6dd-a844-41d0-8e61-f0b180b85814
+$ pnpm --filter @slovo/content content retire word w_788h1r --replaced-by w_42hp8l --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_788h1r --replaced-by w_42hp8l --edition uk
+LINK гарусний w_0wnc9x -> w_hpnvvj w_0wnc9x v4 content v14828 batch 40b0203e-bff8-4339-ae7b-c134a1fdd000
+$ pnpm --filter @slovo/content content retire word w_0wnc9x --replaced-by w_hpnvvj --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_0wnc9x --replaced-by w_hpnvvj --edition uk
+LINK гелертер w_l6jqsn -> w_tjnzix w_l6jqsn v3 content v14829 batch 09cb5fc8-3d58-4601-97da-5b9351e48780
+$ pnpm --filter @slovo/content content retire word w_l6jqsn --replaced-by w_tjnzix --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_l6jqsn --replaced-by w_tjnzix --edition uk
+LINK гендлювати w_4nifi3 -> w_nw2ghb w_4nifi3 v3 content v14830 batch af12c859-b55a-4bb0-8b77-a1b80a9bd6da
+$ pnpm --filter @slovo/content content retire word w_4nifi3 --replaced-by w_nw2ghb --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_4nifi3 --replaced-by w_nw2ghb --edition uk
+LINK геройствувати w_gpiq13 -> w_6kldet w_gpiq13 v3 content v14831 batch 6d3eeeba-352c-466d-a54a-36473a1fc685
+$ pnpm --filter @slovo/content content retire word w_gpiq13 --replaced-by w_6kldet --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_gpiq13 --replaced-by w_6kldet --edition uk
+LINK гичка w_sfeq8j -> w_hvfpj3 w_sfeq8j v4 content v14832 batch 9f9a8fed-a6b0-4829-87ba-8ac399679ad6
+$ pnpm --filter @slovo/content content retire word w_sfeq8j --replaced-by w_hvfpj3 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_sfeq8j --replaced-by w_hvfpj3 --edition uk
+LINK глупота w_jhyu0c -> w_fagubp w_jhyu0c v3 content v14833 batch 3f3d562c-8aad-4f60-8b13-5ebc36ac3ece
+$ pnpm --filter @slovo/content content retire word w_jhyu0c --replaced-by w_fagubp --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_jhyu0c --replaced-by w_fagubp --edition uk
+LINK глушина w_hvfm1e -> w_7u046t w_hvfm1e v4 content v14834 batch ced73875-166a-459f-aac3-34b0fed1d19b
+$ pnpm --filter @slovo/content content retire word w_hvfm1e --replaced-by w_7u046t --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_hvfm1e --replaced-by w_7u046t --edition uk
+LINK гнівливість w_0gugds -> w_mkg8wq w_0gugds v3 content v14835 batch 8b5187a3-36ce-4497-a3d6-7a61a5833328
+$ pnpm --filter @slovo/content content retire word w_0gugds --replaced-by w_mkg8wq --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_0gugds --replaced-by w_mkg8wq --edition uk
+LINK говорильня w_ticsyw -> w_ysr58n w_ticsyw v3 content v14836 batch 4341053b-b282-4721-929d-f36a5eedf540
+$ pnpm --filter @slovo/content content retire word w_ticsyw --replaced-by w_ysr58n --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ticsyw --replaced-by w_ysr58n --edition uk
+LINK говір w_ojazzv -> w_bavldt w_ojazzv v3 content v14837 batch ad5d9930-b204-4a8f-a6e7-9771fb46e76c
+$ pnpm --filter @slovo/content content retire word w_ojazzv --replaced-by w_bavldt --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ojazzv --replaced-by w_bavldt --edition uk
+LINK голяк w_nnkybj -> w_chg4mj w_nnkybj v3 content v14838 batch fba454cc-0c6b-4dad-af82-9955c166dc9a
+$ pnpm --filter @slovo/content content retire word w_nnkybj --replaced-by w_chg4mj --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_nnkybj --replaced-by w_chg4mj --edition uk
+LINK голіаф w_3loo6w -> w_2ikprr w_3loo6w v3 content v14839 batch 980a6166-fb35-4c6b-ab36-f7a4a9e1f84e
+$ pnpm --filter @slovo/content content retire word w_3loo6w --replaced-by w_2ikprr --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_3loo6w --replaced-by w_2ikprr --edition uk
+LINK горгона w_8fj3hw -> w_e4swx0 w_8fj3hw v3 content v14840 batch 5804301d-838f-4d56-81b8-db3506210712
+$ pnpm --filter @slovo/content content retire word w_8fj3hw --replaced-by w_e4swx0 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_8fj3hw --replaced-by w_e4swx0 --edition uk
+LINK гостина w_0iql9f -> w_2r92n1 w_0iql9f v3 content v14841 batch 434fe393-7c48-48ad-bd0b-42735efb33ef
+$ pnpm --filter @slovo/content content retire word w_0iql9f --replaced-by w_2r92n1 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_0iql9f --replaced-by w_2r92n1 --edition uk
+LINK гострословити w_6s6n70 -> w_abs6eu w_6s6n70 v3 content v14842 batch 1e289e21-3013-4437-95cb-dec8b579b69e
+$ pnpm --filter @slovo/content content retire word w_6s6n70 --replaced-by w_abs6eu --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_6s6n70 --replaced-by w_abs6eu --edition uk
+LINK гризня w_up324q -> w_nufts6 w_up324q v4 content v14843 batch 6c267488-f75b-4ebe-9103-a1ef332e72bd
+$ pnpm --filter @slovo/content content retire word w_up324q --replaced-by w_nufts6 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_up324q --replaced-by w_nufts6 --edition uk
+LINK грошина w_yn1b52 -> w_7nigc6 w_yn1b52 v4 content v14844 batch 13881915-c5a3-4112-ae95-65c59601cf50
+$ pnpm --filter @slovo/content content retire word w_yn1b52 --replaced-by w_7nigc6 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_yn1b52 --replaced-by w_7nigc6 --edition uk
+LINK грубощі w_98uzwx -> w_yc5peu w_98uzwx v3 content v14845 batch fed7fb17-2385-4a1f-bec5-f4db59797bdb
+$ pnpm --filter @slovo/content content retire word w_98uzwx --replaced-by w_yc5peu --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_98uzwx --replaced-by w_yc5peu --edition uk
+LINK грузило w_602g80 -> w_7anx20 w_602g80 v4 content v14846 batch 747f073f-0545-47b5-8aab-d6feb9bf5d42
+$ pnpm --filter @slovo/content content retire word w_602g80 --replaced-by w_7anx20 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_602g80 --replaced-by w_7anx20 --edition uk
+LINK губитель w_o9ibmc -> w_muwbwx w_o9ibmc v3 content v14847 batch a73a8f13-a706-4e14-b534-cd2ca755002d
+$ pnpm --filter @slovo/content content retire word w_o9ibmc --replaced-by w_muwbwx --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_o9ibmc --replaced-by w_muwbwx --edition uk
+LINK гувернер w_icx28t -> w_8zf647 w_icx28t v4 content v14848 batch a9cd35f8-5003-414b-84bf-13a8cc4749e5
+$ pnpm --filter @slovo/content content retire word w_icx28t --replaced-by w_8zf647 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_icx28t --replaced-by w_8zf647 --edition uk
+LINK гугнявити w_3b8nlh -> w_8bk3ml w_3b8nlh v3 content v14849 batch b3b4ff58-7155-42a6-8b7a-766391b4b563
+$ pnpm --filter @slovo/content content retire word w_3b8nlh --replaced-by w_8bk3ml --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_3b8nlh --replaced-by w_8bk3ml --edition uk
+LINK гусеня w_7zeizg -> w_6qvna3 w_7zeizg v3 content v14850 batch 3f7f0bf6-a553-4f81-92df-2cca5944626c
+$ pnpm --filter @slovo/content content retire word w_7zeizg --replaced-by w_6qvna3 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_7zeizg --replaced-by w_6qvna3 --edition uk
+LINK гяур w_rn774q -> w_2fhta0 w_rn774q v3 content v14851 batch aee7e085-3ae0-423f-81de-9dce4af6734b
+$ pnpm --filter @slovo/content content retire word w_rn774q --replaced-by w_2fhta0 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_rn774q --replaced-by w_2fhta0 --edition uk
+LINK гінекократія w_0rcy9n -> w_98xduf w_0rcy9n v3 content v14852 batch f03fdb76-aa36-43b3-b872-33c567cf9524
+$ pnpm --filter @slovo/content content retire word w_0rcy9n --replaced-by w_98xduf --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_0rcy9n --replaced-by w_98xduf --edition uk
+LINK гіркотно w_7rxyui -> w_3jps12 w_7rxyui v3 content v14853 batch 025410f8-a866-45d0-8031-b3ee56053414
+$ pnpm --filter @slovo/content content retire word w_7rxyui --replaced-by w_3jps12 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_7rxyui --replaced-by w_3jps12 --edition uk
+LINK данник w_tpnhsr -> w_lp8g5b w_tpnhsr v4 content v14854 batch e68e9bf6-de5d-49f9-bca2-469222541c56
+$ pnpm --filter @slovo/content content retire word w_tpnhsr --replaced-by w_lp8g5b --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_tpnhsr --replaced-by w_lp8g5b --edition uk
+LINK диба w_f05uft -> w_2fncv1 w_f05uft v4 content v14855 batch aa5c1d9f-d15b-4610-86b2-935db93fad6b
+$ pnpm --filter @slovo/content content retire word w_f05uft --replaced-by w_2fncv1 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_f05uft --replaced-by w_2fncv1 --edition uk
+LINK дичка w_0hz9ob -> w_57vydz w_0hz9ob v3 content v14856 batch 04bbd963-2bbe-4f09-943b-89f826faac36
+$ pnpm --filter @slovo/content content retire word w_0hz9ob --replaced-by w_57vydz --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_0hz9ob --replaced-by w_57vydz --edition uk
+LINK еклектизм w_pwayjt -> w_xvubwg w_pwayjt v3 content v14857 batch ae726c7f-03c3-4b81-99d5-487e4fbf5beb
+$ pnpm --filter @slovo/content content retire word w_pwayjt --replaced-by w_xvubwg --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_pwayjt --replaced-by w_xvubwg --edition uk
+LINK еспланада w_rt5q4w -> w_wfyr94 w_rt5q4w v3 content v14858 batch 1eaea745-16b4-48df-9345-7dad37c261a1
+$ pnpm --filter @slovo/content content retire word w_rt5q4w --replaced-by w_wfyr94 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_rt5q4w --replaced-by w_wfyr94 --edition uk
+LINK жебри w_5flh5l -> w_hqv7hh w_5flh5l v4 content v14859 batch 9401c476-346d-413f-bd3f-8271dcd3a0e4
+$ pnpm --filter @slovo/content content retire word w_5flh5l --replaced-by w_hqv7hh --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_5flh5l --replaced-by w_hqv7hh --edition uk
+LINK жижки w_2s4u1h -> w_4wzw2q w_2s4u1h v3 content v14860 batch 0b124d43-5110-4dd3-9261-58a9f0f7625f
+$ pnpm --filter @slovo/content content retire word w_2s4u1h --replaced-by w_4wzw2q --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_2s4u1h --replaced-by w_4wzw2q --edition uk
+LINK житійний w_sph9a1 -> w_bb2b36 w_sph9a1 v4 content v14861 batch dccecb0a-73a3-4dc3-a558-dd38f77a0240
+$ pnpm --filter @slovo/content content retire word w_sph9a1 --replaced-by w_bb2b36 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_sph9a1 --replaced-by w_bb2b36 --edition uk
+LINK жовклий w_uy519h -> w_dnplue w_uy519h v4 content v14862 batch 112eb6a4-34ec-49f4-b7a3-deb4f53e5064
+$ pnpm --filter @slovo/content content retire word w_uy519h --replaced-by w_dnplue --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_uy519h --replaced-by w_dnplue --edition uk
+LINK жовтофіоль w_7kweu3 -> w_h3i2x1 w_7kweu3 v4 content v14863 batch cc0c38cd-c8dd-4ea1-ad8e-0d523c768172
+$ pnpm --filter @slovo/content content retire word w_7kweu3 --replaced-by w_h3i2x1 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_7kweu3 --replaced-by w_h3i2x1 --edition uk
+LINK жовтяк w_lx6ux5 -> w_gkwxy1 w_lx6ux5 v4 content v14864 batch 32457fa1-614a-49a2-989b-7ad9c75c45ee
+$ pnpm --filter @slovo/content content retire word w_lx6ux5 --replaced-by w_gkwxy1 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_lx6ux5 --replaced-by w_gkwxy1 --edition uk
+LINK жолуддя w_bqe78w -> w_20cyqz w_bqe78w v3 content v14865 batch fc2b2dcb-4bd5-466c-b4cb-080b8f1a5767
+$ pnpm --filter @slovo/content content retire word w_bqe78w --replaced-by w_20cyqz --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_bqe78w --replaced-by w_20cyqz --edition uk
+LINK журкіт w_2s8dl3 -> w_08u9ra w_2s8dl3 v3 content v14866 batch d906551d-c39f-4512-afce-fab8faa26228
+$ pnpm --filter @slovo/content content retire word w_2s8dl3 --replaced-by w_08u9ra --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_2s8dl3 --replaced-by w_08u9ra --edition uk
+LINK жінота w_ajlmub -> w_qsi4gz w_ajlmub v3 content v14867 batch e2f14cf7-8838-4299-a767-2f32094de32e
+$ pnpm --filter @slovo/content content retire word w_ajlmub --replaced-by w_qsi4gz --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ajlmub --replaced-by w_qsi4gz --edition uk
+LINK заблуд w_kz2ijj -> w_6fd1p7 w_kz2ijj v3 content v14868 batch 1fd5e19e-74be-46d0-a141-3603bff68021
+$ pnpm --filter @slovo/content content retire word w_kz2ijj --replaced-by w_6fd1p7 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_kz2ijj --replaced-by w_6fd1p7 --edition uk
+LINK загребистий w_z4hgmw -> w_uv15ux w_z4hgmw v3 content v14869 batch d1d20331-35f6-4c00-93b5-397951a6da6d
+$ pnpm --filter @slovo/content content retire word w_z4hgmw --replaced-by w_uv15ux --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_z4hgmw --replaced-by w_uv15ux --edition uk
+LINK займище w_5twlwy -> w_bjhwgl w_5twlwy v3 content v14870 batch abd5e4b9-e2f4-4c12-98ea-113e9e0fb21b
+$ pnpm --filter @slovo/content content retire word w_5twlwy --replaced-by w_bjhwgl --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_5twlwy --replaced-by w_bjhwgl --edition uk
+LINK заліззя w_biaq9e -> w_ugly9b w_biaq9e v3 content v14871 batch 39b0c0b6-c6a5-43c4-9435-ef039de7160a
+$ pnpm --filter @slovo/content content retire word w_biaq9e --replaced-by w_ugly9b --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_biaq9e --replaced-by w_ugly9b --edition uk
+LINK запівніч w_vxq89l -> w_j871d8 w_vxq89l v3 content v14872 batch bd0a67ff-231c-4858-af54-f6b5a5c66512
+$ pnpm --filter @slovo/content content retire word w_vxq89l --replaced-by w_j871d8 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_vxq89l --replaced-by w_j871d8 --edition uk
+LINK затим w_ikj2jk -> w_xcuq4l w_ikj2jk v3 content v14873 batch 827ebccb-dcf5-4ff6-ae8f-f85bbdf21199
+$ pnpm --filter @slovo/content content retire word w_ikj2jk --replaced-by w_xcuq4l --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ikj2jk --replaced-by w_xcuq4l --edition uk
+LINK затямлювати w_ibtym5 -> w_fuyb79 w_ibtym5 v4 content v14874 batch cfc403e5-34e2-448a-9a19-b23cee1ee226
+$ pnpm --filter @slovo/content content retire word w_ibtym5 --replaced-by w_fuyb79 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ibtym5 --replaced-by w_fuyb79 --edition uk
+LINK захалявний w_sjejv4 -> w_s2kx07 w_sjejv4 v3 content v14875 batch ef6961b1-14bf-4e55-bce6-899067628ffe
+$ pnpm --filter @slovo/content content retire word w_sjejv4 --replaced-by w_s2kx07 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_sjejv4 --replaced-by w_s2kx07 --edition uk
+LINK звільна w_e34l37 -> w_m6irct w_e34l37 v3 content v14876 batch 2843abff-957a-4098-9906-5dc6c75f31d3
+$ pnpm --filter @slovo/content content retire word w_e34l37 --replaced-by w_m6irct --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_e34l37 --replaced-by w_m6irct --edition uk
+LINK злощастя w_5qnyv3 -> w_rks6v2 w_5qnyv3 v3 content v14877 batch 73f3e39e-6df4-4f0d-bdf4-f97861143bb1
+$ pnpm --filter @slovo/content content retire word w_5qnyv3 --replaced-by w_rks6v2 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_5qnyv3 --replaced-by w_rks6v2 --edition uk
+LINK зоріти w_bh3oyk -> w_uwswcd w_bh3oyk v4 content v14878 batch 691a6419-e0e0-4dc7-8f1e-9dc01350f8ee
+$ pnpm --filter @slovo/content content retire word w_bh3oyk --replaced-by w_uwswcd --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_bh3oyk --replaced-by w_uwswcd --edition uk
+LINK каганчик w_dpjlm3 -> w_ozma97 w_dpjlm3 v4 content v14879 batch a85804b9-be64-49f3-9c68-7e51550a8a7d
+$ pnpm --filter @slovo/content content retire word w_dpjlm3 --replaced-by w_ozma97 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_dpjlm3 --replaced-by w_ozma97 --edition uk
+LINK казнокрад w_t63qe5 -> w_ee8m3y w_t63qe5 v3 content v14880 batch 56c758fa-37da-45b1-b3e3-2082a16b71c7
+$ pnpm --filter @slovo/content content retire word w_t63qe5 --replaced-by w_ee8m3y --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_t63qe5 --replaced-by w_ee8m3y --edition uk
+LINK каймак w_rp5ap8 -> w_0om79g w_rp5ap8 v3 content v14881 batch abe8f403-a4eb-4e3d-b50a-03a0e908ec60
+$ pnpm --filter @slovo/content content retire word w_rp5ap8 --replaced-by w_0om79g --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_rp5ap8 --replaced-by w_0om79g --edition uk
+LINK калим w_yw7cdo -> w_53jv8e w_yw7cdo v4 content v14882 batch 43050d22-b509-471d-bc1b-f552213e393c
+$ pnpm --filter @slovo/content content retire word w_yw7cdo --replaced-by w_53jv8e --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_yw7cdo --replaced-by w_53jv8e --edition uk
+LINK камбуз w_77b7fz -> w_4t04aw w_77b7fz v3 content v14883 batch c99d2a27-e522-40cf-9dc7-0cc911836ee0
+$ pnpm --filter @slovo/content content retire word w_77b7fz --replaced-by w_4t04aw --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_77b7fz --replaced-by w_4t04aw --edition uk
+LINK канделябр w_7b4l6s -> w_mig87u w_7b4l6s v3 content v14884 batch ded6fa64-f4c2-42ef-85cf-36f11d3ae829
+$ pnpm --filter @slovo/content content retire word w_7b4l6s --replaced-by w_mig87u --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_7b4l6s --replaced-by w_mig87u --edition uk
+LINK капітул w_10kv1d -> w_mxlvgg w_10kv1d v3 content v14885 batch 1d35b7cf-2dd5-49f4-b89a-fd92d38ef051
+$ pnpm --filter @slovo/content content retire word w_10kv1d --replaced-by w_mxlvgg --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_10kv1d --replaced-by w_mxlvgg --edition uk
+LINK карбонар w_rw8dvk -> w_toxgjs w_rw8dvk v3 content v14886 batch 49a811d0-0090-4eba-b9a9-a6970e0f35bd
+$ pnpm --filter @slovo/content content retire word w_rw8dvk --replaced-by w_toxgjs --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_rw8dvk --replaced-by w_toxgjs --edition uk
+LINK карбівка w_9g1fjv -> w_g2u2v2 w_9g1fjv v3 content v14887 batch 0caa9123-63a6-4837-aa18-00db9ad1f0ae
+$ pnpm --filter @slovo/content content retire word w_9g1fjv --replaced-by w_g2u2v2 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_9g1fjv --replaced-by w_g2u2v2 --edition uk
+LINK карга w_civyx4 -> w_yl1jjr w_civyx4 v3 content v14888 batch d046fcc4-cf83-4462-be0a-714cc908dce4
+$ pnpm --filter @slovo/content content retire word w_civyx4 --replaced-by w_yl1jjr --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_civyx4 --replaced-by w_yl1jjr --edition uk
+LINK карколомність w_uuj03y -> w_vknm9p w_uuj03y v3 content v14889 batch 8fab8a8a-93c3-42e3-bb9a-6203556bf9c0
+$ pnpm --filter @slovo/content content retire word w_uuj03y --replaced-by w_vknm9p --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_uuj03y --replaced-by w_vknm9p --edition uk
+LINK картярство w_b6fhso -> w_fvcwbo w_b6fhso v4 content v14890 batch b5b2d2b9-f7b6-46e9-8f73-8fd76593b9bf
+$ pnpm --filter @slovo/content content retire word w_b6fhso --replaced-by w_fvcwbo --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_b6fhso --replaced-by w_fvcwbo --edition uk
+LINK квакша w_zzfcfx -> w_r8r5gb w_zzfcfx v3 content v14891 batch 19c445b3-939f-4739-910d-1499359071d8
+$ pnpm --filter @slovo/content content retire word w_zzfcfx --replaced-by w_r8r5gb --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_zzfcfx --replaced-by w_r8r5gb --edition uk
+LINK кендюх w_pb8bfi -> w_90gk5w w_pb8bfi v4 content v14892 batch 6d08e6f1-8056-4c49-b739-f10d62dfec9a
+$ pnpm --filter @slovo/content content retire word w_pb8bfi --replaced-by w_90gk5w --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_pb8bfi --replaced-by w_90gk5w --edition uk
+LINK кетмень w_osndrg -> w_jchxve w_osndrg v3 content v14893 batch 154230cd-f82b-4d72-ae9a-acf76effad2f
+$ pnpm --filter @slovo/content content retire word w_osndrg --replaced-by w_jchxve --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_osndrg --replaced-by w_jchxve --edition uk
+LINK китиця w_wso9pt -> w_hbshxf w_wso9pt v4 content v14894 batch 9d7ac917-484e-451c-ab9d-19e9867a3dbd
+$ pnpm --filter @slovo/content content retire word w_wso9pt --replaced-by w_hbshxf --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_wso9pt --replaced-by w_hbshxf --edition uk
+LINK книгоїд w_oakyh8 -> w_toj8kw w_oakyh8 v3 content v14895 batch 74b75d3c-a0a5-4e16-b877-a181ca052ef1
+$ pnpm --filter @slovo/content content retire word w_oakyh8 --replaced-by w_toj8kw --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_oakyh8 --replaced-by w_toj8kw --edition uk
+LINK колосистий w_zml1ff -> w_mw2n2x w_zml1ff v3 content v14896 batch 6f265fdb-82df-4619-a8b4-920dac4ee305
+$ pnpm --filter @slovo/content content retire word w_zml1ff --replaced-by w_mw2n2x --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_zml1ff --replaced-by w_mw2n2x --edition uk
+LINK конкубіна w_ifpmxq -> w_xvbwig w_ifpmxq v3 content v14897 batch 7ba15581-8fdd-40df-8d92-99cfdb088a0f
+$ pnpm --filter @slovo/content content retire word w_ifpmxq --replaced-by w_xvbwig --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ifpmxq --replaced-by w_xvbwig --edition uk
+LINK кошеніль w_096rn4 -> w_36v5pt w_096rn4 v3 content v14898 batch 22aae6d9-d6b2-410c-b9a7-43e5717f1d9f
+$ pnpm --filter @slovo/content content retire word w_096rn4 --replaced-by w_36v5pt --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_096rn4 --replaced-by w_36v5pt --edition uk
+LINK кряква w_yd9dyv -> w_yf5ert w_yd9dyv v4 content v14899 batch 5665bbe9-6133-47a5-bcbd-6d0813b3933a
+$ pnpm --filter @slovo/content content retire word w_yd9dyv --replaced-by w_yf5ert --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_yd9dyv --replaced-by w_yf5ert --edition uk
+LINK курильниця w_gis7ne -> w_087qln w_gis7ne v3 content v14900 batch b7046130-3084-4953-afe8-576890ae343f
+$ pnpm --filter @slovo/content content retire word w_gis7ne --replaced-by w_087qln --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_gis7ne --replaced-by w_087qln --edition uk
+LINK курсистка w_axzqn2 -> w_mnogvb w_axzqn2 v3 content v14901 batch 6fba9c78-c2b0-4125-bfae-69bde6cc2d69
+$ pnpm --filter @slovo/content content retire word w_axzqn2 --replaced-by w_mnogvb --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_axzqn2 --replaced-by w_mnogvb --edition uk
+LINK набоб w_vz97xk -> w_mehj70 w_vz97xk v3 content v14902 batch 26c0e55d-a88d-446b-a0e4-1ee844deba73
+$ pnpm --filter @slovo/content content retire word w_vz97xk --replaced-by w_mehj70 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_vz97xk --replaced-by w_mehj70 --edition uk
+LINK нагай w_oym3t3 -> w_208xhw w_oym3t3 v3 content v14903 batch e0f6819a-ca90-4b34-b8aa-47081367ac09
+$ pnpm --filter @slovo/content content retire word w_oym3t3 --replaced-by w_208xhw --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_oym3t3 --replaced-by w_208xhw --edition uk
+LINK наяда w_c9u00w -> w_9nm55n w_c9u00w v3 content v14904 batch e9c35f94-bebb-4f11-90ba-acab50378023
+$ pnpm --filter @slovo/content content retire word w_c9u00w --replaced-by w_9nm55n --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_c9u00w --replaced-by w_9nm55n --edition uk
+LINK ноша w_zynk3z -> w_knj8fl w_zynk3z v4 content v14905 batch 29f50964-e22b-4a86-8ecc-32ed4e679ba8
+$ pnpm --filter @slovo/content content retire word w_zynk3z --replaced-by w_knj8fl --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_zynk3z --replaced-by w_knj8fl --edition uk
+LINK нужда w_48hyt5 -> w_vqdepo w_48hyt5 v4 content v14906 batch 8fe91d90-a7cc-4bd5-ae02-0cad722013b0
+$ pnpm --filter @slovo/content content retire word w_48hyt5 --replaced-by w_vqdepo --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_48hyt5 --replaced-by w_vqdepo --edition uk
+LINK обіддя w_bgwwuf -> w_f76qvz w_bgwwuf v4 content v14907 batch 2ea772a7-5595-4416-8a57-e55276e3862e
+$ pnpm --filter @slovo/content content retire word w_bgwwuf --replaced-by w_f76qvz --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_bgwwuf --replaced-by w_f76qvz --edition uk
+LINK онагр w_1ntcf8 -> w_25x8qs w_1ntcf8 v4 content v14908 batch 7a61370f-96cd-4794-a341-08808e795b35
+$ pnpm --filter @slovo/content content retire word w_1ntcf8 --replaced-by w_25x8qs --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_1ntcf8 --replaced-by w_25x8qs --edition uk
+LINK орало w_usaskd -> w_zs6v1l w_usaskd v4 content v14909 batch c3357940-b6b2-4b23-adf6-9b44d8f6ec2d
+$ pnpm --filter @slovo/content content retire word w_usaskd --replaced-by w_zs6v1l --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_usaskd --replaced-by w_zs6v1l --edition uk
+LINK оркан w_qidesi -> w_ok5787 w_qidesi v3 content v14910 batch 6f3e857c-5cb3-49ec-8abb-d3e9d4653ad1
+$ pnpm --filter @slovo/content content retire word w_qidesi --replaced-by w_ok5787 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_qidesi --replaced-by w_ok5787 --edition uk
+LINK осля w_86gymc -> w_4cowg6 w_86gymc v3 content v14911 batch 3b6b78ac-5401-46a1-88a5-da9753427dad
+$ pnpm --filter @slovo/content content retire word w_86gymc --replaced-by w_4cowg6 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_86gymc --replaced-by w_4cowg6 --edition uk
+LINK пава w_rparhz -> w_og3r85 w_rparhz v3 content v14912 batch 8c37188d-f13c-411e-8f81-80cb18a29b7b
+$ pnpm --filter @slovo/content content retire word w_rparhz --replaced-by w_og3r85 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_rparhz --replaced-by w_og3r85 --edition uk
+LINK пазур w_q79oue -> w_2wvxor w_q79oue v3 content v14913 batch 64ae0316-db99-4213-9abd-f41aa2fd8498
+$ pnpm --filter @slovo/content content retire word w_q79oue --replaced-by w_2wvxor --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_q79oue --replaced-by w_2wvxor --edition uk
+LINK палантин w_zkwo4z -> w_bycwb7 w_zkwo4z v4 content v14914 batch 378d4a2d-fb3f-4138-a0ae-15a189e3d5b5
+$ pnpm --filter @slovo/content content retire word w_zkwo4z --replaced-by w_bycwb7 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_zkwo4z --replaced-by w_bycwb7 --edition uk
+LINK паля w_kpjzal -> w_y8tutn w_kpjzal v4 content v14915 batch 4a0fcd6a-96ee-4389-8eb8-baffde999a6d
+$ pnpm --filter @slovo/content content retire word w_kpjzal --replaced-by w_y8tutn --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_kpjzal --replaced-by w_y8tutn --edition uk
+LINK парча w_wo1u5p -> w_7nnsj8 w_wo1u5p v3 content v14916 batch 769e4672-3b94-46fa-8d8e-b974fabe0095
+$ pnpm --filter @slovo/content content retire word w_wo1u5p --replaced-by w_7nnsj8 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_wo1u5p --replaced-by w_7nnsj8 --edition uk
+LINK петиметр w_55x93m -> w_cvvr78 w_55x93m v3 content v14917 batch 2a901eaa-4269-4f45-b297-bd4200c05ddf
+$ pnpm --filter @slovo/content content retire word w_55x93m --replaced-by w_cvvr78 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_55x93m --replaced-by w_cvvr78 --edition uk
+LINK пильня w_9eem9d -> w_tq9eyv w_9eem9d v3 content v14918 batch 2e0d2bf1-bbc0-4cd3-b24c-5d93e5c88aa5
+$ pnpm --filter @slovo/content content retire word w_9eem9d --replaced-by w_tq9eyv --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_9eem9d --replaced-by w_tq9eyv --edition uk
+LINK писальце w_7hkwrs -> w_6g4sk9 w_7hkwrs v3 content v14919 batch 4e842e27-b52f-4ccf-abb0-40973f014e09
+$ pnpm --filter @slovo/content content retire word w_7hkwrs --replaced-by w_6g4sk9 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_7hkwrs --replaced-by w_6g4sk9 --edition uk
+LINK полукіпок w_lsm02r -> w_s8n13o w_lsm02r v3 content v14920 batch e8b7d440-7ccc-4c7d-95d9-5e7d7053a30f
+$ pnpm --filter @slovo/content content retire word w_lsm02r --replaced-by w_s8n13o --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_lsm02r --replaced-by w_s8n13o --edition uk
+LINK помийниця w_d6yb1w -> w_c1iidq w_d6yb1w v3 content v14921 batch d24e18cb-8db5-4252-ac45-786b4bd3b2e6
+$ pnpm --filter @slovo/content content retire word w_d6yb1w --replaced-by w_c1iidq --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_d6yb1w --replaced-by w_c1iidq --edition uk
+LINK постерунок w_9q8w6m -> w_0pzwbh w_9q8w6m v4 content v14922 batch 961f3535-06da-46bb-9fc5-71921f5d4150
+$ pnpm --filter @slovo/content content retire word w_9q8w6m --replaced-by w_0pzwbh --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_9q8w6m --replaced-by w_0pzwbh --edition uk
+LINK підголосок w_k5koqt -> w_oo8ty7 w_k5koqt v4 content v14923 batch c7330277-63e4-48c2-afb3-3795d5cbd5d5
+$ pnpm --filter @slovo/content content retire word w_k5koqt --replaced-by w_oo8ty7 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_k5koqt --replaced-by w_oo8ty7 --edition uk
+LINK підложниця w_rp41el -> w_7i9ura w_rp41el v3 content v14924 batch c5e5b489-0da0-4de3-adef-2034ac6e3792
+$ pnpm --filter @slovo/content content retire word w_rp41el --replaced-by w_7i9ura --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_rp41el --replaced-by w_7i9ura --edition uk
+LINK разити w_42i7gy -> w_2x8769 w_42i7gy v3 content v14925 batch 66eb8761-5e6e-4f95-b124-af8fac7fb2a8
+$ pnpm --filter @slovo/content content retire word w_42i7gy --replaced-by w_2x8769 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_42i7gy --replaced-by w_2x8769 --edition uk
+LINK раяти w_hy78mq -> w_uc4n1a w_hy78mq v3 content v14926 batch 57c76ffe-99a0-419c-ad84-2da5772d38d1
+$ pnpm --filter @slovo/content content retire word w_hy78mq --replaced-by w_uc4n1a --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_hy78mq --replaced-by w_uc4n1a --edition uk
+LINK рвацтво w_jr3lw7 -> w_a4ahex w_jr3lw7 v3 content v14927 batch 4666f896-e545-4bd9-8877-3eb8f8785b1b
+$ pnpm --filter @slovo/content content retire word w_jr3lw7 --replaced-by w_a4ahex --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_jr3lw7 --replaced-by w_a4ahex --edition uk
+LINK рдесник w_hj1j4y -> w_nfqtxx w_hj1j4y v3 content v14928 batch 0b49cdb5-5bde-4515-a78c-4fd975a7f0d4
+$ pnpm --filter @slovo/content content retire word w_hj1j4y --replaced-by w_nfqtxx --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_hj1j4y --replaced-by w_nfqtxx --edition uk
+LINK рейсшина w_y7aw84 -> w_98mld9 w_y7aw84 v3 content v14929 batch 711be175-d9d3-4a45-9f66-9ceb97ca8944
+$ pnpm --filter @slovo/content content retire word w_y7aw84 --replaced-by w_98mld9 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_y7aw84 --replaced-by w_98mld9 --edition uk
+LINK ремство w_4h0du0 -> w_xp5daz w_4h0du0 v3 content v14930 batch 67dd74df-5695-4f53-82ef-0bd90f7e63c2
+$ pnpm --filter @slovo/content content retire word w_4h0du0 --replaced-by w_xp5daz --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_4h0du0 --replaced-by w_xp5daz --edition uk
+LINK ретивий w_7pw184 -> w_h5zksz w_7pw184 v3 content v14931 batch 5389b925-de1f-4f50-a74a-e02624d9851b
+$ pnpm --filter @slovo/content content retire word w_7pw184 --replaced-by w_h5zksz --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_7pw184 --replaced-by w_h5zksz --edition uk
+LINK риштунок w_k0jpmb -> w_he1efm w_k0jpmb v3 content v14932 batch 9c473e8b-41b4-4388-9933-63e507336827
+$ pnpm --filter @slovo/content content retire word w_k0jpmb --replaced-by w_he1efm --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_k0jpmb --replaced-by w_he1efm --edition uk
+LINK розбитний w_71oxb6 -> w_6g4rr3 w_71oxb6 v4 content v14933 batch 55a23171-6c94-4927-83df-62f6b9beef32
+$ pnpm --filter @slovo/content content retire word w_71oxb6 --replaced-by w_6g4rr3 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_71oxb6 --replaced-by w_6g4rr3 --edition uk
+LINK розгульний w_jy1j40 -> w_1gq7ws w_jy1j40 v3 content v14934 batch 7ec4fd7a-e11e-4425-becc-5e47959cf0ba
+$ pnpm --filter @slovo/content content retire word w_jy1j40 --replaced-by w_1gq7ws --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_jy1j40 --replaced-by w_1gq7ws --edition uk
+LINK роздолина w_9wooy7 -> w_nnvqje w_9wooy7 v3 content v14935 batch 0e337c32-c0d8-4520-a29b-e86ff2c7d02a
+$ pnpm --filter @slovo/content content retire word w_9wooy7 --replaced-by w_nnvqje --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_9wooy7 --replaced-by w_nnvqje --edition uk
+LINK розкоп w_eoqqa7 -> w_z6vqcd w_eoqqa7 v4 content v14936 batch f238b31d-dfa1-4515-a953-a8083b0aafb4
+$ pnpm --filter @slovo/content content retire word w_eoqqa7 --replaced-by w_z6vqcd --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_eoqqa7 --replaced-by w_z6vqcd --edition uk
+LINK розмаювати w_88aeqf -> w_dy2dzs w_88aeqf v4 content v14937 batch ecc8646f-06f8-43e0-ac32-4349401eea38
+$ pnpm --filter @slovo/content content retire word w_88aeqf --replaced-by w_dy2dzs --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_88aeqf --replaced-by w_dy2dzs --edition uk
+LINK розторопша w_janv7s -> w_88b76t w_janv7s v3 content v14938 batch 253e557d-e65a-4457-b01c-3a625b1e7ba0
+$ pnpm --filter @slovo/content content retire word w_janv7s --replaced-by w_88b76t --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_janv7s --replaced-by w_88b76t --edition uk
+LINK русий w_rqdv3j -> w_8ei9uq w_rqdv3j v3 content v14939 batch c9a03524-aa14-4304-abb7-a61d21373479
+$ pnpm --filter @slovo/content content retire word w_rqdv3j --replaced-by w_8ei9uq --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_rqdv3j --replaced-by w_8ei9uq --edition uk
+LINK рясніти w_iny2tc -> w_naa7y8 w_iny2tc v4 content v14940 batch c7b0f7f6-8980-4db7-bef5-be4685148231
+$ pnpm --filter @slovo/content content retire word w_iny2tc --replaced-by w_naa7y8 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_iny2tc --replaced-by w_naa7y8 --edition uk
+LINK рястка w_e9gdsx -> w_dw0d52 w_e9gdsx v4 content v14941 batch 30959c2f-5377-4c50-9bb2-29a45076b170
+$ pnpm --filter @slovo/content content retire word w_e9gdsx --replaced-by w_dw0d52 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_e9gdsx --replaced-by w_dw0d52 --edition uk
+LINK садівникувати w_wk52tb -> w_jtwlkp w_wk52tb v3 content v14942 batch 90dee70c-0512-4719-b9cb-c99362a4bef6
+$ pnpm --filter @slovo/content content retire word w_wk52tb --replaced-by w_jtwlkp --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_wk52tb --replaced-by w_jtwlkp --edition uk
+LINK садівникувати w_z13gvt -> w_jtwlkp w_z13gvt v3 content v14943 batch 65b1f8a6-f53e-4bf2-abff-c072dac541dd
+$ pnpm --filter @slovo/content content retire word w_z13gvt --replaced-by w_jtwlkp --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_z13gvt --replaced-by w_jtwlkp --edition uk
+LINK себелюбство w_17s3ar -> w_3dz41q w_17s3ar v3 content v14944 batch f49de41c-108c-4810-b65d-966c9c58a0c4
+$ pnpm --filter @slovo/content content retire word w_17s3ar --replaced-by w_3dz41q --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_17s3ar --replaced-by w_3dz41q --edition uk
+LINK себелюбство w_x4fotz -> w_3dz41q w_x4fotz v3 content v14945 batch f8b927de-77f5-41b2-8008-81f09d5c0559
+$ pnpm --filter @slovo/content content retire word w_x4fotz --replaced-by w_3dz41q --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_x4fotz --replaced-by w_3dz41q --edition uk
+LINK скотобоєць w_6llb4a -> w_d5ntov w_6llb4a v3 content v14946 batch 0d995324-ca0a-47a2-90eb-bf4de6f1415b
+$ pnpm --filter @slovo/content content retire word w_6llb4a --replaced-by w_d5ntov --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_6llb4a --replaced-by w_d5ntov --edition uk
+LINK смиренник w_8j8a7h -> w_ci199b w_8j8a7h v3 content v14947 batch 0b4e1fe6-0116-4ac9-b74e-1ea0abe7b832
+$ pnpm --filter @slovo/content content retire word w_8j8a7h --replaced-by w_ci199b --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_8j8a7h --replaced-by w_ci199b --edition uk
+LINK смиренник w_zraool -> w_ci199b w_zraool v3 content v14948 batch fc135c35-6506-4156-8456-6ad5918d14b6
+$ pnpm --filter @slovo/content content retire word w_zraool --replaced-by w_ci199b --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_zraool --replaced-by w_ci199b --edition uk
+LINK смута w_aqgdj5 -> w_zke3lf w_aqgdj5 v4 content v14949 batch 6e3e5cf9-69a6-4f6d-b887-efe1ab4eac09
+$ pnpm --filter @slovo/content content retire word w_aqgdj5 --replaced-by w_zke3lf --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_aqgdj5 --replaced-by w_zke3lf --edition uk
+LINK согрішати w_bbyu82 -> w_z9tjke w_bbyu82 v4 content v14950 batch fefd97cb-87b9-4be4-8ec4-b7934e5d97f3
+$ pnpm --filter @slovo/content content retire word w_bbyu82 --replaced-by w_z9tjke --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_bbyu82 --replaced-by w_z9tjke --edition uk
+LINK согрішати w_v8phgg -> w_z9tjke w_v8phgg v3 content v14951 batch 58376084-dd13-486b-85a8-3efcd6e7bc1d
+$ pnpm --filter @slovo/content content retire word w_v8phgg --replaced-by w_z9tjke --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_v8phgg --replaced-by w_z9tjke --edition uk
+LINK сопка w_al2uy0 -> w_3vhxz5 w_al2uy0 v3 content v14952 batch 3500a91a-2d85-4ab1-8a98-19a42525215e
+$ pnpm --filter @slovo/content content retire word w_al2uy0 --replaced-by w_3vhxz5 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_al2uy0 --replaced-by w_3vhxz5 --edition uk
+LINK сочити w_dslji4 -> w_5e40dr w_dslji4 v4 content v14953 batch 20702235-0172-4d8c-8654-ab1042dcc776
+$ pnpm --filter @slovo/content content retire word w_dslji4 --replaced-by w_5e40dr --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_dslji4 --replaced-by w_5e40dr --edition uk
+LINK сочити w_wyhvmx -> w_5e40dr w_wyhvmx v4 content v14954 batch 73692f98-5164-4cc3-88bc-0dda4c2ac575
+$ pnpm --filter @slovo/content content retire word w_wyhvmx --replaced-by w_5e40dr --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_wyhvmx --replaced-by w_5e40dr --edition uk
+LINK сполячувати w_7rt7bt -> w_96vijn w_7rt7bt v3 content v14955 batch 139dc9b2-64cf-4ad7-80c8-0dff08414fdc
+$ pnpm --filter @slovo/content content retire word w_7rt7bt --replaced-by w_96vijn --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_7rt7bt --replaced-by w_96vijn --edition uk
+LINK сполячувати w_qcj89o -> w_96vijn w_qcj89o v3 content v14956 batch 82e06ebd-27a1-4d6a-b522-ab72ebb5b449
+$ pnpm --filter @slovo/content content retire word w_qcj89o --replaced-by w_96vijn --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_qcj89o --replaced-by w_96vijn --edition uk
+LINK співанка w_3pch4n -> w_9wxbnp w_3pch4n v3 content v14957 batch 6963fab6-bee8-45f4-bc54-c6bc3c2d0d5e
+$ pnpm --filter @slovo/content content retire word w_3pch4n --replaced-by w_9wxbnp --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_3pch4n --replaced-by w_9wxbnp --edition uk
+LINK співанка w_o6l1m6 -> w_9wxbnp w_o6l1m6 v3 content v14958 batch e065f608-d5fc-4560-b1bb-3e7a617f8659
+$ pnpm --filter @slovo/content content retire word w_o6l1m6 --replaced-by w_9wxbnp --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_o6l1m6 --replaced-by w_9wxbnp --edition uk
+LINK сьогочасний w_tugl7o -> w_ue1agd w_tugl7o v4 content v14959 batch af079ef9-6aa1-4838-b3d7-394e655aebfd
+$ pnpm --filter @slovo/content content retire word w_tugl7o --replaced-by w_ue1agd --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_tugl7o --replaced-by w_ue1agd --edition uk
+LINK тамарикс w_c6lnly -> w_hyk39g w_c6lnly v3 content v14960 batch 99155f51-c45b-4be3-9096-60b2235161f1
+$ pnpm --filter @slovo/content content retire word w_c6lnly --replaced-by w_hyk39g --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_c6lnly --replaced-by w_hyk39g --edition uk
+LINK тамаринд w_dvzjb4 -> w_c0g1sq w_dvzjb4 v3 content v14961 batch 91bf08be-dca3-4c0d-9c08-c128ac5a896e
+$ pnpm --filter @slovo/content content retire word w_dvzjb4 --replaced-by w_c0g1sq --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_dvzjb4 --replaced-by w_c0g1sq --edition uk
+LINK тараня w_hv7a92 -> w_f7vtsm w_hv7a92 v4 content v14962 batch d23893e3-3770-4802-a299-ad0d1bc11de5
+$ pnpm --filter @slovo/content content retire word w_hv7a92 --replaced-by w_f7vtsm --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_hv7a92 --replaced-by w_f7vtsm --edition uk
+LINK тархан w_vdiilv -> w_dgt231 w_vdiilv v3 content v14963 batch f37306ed-808e-4094-9ac3-645dfc3e9237
+$ pnpm --filter @slovo/content content retire word w_vdiilv --replaced-by w_dgt231 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_vdiilv --replaced-by w_dgt231 --edition uk
+LINK тибель w_m6jylb -> w_jros7t w_m6jylb v4 content v14964 batch ba7804ee-b29e-467f-8a6c-aaf7ff6b8f45
+$ pnpm --filter @slovo/content content retire word w_m6jylb --replaced-by w_jros7t --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_m6jylb --replaced-by w_jros7t --edition uk
+LINK типікон w_vv6d1e -> w_pggo0e w_vv6d1e v3 content v14965 batch f9129747-a043-4c2c-8ddf-48a61a55185b
+$ pnpm --filter @slovo/content content retire word w_vv6d1e --replaced-by w_pggo0e --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_vv6d1e --replaced-by w_pggo0e --edition uk
+LINK тлінний w_3l01b3 -> w_us34fc w_3l01b3 v4 content v14966 batch 3c3ab694-97ec-4427-9993-6c85437de227
+$ pnpm --filter @slovo/content content retire word w_3l01b3 --replaced-by w_us34fc --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_3l01b3 --replaced-by w_us34fc --edition uk
+LINK толокно w_z77zzn -> w_uej6b9 w_z77zzn v3 content v14967 batch e49a78b8-f057-478b-a205-ec8a679cc50d
+$ pnpm --filter @slovo/content content retire word w_z77zzn --replaced-by w_uej6b9 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_z77zzn --replaced-by w_uej6b9 --edition uk
+LINK тороки w_s6tepz -> w_rvz0r4 w_s6tepz v4 content v14968 batch f665b09d-ff7f-4d32-a933-9712981f1c98
+$ pnpm --filter @slovo/content content retire word w_s6tepz --replaced-by w_rvz0r4 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_s6tepz --replaced-by w_rvz0r4 --edition uk
+LINK трельяж w_n4tb65 -> w_o4nzx7 w_n4tb65 v4 content v14969 batch ad297d40-bab4-4917-8ff2-1ca493d272b4
+$ pnpm --filter @slovo/content content retire word w_n4tb65 --replaced-by w_o4nzx7 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_n4tb65 --replaced-by w_o4nzx7 --edition uk
+LINK трембітати w_k9agv0 -> w_cr4mr4 w_k9agv0 v4 content v14970 batch a3113208-f5af-414f-b9d1-65b682c94eeb
+$ pnpm --filter @slovo/content content retire word w_k9agv0 --replaced-by w_cr4mr4 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_k9agv0 --replaced-by w_cr4mr4 --edition uk
+LINK троюдити w_zlui6u -> w_6dzi3g w_zlui6u v4 content v14971 batch 05c279fa-de3a-4801-934a-86343bb432f6
+$ pnpm --filter @slovo/content content retire word w_zlui6u --replaced-by w_6dzi3g --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_zlui6u --replaced-by w_6dzi3g --edition uk
+LINK тужавіти w_oro2df -> w_qp682q w_oro2df v3 content v14972 batch 7acd76d6-ea1c-475d-ad0b-6eab9dc340e3
+$ pnpm --filter @slovo/content content retire word w_oro2df --replaced-by w_qp682q --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_oro2df --replaced-by w_qp682q --edition uk
+LINK туркати w_wp3pgi -> w_ohqwnq w_wp3pgi v4 content v14973 batch 771be17d-375e-4abb-9b2b-9b2e36bed631
+$ pnpm --filter @slovo/content content retire word w_wp3pgi --replaced-by w_ohqwnq --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_wp3pgi --replaced-by w_ohqwnq --edition uk
+LINK тюпати w_yruwv3 -> w_llhexk w_yruwv3 v3 content v14974 batch 0eac851c-2263-4d8a-b1f4-c4c0a4c3188b
+$ pnpm --filter @slovo/content content retire word w_yruwv3 --replaced-by w_llhexk --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_yruwv3 --replaced-by w_llhexk --edition uk
+LINK убуток w_l9e3ao -> w_qdhxy8 w_l9e3ao v3 content v14975 batch ba853f76-1e46-4d19-9d5b-594511164d3c
+$ pnpm --filter @slovo/content content retire word w_l9e3ao --replaced-by w_qdhxy8 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_l9e3ao --replaced-by w_qdhxy8 --edition uk
+LINK узмор'я w_5bawic -> w_9s4iqf w_5bawic v4 content v14976 batch 4d2366df-5af9-4ee2-a98f-e3b7c2decbcf
+$ pnpm --filter @slovo/content content retire word w_5bawic --replaced-by w_9s4iqf --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_5bawic --replaced-by w_9s4iqf --edition uk
+LINK укоханець w_l07ogp -> w_inq7k8 w_l07ogp v3 content v14977 batch b30d7838-36a5-41f6-b985-c1ab7627b315
+$ pnpm --filter @slovo/content content retire word w_l07ogp --replaced-by w_inq7k8 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_l07ogp --replaced-by w_inq7k8 --edition uk
+LINK упертюх w_x74kq3 -> w_v1tfhk w_x74kq3 v3 content v14978 batch ac9af69a-920d-4db7-9e58-319c8adbea61
+$ pnpm --filter @slovo/content content retire word w_x74kq3 --replaced-by w_v1tfhk --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_x74kq3 --replaced-by w_v1tfhk --edition uk
+LINK урюк w_xh1qz7 -> w_c7juzj w_xh1qz7 v3 content v14979 batch 2080b124-4be3-4501-a5e2-eb5c02677d9f
+$ pnpm --filter @slovo/content content retire word w_xh1qz7 --replaced-by w_c7juzj --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_xh1qz7 --replaced-by w_c7juzj --edition uk
+LINK усовіщати w_vb28eq -> w_x23fg0 w_vb28eq v4 content v14980 batch 34a5502a-6e0f-4a5b-b117-baca021c176f
+$ pnpm --filter @slovo/content content retire word w_vb28eq --replaced-by w_x23fg0 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_vb28eq --replaced-by w_x23fg0 --edition uk
+LINK усолода w_gtyy2z -> w_u4l530 w_gtyy2z v3 content v14981 batch f89839fa-21a0-4d1d-8ec9-85f4f0c65c28
+$ pnpm --filter @slovo/content content retire word w_gtyy2z --replaced-by w_u4l530 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_gtyy2z --replaced-by w_u4l530 --edition uk
+LINK утлуватий w_az8143 -> w_6ml7uy w_az8143 v3 content v14982 batch 0ae47a5c-21c5-407b-9147-794423674731
+$ pnpm --filter @slovo/content content retire word w_az8143 --replaced-by w_6ml7uy --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_az8143 --replaced-by w_6ml7uy --edition uk
+LINK учадіти w_ssc5xk -> w_usqmc6 w_ssc5xk v4 content v14983 batch 68a9fb8c-47fa-4230-9ef0-53e058b0385b
+$ pnpm --filter @slovo/content content retire word w_ssc5xk --replaced-by w_usqmc6 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ssc5xk --replaced-by w_usqmc6 --edition uk
+LINK фатум w_lbbtcr -> w_rv95au w_lbbtcr v3 content v14984 batch 49540159-8c5d-4218-b853-24a777b7e96e
+$ pnpm --filter @slovo/content content retire word w_lbbtcr --replaced-by w_rv95au --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_lbbtcr --replaced-by w_rv95au --edition uk
+LINK хиба w_42tead -> w_cmegwg w_42tead v4 content v14985 batch 39db4dd7-285f-4f9a-baf5-11954483c330
+$ pnpm --filter @slovo/content content retire word w_42tead --replaced-by w_cmegwg --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_42tead --replaced-by w_cmegwg --edition uk
+LINK хоку w_9qnn3d -> w_sk7zmg w_9qnn3d v3 content v14986 batch 465f45c8-26a7-4df9-8c0d-88ec1335c8ae
+$ pnpm --filter @slovo/content content retire word w_9qnn3d --replaced-by w_sk7zmg --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_9qnn3d --replaced-by w_sk7zmg --edition uk
+LINK худяк w_rule68 -> w_cnxkpz w_rule68 v3 content v14987 batch 70225cf3-b525-4e87-9341-7faa2d6f9708
+$ pnpm --filter @slovo/content content retire word w_rule68 --replaced-by w_cnxkpz --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_rule68 --replaced-by w_cnxkpz --edition uk
+LINK чигир w_x3s8x6 -> w_sc0tsw w_x3s8x6 v3 content v14988 batch b62b0705-7507-42de-a55a-6dbd9c3e93e5
+$ pnpm --filter @slovo/content content retire word w_x3s8x6 --replaced-by w_sc0tsw --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_x3s8x6 --replaced-by w_sc0tsw --edition uk
+LINK чудернацтво w_brr60a -> w_tulc9m w_brr60a v3 content v14989 batch 4b3d4889-af33-41d1-9fde-573c4e4de554
+$ pnpm --filter @slovo/content content retire word w_brr60a --replaced-by w_tulc9m --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_brr60a --replaced-by w_tulc9m --edition uk
+LINK чуперадло w_pz4b43 -> w_tafn8s w_pz4b43 v3 content v14990 batch 35e4699e-be30-4d2b-9f36-bf28162caca0
+$ pnpm --filter @slovo/content content retire word w_pz4b43 --replaced-by w_tafn8s --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_pz4b43 --replaced-by w_tafn8s --edition uk
+LINK шалапутство w_dnc44c -> w_vvv9vm w_dnc44c v3 content v14991 batch 4ecbe7c3-1f30-4d1e-a9b2-6733af91ed73
+$ pnpm --filter @slovo/content content retire word w_dnc44c --replaced-by w_vvv9vm --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_dnc44c --replaced-by w_vvv9vm --edition uk
+LINK шанолюбець w_f723yy -> w_0k9k5k w_f723yy v3 content v14992 batch 7af3be1b-c35b-446f-bc71-8b3faefdf193
+$ pnpm --filter @slovo/content content retire word w_f723yy --replaced-by w_0k9k5k --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_f723yy --replaced-by w_0k9k5k --edition uk
+LINK шанцевий w_v7xjpr -> w_x7es0d w_v7xjpr v4 content v14993 batch 1fad97d7-c549-44d2-90b8-c0cb0853e10b
+$ pnpm --filter @slovo/content content retire word w_v7xjpr --replaced-by w_x7es0d --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_v7xjpr --replaced-by w_x7es0d --edition uk
+LINK шапірограф w_wo6tg5 -> w_e24to6 w_wo6tg5 v3 content v14994 batch 72b6cc5e-975b-437d-be55-38b436b28e79
+$ pnpm --filter @slovo/content content retire word w_wo6tg5 --replaced-by w_e24to6 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_wo6tg5 --replaced-by w_e24to6 --edition uk
+LINK шарманщик w_brfxzt -> w_zfxzdp w_brfxzt v3 content v14995 batch cedc4f2c-405e-4a6e-aee4-cc7f4d98e362
+$ pnpm --filter @slovo/content content retire word w_brfxzt --replaced-by w_zfxzdp --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_brfxzt --replaced-by w_zfxzdp --edition uk
+LINK шатія w_mvp6pf -> w_q7euqd w_mvp6pf v3 content v14996 batch 074989ea-c2ff-46e5-a7d4-e793031262e6
+$ pnpm --filter @slovo/content content retire word w_mvp6pf --replaced-by w_q7euqd --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_mvp6pf --replaced-by w_q7euqd --edition uk
+LINK шахермахерство w_ef1lof -> w_3y2qx5 w_ef1lof v3 content v14997 batch 4d005416-bd2f-4e72-9db6-e6ff59e725ec
+$ pnpm --filter @slovo/content content retire word w_ef1lof --replaced-by w_3y2qx5 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ef1lof --replaced-by w_3y2qx5 --edition uk
+LINK шахиншах w_kctfzl -> w_9ora77 w_kctfzl v3 content v14998 batch d9e70119-9bad-4669-b513-6d366e158bb0
+$ pnpm --filter @slovo/content content retire word w_kctfzl --replaced-by w_9ora77 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_kctfzl --replaced-by w_9ora77 --edition uk
+LINK шемрати w_evga1o -> w_bozui1 w_evga1o v3 content v14999 batch 35b07437-be69-4652-a7f4-8afdc4a9263a
+$ pnpm --filter @slovo/content content retire word w_evga1o --replaced-by w_bozui1 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_evga1o --replaced-by w_bozui1 --edition uk
+LINK школити w_8l1dcm -> w_qyb6tj w_8l1dcm v4 content v15000 batch c35489f5-a21d-4603-a6f4-99e0c406e6b3
+$ pnpm --filter @slovo/content content retire word w_8l1dcm --replaced-by w_qyb6tj --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_8l1dcm --replaced-by w_qyb6tj --edition uk
+LINK євгеніка w_and62o -> w_qgimoo w_and62o v3 content v15001 batch 9c668c71-a703-4712-be2d-f2c0a4a72383
+$ pnpm --filter @slovo/content content retire word w_and62o --replaced-by w_qgimoo --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_and62o --replaced-by w_qgimoo --edition uk
+LINK бузинник w_59k9ej -> w_9kk86u w_59k9ej v3 content v15002 batch a4f2064c-1c14-484f-958b-d08dc1bc6186
+$ pnpm --filter @slovo/content content retire word w_59k9ej --replaced-by w_9kk86u --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_59k9ej --replaced-by w_9kk86u --edition uk
+LINK буран w_p8s4u8 -> w_3g6lry w_p8s4u8 v3 content v15003 batch 053198c2-6f4f-4582-81ef-c17cdbc62b89
+$ pnpm --filter @slovo/content content retire word w_p8s4u8 --replaced-by w_3g6lry --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_p8s4u8 --replaced-by w_3g6lry --edition uk
+LINK бушель w_ar5td8 -> w_esrgki w_ar5td8 v3 content v15004 batch 465a793f-fc7b-4abc-b4d9-1f1fba10bfb2
+$ pnpm --filter @slovo/content content retire word w_ar5td8 --replaced-by w_esrgki --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ar5td8 --replaced-by w_esrgki --edition uk
+LINK буян w_nal0ri -> w_ksqur9 w_nal0ri v3 content v15005 batch c42c416a-892e-4241-9b77-f4918690f7f8
+$ pnpm --filter @slovo/content content retire word w_nal0ri --replaced-by w_ksqur9 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_nal0ri --replaced-by w_ksqur9 --edition uk
+LINK бігос w_nnzhti -> w_gzg79y w_nnzhti v3 content v15006 batch b3fe5634-12dd-4fb6-a585-ca81ff1441a3
+$ pnpm --filter @slovo/content content retire word w_nnzhti --replaced-by w_gzg79y --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_nnzhti --replaced-by w_gzg79y --edition uk
+LINK гакаборт w_y8o7lo -> w_9bzxqk w_y8o7lo v3 content v15007 batch a00e02a8-4163-412e-8aff-7e2b5a9730da
+$ pnpm --filter @slovo/content content retire word w_y8o7lo --replaced-by w_9bzxqk --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_y8o7lo --replaced-by w_9bzxqk --edition uk
+LINK гарус w_q98p8t -> w_7t2a0b w_q98p8t v4 content v15008 batch abf9c4ca-a92e-49b5-8de7-02d6ba791ff0
+$ pnpm --filter @slovo/content content retire word w_q98p8t --replaced-by w_7t2a0b --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_q98p8t --replaced-by w_7t2a0b --edition uk
+LINK гарцівник w_0tk8h6 -> w_9kz8us w_0tk8h6 v3 content v15009 batch 9edf9773-e606-452d-ab2b-a1baed783681
+$ pnpm --filter @slovo/content content retire word w_0tk8h6 --replaced-by w_9kz8us --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_0tk8h6 --replaced-by w_9kz8us --edition uk
+LINK гафель w_wm9k6m -> w_kc2je3 w_wm9k6m v3 content v15010 batch 52551046-c6e8-4571-907e-cfe6eee3877d
+$ pnpm --filter @slovo/content content retire word w_wm9k6m --replaced-by w_kc2je3 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_wm9k6m --replaced-by w_kc2je3 --edition uk
+LINK гелер w_jombsi -> w_etbkoy w_jombsi v3 content v15011 batch 5f1b4524-75ed-4654-9af3-e5c6c1506a3a
+$ pnpm --filter @slovo/content content retire word w_jombsi --replaced-by w_etbkoy --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_jombsi --replaced-by w_etbkoy --edition uk
+LINK геліогравюра w_worwwv -> w_r10ks6 w_worwwv v3 content v15012 batch de1b9ad0-0fb9-4f74-a5cb-4cd69c6f4d10
+$ pnpm --filter @slovo/content content retire word w_worwwv --replaced-by w_r10ks6 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_worwwv --replaced-by w_r10ks6 --edition uk
+LINK гептаметр w_j8w3sc -> w_i6ta9i w_j8w3sc v3 content v15013 batch 38fa2c7c-926e-4351-999a-63ce0be26c57
+$ pnpm --filter @slovo/content content retire word w_j8w3sc --replaced-by w_i6ta9i --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_j8w3sc --replaced-by w_i6ta9i --edition uk
+LINK гепіди w_xy18ks -> w_v4uyc0 w_xy18ks v3 content v15014 batch 6b0cfb69-329d-4660-a163-27c607d52981
+$ pnpm --filter @slovo/content content retire word w_xy18ks --replaced-by w_v4uyc0 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_xy18ks --replaced-by w_v4uyc0 --edition uk
+LINK герма w_kwf7uu -> w_h9vu0y w_kwf7uu v3 content v15015 batch 85e01d2b-e80f-4c34-92c6-8f601483ba61
+$ pnpm --filter @slovo/content content retire word w_kwf7uu --replaced-by w_h9vu0y --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_kwf7uu --replaced-by w_h9vu0y --edition uk
+LINK глаголити w_6uyd63 -> w_8ruu42 w_6uyd63 v3 content v15016 batch ca794e93-a8d6-4fb5-ac48-719a528fefe9
+$ pnpm --filter @slovo/content content retire word w_6uyd63 --replaced-by w_8ruu42 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_6uyd63 --replaced-by w_8ruu42 --edition uk
+LINK глаголиця w_bsy26o -> w_8w7nks w_bsy26o v4 content v15017 batch 07cbd0d6-a783-4264-8398-075bef7af4df
+$ pnpm --filter @slovo/content content retire word w_bsy26o --replaced-by w_8w7nks --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_bsy26o --replaced-by w_8w7nks --edition uk
+LINK глетчер w_0ffhs5 -> w_20j0qi w_0ffhs5 v3 content v15018 batch 2814024e-662c-4cb5-9bf6-17a498f1a40f
+$ pnpm --filter @slovo/content content retire word w_0ffhs5 --replaced-by w_20j0qi --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_0ffhs5 --replaced-by w_20j0qi --edition uk
+LINK гліптотека w_z344yc -> w_lx6voq w_z344yc v3 content v15019 batch 1511e428-200a-4555-b288-645d9cb8a65c
+$ pnpm --filter @slovo/content content retire word w_z344yc --replaced-by w_lx6voq --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_z344yc --replaced-by w_lx6voq --edition uk
+LINK гномічний w_r0ycd6 -> w_b1oogr w_r0ycd6 v4 content v15020 batch 26959fbf-f820-4d09-ab32-55b1d795ec51
+$ pnpm --filter @slovo/content content retire word w_r0ycd6 --replaced-by w_b1oogr --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_r0ycd6 --replaced-by w_b1oogr --edition uk
+LINK гнідко w_hkdjut -> w_6qgic5 w_hkdjut v3 content v15021 batch 79f9c6eb-f5ff-4a81-9d86-e805a18d90d5
+$ pnpm --filter @slovo/content content retire word w_hkdjut --replaced-by w_6qgic5 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_hkdjut --replaced-by w_6qgic5 --edition uk
+LINK гоже w_4ak3nh -> w_x25qg5 w_4ak3nh v3 content v15022 batch 797c0464-24dd-464e-a25a-9172f25acc31
+$ pnpm --filter @slovo/content content retire word w_4ak3nh --replaced-by w_x25qg5 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_4ak3nh --replaced-by w_x25qg5 --edition uk
+LINK гожість w_vkzwl4 -> w_l6fc00 w_vkzwl4 v3 content v15023 batch dcb9d867-2baf-45de-ad5a-f4b72fc97cce
+$ pnpm --filter @slovo/content content retire word w_vkzwl4 --replaced-by w_l6fc00 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_vkzwl4 --replaced-by w_l6fc00 --edition uk
+LINK гойність w_tgz8p8 -> w_g001k6 w_tgz8p8 v3 content v15024 batch 265b6698-fe5a-48d0-b952-be3320737a4c
+$ pnpm --filter @slovo/content content retire word w_tgz8p8 --replaced-by w_g001k6 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_tgz8p8 --replaced-by w_g001k6 --edition uk
+LINK голець w_59cmhy -> w_qrewyf w_59cmhy v4 content v15025 batch 7ae74fe8-2d1f-4194-9260-282ab0e5f03a
+$ pnpm --filter @slovo/content content retire word w_59cmhy --replaced-by w_qrewyf --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_59cmhy --replaced-by w_qrewyf --edition uk
+LINK голосільниця w_xoh82n -> w_7n6omt w_xoh82n v4 content v15026 batch c665819d-b8c2-472e-9c4d-194ba0c1d82b
+$ pnpm --filter @slovo/content content retire word w_xoh82n --replaced-by w_7n6omt --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_xoh82n --replaced-by w_7n6omt --edition uk
+LINK гольтіпа w_9elf6w -> w_gtht3t w_9elf6w v4 content v15027 batch 6c36b7b6-ed74-4e88-a22c-c95bdf1a7236
+$ pnpm --filter @slovo/content content retire word w_9elf6w --replaced-by w_gtht3t --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_9elf6w --replaced-by w_gtht3t --edition uk
+LINK голярня w_viusor -> w_l0knu2 w_viusor v3 content v15028 batch 8532571f-5e9a-4b24-9c95-ff1d267e432b
+$ pnpm --filter @slovo/content content retire word w_viusor --replaced-by w_l0knu2 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_viusor --replaced-by w_l0knu2 --edition uk
+LINK гонвед w_agosgp -> w_i8vkz4 w_agosgp v4 content v15029 batch f015a963-4b6a-46bd-b074-829c2b352b22
+$ pnpm --filter @slovo/content content retire word w_agosgp --replaced-by w_i8vkz4 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_agosgp --replaced-by w_i8vkz4 --edition uk
+LINK гончак w_8o3z17 -> w_6lnu9r w_8o3z17 v3 content v15030 batch ff194472-83f9-4db6-aca6-4ccc3ae2fbde
+$ pnpm --filter @slovo/content content retire word w_8o3z17 --replaced-by w_6lnu9r --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_8o3z17 --replaced-by w_6lnu9r --edition uk
+LINK гопліт w_riowf1 -> w_5l5h2c w_riowf1 v3 content v15031 batch 176a6b8b-64ea-4f54-8154-bed81385220f
+$ pnpm --filter @slovo/content content retire word w_riowf1 --replaced-by w_5l5h2c --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_riowf1 --replaced-by w_5l5h2c --edition uk
+LINK горлань w_xv34sn -> w_8sb0c0 w_xv34sn v4 content v15032 batch 39ac0404-4f48-4297-8668-e5f5941ff57c
+$ pnpm --filter @slovo/content content retire word w_xv34sn --replaced-by w_8sb0c0 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_xv34sn --replaced-by w_8sb0c0 --edition uk
+LINK горниця w_u8qu0q -> w_ony72m w_u8qu0q v3 content v15033 batch c4f72d11-4a7b-43cd-b12e-e91b954afefa
+$ pnpm --filter @slovo/content content retire word w_u8qu0q --replaced-by w_ony72m --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_u8qu0q --replaced-by w_ony72m --edition uk
+LINK горничка w_yht3ux -> w_4equ2r w_yht3ux v4 content v15034 batch e98e1ca7-fc89-404c-8226-79a5c15ad91c
+$ pnpm --filter @slovo/content content retire word w_yht3ux --replaced-by w_4equ2r --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_yht3ux --replaced-by w_4equ2r --edition uk
+LINK грабштихель w_7bmg9r -> w_gqej5n w_7bmg9r v3 content v15035 batch b535c49e-563d-4c23-8b84-e057522c3f06
+$ pnpm --filter @slovo/content content retire word w_7bmg9r --replaced-by w_gqej5n --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_7bmg9r --replaced-by w_gqej5n --edition uk
+LINK гребти w_scjpw4 -> w_ey10ib w_scjpw4 v4 content v15036 batch 24535dad-9623-4a7a-adc9-ae82293dfe79
+$ pnpm --filter @slovo/content content retire word w_scjpw4 --replaced-by w_ey10ib --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_scjpw4 --replaced-by w_ey10ib --edition uk
+LINK громило w_vi6w22 -> w_6tza3c w_vi6w22 v3 content v15037 batch 72a3761c-e5f3-4231-b21b-e47d3a9e4089
+$ pnpm --filter @slovo/content content retire word w_vi6w22 --replaced-by w_6tza3c --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_vi6w22 --replaced-by w_6tza3c --edition uk
+LINK груда w_yc7wtf -> w_ukmf4i w_yc7wtf v4 content v15038 batch 845caaf8-4f68-42b8-bdc6-a0a8a9c8fc52
+$ pnpm --filter @slovo/content content retire word w_yc7wtf --replaced-by w_ukmf4i --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_yc7wtf --replaced-by w_ukmf4i --edition uk
+LINK грюндерство w_pzri9g -> w_2xhv2l w_pzri9g v4 content v15039 batch ebfbe075-3d48-415b-95ee-b750e56d3c28
+$ pnpm --filter @slovo/content content retire word w_pzri9g --replaced-by w_2xhv2l --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_pzri9g --replaced-by w_2xhv2l --edition uk
+LINK гугенотство w_t6bc6k -> w_6jaw13 w_t6bc6k v3 content v15040 batch 4c9e43c6-5c38-4c08-b846-ab0b62deb0c7
+$ pnpm --filter @slovo/content content retire word w_t6bc6k --replaced-by w_6jaw13 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_t6bc6k --replaced-by w_6jaw13 --edition uk
+LINK гузно w_9gtfqj -> w_a2ts0x w_9gtfqj v3 content v15041 batch 2503b453-497f-4b55-b5c5-76b56e8075fc
+$ pnpm --filter @slovo/content content retire word w_9gtfqj --replaced-by w_a2ts0x --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_9gtfqj --replaced-by w_a2ts0x --edition uk
+LINK гульбище w_w7qh1a -> w_79gdt3 w_w7qh1a v3 content v15042 batch 1e83517a-e7b9-4a5f-923b-b4e638d4a3aa
+$ pnpm --filter @slovo/content content retire word w_w7qh1a --replaced-by w_79gdt3 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_w7qh1a --replaced-by w_79gdt3 --edition uk
+LINK гуслярство w_wbrap7 -> w_5vpffz w_wbrap7 v3 content v15043 batch d061de8b-8f75-4d58-9824-3fc758578999
+$ pnpm --filter @slovo/content content retire word w_wbrap7 --replaced-by w_5vpffz --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_wbrap7 --replaced-by w_5vpffz --edition uk
+LINK гібон w_65kq6g -> w_10ysq7 w_65kq6g v3 content v15044 batch 75663094-8ca2-41bd-a24d-5b8eae6c5796
+$ pnpm --filter @slovo/content content retire word w_65kq6g --replaced-by w_10ysq7 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_65kq6g --replaced-by w_10ysq7 --edition uk
+LINK гінекей w_lyyfce -> w_4eo5ey w_lyyfce v3 content v15045 batch b7ac4976-dd3c-4f55-a35d-14bee2a5a28c
+$ pnpm --filter @slovo/content content retire word w_lyyfce --replaced-by w_4eo5ey --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_lyyfce --replaced-by w_4eo5ey --edition uk
+LINK джезва w_kbx8qo -> w_qn3px1 w_kbx8qo v3 content v15046 batch 411f94c8-c0e3-4aab-a08d-19dd536c4513
+$ pnpm --filter @slovo/content content retire word w_kbx8qo --replaced-by w_qn3px1 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_kbx8qo --replaced-by w_qn3px1 --edition uk
+LINK дискос w_667jcy -> w_e0g1ic w_667jcy v3 content v15047 batch fb596698-bdfd-4df4-abd0-e65bed449d33
+$ pnpm --filter @slovo/content content retire word w_667jcy --replaced-by w_e0g1ic --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_667jcy --replaced-by w_e0g1ic --edition uk
+LINK диспут w_k8uz7b -> w_rogda6 w_k8uz7b v3 content v15048 batch 884b81b5-378b-4a93-a293-d08a117a98ea
+$ pnpm --filter @slovo/content content retire word w_k8uz7b --replaced-by w_rogda6 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_k8uz7b --replaced-by w_rogda6 --edition uk
+LINK днина w_ew2m6h -> w_k91js1 w_ew2m6h v3 content v15049 batch 4c5f1fb6-8615-44f8-bd04-28f0653fefb6
+$ pnpm --filter @slovo/content content retire word w_ew2m6h --replaced-by w_k91js1 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ew2m6h --replaced-by w_k91js1 --edition uk
+LINK добряк w_04dqkf -> w_jj7we0 w_04dqkf v4 content v15050 batch e414d638-160d-476c-bf3f-c4d151b61d8c
+$ pnpm --filter @slovo/content content retire word w_04dqkf --replaced-by w_jj7we0 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_04dqkf --replaced-by w_jj7we0 --edition uk
+LINK дотеп w_qx3doz -> w_ujrwoa w_qx3doz v3 content v15051 batch b3a7e91a-91b9-4615-af09-e2b6456d97d1
+$ pnpm --filter @slovo/content content retire word w_qx3doz --replaced-by w_ujrwoa --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_qx3doz --replaced-by w_ujrwoa --edition uk
+LINK едикула w_9pwedn -> w_wnti9s w_9pwedn v3 content v15052 batch b19dceb4-8554-423e-93e9-e5a5d7d41771
+$ pnpm --filter @slovo/content content retire word w_9pwedn --replaced-by w_wnti9s --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_9pwedn --replaced-by w_wnti9s --edition uk
+LINK екер w_kyk9af -> w_vcal5k w_kyk9af v3 content v15053 batch 85eda741-bfd4-48a2-a430-b8a829077945
+$ pnpm --filter @slovo/content content retire word w_kyk9af --replaced-by w_vcal5k --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_kyk9af --replaced-by w_vcal5k --edition uk
+LINK еон w_z6xd21 -> w_3ten3e w_z6xd21 v3 content v15054 batch fe2d64d5-8cfd-4e62-b22e-0b92f8675db5
+$ pnpm --filter @slovo/content content retire word w_z6xd21 --replaced-by w_3ten3e --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_z6xd21 --replaced-by w_3ten3e --edition uk
+LINK ефа w_igejhg -> w_ijg4v5 w_igejhg v3 content v15055 batch 52019802-2f2f-43f0-86f5-3e64491d4718
+$ pnpm --filter @slovo/content content retire word w_igejhg --replaced-by w_ijg4v5 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_igejhg --replaced-by w_ijg4v5 --edition uk
+LINK жниварка w_ojf5gq -> w_z1vwka w_ojf5gq v3 content v15056 batch 1e1ffda8-53e5-41d4-8a2c-213b0f23ee1b
+$ pnpm --filter @slovo/content content retire word w_ojf5gq --replaced-by w_z1vwka --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ojf5gq --replaced-by w_z1vwka --edition uk
+LINK жниво w_q02iyh -> w_8qwxcz w_q02iyh v3 content v15057 batch ede4ecf9-5937-445b-80f1-2d4c87e6b083
+$ pnpm --filter @slovo/content content retire word w_q02iyh --replaced-by w_8qwxcz --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_q02iyh --replaced-by w_8qwxcz --edition uk
+LINK жонкіль w_yebl9g -> w_aocdsz w_yebl9g v3 content v15058 batch e239b69e-ab04-444f-a00c-544dbc150132
+$ pnpm --filter @slovo/content content retire word w_yebl9g --replaced-by w_aocdsz --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_yebl9g --replaced-by w_aocdsz --edition uk
+LINK забаляндрасити w_6v7v8m -> w_cxrl1g w_6v7v8m v3 content v15059 batch 96c8b7d3-74a6-4658-9f35-83cb2721129a
+$ pnpm --filter @slovo/content content retire word w_6v7v8m --replaced-by w_cxrl1g --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_6v7v8m --replaced-by w_cxrl1g --edition uk
+LINK забара w_52iqc1 -> w_8yw0h4 w_52iqc1 v3 content v15060 batch 7132b35f-05ed-48fb-8049-d3954af225ce
+$ pnpm --filter @slovo/content content retire word w_52iqc1 --replaced-by w_8yw0h4 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_52iqc1 --replaced-by w_8yw0h4 --edition uk
+LINK заболонь w_jw597l -> w_bjm05z w_jw597l v4 content v15061 batch ffe3ffc3-bfba-40fe-8299-040bb1bcffd2
+$ pnpm --filter @slovo/content content retire word w_jw597l --replaced-by w_bjm05z --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_jw597l --replaced-by w_bjm05z --edition uk
+LINK завечоріти w_xjgtty -> w_iki2vr w_xjgtty v4 content v15062 batch 7c9eba89-3f42-49d6-b1c9-0145c1b1d1fe
+$ pnpm --filter @slovo/content content retire word w_xjgtty --replaced-by w_iki2vr --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_xjgtty --replaced-by w_iki2vr --edition uk
+LINK завзятець w_rjbm5b -> w_gxxu53 w_rjbm5b v4 content v15063 batch e296d484-6b53-47e8-8cb8-4ddaf56503e8
+$ pnpm --filter @slovo/content content retire word w_rjbm5b --replaced-by w_gxxu53 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_rjbm5b --replaced-by w_gxxu53 --edition uk
+LINK загніт w_0vy5x8 -> w_jycy26 w_0vy5x8 v3 content v15064 batch f5e2217a-23b6-40e7-ac7b-b6235ec34529
+$ pnpm --filter @slovo/content content retire word w_0vy5x8 --replaced-by w_jycy26 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_0vy5x8 --replaced-by w_jycy26 --edition uk
+LINK загонич w_x8q2zg -> w_edpox7 w_x8q2zg v3 content v15065 batch 19404cbc-958f-40b7-ae7b-592ba93a7359
+$ pnpm --filter @slovo/content content retire word w_x8q2zg --replaced-by w_edpox7 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_x8q2zg --replaced-by w_edpox7 --edition uk
+LINK задруга w_300jpc -> w_fhj7vi w_300jpc v3 content v15066 batch 7907ed4e-bbbd-4e16-a485-ceeb61bd1f9a
+$ pnpm --filter @slovo/content content retire word w_300jpc --replaced-by w_fhj7vi --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_300jpc --replaced-by w_fhj7vi --edition uk
+LINK замазурка w_aevcev -> w_tlzgz5 w_aevcev v4 content v15067 batch ef0a7ac2-6d50-4256-834f-12acfe7b40c8
+$ pnpm --filter @slovo/content content retire word w_aevcev --replaced-by w_tlzgz5 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_aevcev --replaced-by w_tlzgz5 --edition uk
+LINK заступець w_wbli7y -> w_b92293 w_wbli7y v3 content v15068 batch 48684b0f-143c-420e-9c11-91de6e27cc04
+$ pnpm --filter @slovo/content content retire word w_wbli7y --replaced-by w_b92293 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_wbli7y --replaced-by w_b92293 --edition uk
+LINK зачванитися w_rkdgl3 -> w_9vleux w_rkdgl3 v3 content v15069 batch 70784668-b60e-44f5-a726-0f0ea8c2a669
+$ pnpm --filter @slovo/content content retire word w_rkdgl3 --replaced-by w_9vleux --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_rkdgl3 --replaced-by w_9vleux --edition uk
+LINK зачинальник w_vfujr8 -> w_49dpwx w_vfujr8 v4 content v15070 batch 73ec37b7-0740-4551-a080-00eebbdfee1d
+$ pnpm --filter @slovo/content content retire word w_vfujr8 --replaced-by w_49dpwx --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_vfujr8 --replaced-by w_49dpwx --edition uk
+LINK збіса w_kc7uel -> w_3yf7f4 w_kc7uel v3 content v15071 batch e9b484ed-1307-430a-8e0c-4f11d8bcecee
+$ pnpm --filter @slovo/content content retire word w_kc7uel --replaced-by w_3yf7f4 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_kc7uel --replaced-by w_3yf7f4 --edition uk
+LINK зверхництво w_c6x99o -> w_h4w7yb w_c6x99o v3 content v15072 batch a61d45a1-fbb7-4413-803e-b88a43f30e77
+$ pnpm --filter @slovo/content content retire word w_c6x99o --replaced-by w_h4w7yb --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_c6x99o --replaced-by w_h4w7yb --edition uk
+LINK звитяжець w_85q7nc -> w_5rlyyv w_85q7nc v3 content v15073 batch 23907691-88c6-4a09-a237-c460d5569764
+$ pnpm --filter @slovo/content content retire word w_85q7nc --replaced-by w_5rlyyv --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_85q7nc --replaced-by w_5rlyyv --edition uk
+LINK зганити w_k10jbn -> w_erskoh w_k10jbn v3 content v15074 batch 33091eb0-0666-43b4-a864-0bc8d98d8fdf
+$ pnpm --filter @slovo/content content retire word w_k10jbn --replaced-by w_erskoh --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_k10jbn --replaced-by w_erskoh --edition uk
+LINK землемірство w_52cb2e -> w_gy1npa w_52cb2e v3 content v15075 batch 579b18b1-cdf5-441e-aa4b-14e712844509
+$ pnpm --filter @slovo/content content retire word w_52cb2e --replaced-by w_gy1npa --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_52cb2e --replaced-by w_gy1npa --edition uk
+LINK зичити w_1at3ua -> w_bwisxx w_1at3ua v4 content v15076 batch 7ce4969b-151f-4e29-80a4-6c40453e601c
+$ pnpm --filter @slovo/content content retire word w_1at3ua --replaced-by w_bwisxx --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_1at3ua --replaced-by w_bwisxx --edition uk
+LINK змилостивитися w_ntu7jp -> w_avb0z6 w_ntu7jp v3 content v15077 batch 12ccab22-e7ee-410f-815e-59d62b31018e
+$ pnpm --filter @slovo/content content retire word w_ntu7jp --replaced-by w_avb0z6 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ntu7jp --replaced-by w_avb0z6 --edition uk
+LINK золотарство w_sydndu -> w_g6qe6l w_sydndu v3 content v15078 batch 33be5391-1b23-4f6d-b18a-9fe8c642e531
+$ pnpm --filter @slovo/content content retire word w_sydndu --replaced-by w_g6qe6l --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_sydndu --replaced-by w_g6qe6l --edition uk
+LINK золотуха w_sigvsl -> w_aswedt w_sigvsl v4 content v15079 batch 5d2db6ed-6f3d-4e71-a12b-1932d11abb28
+$ pnpm --filter @slovo/content content retire word w_sigvsl --replaced-by w_aswedt --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_sigvsl --replaced-by w_aswedt --edition uk
+LINK зурочити w_du9p4j -> w_5agp74 w_du9p4j v4 content v15080 batch c561febe-89d0-468d-9dd8-4d143ba57dce
+$ pnpm --filter @slovo/content content retire word w_du9p4j --replaced-by w_5agp74 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_du9p4j --replaced-by w_5agp74 --edition uk
+LINK зухвалець w_2gpixf -> w_msr6tj w_2gpixf v4 content v15081 batch 24babcef-c338-4532-9fa9-5ab6638d688e
+$ pnpm --filter @slovo/content content retire word w_2gpixf --replaced-by w_msr6tj --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_2gpixf --replaced-by w_msr6tj --edition uk
+LINK зяблик w_vnkj1m -> w_8lfe2e w_vnkj1m v3 content v15082 batch c5280707-64c3-448f-b83d-924712f19a30
+$ pnpm --filter @slovo/content content retire word w_vnkj1m --replaced-by w_8lfe2e --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_vnkj1m --replaced-by w_8lfe2e --edition uk
+LINK казуар w_7uy77w -> w_27oglf w_7uy77w v3 content v15083 batch d315f2d4-e2e9-4bbf-afc4-a15d2482472c
+$ pnpm --filter @slovo/content content retire word w_7uy77w --replaced-by w_27oglf --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_7uy77w --replaced-by w_27oglf --edition uk
+LINK казуїст w_rvrr90 -> w_c2qvmx w_rvrr90 v4 content v15084 batch 04603db2-05b1-4d9f-b406-c6cce34a8e12
+$ pnpm --filter @slovo/content content retire word w_rvrr90 --replaced-by w_c2qvmx --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_rvrr90 --replaced-by w_c2qvmx --edition uk
+LINK кайданник w_km3ptn -> w_wzixeg w_km3ptn v3 content v15085 batch 25677632-d706-4e3d-8b91-6c948941169d
+$ pnpm --filter @slovo/content content retire word w_km3ptn --replaced-by w_wzixeg --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_km3ptn --replaced-by w_wzixeg --edition uk
+LINK калан w_8cn8bf -> w_9i42zv w_8cn8bf v3 content v15086 batch e78cf60f-5538-4afe-9cee-37474d591f01
+$ pnpm --filter @slovo/content content retire word w_8cn8bf --replaced-by w_9i42zv --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_8cn8bf --replaced-by w_9i42zv --edition uk
+LINK каліграф w_20fcca -> w_ojio2c w_20fcca v3 content v15087 batch b9baefb7-628d-4da1-9ab7-4ccacad62e8d
+$ pnpm --filter @slovo/content content retire word w_20fcca --replaced-by w_ojio2c --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_20fcca --replaced-by w_ojio2c --edition uk
+LINK камарилья w_w22s43 -> w_6g2kpf w_w22s43 v3 content v15088 batch 4c348eac-e80d-4ecc-9208-3cb495a76367
+$ pnpm --filter @slovo/content content retire word w_w22s43 --replaced-by w_6g2kpf --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_w22s43 --replaced-by w_6g2kpf --edition uk
+LINK камлот w_z3oy3u -> w_ql1861 w_z3oy3u v3 content v15089 batch e87b2473-6edb-4ff1-90e7-29dc95f61ebd
+$ pnpm --filter @slovo/content content retire word w_z3oy3u --replaced-by w_ql1861 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_z3oy3u --replaced-by w_ql1861 --edition uk
+LINK каня w_rp2d6a -> w_2x31iv w_rp2d6a v3 content v15090 batch d83744ba-684a-4881-96a6-c2dc4acdda53
+$ pnpm --filter @slovo/content content retire word w_rp2d6a --replaced-by w_2x31iv --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_rp2d6a --replaced-by w_2x31iv --edition uk
+LINK капуцин w_lhe1l3 -> w_mebxol w_lhe1l3 v3 content v15091 batch 39e2ff44-bb4f-4581-b123-ba47f0445206
+$ pnpm --filter @slovo/content content retire word w_lhe1l3 --replaced-by w_mebxol --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_lhe1l3 --replaced-by w_mebxol --edition uk
+LINK карагана w_1hznkn -> w_bfxvnm w_1hznkn v3 content v15092 batch 20fd4bb6-621b-48df-a1bd-aa7c5c1b165c
+$ pnpm --filter @slovo/content content retire word w_1hznkn --replaced-by w_bfxvnm --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_1hznkn --replaced-by w_bfxvnm --edition uk
+LINK карагач w_plejma -> w_x6c2q5 w_plejma v4 content v15093 batch 2b510c48-7a4d-409c-b70f-3b5cbdb11184
+$ pnpm --filter @slovo/content content retire word w_plejma --replaced-by w_x6c2q5 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_plejma --replaced-by w_x6c2q5 --edition uk
+LINK каракурт w_0rn9ie -> w_108mqr w_0rn9ie v4 content v15094 batch b8a465ba-af8e-449a-93a6-e6a6f975941f
+$ pnpm --filter @slovo/content content retire word w_0rn9ie --replaced-by w_108mqr --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_0rn9ie --replaced-by w_108mqr --edition uk
+LINK каретник w_kd1szy -> w_k33wwi w_kd1szy v3 content v15095 batch 66d47b68-cbdc-48aa-bc77-733b9b697434
+$ pnpm --filter @slovo/content content retire word w_kd1szy --replaced-by w_k33wwi --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_kd1szy --replaced-by w_k33wwi --edition uk
+LINK картяр w_ftony4 -> w_aiid64 w_ftony4 v3 content v15096 batch 3498a3a3-b34c-4418-a064-8ebd7741ae52
+$ pnpm --filter @slovo/content content retire word w_ftony4 --replaced-by w_aiid64 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ftony4 --replaced-by w_aiid64 --edition uk
+LINK кастет w_t4mkz1 -> w_d3wujo w_t4mkz1 v3 content v15097 batch 3e39c408-77d8-41e6-a05d-1a3e93434334
+$ pnpm --filter @slovo/content content retire word w_t4mkz1 --replaced-by w_d3wujo --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_t4mkz1 --replaced-by w_d3wujo --edition uk
+LINK кашпо w_881782 -> w_gw0vvq w_881782 v3 content v15098 batch 42d990ab-7df6-45e1-8fa6-66749b2b121b
+$ pnpm --filter @slovo/content content retire word w_881782 --replaced-by w_gw0vvq --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_881782 --replaced-by w_gw0vvq --edition uk
+LINK каюк w_q0v3uk -> w_vbattt w_q0v3uk v4 content v15099 batch aaf9e0f3-1917-4ccc-bbd0-e0fa06600f7a
+$ pnpm --filter @slovo/content content retire word w_q0v3uk --replaced-by w_vbattt --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_q0v3uk --replaced-by w_vbattt --edition uk
+LINK кепкун w_349ox0 -> w_vwswrj w_349ox0 v3 content v15100 batch 72ee115e-b7f4-4790-854f-62d757712a8e
+$ pnpm --filter @slovo/content content retire word w_349ox0 --replaced-by w_vwswrj --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_349ox0 --replaced-by w_vwswrj --edition uk
+LINK кесар w_os12jx -> w_reyx98 w_os12jx v3 content v15101 batch e4ede09b-4735-441c-a965-cf406f74746f
+$ pnpm --filter @slovo/content content retire word w_os12jx --replaced-by w_reyx98 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_os12jx --replaced-by w_reyx98 --edition uk
+LINK ключар w_2sw2jy -> w_0o8k9o w_2sw2jy v4 content v15102 batch 9c2b6dfa-9e0c-4c4c-93c9-9ed4d84fdb91
+$ pnpm --filter @slovo/content content retire word w_2sw2jy --replaced-by w_0o8k9o --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_2sw2jy --replaced-by w_0o8k9o --edition uk
+LINK коала w_h8t100 -> w_r5oey0 w_h8t100 v3 content v15103 batch dc4030d6-200d-48db-bbbe-744e9b8f58b6
+$ pnpm --filter @slovo/content content retire word w_h8t100 --replaced-by w_r5oey0 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_h8t100 --replaced-by w_r5oey0 --edition uk
+LINK козуля w_576fey -> w_ptg966 w_576fey v3 content v15104 batch 92baec9d-9af6-4d9e-82ca-54f477aa795c
+$ pnpm --filter @slovo/content content retire word w_576fey --replaced-by w_ptg966 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_576fey --replaced-by w_ptg966 --edition uk
+LINK копач w_m63r9g -> w_hlxjae w_m63r9g v4 content v15105 batch 7f4825c7-7e07-4b5e-ba78-41688271fa83
+$ pnpm --filter @slovo/content content retire word w_m63r9g --replaced-by w_hlxjae --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_m63r9g --replaced-by w_hlxjae --edition uk
+LINK корольок w_buk5h1 -> w_76rkba w_buk5h1 v3 content v15106 batch 2fa40c32-06ba-4bc5-bead-9560043cce92
+$ pnpm --filter @slovo/content content retire word w_buk5h1 --replaced-by w_76rkba --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_buk5h1 --replaced-by w_76rkba --edition uk
+LINK косатка w_kqk7xp -> w_gpz51q w_kqk7xp v3 content v15107 batch c49d1c78-8ba5-4600-9369-c222bd68c8a1
+$ pnpm --filter @slovo/content content retire word w_kqk7xp --replaced-by w_gpz51q --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_kqk7xp --replaced-by w_gpz51q --edition uk
+LINK креатура w_9cf67a -> w_9fxah6 w_9cf67a v3 content v15108 batch 3df3df13-f3bd-4c22-abe3-9f1eb5d4d91f
+$ pnpm --filter @slovo/content content retire word w_9cf67a --replaced-by w_9fxah6 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_9cf67a --replaced-by w_9fxah6 --edition uk
+LINK крильчатка w_mzczhy -> w_947ce1 w_mzczhy v3 content v15109 batch b8846c1d-8a55-462a-90a3-4b3d444ce424
+$ pnpm --filter @slovo/content content retire word w_mzczhy --replaced-by w_947ce1 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_mzczhy --replaced-by w_947ce1 --edition uk
+LINK крутійство w_whin38 -> w_3yecla w_whin38 v4 content v15110 batch c09eedc8-6e08-490a-9dc4-eef65030aafd
+$ pnpm --filter @slovo/content content retire word w_whin38 --replaced-by w_3yecla --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_whin38 --replaced-by w_3yecla --edition uk
+LINK курбет w_k1rl6y -> w_ectgrn w_k1rl6y v3 content v15111 batch 62258055-8d3a-4026-9c9d-d3156f2a9a80
+$ pnpm --filter @slovo/content content retire word w_k1rl6y --replaced-by w_ectgrn --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_k1rl6y --replaced-by w_ectgrn --edition uk
+LINK куховарня w_l3z59y -> w_6cfa5z w_l3z59y v4 content v15112 batch e3f0c0c3-67f7-4767-84fd-fd57b4a9ace6
+$ pnpm --filter @slovo/content content retire word w_l3z59y --replaced-by w_6cfa5z --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_l3z59y --replaced-by w_6cfa5z --edition uk
+LINK лахтак w_z7jl8l -> w_dd0g0f w_z7jl8l v3 content v15113 batch 44d31c6c-486d-475d-8341-d77e7cb4406b
+$ pnpm --filter @slovo/content content retire word w_z7jl8l --replaced-by w_dd0g0f --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_z7jl8l --replaced-by w_dd0g0f --edition uk
+LINK лужити w_k3hhtb -> w_hzmn90 w_k3hhtb v3 content v15114 batch c11526b1-f06e-4260-a294-05c0c2178873
+$ pnpm --filter @slovo/content content retire word w_k3hhtb --replaced-by w_hzmn90 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_k3hhtb --replaced-by w_hzmn90 --edition uk
+LINK лутига w_f04j8g -> w_kog8sb w_f04j8g v4 content v15115 batch a385fb8a-4b18-4df9-8da1-aa6d2a0e7210
+$ pnpm --filter @slovo/content content retire word w_f04j8g --replaced-by w_kog8sb --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_f04j8g --replaced-by w_kog8sb --edition uk
+LINK мастихін w_tks24r -> w_ol469t w_tks24r v3 content v15116 batch eb3c1b52-a3f0-491e-8ef4-256a8caaa345
+$ pnpm --filter @slovo/content content retire word w_tks24r --replaced-by w_ol469t --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_tks24r --replaced-by w_ol469t --edition uk
+LINK міріада w_h6giu0 -> w_9xd4sx w_h6giu0 v3 content v15117 batch e8627f41-776b-4460-8044-2089a9a90945
+$ pnpm --filter @slovo/content content retire word w_h6giu0 --replaced-by w_9xd4sx --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_h6giu0 --replaced-by w_9xd4sx --edition uk
+LINK мітенка w_n197dk -> w_6tc9bb w_n197dk v3 content v15118 batch 3373be51-2984-48ea-a4c3-7eb4acae6109
+$ pnpm --filter @slovo/content content retire word w_n197dk --replaced-by w_6tc9bb --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_n197dk --replaced-by w_6tc9bb --edition uk
+LINK навіч w_88l6jp -> w_n1bf8x w_88l6jp v3 content v15119 batch e0dfd75a-9164-4826-9ece-b0ea7df02941
+$ pnpm --filter @slovo/content content retire word w_88l6jp --replaced-by w_n1bf8x --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_88l6jp --replaced-by w_n1bf8x --edition uk
+LINK назвисько w_iqp3gf -> w_gt3ldy w_iqp3gf v4 content v15120 batch f685a82a-0b92-42d7-8fc3-bcf8f9848ce2
+$ pnpm --filter @slovo/content content retire word w_iqp3gf --replaced-by w_gt3ldy --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_iqp3gf --replaced-by w_gt3ldy --edition uk
+LINK найпаче w_5kwn9l -> w_bxek5y w_5kwn9l v4 content v15121 batch 595800dc-3f78-401c-be09-33777827894f
+$ pnpm --filter @slovo/content content retire word w_5kwn9l --replaced-by w_bxek5y --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_5kwn9l --replaced-by w_bxek5y --edition uk
+LINK нанка w_4ctaz2 -> w_zndben w_4ctaz2 v3 content v15122 batch d0b576a5-cecd-4b82-bc83-0f40d3921991
+$ pnpm --filter @slovo/content content retire word w_4ctaz2 --replaced-by w_zndben --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_4ctaz2 --replaced-by w_zndben --edition uk
+LINK нірка w_z0qhgr -> w_w3wtr4 w_z0qhgr v4 content v15123 batch 34837446-7767-4df3-8471-b7b4a4ea7319
+$ pnpm --filter @slovo/content content retire word w_z0qhgr --replaced-by w_w3wtr4 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_z0qhgr --replaced-by w_w3wtr4 --edition uk
+LINK огріх w_xfkcy3 -> w_mzfmvl w_xfkcy3 v3 content v15124 batch 52553c84-a399-4a0f-a3bb-3bc66ddc494c
+$ pnpm --filter @slovo/content content retire word w_xfkcy3 --replaced-by w_mzfmvl --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_xfkcy3 --replaced-by w_mzfmvl --edition uk
+LINK олеандр w_j5vjlp -> w_yar3e6 w_j5vjlp v3 content v15125 batch 9e6eb95e-dc59-49b4-9eee-1194d337106a
+$ pnpm --filter @slovo/content content retire word w_j5vjlp --replaced-by w_yar3e6 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_j5vjlp --replaced-by w_yar3e6 --edition uk
+LINK орчик w_wclvoa -> w_cndsg5 w_wclvoa v4 content v15126 batch e081c12f-24d2-4327-9799-c358eee05582
+$ pnpm --filter @slovo/content content retire word w_wclvoa --replaced-by w_cndsg5 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_wclvoa --replaced-by w_cndsg5 --edition uk
+LINK остюк w_uc7s6w -> w_h8isey w_uc7s6w v4 content v15127 batch 4053a722-9277-491f-88c2-941fcda6e7da
+$ pnpm --filter @slovo/content content retire word w_uc7s6w --replaced-by w_h8isey --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_uc7s6w --replaced-by w_h8isey --edition uk
+LINK пагін w_u8trtv -> w_2ni02f w_u8trtv v4 content v15128 batch 3a16388c-e98d-458e-b9ce-a3e0e92efc0f
+$ pnpm --filter @slovo/content content retire word w_u8trtv --replaced-by w_2ni02f --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_u8trtv --replaced-by w_2ni02f --edition uk
+LINK падуб w_8bqw73 -> w_ssbgqh w_8bqw73 v3 content v15129 batch 8a5be9ba-0817-4cd5-8da1-9b9eebbb5761
+$ pnpm --filter @slovo/content content retire word w_8bqw73 --replaced-by w_ssbgqh --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_8bqw73 --replaced-by w_ssbgqh --edition uk
+LINK парастас w_p5ku6r -> w_rll15a w_p5ku6r v3 content v15130 batch c032d5fd-48c2-457f-86a6-bf64addfe9b9
+$ pnpm --filter @slovo/content content retire word w_p5ku6r --replaced-by w_rll15a --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_p5ku6r --replaced-by w_rll15a --edition uk
+LINK почивальня w_32y5a0 -> w_dpi3ib w_32y5a0 v4 content v15131 batch b0c4054c-b31c-42fc-a4cc-601040fa585c
+$ pnpm --filter @slovo/content content retire word w_32y5a0 --replaced-by w_dpi3ib --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_32y5a0 --replaced-by w_dpi3ib --edition uk
+LINK ралити w_qwrgmx -> w_jf76rt w_qwrgmx v3 content v15132 batch d1c43974-f1eb-4678-91a3-ddae94a628c9
+$ pnpm --filter @slovo/content content retire word w_qwrgmx --replaced-by w_jf76rt --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_qwrgmx --replaced-by w_jf76rt --edition uk
+LINK рантух w_q3vwdy -> w_jo6jsg w_q3vwdy v4 content v15133 batch c1238125-bf7b-4ff7-adfa-55facc2c0e4e
+$ pnpm --filter @slovo/content content retire word w_q3vwdy --replaced-by w_jo6jsg --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_q3vwdy --replaced-by w_jo6jsg --edition uk
+LINK ратоборство w_16a7lq -> w_cbs5l9 w_16a7lq v3 content v15134 batch 11d5df06-6051-486f-b6a1-bf811182e914
+$ pnpm --filter @slovo/content content retire word w_16a7lq --replaced-by w_cbs5l9 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_16a7lq --replaced-by w_cbs5l9 --edition uk
+LINK репетувати w_ipco6n -> w_ma41u9 w_ipco6n v4 content v15135 batch 0d8e77e6-d108-49cd-9f06-d3b8e74c3572
+$ pnpm --filter @slovo/content content retire word w_ipco6n --replaced-by w_ma41u9 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ipco6n --replaced-by w_ma41u9 --edition uk
+LINK реченець w_qu90cc -> w_ssrasu w_qu90cc v3 content v15136 batch e09fda66-0fa9-4dc0-81d1-6cff51f3f0ce
+$ pnpm --filter @slovo/content content retire word w_qu90cc --replaced-by w_ssrasu --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_qu90cc --replaced-by w_ssrasu --edition uk
+LINK ридикюль w_xjvkej -> w_k7g9mm w_xjvkej v3 content v15137 batch e0be08f0-fe42-4a8b-9312-5a718204651d
+$ pnpm --filter @slovo/content content retire word w_xjvkej --replaced-by w_k7g9mm --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_xjvkej --replaced-by w_k7g9mm --edition uk
+LINK ринути w_iqzzks -> w_9eev6f w_iqzzks v4 content v15138 batch b6fbe72c-66c5-4750-bc48-ed80ce243c83
+$ pnpm --filter @slovo/content content retire word w_iqzzks --replaced-by w_9eev6f --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_iqzzks --replaced-by w_9eev6f --edition uk
+LINK родоніт w_xri0d6 -> w_1q2k1m w_xri0d6 v3 content v15139 batch 0b3e8036-954f-4d87-beca-4c859ab3a79e
+$ pnpm --filter @slovo/content content retire word w_xri0d6 --replaced-by w_1q2k1m --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_xri0d6 --replaced-by w_1q2k1m --edition uk
+LINK розбубнявіти w_070ypo -> w_nej36c w_070ypo v3 content v15140 batch f9cf3b41-0cd0-4fe9-95a1-f51bc25588c8
+$ pnpm --filter @slovo/content content retire word w_070ypo --replaced-by w_nej36c --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_070ypo --replaced-by w_nej36c --edition uk
+LINK розкаряка w_icle9s -> w_110emb w_icle9s v3 content v15141 batch 41ed381b-9606-4bfe-bc2a-09393b87abda
+$ pnpm --filter @slovo/content content retire word w_icle9s --replaced-by w_110emb --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_icle9s --replaced-by w_110emb --edition uk
+LINK розсильний w_noq8gp -> w_lw2ij5 w_noq8gp v4 content v15142 batch b46a7bbd-72d2-405b-ac07-ecbf6594f55d
+$ pnpm --filter @slovo/content content retire word w_noq8gp --replaced-by w_lw2ij5 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_noq8gp --replaced-by w_lw2ij5 --edition uk
+LINK розстрига w_dskttx -> w_gywxtz w_dskttx v3 content v15143 batch 7d549681-2532-421d-bc5b-14049b12b002
+$ pnpm --filter @slovo/content content retire word w_dskttx --replaced-by w_gywxtz --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_dskttx --replaced-by w_gywxtz --edition uk
+LINK ронити w_subrxq -> w_w2yzym w_subrxq v3 content v15144 batch 4f380bd7-a712-4570-86cf-0cdba6ad268d
+$ pnpm --filter @slovo/content content retire word w_subrxq --replaced-by w_w2yzym --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_subrxq --replaced-by w_w2yzym --edition uk
+LINK ропак w_yu22zd -> w_46w3a8 w_yu22zd v3 content v15145 batch 0187cdb6-7aa7-45ae-9a27-2087cea9de45
+$ pnpm --filter @slovo/content content retire word w_yu22zd --replaced-by w_46w3a8 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_yu22zd --replaced-by w_46w3a8 --edition uk
+LINK росянка w_pv3n87 -> w_gi5xni w_pv3n87 v3 content v15146 batch 779fc7ab-c7bd-4623-8d24-7ba4f6986836
+$ pnpm --filter @slovo/content content retire word w_pv3n87 --replaced-by w_gi5xni --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_pv3n87 --replaced-by w_gi5xni --edition uk
+LINK рінистий w_kwjnkh -> w_8zitvg w_kwjnkh v4 content v15147 batch a65041d7-f1a5-450f-a9d3-a2754f7e304a
+$ pnpm --filter @slovo/content content retire word w_kwjnkh --replaced-by w_8zitvg --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_kwjnkh --replaced-by w_8zitvg --edition uk
+LINK свідкувати w_u0j08u -> w_977xtb w_u0j08u v3 content v15148 batch 9c3e7d55-812c-4b32-ad44-152ff3450708
+$ pnpm --filter @slovo/content content retire word w_u0j08u --replaced-by w_977xtb --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_u0j08u --replaced-by w_977xtb --edition uk
+LINK сеймувати w_f341l6 -> w_fg2gsh w_f341l6 v3 content v15149 batch 77688df5-dec4-4d0f-9f6c-36935e7cba30
+$ pnpm --filter @slovo/content content retire word w_f341l6 --replaced-by w_fg2gsh --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_f341l6 --replaced-by w_fg2gsh --edition uk
+LINK сеймувати w_ndfjil -> w_fg2gsh w_ndfjil v3 content v15150 batch bf20c728-9fd8-43f0-b0e3-4c07d69c9376
+$ pnpm --filter @slovo/content content retire word w_ndfjil --replaced-by w_fg2gsh --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ndfjil --replaced-by w_fg2gsh --edition uk
+LINK скупник w_rqhrlk -> w_zp5caz w_rqhrlk v3 content v15151 batch 797dc2c1-c693-4255-945f-9f44afe68960
+$ pnpm --filter @slovo/content content retire word w_rqhrlk --replaced-by w_zp5caz --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_rqhrlk --replaced-by w_zp5caz --edition uk
+LINK сопун w_52tpla -> w_gsldkh w_52tpla v3 content v15152 batch 63408795-4a02-47a7-bfdf-596ad837c3d8
+$ pnpm --filter @slovo/content content retire word w_52tpla --replaced-by w_gsldkh --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_52tpla --replaced-by w_gsldkh --edition uk
+LINK сопун w_g1db5p -> w_gsldkh w_g1db5p v3 content v15153 batch 92ef9fe9-5518-4ee3-8051-ed8f1efceb16
+$ pnpm --filter @slovo/content content retire word w_g1db5p --replaced-by w_gsldkh --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_g1db5p --replaced-by w_gsldkh --edition uk
+LINK сороковини w_hb2mii -> w_cerzgv w_hb2mii v4 content v15154 batch d4c7b9d7-06a8-47cc-b768-7aceccdc7f11
+$ pnpm --filter @slovo/content content retire word w_hb2mii --replaced-by w_cerzgv --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_hb2mii --replaced-by w_cerzgv --edition uk
+LINK спитлювати w_7ffscb -> w_142mlc w_7ffscb v3 content v15155 batch 0f550e55-f4d7-4805-aacf-10990fc0fe84
+$ pnpm --filter @slovo/content content retire word w_7ffscb --replaced-by w_142mlc --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_7ffscb --replaced-by w_142mlc --edition uk
+LINK спитлювати w_g0euw1 -> w_142mlc w_g0euw1 v3 content v15156 batch f18edc7b-86e1-4d16-801a-7c23e687de32
+$ pnpm --filter @slovo/content content retire word w_g0euw1 --replaced-by w_142mlc --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_g0euw1 --replaced-by w_142mlc --edition uk
+LINK спиця w_hitm56 -> w_srp5hs w_hitm56 v4 content v15157 batch b9abd4fa-91e7-4b8b-8049-fa05afbfaacf
+$ pnpm --filter @slovo/content content retire word w_hitm56 --replaced-by w_srp5hs --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_hitm56 --replaced-by w_srp5hs --edition uk
+LINK сподіяти w_xkm4mr -> w_uxhovz w_xkm4mr v4 content v15158 batch 46526a52-bd6d-4132-a9cb-317fad13a0a4
+$ pnpm --filter @slovo/content content retire word w_xkm4mr --replaced-by w_uxhovz --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_xkm4mr --replaced-by w_uxhovz --edition uk
+LINK сподіяти w_54uaga -> w_uxhovz w_54uaga v4 content v15159 batch c0d66072-dac7-4ea9-9ae0-f3d6c468c1dc
+$ pnpm --filter @slovo/content content retire word w_54uaga --replaced-by w_uxhovz --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_54uaga --replaced-by w_uxhovz --edition uk
+LINK спрощенство w_h8ixg1 -> w_efnqrn w_h8ixg1 v3 content v15160 batch 87b11a52-200b-4e28-8ff4-c5d0532b3ce3
+$ pnpm --filter @slovo/content content retire word w_h8ixg1 --replaced-by w_efnqrn --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_h8ixg1 --replaced-by w_efnqrn --edition uk
+LINK спрощенство w_woqwrx -> w_efnqrn w_woqwrx v3 content v15161 batch 03a1d535-cece-4825-93fc-dbcd858944af
+$ pnpm --filter @slovo/content content retire word w_woqwrx --replaced-by w_efnqrn --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_woqwrx --replaced-by w_efnqrn --edition uk
+LINK співомовка w_eqard3 -> w_gb1cl2 w_eqard3 v3 content v15162 batch 6ea892d4-38e0-4722-8727-cb6822a46069
+$ pnpm --filter @slovo/content content retire word w_eqard3 --replaced-by w_gb1cl2 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_eqard3 --replaced-by w_gb1cl2 --edition uk
+LINK співомовка w_pxwyvx -> w_gb1cl2 w_pxwyvx v4 content v15163 batch 0ab217f2-fd65-4f8a-ba62-bdf2e50db394
+$ pnpm --filter @slovo/content content retire word w_pxwyvx --replaced-by w_gb1cl2 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_pxwyvx --replaced-by w_gb1cl2 --edition uk
+LINK сталити w_kadlz1 -> w_arfqmf w_kadlz1 v3 content v15164 batch b61f2201-b146-4a71-9178-0220bb3c55b7
+$ pnpm --filter @slovo/content content retire word w_kadlz1 --replaced-by w_arfqmf --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_kadlz1 --replaced-by w_arfqmf --edition uk
+LINK сталити w_vpjw3r -> w_arfqmf w_vpjw3r v4 content v15165 batch dbe35765-cbaa-4fe6-ad8b-563b077bb0d1
+$ pnpm --filter @slovo/content content retire word w_vpjw3r --replaced-by w_arfqmf --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_vpjw3r --replaced-by w_arfqmf --edition uk
+LINK старообрядництво w_tqtdy4 -> w_amubaf w_tqtdy4 v4 content v15166 batch 40c7bd13-2f8d-43f2-8b22-aaaef54b90e8
+$ pnpm --filter @slovo/content content retire word w_tqtdy4 --replaced-by w_amubaf --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_tqtdy4 --replaced-by w_amubaf --edition uk
+LINK старообрядництво w_6n7wzc -> w_amubaf w_6n7wzc v3 content v15167 batch 5a93ad23-c351-4fd9-a8db-795a148d7968
+$ pnpm --filter @slovo/content content retire word w_6n7wzc --replaced-by w_amubaf --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_6n7wzc --replaced-by w_amubaf --edition uk
+LINK стлумити w_bfy1fq -> w_3ifqex w_bfy1fq v4 content v15168 batch a0ba9eaf-c906-446b-a338-6415eb666d3f
+$ pnpm --filter @slovo/content content retire word w_bfy1fq --replaced-by w_3ifqex --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_bfy1fq --replaced-by w_3ifqex --edition uk
+LINK стлумити w_s91fg0 -> w_3ifqex w_s91fg0 v4 content v15169 batch d28d625c-3898-44ee-8d6d-7647a19b0fb6
+$ pnpm --filter @slovo/content content retire word w_s91fg0 --replaced-by w_3ifqex --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_s91fg0 --replaced-by w_3ifqex --edition uk
+LINK стожильний w_17dq6x -> w_3cpluh w_17dq6x v3 content v15170 batch 28debb52-de4f-4b0b-865c-2af3dd1cd93f
+$ pnpm --filter @slovo/content content retire word w_17dq6x --replaced-by w_3cpluh --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_17dq6x --replaced-by w_3cpluh --edition uk
+LINK стожильний w_z7nqtm -> w_3cpluh w_z7nqtm v3 content v15171 batch 5bfcfb86-e766-4619-b950-f0a904194dfc
+$ pnpm --filter @slovo/content content retire word w_z7nqtm --replaced-by w_3cpluh --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_z7nqtm --replaced-by w_3cpluh --edition uk
+LINK схмеліти w_ie5gsf -> w_j1vbtu w_ie5gsf v4 content v15172 batch 7573a7f1-6977-4b68-b757-7b3a47e266d5
+$ pnpm --filter @slovo/content content retire word w_ie5gsf --replaced-by w_j1vbtu --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ie5gsf --replaced-by w_j1vbtu --edition uk
+LINK схмеліти w_y97av5 -> w_j1vbtu w_y97av5 v4 content v15173 batch 4eb63ee7-a788-49e0-8910-793cef153746
+$ pnpm --filter @slovo/content content retire word w_y97av5 --replaced-by w_j1vbtu --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_y97av5 --replaced-by w_j1vbtu --edition uk
+LINK талина w_3zu01s -> w_m36id2 w_3zu01s v4 content v15174 batch 08e3169c-2664-45d8-8d5c-5b936203e427
+$ pnpm --filter @slovo/content content retire word w_3zu01s --replaced-by w_m36id2 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_3zu01s --replaced-by w_m36id2 --edition uk
+LINK тамтам w_q40sta -> w_s306bb w_q40sta v3 content v15175 batch 0ffdc074-029c-408f-b628-c4b48700dd77
+$ pnpm --filter @slovo/content content retire word w_q40sta --replaced-by w_s306bb --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_q40sta --replaced-by w_s306bb --edition uk
+LINK таньга w_gavknh -> w_f37spl w_gavknh v3 content v15176 batch 0d64e8a5-f4fd-418d-a937-3a5a2f3ea7bf
+$ pnpm --filter @slovo/content content retire word w_gavknh --replaced-by w_f37spl --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_gavknh --replaced-by w_f37spl --edition uk
+LINK тельбушити w_otodjn -> w_kxvebn w_otodjn v3 content v15177 batch 4e50ef2d-8a0d-4f53-a598-0b3f509a0eeb
+$ pnpm --filter @slovo/content content retire word w_otodjn --replaced-by w_kxvebn --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_otodjn --replaced-by w_kxvebn --edition uk
+LINK теситура w_m5n69d -> w_e9a0i8 w_m5n69d v3 content v15178 batch dbca2c26-18ed-48d0-9c5e-54f3d54303fd
+$ pnpm --filter @slovo/content content retire word w_m5n69d --replaced-by w_e9a0i8 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_m5n69d --replaced-by w_e9a0i8 --edition uk
+LINK тильда w_47zbix -> w_5q966q w_47zbix v3 content v15179 batch 1318e7da-7095-4ea4-a40c-8a21e5c2b244
+$ pnpm --filter @slovo/content content retire word w_47zbix --replaced-by w_5q966q --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_47zbix --replaced-by w_5q966q --edition uk
+LINK тимократія w_re8lr6 -> w_tbb5f5 w_re8lr6 v3 content v15180 batch eab99bc2-25f9-4cf2-84c0-b906febff1d0
+$ pnpm --filter @slovo/content content retire word w_re8lr6 --replaced-by w_tbb5f5 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_re8lr6 --replaced-by w_tbb5f5 --edition uk
+LINK титарювати w_ldkrtt -> w_29l9dg w_ldkrtt v3 content v15181 batch 45db934d-ef9e-461c-8663-35886711a9cd
+$ pnpm --filter @slovo/content content retire word w_ldkrtt --replaced-by w_29l9dg --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ldkrtt --replaced-by w_29l9dg --edition uk
+LINK тканиця w_32p054 -> w_glg42y w_32p054 v4 content v15182 batch c1cdc9fe-8a7f-4088-a470-42cd03a25afa
+$ pnpm --filter @slovo/content content retire word w_32p054 --replaced-by w_glg42y --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_32p054 --replaced-by w_glg42y --edition uk
+LINK томпак w_ckb24m -> w_kl2w0b w_ckb24m v3 content v15183 batch 9482c9c9-20e7-4132-be4e-e3801015c0b9
+$ pnpm --filter @slovo/content content retire word w_ckb24m --replaced-by w_kl2w0b --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ckb24m --replaced-by w_kl2w0b --edition uk
+LINK топчило w_czrauq -> w_7ta9pn w_czrauq v3 content v15184 batch 9be312eb-6623-4783-b8eb-bf25cffdae5d
+$ pnpm --filter @slovo/content content retire word w_czrauq --replaced-by w_7ta9pn --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_czrauq --replaced-by w_7ta9pn --edition uk
+LINK торботряс w_r52whh -> w_oynmlc w_r52whh v3 content v15185 batch 1ee29fbb-f8fc-4144-bf62-c474996fae8c
+$ pnpm --filter @slovo/content content retire word w_r52whh --replaced-by w_oynmlc --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_r52whh --replaced-by w_oynmlc --edition uk
+LINK треста w_psnexj -> w_0idfuk w_psnexj v4 content v15186 batch d352c256-a042-40ae-a4ce-4bc4bacd275d
+$ pnpm --filter @slovo/content content retire word w_psnexj --replaced-by w_0idfuk --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_psnexj --replaced-by w_0idfuk --edition uk
+LINK тріумвір w_qrroxm -> w_d808ax w_qrroxm v3 content v15187 batch 59d74c5b-4f97-49f9-9b49-fe9354868a37
+$ pnpm --filter @slovo/content content retire word w_qrroxm --replaced-by w_d808ax --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_qrroxm --replaced-by w_d808ax --edition uk
+LINK турель w_9ulamx -> w_8hqok0 w_9ulamx v3 content v15188 batch ccbe2006-c48e-46a8-b97b-f3ccf3ca90ba
+$ pnpm --filter @slovo/content content retire word w_9ulamx --replaced-by w_8hqok0 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_9ulamx --replaced-by w_8hqok0 --edition uk
+LINK туриця w_p8z7f2 -> w_1wqwwt w_p8z7f2 v3 content v15189 batch debf98e0-00bf-49d7-b1c5-087530319e06
+$ pnpm --filter @slovo/content content retire word w_p8z7f2 --replaced-by w_1wqwwt --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_p8z7f2 --replaced-by w_1wqwwt --edition uk
+LINK увізвати w_1umu4m -> w_g39aj4 w_1umu4m v3 content v15190 batch bff5859d-d58c-4502-ad42-3030f221bbd1
+$ pnpm --filter @slovo/content content retire word w_1umu4m --replaced-by w_g39aj4 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_1umu4m --replaced-by w_g39aj4 --edition uk
+LINK уловистий w_pmqju3 -> w_yr19u9 w_pmqju3 v3 content v15191 batch 25dbdc2d-dedb-46e7-9f47-ad2b109fcb61
+$ pnpm --filter @slovo/content content retire word w_pmqju3 --replaced-by w_yr19u9 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_pmqju3 --replaced-by w_yr19u9 --edition uk
+LINK умишляти w_o8bgv7 -> w_2bpdbb w_o8bgv7 v3 content v15192 batch 02cbe37e-8d3b-442f-96ab-5d91f2363321
+$ pnpm --filter @slovo/content content retire word w_o8bgv7 --replaced-by w_2bpdbb --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_o8bgv7 --replaced-by w_2bpdbb --edition uk
+LINK ундина w_ml4udx -> w_j5sbc6 w_ml4udx v4 content v15193 batch c997f70e-a0b3-442d-8946-20198f04623b
+$ pnpm --filter @slovo/content content retire word w_ml4udx --replaced-by w_j5sbc6 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ml4udx --replaced-by w_j5sbc6 --edition uk
+LINK упадливий w_i60zsg -> w_hc3gaz w_i60zsg v3 content v15194 batch 2d239960-cb78-45e9-a378-783dd775c627
+$ pnpm --filter @slovo/content content retire word w_i60zsg --replaced-by w_hc3gaz --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_i60zsg --replaced-by w_hc3gaz --edition uk
+LINK упряж w_wqyhb5 -> w_5k46le w_wqyhb5 v3 content v15195 batch aa473eb0-402e-45ca-8572-02c7857def31
+$ pnpm --filter @slovo/content content retire word w_wqyhb5 --replaced-by w_5k46le --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_wqyhb5 --replaced-by w_5k46le --edition uk
+LINK урвистий w_6augnp -> w_luzmor w_6augnp v3 content v15196 batch c0b2ec4b-9b40-44af-88f2-a6862ac9e778
+$ pnpm --filter @slovo/content content retire word w_6augnp --replaced-by w_luzmor --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_6augnp --replaced-by w_luzmor --edition uk
+LINK урема w_s4s1kb -> w_6092nr w_s4s1kb v3 content v15197 batch f18f6aba-c56b-4411-b991-f721ea684be2
+$ pnpm --filter @slovo/content content retire word w_s4s1kb --replaced-by w_6092nr --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_s4s1kb --replaced-by w_6092nr --edition uk
+LINK усобник w_r6g63v -> w_hvu51n w_r6g63v v3 content v15198 batch e44f4fb6-56f6-48da-8537-460ec7c6df6e
+$ pnpm --filter @slovo/content content retire word w_r6g63v --replaced-by w_hvu51n --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_r6g63v --replaced-by w_hvu51n --edition uk
+LINK усправжки w_yu40w4 -> w_uivp0d w_yu40w4 v3 content v15199 batch 2d8d0b0e-6231-481f-8554-a50079b524e4
+$ pnpm --filter @slovo/content content retire word w_yu40w4 --replaced-by w_uivp0d --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_yu40w4 --replaced-by w_uivp0d --edition uk
+LINK уторник w_pd9fup -> w_cp90y1 w_pd9fup v4 content v15200 batch ef591c81-ddbf-4b78-8307-b5df1626ef27
+$ pnpm --filter @slovo/content content retire word w_pd9fup --replaced-by w_cp90y1 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_pd9fup --replaced-by w_cp90y1 --edition uk
+LINK утямити w_g5ck4f -> w_8jjd0c w_g5ck4f v4 content v15201 batch 4f11691c-4e75-4130-b048-a885dd08918d
+$ pnpm --filter @slovo/content content retire word w_g5ck4f --replaced-by w_8jjd0c --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_g5ck4f --replaced-by w_8jjd0c --edition uk
+LINK уцяцьковувати w_bf0lk1 -> w_7ujk5l w_bf0lk1 v3 content v15202 batch 2ad63578-93ed-496b-b45a-b85da0a64c3a
+$ pnpm --filter @slovo/content content retire word w_bf0lk1 --replaced-by w_7ujk5l --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_bf0lk1 --replaced-by w_7ujk5l --edition uk
+LINK учта w_roshmu -> w_n9l6fv w_roshmu v4 content v15203 batch f813a133-e822-4093-8fb8-4409e350f1c4
+$ pnpm --filter @slovo/content content retire word w_roshmu --replaced-by w_n9l6fv --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_roshmu --replaced-by w_n9l6fv --edition uk
+LINK фарандола w_oqvfxz -> w_7ia5b0 w_oqvfxz v3 content v15204 batch 327379bc-3b00-4d35-b3f3-9d98dc03ec46
+$ pnpm --filter @slovo/content content retire word w_oqvfxz --replaced-by w_7ia5b0 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_oqvfxz --replaced-by w_7ia5b0 --edition uk
+LINK флюгер w_b97yb8 -> w_p6l88t w_b97yb8 v4 content v15205 batch 3225e4b3-7a69-4738-ad9c-e9d4f1731e27
+$ pnpm --filter @slovo/content content retire word w_b97yb8 --replaced-by w_p6l88t --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_b97yb8 --replaced-by w_p6l88t --edition uk
+LINK фільдеперс w_ld1nqd -> w_4bbdro w_ld1nqd v4 content v15206 batch 0657311b-5ec5-48db-b176-6a3755493007
+$ pnpm --filter @slovo/content content retire word w_ld1nqd --replaced-by w_4bbdro --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ld1nqd --replaced-by w_4bbdro --edition uk
+LINK хлястик w_b3xjrn -> w_gya145 w_b3xjrn v4 content v15207 batch 0fd03dbd-1ef5-4231-b976-627ba9649f4b
+$ pnpm --filter @slovo/content content retire word w_b3xjrn --replaced-by w_gya145 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_b3xjrn --replaced-by w_gya145 --edition uk
+LINK ходики w_8n4nie -> w_91pd3i w_8n4nie v3 content v15208 batch b3e5770c-51ac-40de-930a-f77ac740d8a3
+$ pnpm --filter @slovo/content content retire word w_8n4nie --replaced-by w_91pd3i --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_8n4nie --replaced-by w_91pd3i --edition uk
+LINK хосен w_aw1xcm -> w_47zzov w_aw1xcm v4 content v15209 batch e454ac51-94f5-4110-9410-6db190c8c2c3
+$ pnpm --filter @slovo/content content retire word w_aw1xcm --replaced-by w_47zzov --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_aw1xcm --replaced-by w_47zzov --edition uk
+LINK цикля w_yqb58f -> w_3mgzf1 w_yqb58f v4 content v15210 batch 3282f8da-d3a5-4f77-b43f-358769202bb7
+$ pnpm --filter @slovo/content content retire word w_yqb58f --replaced-by w_3mgzf1 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_yqb58f --replaced-by w_3mgzf1 --edition uk
+LINK чемерник w_42va6o -> w_83w83j w_42va6o v4 content v15211 batch 5c7416aa-d9de-4a42-8a34-ab1d510374f4
+$ pnpm --filter @slovo/content content retire word w_42va6o --replaced-by w_83w83j --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_42va6o --replaced-by w_83w83j --edition uk
+LINK черсак w_igkfdj -> w_cprgg7 w_igkfdj v4 content v15212 batch a192ec0a-ea4a-4d34-96ef-878eb23e9f14
+$ pnpm --filter @slovo/content content retire word w_igkfdj --replaced-by w_cprgg7 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_igkfdj --replaced-by w_cprgg7 --edition uk
+LINK чинар w_x0j0sr -> w_j76b6l w_x0j0sr v3 content v15213 batch 4118370a-e4d6-4e9c-9d31-ba47801f513a
+$ pnpm --filter @slovo/content content retire word w_x0j0sr --replaced-by w_j76b6l --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_x0j0sr --replaced-by w_j76b6l --edition uk
+LINK чорнорясник w_rmfnyz -> w_orss57 w_rmfnyz v3 content v15214 batch ad8f3e72-5ad6-4b67-aeea-1a7b82d97868
+$ pnpm --filter @slovo/content content retire word w_rmfnyz --replaced-by w_orss57 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_rmfnyz --replaced-by w_orss57 --edition uk
+LINK чорнотроп w_tueb2l -> w_0t40sr w_tueb2l v3 content v15215 batch 55c34058-5d30-4da0-af75-7188522b8885
+$ pnpm --filter @slovo/content content retire word w_tueb2l --replaced-by w_0t40sr --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_tueb2l --replaced-by w_0t40sr --edition uk
+LINK чортопхайка w_pvqbmo -> w_i3vx7y w_pvqbmo v3 content v15216 batch 7be406fd-b046-458a-878c-0ba306ab3beb
+$ pnpm --filter @slovo/content content retire word w_pvqbmo --replaced-by w_i3vx7y --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_pvqbmo --replaced-by w_i3vx7y --edition uk
+LINK чубарка w_zt6nen -> w_qpprsg w_zt6nen v4 content v15217 batch a0a264cb-9cc5-4faa-8fca-504fb65a8938
+$ pnpm --filter @slovo/content content retire word w_zt6nen --replaced-by w_qpprsg --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_zt6nen --replaced-by w_qpprsg --edition uk
+LINK шабельник w_x3bgf5 -> w_kteuvi w_x3bgf5 v3 content v15218 batch 528736d8-5c6a-417d-877a-552eb9370e51
+$ pnpm --filter @slovo/content content retire word w_x3bgf5 --replaced-by w_kteuvi --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_x3bgf5 --replaced-by w_kteuvi --edition uk
+LINK шандал w_la6ls3 -> w_ncs003 w_la6ls3 v3 content v15219 batch dbecbea8-e014-4082-8bbd-2de3a0c18c48
+$ pnpm --filter @slovo/content content retire word w_la6ls3 --replaced-by w_ncs003 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_la6ls3 --replaced-by w_ncs003 --edition uk
+LINK шансонетка w_kh6f2o -> w_mgyohm w_kh6f2o v4 content v15220 batch 41a7687b-14b6-4232-a404-aca2143c6659
+$ pnpm --filter @slovo/content content retire word w_kh6f2o --replaced-by w_mgyohm --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_kh6f2o --replaced-by w_mgyohm --edition uk
+LINK шахівниця w_rgxsv4 -> w_t2ijzg w_rgxsv4 v3 content v15221 batch 44d5656c-f115-4c25-b9a4-0a3b457f4c70
+$ pnpm --filter @slovo/content content retire word w_rgxsv4 --replaced-by w_t2ijzg --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_rgxsv4 --replaced-by w_t2ijzg --edition uk
+LINK шибздик w_vb1yjw -> w_jnk10a w_vb1yjw v3 content v15222 batch fb28276b-164f-4177-8373-e0063f711d7d
+$ pnpm --filter @slovo/content content retire word w_vb1yjw --replaced-by w_jnk10a --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_vb1yjw --replaced-by w_jnk10a --edition uk
+LINK широкораменний w_wea8ku -> w_afls60 w_wea8ku v3 content v15223 batch 97825548-bfae-469d-b14b-1971ea77f3eb
+$ pnpm --filter @slovo/content content retire word w_wea8ku --replaced-by w_afls60 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_wea8ku --replaced-by w_afls60 --edition uk
+LINK шлафрок w_bjf1ew -> w_gw9smy w_bjf1ew v3 content v15224 batch 6c53acdd-be6a-43f0-b1ea-d60f2129b55c
+$ pnpm --filter @slovo/content content retire word w_bjf1ew --replaced-by w_gw9smy --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_bjf1ew --replaced-by w_gw9smy --edition uk
+LINK шлягер w_6tlydc -> w_492m5i w_6tlydc v3 content v15225 batch 380401b7-5222-47b9-9393-fd7155e86da2
+$ pnpm --filter @slovo/content content retire word w_6tlydc --replaced-by w_492m5i --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_6tlydc --replaced-by w_492m5i --edition uk
+LINK шпеник w_sn844a -> w_884otx w_sn844a v3 content v15226 batch 60020100-6c58-4024-a1c8-119dce2df074
+$ pnpm --filter @slovo/content content retire word w_sn844a --replaced-by w_884otx --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_sn844a --replaced-by w_884otx --edition uk
+LINK шулик w_xz270u -> w_urlyzx w_xz270u v4 content v15227 batch 384ddf50-bb1e-4c5e-8c57-19f8b6d29f92
+$ pnpm --filter @slovo/content content retire word w_xz270u --replaced-by w_urlyzx --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_xz270u --replaced-by w_urlyzx --edition uk
+LINK єдиноутробний w_dm2x7y -> w_6g40ls w_dm2x7y v4 content v15228 batch 4fcc55d0-1323-49f4-81e1-722701d8a20b
+$ pnpm --filter @slovo/content content retire word w_dm2x7y --replaced-by w_6g40ls --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_dm2x7y --replaced-by w_6g40ls --edition uk
+LINK єфимок w_uwmfn8 -> w_n1rl3n w_uwmfn8 v4 content v15229 batch 7b55f4eb-3a62-43d1-8b4e-43fa55eeb9a8
+$ pnpm --filter @slovo/content content retire word w_uwmfn8 --replaced-by w_n1rl3n --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_uwmfn8 --replaced-by w_n1rl3n --edition uk
+LINK іредента w_rvuf4z -> w_s8gd6l w_rvuf4z v3 content v15230 batch 659719ff-41e0-4fda-a505-27d72ebe8793
+$ pnpm --filter @slovo/content content retire word w_rvuf4z --replaced-by w_s8gd6l --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_rvuf4z --replaced-by w_s8gd6l --edition uk
+LINK іудин w_tu33n7 -> w_nc3qpv w_tu33n7 v4 content v15231 batch 91365c18-e8da-43ae-bb20-9bac69107dd4
+$ pnpm --filter @slovo/content content retire word w_tu33n7 --replaced-by w_nc3qpv --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_tu33n7 --replaced-by w_nc3qpv --edition uk
+LINK казарка w_2s698p -> w_mkvg9v w_2s698p v3 content v15232 batch c9f1c1f5-dca6-4b33-846f-94b4d9c556eb
+$ pnpm --filter @slovo/content content retire word w_2s698p --replaced-by w_mkvg9v --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_2s698p --replaced-by w_mkvg9v --edition uk
+LINK казарка w_8ttqcj -> w_z4dy5w w_8ttqcj v3 content v15233 batch 144d180e-f14d-4eab-a178-5b7ef6b75a5a
+$ pnpm --filter @slovo/content content retire word w_8ttqcj --replaced-by w_z4dy5w --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_8ttqcj --replaced-by w_z4dy5w --edition uk
+LINK канатник w_yfcle3 -> w_eify8d w_yfcle3 v3 content v15234 batch 42549827-7e04-419b-a3df-5949c2daf9fb
+$ pnpm --filter @slovo/content content retire word w_yfcle3 --replaced-by w_eify8d --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_yfcle3 --replaced-by w_eify8d --edition uk
+LINK каурі w_6b2m33 -> w_nhgg3y w_6b2m33 v3 content v15235 batch 81d29d83-71ff-4f13-bf4a-580b50182627
+$ pnpm --filter @slovo/content content retire word w_6b2m33 --replaced-by w_nhgg3y --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_6b2m33 --replaced-by w_nhgg3y --edition uk
+LINK укоїти w_ph31hn -> w_8rffd8 w_ph31hn v3 content v15236 batch fba88b0e-3659-4583-bafd-55287b075a99
+$ pnpm --filter @slovo/content content retire word w_ph31hn --replaced-by w_8rffd8 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ph31hn --replaced-by w_8rffd8 --edition uk
+LINK укоїти w_eiz4qy -> w_r66bhh w_eiz4qy v4 content v15237 batch 56a8a5fc-13c7-4fdb-92ce-2f476e78de99
+$ pnpm --filter @slovo/content content retire word w_eiz4qy --replaced-by w_r66bhh --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_eiz4qy --replaced-by w_r66bhh --edition uk
+LINK ухибити w_dh7z6v -> w_7m8rm1 w_dh7z6v v3 content v15238 batch 98541c7d-7559-4973-8d97-50e8108c9d05
+$ pnpm --filter @slovo/content content retire word w_dh7z6v --replaced-by w_7m8rm1 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_dh7z6v --replaced-by w_7m8rm1 --edition uk
+LINK ухибити w_nqrqz8 -> w_bmg0dp w_nqrqz8 v3 content v15239 batch 7404c609-9caf-40ec-969c-bcff489a14de
+$ pnpm --filter @slovo/content content retire word w_nqrqz8 --replaced-by w_bmg0dp --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_nqrqz8 --replaced-by w_bmg0dp --edition uk
+LINK рунистий w_jomhv7 -> w_igouuw w_jomhv7 v4 content v15240 batch 789c8e69-ce8e-4052-badb-a5a3c75c7723
+$ pnpm --filter @slovo/content content retire word w_jomhv7 --replaced-by w_igouuw --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_jomhv7 --replaced-by w_igouuw --edition uk
+LINK урочний w_dt8vb9 -> w_nsp0qc w_dt8vb9 v4 content v15241 batch 0ddc0c34-bf2a-4c7a-913c-cdf35091f8d0
+$ pnpm --filter @slovo/content content retire word w_dt8vb9 --replaced-by w_nsp0qc --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_dt8vb9 --replaced-by w_nsp0qc --edition uk
+LINK ходак w_xlmli9 -> w_8x5dbf w_xlmli9 v4 content v15242 batch 45765e00-7770-4817-82d2-205b344f8de1
+$ pnpm --filter @slovo/content content retire word w_xlmli9 --replaced-by w_8x5dbf --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_xlmli9 --replaced-by w_8x5dbf --edition uk
+LINK крейцер w_gl4u1s -> w_xfkmri w_gl4u1s v3 content v15243 batch 44862aca-4dfb-424a-97fa-80c044ff7afb
+$ pnpm --filter @slovo/content content retire word w_gl4u1s --replaced-by w_xfkmri --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_gl4u1s --replaced-by w_xfkmri --edition uk
+LINK роз'юшити w_6gs70k -> w_02n88k w_6gs70k v4 content v15244 batch 76552dee-029d-45d0-80ba-19e0029e70c1
+$ pnpm --filter @slovo/content content retire word w_6gs70k --replaced-by w_02n88k --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_6gs70k --replaced-by w_02n88k --edition uk
+# link {'links': 423, 'already': 2, 'skips': 0, 'refusals': 0}

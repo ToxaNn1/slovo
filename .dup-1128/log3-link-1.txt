@@ -1,0 +1,6 @@
+# snapshot content v14802
+LINK афронт w_atuc2s -> w_hnis89 w_atuc2s v3 content v14803 batch 726dc115-de50-478f-bafe-052de8c8bec7
+$ pnpm --filter @slovo/content content retire word w_atuc2s --replaced-by w_hnis89 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_atuc2s --replaced-by w_hnis89 --edition uk
+SKIP link batch2.json ратиця w_ojmygi: not Retired
+# link {'links': 1, 'already': 0, 'skips': 1, 'refusals': 0}

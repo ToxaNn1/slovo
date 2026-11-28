@@ -1,0 +1,60 @@
+# snapshot content v14803
+EDIT 0 ратиця w_0s7z3u v4 content v14804 batch d822c5aa-a54a-448b-aafa-3b770232ba1e
+$ pnpm --filter @slovo/content content edit word w_0s7z3u /tmp/claude-0/-home-user-slovo/a3bcc3e6-f3c0-52ce-a7de-468bc4e701b0/scratchpad/edits3/w_0s7z3u.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_0s7z3u /tmp/claude-0/-home-user-slovo/a3bcc3e6-f3c0-52ce-a7de-468bc4e701b0/scratchpad/edits3/w_0s7z3u.json --edition uk
+RETIRE 0 ратиця w_ojmygi v3 content v14805 batch 52c62633-f8ec-4f14-ab13-ee5a893e7768
+$ pnpm --filter @slovo/content content retire word w_ojmygi --replaced-by w_0s7z3u --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ojmygi --replaced-by w_0s7z3u --edition uk
+NOEDIT 1 берданка
+RETIRE 1 берданка w_tbt9bu v2 content v14806 batch 4bff6c13-570c-428f-997a-c2c21078bd05
+$ pnpm --filter @slovo/content content retire word w_tbt9bu --replaced-by w_axiffk --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_tbt9bu --replaced-by w_axiffk --edition uk
+NOEDIT 2 бересклет
+RETIRE 2 бересклет w_k0h2m2 v2 content v14807 batch 25a21d50-217a-4c22-a7b9-68405ab7ba9e
+$ pnpm --filter @slovo/content content retire word w_k0h2m2 --replaced-by w_byg61q --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_k0h2m2 --replaced-by w_byg61q --edition uk
+NOEDIT 3 бестія
+RETIRE 3 бестія w_hq80fp v2 content v14808 batch e0287394-7932-4e0f-a942-c97c153259d4
+$ pnpm --filter @slovo/content content retire word w_hq80fp --replaced-by w_am2bxf --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_hq80fp --replaced-by w_am2bxf --edition uk
+EDIT 4 благоліпний w_fh3sb6 v2 content v14809 batch 7c17ee04-744c-4b8c-8f11-712c5bc64928
+$ pnpm --filter @slovo/content content edit word w_fh3sb6 /tmp/claude-0/-home-user-slovo/a3bcc3e6-f3c0-52ce-a7de-468bc4e701b0/scratchpad/edits3/w_fh3sb6.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_fh3sb6 /tmp/claude-0/-home-user-slovo/a3bcc3e6-f3c0-52ce-a7de-468bc4e701b0/scratchpad/edits3/w_fh3sb6.json --edition uk
+RETIRE 4 благоліпний w_t2pw4j v2 content v14810 batch cd985a73-1a46-41d8-942d-cb22809bc516
+$ pnpm --filter @slovo/content content retire word w_t2pw4j --replaced-by w_fh3sb6 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_t2pw4j --replaced-by w_fh3sb6 --edition uk
+NOEDIT 5 благородіє
+RETIRE 5 благородіє w_92hylx v2 content v14811 batch 919e9bbb-71cb-4186-8ad5-dc0be899ec95
+$ pnpm --filter @slovo/content content retire word w_92hylx --replaced-by w_sda28a --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_92hylx --replaced-by w_sda28a --edition uk
+EDIT 6 благоуханний w_swbb2d v2 content v14812 batch 82b77fcd-1704-4b2a-bf42-c69193504098
+$ pnpm --filter @slovo/content content edit word w_swbb2d /tmp/claude-0/-home-user-slovo/a3bcc3e6-f3c0-52ce-a7de-468bc4e701b0/scratchpad/edits3/w_swbb2d.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_swbb2d /tmp/claude-0/-home-user-slovo/a3bcc3e6-f3c0-52ce-a7de-468bc4e701b0/scratchpad/edits3/w_swbb2d.json --edition uk
+RETIRE 6 благоуханний w_wjy6ch v2 content v14813 batch 157519ae-820f-49c8-94bb-a4aef26014ed
+$ pnpm --filter @slovo/content content retire word w_wjy6ch --replaced-by w_swbb2d --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_wjy6ch --replaced-by w_swbb2d --edition uk
+EDIT 7 віршівник w_8qt67k v2 content v14814 batch 133afeea-a6b3-47d2-a757-ea2f6bce3f1c
+$ pnpm --filter @slovo/content content edit word w_8qt67k /tmp/claude-0/-home-user-slovo/a3bcc3e6-f3c0-52ce-a7de-468bc4e701b0/scratchpad/edits3/w_8qt67k.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_8qt67k /tmp/claude-0/-home-user-slovo/a3bcc3e6-f3c0-52ce-a7de-468bc4e701b0/scratchpad/edits3/w_8qt67k.json --edition uk
+RETIRE 7 віршівник w_sin36s v2 content v14815 batch 3e92ab62-a300-4cc0-8328-fb120a8836ab
+$ pnpm --filter @slovo/content content retire word w_sin36s --replaced-by w_8qt67k --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_sin36s --replaced-by w_8qt67k --edition uk
+EDIT 8 віспощепій w_euhut0 v2 content v14816 batch 7046e30e-caef-4284-9b28-589c9898b9a9
+$ pnpm --filter @slovo/content content edit word w_euhut0 /tmp/claude-0/-home-user-slovo/a3bcc3e6-f3c0-52ce-a7de-468bc4e701b0/scratchpad/edits3/w_euhut0.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_euhut0 /tmp/claude-0/-home-user-slovo/a3bcc3e6-f3c0-52ce-a7de-468bc4e701b0/scratchpad/edits3/w_euhut0.json --edition uk
+RETIRE 8 віспощепій w_9yj0dp v2 content v14817 batch 3b0167d9-6165-436b-9468-35ae14a5de84
+$ pnpm --filter @slovo/content content retire word w_9yj0dp --replaced-by w_euhut0 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_9yj0dp --replaced-by w_euhut0 --edition uk
+EDIT 9 галуза w_md5qit v2 content v14818 batch e440c3d8-8b11-409c-80d7-da4af85767e1
+$ pnpm --filter @slovo/content content edit word w_md5qit /tmp/claude-0/-home-user-slovo/a3bcc3e6-f3c0-52ce-a7de-468bc4e701b0/scratchpad/edits3/w_md5qit.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_md5qit /tmp/claude-0/-home-user-slovo/a3bcc3e6-f3c0-52ce-a7de-468bc4e701b0/scratchpad/edits3/w_md5qit.json --edition uk
+RETIRE 9 галуза w_jkfo0g v2 content v14819 batch f2e37aa3-f72d-4b28-b45e-9efb71b4a9bb
+$ pnpm --filter @slovo/content content retire word w_jkfo0g --replaced-by w_md5qit --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_jkfo0g --replaced-by w_md5qit --edition uk
+EDIT 10 генделик w_espquk v2 content v14820 batch e645ce58-6280-43b6-8e44-69d3330876fc
+$ pnpm --filter @slovo/content content edit word w_espquk /tmp/claude-0/-home-user-slovo/a3bcc3e6-f3c0-52ce-a7de-468bc4e701b0/scratchpad/edits3/w_espquk.json --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_espquk /tmp/claude-0/-home-user-slovo/a3bcc3e6-f3c0-52ce-a7de-468bc4e701b0/scratchpad/edits3/w_espquk.json --edition uk
+RETIRE 10 генделик w_ay3ajc v2 content v14821 batch ef6c3f74-67db-40ae-b1cf-20ddc77d323d
+$ pnpm --filter @slovo/content content retire word w_ay3ajc --replaced-by w_espquk --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_ay3ajc --replaced-by w_espquk --edition uk
+# groups {'groups': 11, 'ok': 11, 'edits': 7, 'noedit': 4, 'retires': 11, 'skips': 0, 'refusals': 0}

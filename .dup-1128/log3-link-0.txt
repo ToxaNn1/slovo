@@ -1,0 +1,12 @@
+# snapshot content v14802
+REFUSAL link афронт w_atuc2s: $ pnpm --filter @slovo/content content retire word w_atuc2s --replaced-by w_hnis89 --edition uk
+$ tsx --disable-warning=ExperimentalWarning src/cli.ts retire word w_atuc2s --replaced-by w_hnis89 --edition uk
+w_atuc2s: BAD_REQUEST: Input validation failed
+[ELIFECYCLE] Command failed with exit code 1.
+Error: ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL
+
+  × "pnpm recursive run" failed in /home/user/slovo/tools/content
+
+[ELIFECYCLE] Command failed with exit code 1.
+SKIP link batch2.json ратиця w_ojmygi: not Retired
+# link {'links': 0, 'already': 0, 'skips': 1, 'refusals': 1}

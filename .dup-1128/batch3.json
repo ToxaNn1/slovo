@@ -1,0 +1,182 @@
+{
+ "contentVersion": 14802,
+ "groups": [
+  {
+   "lemma": "ратиця",
+   "keep": "w_0s7z3u",
+   "retire": [
+    "w_ojmygi"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Після дощу на стежці лишилися глибокі сліди коров’ячих ратиць."
+    },
+    {
+     "text": "Ветеринар оглянув ратиці корови й знайшов скалку, через яку вона кульгала."
+    },
+    {
+     "text": "На вологій стежці чітко відбилися ратиці кози, яка втекла з двору."
+    }
+   ],
+   "etymology": null,
+   "section": "3"
+  },
+  {
+   "lemma": "берданка",
+   "keep": "w_axiffk",
+   "retire": [
+    "w_tbt9bu"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "3"
+  },
+  {
+   "lemma": "бересклет",
+   "keep": "w_byg61q",
+   "retire": [
+    "w_k0h2m2"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "3"
+  },
+  {
+   "lemma": "бестія",
+   "keep": "w_am2bxf",
+   "retire": [
+    "w_hq80fp"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "3"
+  },
+  {
+   "lemma": "благоліпний",
+   "keep": "w_fh3sb6",
+   "retire": [
+    "w_t2pw4j"
+   ],
+   "synonyms": [
+    "гарний",
+    "вродливий",
+    "благообразний",
+    "статечний"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "3"
+  },
+  {
+   "lemma": "благородіє",
+   "keep": "w_sda28a",
+   "retire": [
+    "w_92hylx"
+   ],
+   "synonyms": null,
+   "examples": null,
+   "etymology": null,
+   "section": "3"
+  },
+  {
+   "lemma": "благоуханний",
+   "keep": "w_swbb2d",
+   "retire": [
+    "w_wjy6ch"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Благоуханний сельний крине!",
+     "author": "Т. Шевченко"
+    },
+    {
+     "text": "Після дощу сад став благоуханним, і ми довго не хотіли йти додому."
+    },
+    {
+     "text": "Старі поети любили оспівувати благоуханні луки й гаї."
+    }
+   ],
+   "etymology": null,
+   "section": "3"
+  },
+  {
+   "lemma": "віршівник",
+   "keep": "w_8qt67k",
+   "retire": [
+    "w_sin36s"
+   ],
+   "synonyms": [
+    "поет",
+    "віршописець",
+    "римувальник",
+    "віршотворець"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "3"
+  },
+  {
+   "lemma": "віспощепій",
+   "keep": "w_euhut0",
+   "retire": [
+    "w_9yj0dp"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "У волості був один віспощепій, і він об’їжджав села, щоб щепити дітей від віспи."
+    },
+    {
+     "text": "Спершу люди не довіряли віспощепієві, але після епідемії самі понесли до нього малюків."
+    },
+    {
+     "text": "Навесні до села приїхав віспощепій, і матері вишикувалися з дітьми в черзі біля волосної управи."
+    }
+   ],
+   "etymology": null,
+   "section": "3"
+  },
+  {
+   "lemma": "галуза",
+   "keep": "w_md5qit",
+   "retire": [
+    "w_jkfo0g"
+   ],
+   "synonyms": [
+    "гілка",
+    "гілля",
+    "віта",
+    "галузь"
+   ],
+   "examples": null,
+   "etymology": null,
+   "section": "3"
+  },
+  {
+   "lemma": "генделик",
+   "keep": "w_espquk",
+   "retire": [
+    "w_ay3ajc"
+   ],
+   "synonyms": null,
+   "examples": [
+    {
+     "text": "Після зміни робітники заходили в генделик біля вокзалу на чарку."
+    },
+    {
+     "text": "Замість ресторану він повів нас у тісний генделик із трьома столиками й липкою стійкою."
+    },
+    {
+     "text": "На розі вулиці відкрили ще один генделик, і тепер вечорами там гомонять до півночі."
+    }
+   ],
+   "etymology": null,
+   "section": "3"
+  }
+ ]
+}
