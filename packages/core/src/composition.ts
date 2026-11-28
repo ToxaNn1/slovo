@@ -705,7 +705,13 @@ export async function openComposition({
   });
   await day.resume();
   // Once the day is turned to, so its hero is today's Word of the Day.
-  const correctionTypes = await openCorrectionTypes({ edition, entries, userState, seen });
+  const correctionTypes = await openCorrectionTypes({
+    edition,
+    entries,
+    userState,
+    seen,
+    hiddenEntries,
+  });
   const curatedCollections = await openCuratedCollections({
     edition,
     content,
