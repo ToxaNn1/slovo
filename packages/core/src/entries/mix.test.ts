@@ -289,6 +289,13 @@ describe('the Mix', () => {
     expect(categoriesTakenOut(['speech'], ['speech'])).toEqual([]);
   });
 
+  it('keeps the last Category in when the group names a Category twice', () => {
+    expect(categoriesTakenOut(['speech'], ['speech', 'speech'])).toEqual([]);
+    expect(categoriesTakenOut(['speech', 'crafts'], ['speech', 'crafts', 'speech'])).toEqual([
+      'speech',
+    ]);
+  });
+
   it('keeps the group’s last Category in when taking the group out would leave none', async () => {
     const app = await run();
     await app.mix.takeOut('nature');

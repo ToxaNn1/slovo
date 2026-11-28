@@ -322,7 +322,8 @@ export function categoriesTakenOut(
   inMix: readonly string[],
   chosen: readonly string[],
 ): readonly string[] {
-  const out = chosen.filter((id) => inMix.includes(id));
+  // Each Category once, so the one kept is never only a repeat of one taken out.
+  const out = [...new Set(chosen)].filter((id) => inMix.includes(id));
   return inMix.every((id) => out.includes(id)) ? out.slice(0, -1) : out;
 }
 
