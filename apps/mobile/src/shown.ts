@@ -1,6 +1,7 @@
 import type { EntryKind, MixPlace } from '@slovo/contracts';
 import {
   kindsShown,
+  statisticsGoverned,
   type Edition,
   type FeatureSwitch,
   type MixState,
@@ -111,7 +112,7 @@ export function shownOf({
     ),
     mixPlace: mixPlaceOf(edition),
     selfCheck: on('selfCheck') && settings.selfCheck,
-    shareCountersSetting: on('communityCounters') || on('analytics'),
+    shareCountersSetting: statisticsGoverned(edition),
     stats: on('statistics')
       ? {
           streak: !settings.noCounters,

@@ -117,8 +117,11 @@ export interface LemmaSourcingInput {
   readonly excludeLists: readonly string[];
   /** The Lemmas Wiktionary labels dated, rare, archaic or dialectal. */
   readonly labelled: ReadonlySet<string>;
-  /** Whether ЕСУМ lists the Lemma; asked only about each cell's shortlist. */
-  readonly inEsum: (lemma: string) => Promise<boolean>;
+  /**
+   * Whether ЕСУМ lists the Lemma; asked only about each cell's shortlist.
+   * Undefined, ЕСУМ is not asked and archaic and Wiktionary alone rank.
+   */
+  readonly inEsum: ((lemma: string) => Promise<boolean>) | undefined;
   readonly options: LemmaOptions;
   readonly random: () => number;
 }
@@ -253,7 +256,8 @@ export async function sourceLemmas(input: LemmaSourcingInput): Promise<LemmaSour
 /**
  * The `count` candidates of a cell with the most evidence, ties at random:
  * archaic and Wiktionary rank first, then ЕСУМ is asked about the shortlist
- * of the best `ESUM_SHORTLIST_FACTOR × count` and ranks it once more.
+ * of the best `ESUM_SHORTLIST_FACTOR × count` and ranks it once more, unless
+ * there is no ЕСУМ to ask.
  */
 async function best(
   cell: readonly Candidate[],
@@ -263,6 +267,7 @@ async function best(
   if (count === 0) return [];
   const byEvidence = (a: Candidate, b: Candidate) => b.evidence.length - a.evidence.length;
   const ranked = sample(cell, cell.length, random).sort(byEvidence);
+  if (inEsum === undefined) return ranked.slice(0, count);
   const shortlist: Candidate[] = [];
   for (const candidate of ranked.slice(0, count * ESUM_SHORTLIST_FACTOR)) {
     const listed = await inEsum(candidate.lemma);

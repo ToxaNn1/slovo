@@ -469,6 +469,10 @@ _Avoid_: Stats, statistics (the reader's own numbers), ratings
 Reader-consented product events (onboarding steps, Games, Review, goals, Streak events, settings, screens) sent with the Install id as the distinct id through one port of the Core, to measure retention and goal completion. No advertising id, no location, no contacts, no session recording and no tracking prompt. One Settings switch, «Ділитися анонімною статистикою», turns off both Analytics and Community Counters. Distinct from Community Counters, which count Entries and never events.
 _Avoid_: Tracking, telemetry, stats (the reader's own numbers)
 
+**Statistics consent**:
+The question the onboarding asks a reader whose phone's region is in the EEA or unknown, with two equal choices, before anything is sent: the answer sets «Ділитися анонімною статистикою», which is off for that reader until they choose and on for every other reader (ADR 0210).
+_Avoid_: Cookie banner, GDPR prompt, tracking prompt, opt-in
+
 **Mistake Report**:
 «Повідомлення про помилку»: what a reader sends from an Entry card's menu about a mistake in that Entry: its type (typo, Stress, Definition or other), an optional comment of at most 500 characters (required for other), the Edition, the Entry id, the app version and the content version. It carries no device id and no Install id; a signed-in reader's report names their Account, an anonymous one nothing. It waits on the device until it can be sent, and is kept on the server until the owner resolves it in the Owner admin's Content queue.
 _Avoid_: Bug report, feedback, complaint

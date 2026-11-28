@@ -924,4 +924,10 @@ export const FEATURE_SWITCHES = catalogue({
     line: 'Коли читач вимикає анонімну статистику, застосунок один раз надсилає анонімну одиницю, лише з виданням.',
     group: 'analytics',
   },
+  /** The Statistics consent: a reader whose phone's region is in the EEA or unknown is asked in the onboarding before anything is sent, and «Ділитися анонімною статистикою» is off until they choose (ADR 0210); off, no one is asked and the switch is on until turned off. */
+  statisticsConsent: {
+    name: 'Згода на статистику в ЄЕЗ',
+    line: 'Читача з регіоном ЄЕЗ або без регіону запитують в онбордингу, чи ділитися анонімною статистикою; доти нічого не надсилається.',
+    group: 'analytics',
+  },
 });

@@ -3,6 +3,7 @@ import { AccountEmailSchema, SignInCodeSchema } from '@slovo/contracts';
 import { createAnalytics, type AnalyticsSink, type SignInMethod } from '../analytics/analytics';
 import { createSubscribers } from '../in-turn';
 import type { Edition } from '../edition/edition';
+import type { StatisticsConsent } from '../statistics/statistics-consent';
 import type {
   AppleSignInSheet,
   Backend,
@@ -207,6 +208,7 @@ export async function openAccount({
   schedule,
   random,
   analytics: analyticsSink,
+  consent,
 }: {
   backend: Pick<Backend, 'account'>;
   /** The Edition, which the Sign-in code email and the Google sign-in name, and whose `analytics` switch gates the events. */
@@ -223,9 +225,11 @@ export async function openAccount({
   random: Random;
   /** Where each sign-in is told (ADR 0068), while the reader shares anonymous statistics; nowhere without it. */
   analytics?: AnalyticsSink | undefined;
+  /** The Statistics consent of this device (ADR 0210); without it, no one is asked. */
+  consent?: StatisticsConsent | undefined;
 }): Promise<Account> {
   const api = accountRequests(backend, edition.id);
-  const analytics = createAnalytics({ edition, userState, sink: analyticsSink });
+  const analytics = createAnalytics({ edition, userState, sink: analyticsSink, consent });
   const subscribers = createSubscribers();
   const kept = await sessions.read();
   let state: AccountState = kept === undefined ? signedOut : signedIn(kept.email);

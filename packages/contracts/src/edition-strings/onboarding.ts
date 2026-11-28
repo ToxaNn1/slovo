@@ -22,6 +22,19 @@ export const OnboardingStringsSchema = z.strictObject({
     title: TextSchema,
     subtitle: TextSchema,
     start: TextSchema,
+    /** The one honest line for a reader not asked (ADR 0210): the anonymous statistics are on, and where to turn them off. */
+    statistics: TextSchema,
+  }),
+  /** The Statistics consent of a reader to ask (ADR 0210): two equal choices, no going on without one. */
+  statisticsConsent: z.strictObject({
+    /** The word the step shouts large on its red top. */
+    shout: TextSchema,
+    title: TextSchema,
+    subtitle: TextSchema,
+    /** Turns «Ділитися анонімною статистикою» on. */
+    allow: TextSchema,
+    /** Leaves it off. */
+    deny: TextSchema,
   }),
   /** Today's Word of the Day on its card, the reader's first Word. */
   firstWord: z.strictObject({

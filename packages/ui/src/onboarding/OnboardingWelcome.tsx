@@ -27,6 +27,7 @@ export function OnboardingWelcome({
   total,
   hero,
   mascot,
+  statisticsLine,
   onStart,
   onSkip,
 }: {
@@ -36,6 +37,8 @@ export function OnboardingWelcome({
   hero: HeroWord | undefined;
   /** The on-red Mascot in the step's top, when it shows. */
   mascot?: ReactNode;
+  /** Whether a line under the promise says the anonymous statistics are on and where to turn them off (ADR 0210). */
+  statisticsLine: boolean;
   onStart: () => void;
   onSkip: () => void;
 }) {
@@ -93,6 +96,16 @@ export function OnboardingWelcome({
       >
         {welcome.subtitle}
       </Text>
+      {statisticsLine && (
+        <Text
+          testID="onboarding-statistics-line"
+          {...voice}
+          maxFontSizeMultiplier={fontScaleCap.text}
+          style={[typeStyle('stepText', tokens), { color: colors.muted }]}
+        >
+          {welcome.statistics}
+        </Text>
+      )}
     </OnboardingStep>
   );
 }

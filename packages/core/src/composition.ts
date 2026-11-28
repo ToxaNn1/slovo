@@ -74,6 +74,7 @@ import { createRecentQueries, type RecentQueries } from './search/recent-queries
 import { createSearch, withNoResultEvent, type Search } from './search/search';
 import type { UserState } from './user-state/user-state';
 import { createSpotlight, type Spotlight } from './spotlight/spotlight';
+import type { StatisticsConsent } from './statistics/statistics-consent';
 import { createSubject, type Subject } from './subject';
 import {
   createAnalytics,
@@ -381,6 +382,7 @@ export async function openComposition({
   feedNotices = noFeedNotices,
   backend,
   analytics: analyticsSink,
+  consent,
   visit = createVisit(),
   signedIn,
   ...ports
@@ -412,6 +414,8 @@ export async function openComposition({
   backend?: Pick<Backend, 'collectionLinks' | 'counters'>;
   /** Where the Analytics events go (ADR 0068); without it, as in tools and tests of other features, nowhere. */
   analytics?: AnalyticsSink;
+  /** The Statistics consent of this device (ADR 0210); without it, no one is asked. */
+  consent?: StatisticsConsent | undefined;
   /** The app run's Visit, which outlives a reopen; without it, this composition's own. */
   visit?: Visit;
   /**
@@ -445,7 +449,7 @@ export async function openComposition({
   // The Cycle reads the eligible Entries first; the Feed, the plan and the Game follow it.
   eligibility.subscribe(() => cycle.readEligibleAgain());
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
-  const analytics = createAnalytics({ edition, userState, sink: analyticsSink });
+  const analytics = createAnalytics({ edition, userState, sink: analyticsSink, consent });
   const { history, recorder } = await openHistory({ rows, userState, clock });
   const xpLog = await openXpLog({
     edition,
@@ -474,6 +478,7 @@ export async function openComposition({
     userState,
     // The turn of the user state as it was handed over, which the counters' sending is opened over too.
     inTurn: countersTurnOf(ports.userState),
+    consent,
   });
   /** Emits an event about the Entry with its kind, rarity and Category; a failure is lost, never thrown. */
   async function withEntryProperties(
@@ -740,6 +745,7 @@ export async function openComposition({
     analytics,
     backend,
     notifications,
+    consent,
   });
   async function entryCard(entryId: string): Promise<AnyEntryCard | undefined> {
     const entry = await entries.get(entryId);
