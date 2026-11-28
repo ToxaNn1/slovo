@@ -90,14 +90,16 @@ export function createTextComparison({
     const wanted = keyed(sought);
     if (wanted === '') return undefined;
     let plain = '';
-    /** The place in the text of each place in `plain` that begins a character's keyed form. */
+    /** The place in the text of each place in `plain` that begins a letter's keyed form. */
     const placeAt = new Map<number, number>();
     let place = 0;
-    for (const character of text) {
-      const form = keyed(character);
+    // A letter is keyed with the marks after it, so a decomposed letter recomposes as in `keyed(sought)`.
+    for (const [letter] of text.matchAll(/\P{M}?\p{M}*/gu)) {
+      if (letter === '') continue;
+      const form = keyed(letter);
       if (form !== '' && !placeAt.has(plain.length)) placeAt.set(plain.length, place);
       plain += form;
-      place += character.length;
+      place += letter.length;
     }
     /** The place in the text where the character after `plain`'s place stands, past Stress marks; the end of the text when none. */
     const endAt = (at: number) =>
