@@ -38,3 +38,5 @@ Until 1.0 an Active Day was a day on which the app was opened, so scrolling alon
 - **Daily XP cap in the Game**: rejected. The reader plays as long as they like.
 - **Levels that unlock content**: rejected. Nothing waits behind a Level.
 - **Keep the Daily Limit beside the Daily Goal**: rejected. Two daily numbers confuse; the 50-Seen Notice keeps the care for the reader's time.
+
+**Amended (owner, 28 November 2026).** The Break allowance holds in any 30 days in a row, not in 30 days from the first Break of them: a Break that crosses the edge of those 30 days can no longer run past 7 Break days in a row, and days come back one by one as they leave the 30 days.

@@ -782,7 +782,8 @@ describe('the Profile', () => {
       expect(
         card.getByText(
           fill(words.next, {
-            date: fill(editionStrings.share.day, { day: '11', month: months[10] ?? '' }),
+            // The day after the Break: 3 Break days leave 4 in the 30 days.
+            date: fill(editionStrings.share.day, { day: '15', month: months[9] ?? '' }),
           }),
         ),
       ).toBeOnTheScreen();
