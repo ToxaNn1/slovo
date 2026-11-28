@@ -4,7 +4,7 @@
 # locked Python 3.10 environment, ffmpeg and the checked model files. They stay out of the backend's own image, which they would grow by
 # gigabytes. `.railway/railway.ts` names its hourly command.
 # The tag names the version; the digest pins the image, which Dependabot moves.
-FROM node:22.23.4-bookworm-slim@sha256:5ec23b7c622b00547753bc6ffd78085dd868a68aeb41c8e0a1418f033e13d96d AS base
+FROM node:22.23.5-bookworm-slim@sha256:be979e5523c76fa4d5ca4ebd3099078f220aa47ec39c48ad5b5df9314debd6eb AS base
 ENV NODE_ENV=production \
     COREPACK_HOME=/usr/local/share/corepack \
     COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
