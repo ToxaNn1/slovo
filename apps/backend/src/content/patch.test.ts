@@ -288,16 +288,8 @@ describe('the Patch read API', () => {
     });
   });
 
-  it('answers a Patch format it does not serve as unsupported', async () => {
+  it('refuses an app that reads only a lower Patch format than the one it writes', async () => {
     const { client } = await contentBackend();
-    const answer = await client.content.patch({
-      params: { editionId: 'uk' },
-      query: { since: 0, patchFormat: PATCH_FORMAT + 1 },
-    });
-    expect(answer).toMatchObject({
-      status: 200,
-      body: { status: 'unsupported-format', patchFormat: PATCH_FORMAT },
-    });
     // The format before marks and Tip exceptions: an app of it keeps its content.
     expect(PATCH_FORMAT).toBe(3);
     await expect(
@@ -306,6 +298,22 @@ describe('the Patch read API', () => {
       status: 200,
       body: { status: 'unsupported-format', patchFormat: 3 },
     });
+  });
+
+  it('serves the Patch format it writes to an app that reads that format or a higher one', async () => {
+    const { client } = await contentBackend();
+    // `patchFormat` is the highest format the app reads, so an app released
+    // ahead of the backend still gets its content, in the backend's format.
+    for (const patchFormat of [PATCH_FORMAT, PATCH_FORMAT + 1]) {
+      const answer = await client.content.patch({
+        params: { editionId: 'uk' },
+        query: { since: 0, patchFormat },
+      });
+      expect(answer).toMatchObject({
+        status: 200,
+        body: { status: 'patch', patch: { patchFormat: PATCH_FORMAT, since: 0 } },
+      });
+    }
   });
 
   it('answers NOT_FOUND while content updates are off, the content is not imported or the Edition is unknown', async () => {
