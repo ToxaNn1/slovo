@@ -34,7 +34,10 @@ function pairOf(word: Word): GridPair {
  * «Пари», the Core's pairs mode, on when the Edition turns it on:
  * a Round is a grid of up to 4 Words and their primary Definitions, each
  * shuffled apart, whose every pair is a Round of its own, so that a Game's 15
- * Rounds are grids of 4, 4, 4 and 3 pairs. A grid holds the answer and the
+ * Rounds are grids of 4, 4, 4 and 3 pairs. A grid holds at least 2 pairs and
+ * never leaves a single Round to the Game, which would make a grid of one
+ * pair: with 5 Rounds left it holds 3, and when too few Words may share it
+ * there is no grid about the answer. A grid holds the answer and the
  * Words the Game would ask next. First come the ones the reader is weak on
  * whose places the grid reaches; one of them that may not sit in the grid
  * gives its place to the next weak one and moves to a later grid. Then comes a
@@ -84,6 +87,9 @@ export const pairsMode: GameMode = {
       ),
     );
     take(gridOrder(answer, words));
+    // A grid that would leave a single Round gives its last place to a later grid.
+    if (upTo - grid.length === 1) grid.pop();
+    if (grid.length < 2) return undefined;
     const places = grid.map((_, place) => place);
     return {
       form: 'pairs',
