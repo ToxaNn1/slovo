@@ -53,6 +53,12 @@ export type RoundPlanner = (
   from?: number,
 ) => RoundPlan;
 
+/** The Entries the plan would ask after an answer, in order, and the ids of those asked because the reader is weak on them. */
+interface Next {
+  readonly next: readonly AskableEntry[];
+  readonly weakNext: ReadonlySet<string>;
+}
+
 /** Whether at least `count` of the items pass the test, checking no more than it takes. */
 function enough<T>(items: readonly T[], test: (item: T) => boolean, count: number): boolean {
   let passed = 0;
@@ -106,7 +112,8 @@ function checkedRound(mode: GameMode, round: RoundContent, upTo: number): RoundC
  * count. They take places drawn at random among the first `GAME_ROUNDS`
  * Rounds a plan makes, so no two Games start alike; every Round is
  * built at its own place, and a weak Round the mode cannot build at its
- * place moves to the next one. The others ask first about the pool, the eligible
+ * place moves to the next one; when the Round that ends the plan would leave
+ * such an Entry out, the Round asks about it instead. The others ask first about the pool, the eligible
  * Entries in History when at least `GAME_ROUNDS` of them make a Round (a
  * place name makes none), else every eligible one; should the pool
  * make too few fair Rounds, the other eligible Entries fill in, the weak ones
@@ -143,6 +150,7 @@ export function createRoundPlanner({
         answer,
         eligible,
         next: [],
+        weakNext: new Set(),
         upTo: 1,
         round: from,
         random,
@@ -191,33 +199,59 @@ export function createRoundPlanner({
     /** How many weak Rounds are due by the place and not built: one that could not be built waits here. */
     const weakDue = (place: number, weakAsked: number) =>
       weakPlaces.filter((weakPlace) => weakPlace <= place).length - weakAsked;
-    /** Builds the Round about the answer at the next place, the answers after it `next`; whether the mode made one. */
-    function build(answer: AskableEntry, next: readonly AskableEntry[]): boolean {
+    /** The Round the mode makes about the answer at the next place, the answers after it `next`, if it makes one. */
+    function make(answer: AskableEntry, { next, weakNext }: Next): PlannedRound | undefined {
       const upTo = count - planned;
       const round = mode.buildRound({
         answer,
         eligible,
         next,
+        weakNext,
         upTo,
         round: from + planned,
         random,
         edition,
         comparison,
       });
-      if (round === undefined) return false;
-      const content = checkedRound(mode, round, upTo);
-      for (const id of new Set([answer.id, ...entriesIn(content)])) {
+      return round && { entry: answer, content: checkedRound(mode, round, upTo) };
+    }
+    /** The Entries a Round asks about. */
+    const askedBy = ({ entry, content }: PlannedRound) =>
+      new Set([entry.id, ...entriesIn(content)]);
+    /**
+     * Whether the Round would end the plan with a weak Entry left out whose
+     * place has come: a grid's last places went to others, or the Entry may
+     * not share a grid with one in it, and no place is left for it to move to.
+     */
+    function leavesWeakOut(round: PlannedRound): boolean {
+      if (planned + roundsIn(round.content) < count) return false;
+      const ids = askedBy(round);
+      const weakIn = [...ids].filter((id) => weak.has(id)).length;
+      return (
+        weakLeft > weakIn &&
+        weakDue(count - 1, weakBuilt + weakIn) > 0 &&
+        weakInOrder.some(({ id }) => !taken.has(id) && !ids.has(id))
+      );
+    }
+    /** Puts the Round at the next place. */
+    function put(round: PlannedRound): void {
+      for (const id of askedBy(round)) {
         taken.add(id);
         if (!weak.has(id)) continue;
         weakLeft -= 1;
         weakBuilt += 1;
       }
-      built.push({ entry: answer, content });
-      planned += roundsIn(content);
-      return true;
+      built.push(round);
+      planned += roundsIn(round.content);
+    }
+    /** Builds the Round about the answer at the next place, the answers after it `next`; whether the mode made one. */
+    function build(answer: AskableEntry, next: Next): boolean {
+      const round = make(answer, next);
+      if (round !== undefined) put(round);
+      return round !== undefined;
     }
     /** The Entries not asked yet the plan would ask after the answer, in order: the weak ones at their places, then every other. */
-    function after(answer: AskableEntry, othersFrom: number): AskableEntry[] {
+    function after(answer: AskableEntry, othersFrom: number): Next {
       const free = (entry: AskableEntry) => !taken.has(entry.id) && entry !== answer;
       const weakNext = weakInOrder.filter(free);
       const othersNext = othersInOrder.slice(othersFrom).filter(free);
@@ -225,6 +259,7 @@ export function createRoundPlanner({
       let left = weakLeft - isWeak;
       let weakAsked = weakBuilt + isWeak;
       const next: AskableEntry[] = [];
+      const weakIds = new Set<string>();
       let other = 0;
       for (let place = planned + 1; place < count; place += 1) {
         const weakAnswer = left > 0 && weakDue(place, weakAsked) > 0 ? weakNext.shift() : undefined;
@@ -234,20 +269,21 @@ export function createRoundPlanner({
         else {
           left -= 1;
           weakAsked += 1;
+          weakIds.add(weakAnswer.id);
         }
         next.push(nextAnswer);
       }
-      return [...next, ...othersNext.slice(other)];
+      return { next: [...next, ...othersNext.slice(other)], weakNext: weakIds };
     }
     /** Builds a Round about each answer in turn not asked yet, until there are `count`. */
     function fill(answers: readonly AskableEntry[]): void {
       for (const [place, answer] of answers.entries()) {
         if (planned >= count) return;
         if (taken.has(answer.id)) continue;
-        build(
-          answer,
-          answers.slice(place + 1).filter((entry) => !taken.has(entry.id)),
-        );
+        build(answer, {
+          next: answers.slice(place + 1).filter((entry) => !taken.has(entry.id)),
+          weakNext: new Set(),
+        });
       }
     }
     /** The place in `othersInOrder` of the next Entry to try: one that made no Round is not tried again. */
@@ -266,7 +302,19 @@ export function createRoundPlanner({
         const answer = othersInOrder[othersAt];
         othersAt += 1;
         if (answer === undefined || taken.has(answer.id)) continue;
-        made = build(answer, after(answer, othersAt));
+        const round = make(answer, after(answer, othersAt));
+        if (round === undefined) continue;
+        // A weak Entry the last Round would leave out is asked by it instead.
+        const about = leavesWeakOut(round)
+          ? weakInOrder
+              .filter(({ id }) => !taken.has(id))
+              .map((weakAnswer) => make(weakAnswer, after(weakAnswer, tried)))
+              .find((weakRound) => weakRound !== undefined && !leavesWeakOut(weakRound))
+          : undefined;
+        // The answer that gave way is tried again, should Rounds be left to plan.
+        if (about !== undefined) othersAt = tried;
+        put(about ?? round);
+        made = true;
       }
       if (!made) break;
     }
