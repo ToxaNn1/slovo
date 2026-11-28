@@ -446,7 +446,7 @@ export async function openComposition({
   const dayTurned: Subject<LocalDate> = createSubject();
   const returned: Subject<void> = createSubject();
   // Before any module reads the user state: the records of a Retired Word move
-  // to the Word that replaces it (ADR 0212). The composition opens after the
+  // to the Word that replaces it (ADR 0214). The composition opens after the
   // pack does, after each Patch and after each sync that wrote, so each runs it.
   await moveToReplacingWords({ content, userState });
   // The Entries read the reader's choices live; the Mix opens before the

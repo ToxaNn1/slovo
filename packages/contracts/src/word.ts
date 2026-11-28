@@ -181,7 +181,7 @@ const wordRules = (
  * `correctionIds` links the Corrections the Word is the standard form for.
  *
  * `replacedBy` names the Word that replaces a Retired Word, another Word of
- * the Edition, so the reader's records move to it (ADR 0212); only a Retired
+ * the Edition, so the reader's records move to it (ADR 0214); only a Retired
  * Word carries one.
  *
  * List fields default to empty and `retired` to false, so authored content

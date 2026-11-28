@@ -149,7 +149,7 @@ export function checkEntries(
       }
     });
 
-    // The replacing Word may itself be Retired later, so it only has to exist (ADR 0212).
+    // The replacing Word may itself be Retired later, so it only has to exist (ADR 0214).
     if (word.replacedBy !== undefined && !wordIds.has(word.replacedBy)) {
       fail('replaced-by', 'replacedBy', `Unknown Word "${word.replacedBy}"`);
     }

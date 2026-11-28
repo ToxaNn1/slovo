@@ -8,7 +8,7 @@ const later = (one: string, other: string): string => (one >= other ? one : othe
 
 /**
  * How the records of one kind, one per Entry by Entry id, merge when the
- * Retired Word and the Word replacing it both hold one (ADR 0212): `merge`
+ * Retired Word and the Word replacing it both hold one (ADR 0214): `merge`
  * gives the record the replacing Word keeps, of the Retired Word's and its own.
  */
 interface MovedRecords<T> {
@@ -64,7 +64,7 @@ async function movesOf<T>(
 
 /**
  * Moves every record the reader keeps of a Retired Word to the Word that
- * replaces it (ADR 0212): Favorites, Collection entries, History, the Word of
+ * replaces it (ADR 0214): Favorites, Collection entries, History, the Word of
  * the Day archive, the Knowledge Mark, confirmed, the Review answer, Seen and
  * Hidden. Both holding a record, the replacing Word keeps the earlier add of
  * Favorites, a Collection, confirmed and Hidden, the later of History, the

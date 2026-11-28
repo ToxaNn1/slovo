@@ -112,7 +112,7 @@ export type ContentWrite =
       readonly op: 'retire';
       readonly id: string;
       readonly recordVersion: number;
-      /** The Word that replaces the Retired Word (ADR 0212). */
+      /** The Word that replaces the Retired Word (ADR 0214). */
       readonly replacedBy?: string | undefined;
     };
 
@@ -163,7 +163,7 @@ function datedRefusal(
 
 /**
  * Why a write is refused by the Word it names as replacing a Retired Word
- * (ADR 0212): a link, new or changed, names a live Word of the Edition that
+ * (ADR 0214): a link, new or changed, names a live Word of the Edition that
  * is not the Word itself. A link the record already has stays as it is, for
  * the replacing Word may be Retired later.
  */

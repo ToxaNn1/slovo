@@ -571,7 +571,7 @@ const contentWriteContract = {
         recordVersion: z.number().int().positive(),
         /**
          * The Word that replaces a Retired Word, so the reader's records move
-         * to it (ADR 0212): a live Word of the Edition, never the Word itself.
+         * to it (ADR 0214): a live Word of the Edition, never the Word itself.
          */
         replacedBy: WordIdSchema.optional(),
         reason: ReasonSchema.optional(),

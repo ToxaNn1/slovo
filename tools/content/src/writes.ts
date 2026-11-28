@@ -144,7 +144,7 @@ export async function edit(
 
 /**
  * Retires a record at its current record version: it stays, marked retired.
- * `replacedBy` names the Word that replaces a Retired Word (ADR 0212).
+ * `replacedBy` names the Word that replaces a Retired Word (ADR 0214).
  */
 export async function retire(
   api: ApiClient,

@@ -18,7 +18,7 @@ export type RuleName =
   | 'word-correction'
   | 'category-history'
   | 'word-origin'
-  /** A Retired Word is replaced by a Word of the content (ADR 0212). */
+  /** A Retired Word is replaced by a Word of the content (ADR 0214). */
   | 'replaced-by'
   | 'short-definition'
   | 'synonym-row-word'

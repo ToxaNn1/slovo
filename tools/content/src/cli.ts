@@ -182,7 +182,7 @@ async function main(): Promise<number> {
       : edit(api, { editionId, kind, id: first, file: here(second) }, terminal);
   }
   const replacedBy = values['replaced-by'];
-  // Only the retire of a Word names the Word that replaces it (ADR 0212).
+  // Only the retire of a Word names the Word that replaces it (ADR 0214).
   if (replacedBy !== undefined && (command !== 'retire' || kind !== 'word')) return usage();
   if (command === 'retire' && args.length === 1 && first !== undefined) {
     return api === undefined

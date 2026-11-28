@@ -67,12 +67,12 @@ export interface ContentReadPort {
   listCuratedCollections(): Promise<readonly CuratedCollection[]>;
   /**
    * Every Retired Word that names the Word replacing it, while the pack holds
-   * that Word, in no set order (ADR 0212).
+   * that Word, in no set order (ADR 0214).
    */
   listReplacedWords(): Promise<readonly ReplacedWord[]>;
 }
 
-/** A Retired Word and the Word that replaces it, by id (ADR 0212). */
+/** A Retired Word and the Word that replaces it, by id (ADR 0214). */
 export interface ReplacedWord {
   readonly id: string;
   readonly replacedBy: string;
