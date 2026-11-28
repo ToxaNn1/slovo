@@ -503,9 +503,16 @@ export async function openGame({
           : answered;
       changeCurrent(shown);
       moveOn.later(shown);
-      if (award !== undefined) {
-        if (award.piece.changes.size > 0) await inTurn(() => awards.writeRound(award));
-        awards.earned(award);
+      try {
+        if (award !== undefined) {
+          if (award.piece.changes.size > 0) await inTurn(() => awards.writeRound(award));
+          awards.earned(award);
+        }
+      } catch (error) {
+        // The answer is given and its Life taken: its Knowledge Mark is written all the same.
+        if (round !== undefined)
+          await inTurn(() => markAnswer(knowledge, round.entry.id, round.right));
+        throw error;
       }
     } else {
       // A second answer on its way meanwhile is no move; after a failed write the Round is answered again.
