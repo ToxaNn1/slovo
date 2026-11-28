@@ -49,6 +49,7 @@ async function renderWelcome(on: Metrics = metrics, step = 1) {
           step={step}
           total={4}
           hero={undefined}
+          statisticsLine={false}
           onStart={jest.fn()}
           onSkip={jest.fn()}
         />
@@ -180,6 +181,7 @@ describe('An onboarding step', () => {
               step={1}
               total={4}
               hero={undefined}
+              statisticsLine={false}
               onStart={jest.fn()}
               onSkip={jest.fn()}
             />

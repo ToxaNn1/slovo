@@ -67,6 +67,7 @@ export function Onboarding() {
         total={total}
         hero={undefined}
         mascot={mascot}
+        statisticsLine={step.statisticsLine}
         onStart={next}
         onSkip={skip}
       />
@@ -106,6 +107,17 @@ export function Onboarding() {
     );
   } else if (step.kind === 'rarityTest') {
     shown = <RarityTestStep step={step} mascot={mascot} onSkip={skip} />;
+  } else if (step.kind === 'statisticsConsent') {
+    shown = (
+      <StatisticsConsentStep
+        step={step}
+        mascot={mascot}
+        onChoose={(share) => {
+          void keep('the onboarding', onboarding.chooseStatistics(share));
+        }}
+        onSkip={skip}
+      />
+    );
   } else {
     shown = (
       <Question
@@ -134,6 +146,7 @@ export function Onboarding() {
 /** The Mascot's state on each step, as the design poses it. */
 const mascotState: Readonly<Record<Step['kind'], MascotState>> = {
   welcome: 'shouts',
+  statisticsConsent: 'waits',
   firstWord: 'happy',
   voiceStep: 'waits',
   playStep: 'happy',
@@ -435,6 +448,57 @@ function Question({
           />
         ))}
         <LaterButton testID="onboarding-later" onPress={onLater} />
+      </View>
+    </OnboardingStep>
+  );
+}
+
+/**
+ * The Statistics consent (ADR 0210): «Дозволити» and «Не дозволяти», two equal
+ * choices, and no «Далі»: the step goes on only with one of them.
+ */
+function StatisticsConsentStep({
+  step,
+  mascot,
+  onChoose,
+  onSkip,
+}: {
+  step: Step;
+  mascot: ReactNode;
+  onChoose: (share: boolean) => void;
+  onSkip: () => void;
+}) {
+  const { statisticsConsent: texts } = strings;
+  return (
+    <OnboardingStep
+      testID="onboarding-statistics-consent"
+      step={step.number}
+      total={step.total}
+      shout={texts.shout}
+      mascot={mascot}
+      onSkip={onSkip}
+      footer={null}
+    >
+      <View style={stepStyles.heading}>
+        <Title>{texts.title}</Title>
+        <Subtitle>{texts.subtitle}</Subtitle>
+      </View>
+      <View style={styles.options}>
+        {[
+          { share: true, label: texts.allow, testID: 'onboarding-statistics-allow' },
+          { share: false, label: texts.deny, testID: 'onboarding-statistics-deny' },
+        ].map(({ share, label, testID }) => (
+          <Button
+            size="small"
+            variant="neutral"
+            key={testID}
+            testID={testID}
+            label={label}
+            onPress={() => {
+              onChoose(share);
+            }}
+          />
+        ))}
       </View>
     </OnboardingStep>
   );

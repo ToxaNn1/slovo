@@ -10,6 +10,7 @@ import {
   type SettingsDefaults,
   type TrackedUserState,
   type UserSettings,
+  type StatisticsConsent,
 } from '@slovo/core';
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { Appearance, useColorScheme } from 'react-native';
@@ -44,6 +45,7 @@ export function settingsOpening({
   edition: inEffect,
   analytics,
   backend,
+  consent,
 }: {
   userState: Opening<TrackedUserState>;
   /**
@@ -55,6 +57,8 @@ export function settingsOpening({
   analytics: Opening<AnalyticsSink>;
   /** Where switching sharing off sends its one anonymous unit (ADR 0163). */
   backend: Pick<Backend, 'counters'>;
+  /** The Statistics consent of this phone: the switch is off for a reader to ask until they choose (ADR 0210). */
+  consent: StatisticsConsent;
 }): Opening<OpenedSettings> {
   async function settingsOverUserState(): Promise<Settings> {
     const opened = await userState.opened();
@@ -62,8 +66,9 @@ export function settingsOpening({
     return createSettings({
       userState: opened,
       defaults,
-      analytics: createAnalytics({ edition: inEffect, userState: opened, sink }),
+      analytics: createAnalytics({ edition: inEffect, userState: opened, sink, consent }),
       statisticsOff: { edition: inEffect, backend },
+      consent,
     });
   }
   return openOnce(

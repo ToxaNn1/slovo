@@ -668,6 +668,7 @@ export const EditionIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a
  */
 export const ONBOARDING_STEPS = [
   'welcome',
+  'statisticsConsent',
   'firstWord',
   'voiceStep',
   'playStep',

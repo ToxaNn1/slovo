@@ -14,6 +14,7 @@ import type {
   Sync,
   TrackedUserState,
   UserSettings,
+  StatisticsConsent,
 } from '@slovo/core';
 import type { PackReader } from '@slovo/language-pack/reader';
 import type { ShareCardFormat, ShareSheetOutcome } from '@slovo/ui';
@@ -57,6 +58,8 @@ export interface DevicePorts extends Omit<DeviceSources, 'userState'> {
    * carry (ADR 0068, 0089); none while the remote switches can't be opened.
    */
   readonly analytics?: AnalyticsSink;
+  /** The Statistics consent of this phone, by its region (ADR 0210): every sender of statistics asks it. */
+  readonly consent: StatisticsConsent;
 }
 
 /** The settings and those in effect when they opened. */

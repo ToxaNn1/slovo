@@ -12,6 +12,7 @@ import type {
   UserStateChanges,
 } from '../ports';
 import { withRetries } from '../retry';
+import { sharesStatistics, type StatisticsConsent } from '../statistics/statistics-consent';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import { countersTurnOf, forgetUnsentCounters, unsentAfterSending } from './counter-deltas';
@@ -53,6 +54,7 @@ export function openCounterSending({
   clock,
   schedule,
   random,
+  consent,
 }: {
   /** The Edition as the app runs it, with each Feature Switch at its effective value. */
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
@@ -63,8 +65,10 @@ export function openCounterSending({
   schedule: Schedule;
   /** What the waits between tries are jittered by. */
   random: Random;
+  /** The Statistics consent of this device (ADR 0210); without it, no one is asked. */
+  consent?: StatisticsConsent | undefined;
 }): CounterSending {
-  const { countersRead, countersUnsent, shareCounters } = userStateRecords;
+  const { countersRead, countersUnsent } = userStateRecords;
   const inTurn = countersTurnOf(userState);
 
   /**
@@ -116,7 +120,7 @@ export function openCounterSending({
   /** Sends the first batch of the unsent changes; answers whether it left them, so the next may follow. */
   async function sendBatch(): Promise<boolean> {
     if (!edition.isFeatureEnabled('communityCounters') || held()) return false;
-    if ((await userState.read(shareCounters)) === false) return false;
+    if (!(await sharesStatistics(userState, consent))) return false;
     const events: CounterEvent[] = [...(await userState.list(countersUnsent))]
       .slice(0, COUNTERS_BATCH_SIZE)
       .map(([entryId, delta]) => ({ entryId, ...delta }));
@@ -154,7 +158,7 @@ export function openCounterSending({
     }
     await userState.write(changes);
     // Sharing went off while the request was out: what it counted is forgotten too.
-    if ((await userState.read(shareCounters)) === false) {
+    if (!(await sharesStatistics(userState, consent))) {
       await userState.write(await forgetUnsentCounters(userState));
     }
   }
