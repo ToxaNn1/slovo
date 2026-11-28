@@ -108,6 +108,7 @@ pnpm source:lemmas --edition uk --count 200 --letters абв --out scripts/conte
 | `--seed <n>`            | random, printed                | The same seed and inputs give the same list.                                                 |
 | `--out <file>`          | standard output                | Where the list goes; the pool per rarity and the seed go to standard error.                  |
 | `--cache <dir>`         | the shared cache               | Where the two downloaded files are kept.                                                     |
+| `--no-esum`             | off                            | Ranks by `arch` and Wiktionary alone, asking goroh nothing: seconds instead of hours.        |
 
 **Sources**, each downloaded once into `<cache>/lemmas/`, pinned by version and SHA-256, never committed:
 
