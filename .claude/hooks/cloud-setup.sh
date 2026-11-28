@@ -23,8 +23,18 @@ run() {
 }
 
 STEP="commit identity"
+OWNER_EMAIL=$(cat "${CLAUDE_PROJECT_DIR:-.}/.github/owner-email" 2>>"$LOG") || fail
 run git -C "${CLAUDE_PROJECT_DIR:-.}" config user.name anton
-run git -C "${CLAUDE_PROJECT_DIR:-.}" config user.email "$(cat "${CLAUDE_PROJECT_DIR:-.}/.github/owner-email")"
+run git -C "${CLAUDE_PROJECT_DIR:-.}" config user.email "$OWNER_EMAIL"
+# The cloud environment may export GIT_AUTHOR_*/GIT_COMMITTER_* with the account's private email, and those
+# variables win over every git config level; GitHub then refuses the push (GH007). Override them for every
+# later Bash step, here rather than at the end, so a failed Postgres or pnpm step cannot skip it.
+if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
+  {
+    echo "export GIT_AUTHOR_NAME=anton GIT_COMMITTER_NAME=anton"
+    echo "export GIT_AUTHOR_EMAIL=$OWNER_EMAIL GIT_COMMITTER_EMAIL=$OWNER_EMAIL"
+  } >>"$CLAUDE_ENV_FILE" || fail
+fi
 
 postgres_18_ready() {
   pg_isready -q -p 5432 >>"$LOG" 2>&1 &&
