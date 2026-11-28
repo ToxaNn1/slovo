@@ -21,9 +21,11 @@ The CEO runs this every day so that the Board is fresh before the owner's 9:00 T
 
 ## The schedule
 
-On since 28.11.2026: the owner approved the card `ceo-002`. It is the T3 Code scheduled task «Ранкова планірка»; pause or delete it there to turn it off.
+On since 28.11.2026: the owner approved the card `ceo-002`. It is the cloud scheduled task «SLOVO Office: ранкова планірка» (https://claude.ai/code/routines/trig_01UMUK7QTxWTJkZo63Zmrdbc); pause it there to turn it off. It moved to the cloud the same day: a T3 Code scheduled task is skipped, not delayed, when T3 Code is not running at its time, and the first run was lost that way. The T3 Code task of the same name stays paused.
 
-- When: every day at 08:30 Europe/Kyiv.
-- Where: a new T3 Code thread in the SLOVO project, named `Ранкова планірка, <DD.MM>`.
+- When: every day at 06:30 UTC, which is 08:30 Europe/Kyiv in winter and 09:30 in summer.
+- Where: a cloud session of the environment `slovo`, on a fresh checkout of `main`.
 - Model: Opus.
-- Prompt: `Run the morning standup: follow docs/office/standup.md step by step as the ceo agent. Reply in Ukrainian.`
+- Prompt: kept in the scheduled task. It tells the run to act as the `ceo` agent, to follow this document, and what a cloud session lacks.
+
+A cloud session has no `~/Downloads/WORD` and no Sentry or PostHog key. It skips the inbox upload of step 1 and the Journal copy of step 7, writes everything to the Board, and ends with the summary as the standup's Journal entry. A local run (`Запусти агента ceo: ранкова планірка`) does both skipped steps.
