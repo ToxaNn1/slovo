@@ -38,15 +38,21 @@ function account(start = '2026-10-18T09:00:00.000Z') {
 
   /**
    * A device over its own user state: the records it keeps, as an older app
-   * may have left them, and the Sync API it reaches the fake backend through.
+   * may have left them, the Sync API it reaches the fake backend through, and
+   * how far its clock is behind the Account's.
    */
   async function device(
     records = new Map<string, string>(),
     backend: Pick<Backend, 'sync'> = server.backend,
+    { behind = 0 }: { behind?: number } = {},
   ) {
+    const clock = {
+      now: () => new Date(time.clock.now().getTime() - behind),
+      timeZone: () => time.clock.timeZone(),
+    };
     const userState = trackChanges({
       userState: await openUserState({ port: createMemoryUserStatePort(records) }),
-      clock: time.clock,
+      clock,
     });
     const sync = createSyncExchange({ userState, backend, editionId: 'uk' });
     const { token, email } = await signInByCode(server);
@@ -663,6 +669,88 @@ describe('two devices of one Account', () => {
 });
 
 // Spec #378, "The first sign-in rule": a sync without a cursor.
+// ADR 0212: a change the reader makes after a pull is later than what the pull brought.
+describe('a device whose clock is behind another’s', () => {
+  const MINUTE = 60_000;
+
+  it('lets the reader’s later choice win over the one it pulled', async () => {
+    const { device, server, time } = account('2026-10-18T12:00:00.000Z');
+    const tablet = await device();
+    const phone = await device(undefined, undefined, { behind: 2 * MINUTE });
+    await tablet.settings.update({ theme: 'dark' });
+    await tablet.sync();
+    time.advance(30_000);
+    await phone.sync();
+    expect((await phone.settings.read()).theme).toBe('dark');
+    time.advance(30_000);
+
+    await phone.settings.update({ theme: 'light' });
+    await phone.sync();
+    await tablet.sync();
+    await phone.sync();
+
+    expect((await phone.settings.read()).theme).toBe('light');
+    expect((await tablet.settings.read()).theme).toBe('light');
+    expect(server.sync.recordsOf('anna@mail.com').get('settings.theme')?.value).toBe('light');
+    expect(await phone.userState.pendingChanges()).toEqual(new Map());
+  });
+
+  it('lets a change made after its own push win, before a pull brings that push back', async () => {
+    const { device, time } = account('2026-10-18T12:00:00.000Z');
+    const tablet = await device();
+    const phone = await device(undefined, undefined, { behind: 2 * MINUTE });
+    await tablet.settings.update({ theme: 'dark' });
+    await tablet.sync();
+    time.advance(30_000);
+    await phone.sync();
+    await phone.settings.update({ theme: 'light' });
+    await phone.sync();
+    time.advance(30_000);
+
+    await phone.settings.update({ theme: 'system' });
+    await phone.sync();
+    await tablet.sync();
+    await phone.sync();
+
+    expect((await phone.settings.read()).theme).toBe('system');
+    expect((await tablet.settings.read()).theme).toBe('system');
+  });
+
+  it('pushes again a higher Best result than the Account’s with a time after the Account’s', async () => {
+    const { device, server, time } = account('2026-10-18T12:00:00.000Z');
+    const tablet = await device();
+    const phone = await device(undefined, undefined, { behind: 2 * MINUTE });
+    await phone.write(guessWordBest.change(12));
+    time.advance(30_000);
+    await tablet.write(guessWordBest.change(7));
+    await tablet.sync();
+    time.advance(1_000);
+
+    await phone.sync();
+    await tablet.sync();
+
+    expect(server.sync.recordsOf('anna@mail.com').get(guessWordBest.key)?.value).toBe(12);
+    expect(await tablet.userState.read(guessWordBest)).toBe(12);
+  });
+
+  it('keeps the time of its clock when that is later than what the Account holds', async () => {
+    const { device, server, time } = account('2026-10-18T12:00:00.000Z');
+    const tablet = await device();
+    const phone = await device();
+    await tablet.settings.update({ theme: 'dark' });
+    await tablet.sync();
+    await phone.sync();
+    time.advance(MINUTE);
+
+    await phone.settings.update({ theme: 'light' });
+    await phone.sync();
+
+    expect(server.sync.recordsOf('anna@mail.com').get('settings.theme')?.changedAt).toBe(
+      new Date('2026-10-18T12:01:00.000Z').getTime(),
+    );
+  });
+});
+
 describe('the first sign-in', () => {
   /** The user state an 0.7 app left: schema version 3, nothing tracked. */
   const from07 = (records: Record<string, unknown>) =>
