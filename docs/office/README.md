@@ -35,7 +35,7 @@ The definitions live in `.claude/agents/`. Start one in a thread of its own:
 - In T3 Code or Claude Code: `Запусти агента cto: <task>`.
 - From a terminal: `claude --agent cto "<task>"`.
 
-The morning standup is the CEO run described in `docs/office/standup.md`. It runs every day at 08:30 Europe/Kyiv as the T3 Code scheduled task «Ранкова планірка».
+The morning standup is the CEO run described in `docs/office/standup.md`. It runs every day at 08:30 Europe/Kyiv as the cloud scheduled task «SLOVO Office: ранкова планірка».
 
 Every run ends with three things: cards on the Board, entries in the Journal, and a 5-10 line reply in Ukrainian.
 
