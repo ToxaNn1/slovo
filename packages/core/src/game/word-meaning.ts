@@ -1,5 +1,6 @@
 import type { Word } from '@slovo/contracts';
 
+import { definitionAmongSeveral } from '../entries/definition-among-several';
 import type { Random } from '../ports';
 import { shuffled } from '../shuffled';
 import type { TextComparison } from '../text/text-comparison';
@@ -12,22 +13,26 @@ export const WORD_MEANING_ID = 'word-meaning';
 const optionOf = (text: string): RoundOption => ({ text, stressedVowels: [] });
 
 /**
- * Whether the Word Meaning question may ask the Word: not when its primary
- * Definition holds its own Lemma, by the Edition's text comparison, which
- * would give the answer away.
+ * Whether the Word Meaning question may ask the Word: not when the Definition
+ * it would show, its Short Definition or else its primary Definition, holds
+ * its own Lemma by the Edition's text comparison, which would give the answer
+ * away.
  */
 export const asksWordMeaning = (word: Word, comparison: TextComparison): boolean =>
-  comparison.find(word.primaryDefinition, word.lemma) === undefined;
+  comparison.find(definitionAmongSeveral(word), word.lemma) === undefined;
 
 /**
  * The Round of the Word Meaning question (CONTEXT.md): the Word's
  * Lemma, asked by its meaning (`labelKind` `meaning`), and four Definitions,
- * whole, its primary Definition among them. The three Distractors are the
- * primary Definitions of other Eligible Words, of the same part of speech
- * first and of any other when those are too few, never one of this Word's
- * own Definitions nor a homonym's nor a synonym's, whichever of the two lists the other, no two options with one Comparison Key. Nothing when four
- * distinct Definitions cannot be found. Its sheet shows the primary
- * Definition and the Word's first Example, if it has one.
+ * whole, its own among them. Each Word shows its Short Definition, or its
+ * primary Definition when it has none, as the right option and as a
+ * Distractor alike (ADR 0211). The three Distractors are of other Eligible
+ * Words, of the same part of speech first and of any other when those are too
+ * few, never a Word whose primary Definition or shown text is one of this
+ * Word's own Definitions, nor a homonym's nor a synonym's, whichever of the
+ * two lists the other, no two options with one Comparison Key of the text
+ * shown. Nothing when four distinct Definitions cannot be found. Its sheet
+ * shows the primary Definition and the Word's first Example, if it has one.
  */
 export function wordMeaningRound({
   answer,
@@ -41,10 +46,9 @@ export function wordMeaningRound({
   random: Random;
   comparison: TextComparison;
 }): Extract<RoundContent, { readonly form: 'pick' }> | undefined {
-  const right = answer.primaryDefinition;
-  const taken = new Set(
-    [right, ...answer.extraDefinitions].map((text) => comparison.key(text, 'definition')),
-  );
+  const keyOf = (text: string) => comparison.key(text, 'definition');
+  const right = definitionAmongSeveral(answer);
+  const taken = new Set([right, answer.primaryDefinition, ...answer.extraDefinitions].map(keyOf));
   // A homonym shares the Lemma and a synonym the meaning, so either's Definition would be right too.
   const others = eligible.filter(
     (word) =>
@@ -55,10 +59,11 @@ export function wordMeaningRound({
   const distractors: string[] = [];
   for (const other of distractorOrder(answer, others, random)) {
     if (distractors.length === ROUND_OPTIONS - 1) break;
-    const key = definitionOfEntry(comparison, other);
-    if (taken.has(key)) continue;
+    const shown = definitionAmongSeveral(other);
+    const key = keyOf(shown);
+    if (taken.has(key) || taken.has(definitionOfEntry(comparison, other))) continue;
     taken.add(key);
-    distractors.push(other.primaryDefinition);
+    distractors.push(shown);
   }
   if (distractors.length < ROUND_OPTIONS - 1) return undefined;
   const options = shuffled([right, ...distractors], random);
@@ -68,6 +73,6 @@ export function wordMeaningRound({
     labelKind: 'meaning',
     options: options.map(optionOf),
     correct: options.indexOf(right),
-    sheet: { answer: optionOf(right), example: answer.examples[0] },
+    sheet: { answer: optionOf(answer.primaryDefinition), example: answer.examples[0] },
   };
 }

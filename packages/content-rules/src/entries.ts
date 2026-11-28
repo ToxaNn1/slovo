@@ -1,4 +1,5 @@
 import {
+  SHORT_DEFINITION_MAX_LENGTH,
   STRESS_MARK,
   type Correction,
   type EditionConfig,
@@ -41,6 +42,29 @@ export function checkStress(
       fail(index, `Position ${String(position)} is "${letter}", not a vowel`);
     }
   });
+}
+
+/**
+ * A text as the Comparison Key of a Definition writes it (CONTEXT.md): case
+ * folded by the Edition's sort locale, Stress marks out, each character the
+ * Edition reads as an apostrophe written as its first, every run of spaces
+ * one. The Core gives the app the same key; the content rules import no Core
+ * (ADR 0090), so they hold these few lines of their own.
+ */
+function definitionKey({ languageTraits }: EditionConfig, text: string): string {
+  const { apostrophes = [], sortLocale } = languageTraits;
+  const [apostrophe] = apostrophes;
+  const plain = text
+    .normalize('NFD')
+    .replaceAll(STRESS_MARK, '')
+    .normalize('NFC')
+    .toLocaleLowerCase(sortLocale);
+  return Array.from(plain, (character) =>
+    apostrophe !== undefined && apostrophes.includes(character) ? apostrophe : character,
+  )
+    .join('')
+    .replace(/\s+/gu, ' ')
+    .trim();
 }
 
 /**
@@ -144,6 +168,32 @@ export function checkEntries(
         'origin',
         `Unknown origin language "${word.origin}": the Edition's originLanguages list no such code`,
       );
+    }
+
+    if (word.shortDefinition !== undefined) {
+      const failShort = (message: string) => {
+        fail('short-definition', 'shortDefinition', message);
+      };
+      const length = Array.from(word.shortDefinition).length;
+      const primaryLength = Array.from(word.primaryDefinition).length;
+      if (length > SHORT_DEFINITION_MAX_LENGTH) {
+        failShort(
+          `Holds ${String(length)} characters: a Short Definition holds ${String(SHORT_DEFINITION_MAX_LENGTH)} or fewer`,
+        );
+      }
+      if (
+        definitionKey(config, word.shortDefinition) ===
+        definitionKey(config, word.primaryDefinition)
+      ) {
+        failShort('Same text as the primary Definition: word it anew, shorter');
+      } else if (primaryLength <= SHORT_DEFINITION_MAX_LENGTH) {
+        failShort(
+          `Not allowed: the primary Definition holds ${String(primaryLength)} characters, and only one over ${String(SHORT_DEFINITION_MAX_LENGTH)} has a Short Definition`,
+        );
+      }
+      if (definitionKey(config, word.shortDefinition).includes(definitionKey(config, word.lemma))) {
+        failShort(`Holds the Lemma "${word.lemma}", which gives the answer away`);
+      }
     }
 
     if (!stressTrait.marked) {

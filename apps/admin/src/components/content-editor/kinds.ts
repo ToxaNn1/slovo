@@ -1,10 +1,11 @@
-import type {
-  CorrectionType,
-  Gender,
-  IdiomType,
-  PartOfSpeech,
-  Rarity,
-  Register,
+import {
+  type CorrectionType,
+  type Gender,
+  type IdiomType,
+  type PartOfSpeech,
+  type Rarity,
+  type Register,
+  SHORT_DEFINITION_MAX_LENGTH,
 } from '@slovo/contracts';
 import type { AdminApiInputs } from '@slovo/contracts/admin-api';
 
@@ -28,7 +29,8 @@ export type FieldControl =
   | { readonly type: 'text' }
   /** A Curated Collection's publish date: empty means «одразу», fixed once the collection appeared. */
   | { readonly type: 'publish-date' }
-  | { readonly type: 'long-text' }
+  /** A block of text; with a limit, its character count shows against it. */
+  | { readonly type: 'long-text'; readonly limit?: number }
   | { readonly type: 'number' }
   | { readonly type: 'choice'; readonly options: readonly Option[] }
   | { readonly type: 'category'; readonly of: 'categories' | 'correctionCategories' }
@@ -161,6 +163,10 @@ const ROW_WORD = [
 ];
 
 const PRIMARY_DEFINITION = field('primaryDefinition', 'Основне тлумачення', LONG_TEXT);
+const SHORT_DEFINITION = field('shortDefinition', 'Коротке тлумачення', {
+  type: 'long-text',
+  limit: SHORT_DEFINITION_MAX_LENGTH,
+});
 const EXTRA_DEFINITIONS = field('extraDefinitions', 'Додаткові тлумачення', TEXTS);
 const EXAMPLES = field('examples', 'Приклади', rows(...TEXT_AND_AUTHOR));
 const EXAMPLE = field('example', 'Приклад', object(...TEXT_AND_AUTHOR));
@@ -185,6 +191,7 @@ export const CONTENT_KINDS: readonly KindEditor[] = [
       field('partOfSpeech', 'Частина мови', choice(PART_OF_SPEECH)),
       field('gender', 'Рід', choice(GENDER)),
       PRIMARY_DEFINITION,
+      SHORT_DEFINITION,
       EXTRA_DEFINITIONS,
       EXAMPLES,
       field('synonyms', 'Синоніми', TEXTS),

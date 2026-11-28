@@ -58,6 +58,12 @@ export const ExampleOutputSchema = z.object(exampleShape);
 
 export type Example = z.infer<typeof ExampleSchema>;
 
+/**
+ * The most characters a Short Definition holds, and the length of a primary
+ * Definition above which a Word may carry one (ADR 0211).
+ */
+export const SHORT_DEFINITION_MAX_LENGTH = 80;
+
 // The rarities live with the shared schemas, so the Edition's default Mix can name them.
 export { RARITIES, RaritySchema, type Rarity } from './shared';
 
@@ -82,6 +88,7 @@ const wordShape = (
   partOfSpeech: PartOfSpeechSchema,
   gender: GenderSchema.optional(),
   primaryDefinition: EntryTextSchema,
+  shortDefinition: EntryTextSchema.optional(),
   extraDefinitions: z.array(EntryTextSchema).default([]),
   examples: z.array(example).default([]),
   synonyms: z.array(EntryTextSchema).default([]),
@@ -136,6 +143,10 @@ const wordRules = (
  * Stress lists the zero-based positions of the stressed vowels within the
  * Lemma's characters, in ascending order; a Lemma may have more than one
  * valid Stress. It stays empty in Editions that don't mark Stress.
+ *
+ * `shortDefinition` is the Word's Short Definition, a second wording of its
+ * primary Definition for screens where several Definitions share the screen;
+ * the content rules hold its length and what it may say (ADR 0211).
  *
  * `region` names where a dialect Word is said, a short text in the Edition's
  * language; only a Word with the dialectal register label carries one.

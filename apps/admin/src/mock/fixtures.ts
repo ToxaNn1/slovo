@@ -75,6 +75,14 @@ export const WORD_FIELDS = {
   retired: false,
 };
 
+/** The fields of a Word whose primary Definition is long enough to carry a Short Definition. */
+export const LONG_WORD = {
+  lemma: 'шпарка',
+  primaryDefinition:
+    'Вузька щілина між дошками паркану, у стіні чи в підлозі, крізь яку видно, що діється з того боку.',
+  shortDefinition: 'Вузька щілина в стіні',
+};
+
 /** What `pnpm dev:admin --mock` and the screen tests answer, one per procedure. */
 /** The Content queue's one batch. */
 export const QUEUE_BATCH = {
@@ -220,7 +228,7 @@ export const ACCOUNT: NonNullable<AdminApiOutputs['getAccount']['account']> = {
         {
           id: 'w_d4',
           kind: 'word',
-          fields: { ...WORD_FIELDS, lemma: 'шпарка' },
+          fields: { ...WORD_FIELDS, ...LONG_WORD },
           retired: false,
         },
       ],

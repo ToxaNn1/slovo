@@ -172,6 +172,10 @@ _Avoid_: Accent
 The explanation of one meaning of a Word or an Idiom, written in the Edition's language. A Word or an Idiom has one primary Definition and may have more.
 _Avoid_: Description, meaning, explanation
 
+**Short Definition**:
+An optional second wording of a Word's primary Definition, 80 characters or fewer, written only for a Word whose primary Definition is over 80. The Word Meaning question, the Yesterday quiz and the Due Quiz show it in place of the primary Definition, as the right option and as a Distractor alike; the card, «Пари», the sheet and every other screen keep the primary Definition. It never holds the Word's own Lemma.
+_Avoid_: Brief definition, summary, gloss
+
 **Example**:
 A sentence showing a Word or an Idiom in use.
 _Avoid_: Usage, sample
@@ -367,7 +371,7 @@ The vertical stream of Entries the user swipes through, opened from the Dashboar
 _Avoid_: Timeline, home list, home screen
 
 **Feed Notice**:
-A Feed card that is not an Entry, shown one at a time, except that the Weekly Recap and Yesterday share one page, the week first, when both are due. The 1.0 list: the Weekly Recap, the Community Word, a first-week card, Yesterday («Пам’ятаєш учорашнє слово?»: yesterday's Word of the Day as a quiz of three meanings, its own and two of other Words, its part of speech first; the right one sets Known as «Знаю» does, a wrong one Unknown as «Не знаю» does, which starts a Review), «Може, на сьогодні досить?», a Level milestone at Levels 5, 10 and 20 that suggests a wider rarity or a new Category, the offer to save progress, «Ціль дня виконано!» once the Daily Goal is met, the later onboarding questions and the notification re-ask. «Може, на сьогодні досить?» comes once a local day after 50 distinct Seen Entries, has no setting and never locks the Feed. The save-progress Notice comes without an Account on day 3 of the Streak and after the first new Level, at most twice in all; the notification explainer and its re-ask, 7 days after a refusal, once, come only to a reader who did not answer «Коли нагадати?» in onboarding. A reader who finished the old onboarding gets the Daily Goal choice once through a Feed Notice. In the Feed a Feed Notice comes before a due Review, a due Review before a Quick Question and a Quick Question before the rest. It counts in no turn and no Review slot and makes nothing Seen; swiping past it closes it for the local day.
+A Feed card that is not an Entry, shown one at a time, except that the Weekly Recap and Yesterday share one page, the week first, when both are due. The 1.0 list: the Weekly Recap, the Community Word, a first-week card, Yesterday («Пам’ятаєш учорашнє слово?»: yesterday's Word of the Day as a quiz of three meanings, its own and two of other Words, its part of speech first, each Word's Short Definition or else its primary Definition, while the card keeps the primary Definition; the right one sets Known as «Знаю» does, a wrong one Unknown as «Не знаю» does, which starts a Review), «Може, на сьогодні досить?», a Level milestone at Levels 5, 10 and 20 that suggests a wider rarity or a new Category, the offer to save progress, «Ціль дня виконано!» once the Daily Goal is met, the later onboarding questions and the notification re-ask. «Може, на сьогодні досить?» comes once a local day after 50 distinct Seen Entries, has no setting and never locks the Feed. The save-progress Notice comes without an Account on day 3 of the Streak and after the first new Level, at most twice in all; the notification explainer and its re-ask, 7 days after a refusal, once, come only to a reader who did not answer «Коли нагадати?» in onboarding. A reader who finished the old onboarding gets the Daily Goal choice once through a Feed Notice. In the Feed a Feed Notice comes before a due Review, a due Review before a Quick Question and a Quick Question before the rest. It counts in no turn and no Review slot and makes nothing Seen; swiping past it closes it for the local day.
 _Avoid_: Banner, tip (a Tip is an Entry)
 
 **Seen**:
@@ -398,7 +402,7 @@ A setting («Перевір себе», off by default) that hides the answer on
 _Avoid_: Quiz mode, test mode
 
 **Due Quiz**:
-The quiz «Перевір себе» on the «Вчу» list over the Words Due for Review today: for each, its Lemma and three meanings, as Yesterday asks them; the right meaning sets Known, any other Unknown. It shares its UI name with the Self-check setting and is not it: the Self-check hides the answer on Entry cards, the Due Quiz asks the Words due today.
+The quiz «Перевір себе» on the «Вчу» list over the Words Due for Review today: for each, its Lemma and three meanings, as Yesterday asks them, each Word's Short Definition or else its primary Definition; the right meaning sets Known, any other Unknown. It shares its UI name with the Self-check setting and is not it: the Self-check hides the answer on Entry cards, the Due Quiz asks the Words due today.
 _Avoid_: Self-check (for this quiz), Review quiz, flashcards
 
 **Mix**:
@@ -418,7 +422,7 @@ A Feed slot that shows one Round over an Eligible Entry: a Round of an enabled G
 _Avoid_: Pop quiz, Feed Game
 
 **Word Meaning question**:
-A round type of the Quick Question, not a Game Mode: the Lemma of a Word that is an Eligible Entry («„{word}“ — це…») and four Definitions shown whole, its primary Definition among them. The Distractors are primary Definitions of other such Words, of the same part of speech first. A Word whose Definition holds its Lemma is never asked. It has its own Feature Switch.
+A round type of the Quick Question, not a Game Mode: the Lemma of a Word that is an Eligible Entry («„{word}“ — це…») and four Definitions shown whole, its own among them. Each Word shows its Short Definition, or its primary Definition when it has none, as the right option and as a Distractor alike; the Distractors are of other such Words, of the same part of speech first. A Word whose shown Definition holds its Lemma is never asked. The sheet shows the primary Definition. It has its own Feature Switch.
 _Avoid_: Definition mode, meaning Game
 
 **Questionnaire**:

@@ -128,6 +128,49 @@ describe('applying a Patch', () => {
     expect(await pack.listIds('word')).toContain(added.id);
   });
 
+  it('brings a Word its Short Definition and takes it away again', async () => {
+    const pack = writablePack();
+    const short: Word = { ...first, shortDefinition: 'A short meaning.' };
+
+    await applyPatch(pack.writer, patchOf({ words: [short] }), '"next"');
+    expect(await pack.getEntries([first.id])).toEqual([short]);
+
+    await applyPatch(
+      pack.writer,
+      patchOf({
+        since: snapshot.contentVersion + 1,
+        contentVersion: snapshot.contentVersion + 2,
+        words: [first],
+      }),
+      '"after"',
+    );
+    expect(await pack.getEntries([first.id])).toEqual([first]);
+  });
+
+  it('keeps a pack with a Short Definition in the shape the build before it reads', async () => {
+    const pack = writablePack();
+    const file = join(dir, `pack-${String(copies)}.db`);
+    await applyPatch(
+      pack.writer,
+      patchOf({ words: [{ ...first, shortDefinition: 'A short meaning.' }] }),
+      '"next"',
+    );
+
+    // What the build before reads of a Word: the pack format, its columns by name and its Definitions in order.
+    const db = new DatabaseSync(file, { readOnly: true });
+    const read = <T>(sql: string) => nodePackDatabase(db).getAllAsync<T>(sql, [first.id]);
+    expect((await pack.metadata()).packFormat).toBe(14);
+    expect(
+      await read(
+        'SELECT lemma, part_of_speech, gender, category_id, rarity, etymology, region, history, origin, illustration, retired FROM words WHERE id = ?',
+      ),
+    ).toEqual([expect.objectContaining({ lemma: first.lemma, retired: 0 })]);
+    expect(await read('SELECT text FROM definitions WHERE word_id = ? ORDER BY position')).toEqual(
+      [first.primaryDefinition, ...first.extraDefinitions].map((text) => ({ text })),
+    );
+    db.close();
+  });
+
   it('takes a retired Word out of the live ids and keeps it readable by id', async () => {
     const pack = writablePack();
 

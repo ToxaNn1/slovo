@@ -4,6 +4,7 @@ import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync }
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { PATCH_FORMAT } from '@slovo/contracts/api';
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
 import { ukrainianFolder, ukrainianSnapshot } from '@slovo/language-pack/test-support';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
@@ -163,6 +164,62 @@ describe('pnpm content against the content write API', () => {
     );
     expect(actions.map(({ batchId }) => batchId)).toEqual([...batches, ...batches]);
     expect(folderHash()).toBe(hash);
+  });
+
+  it("carries a Word's Short Definition through `add`, `edit` and `check`, into the snapshot and the Patch", async () => {
+    const backend = await servedBackend();
+    const before = await snapshotOf(backend);
+    // 96 characters: over the 80 a Short Definition is written for.
+    const long =
+      'Невелике кільце з металу чи дерева, яке надягають на діжку або колесо, щоб воно не розпалося.';
+    const short = 'Кільце, що стягує діжку.';
+    const drafts = input('short.json', [
+      await draftOf(backend, { lemma: 'обручик', primaryDefinition: long, shortDefinition: short }),
+    ]);
+    const tooLong = input('short-too-long.json', [
+      await draftOf(backend, {
+        lemma: 'обручок',
+        primaryDefinition: long,
+        shortDefinition: long.slice(0, 81),
+      }),
+    ]);
+
+    const checked = await content(backend, 'check', 'word', tooLong, '--edition', 'uk');
+    expect(checked.code).toBe(1);
+    expect(checked.stderr).toContain('a Short Definition holds 80 or fewer');
+    expect((await content(backend, 'add', 'word', tooLong, '--edition', 'uk')).code).toBe(1);
+    expect(await snapshotOf(backend)).toEqual(before);
+
+    const added = await content(backend, 'add', 'word', drafts, '--edition', 'uk');
+    expect(added.stderr).not.toMatch(/REFUSED|UNAUTHORIZED/);
+    expect(added.code).toBe(0);
+    const [addedId] = added.stdout.trim().split(' ');
+    const edit = input('short-edit.json', {
+      ...(await draftOf(backend, {})),
+      primaryDefinition: long,
+      shortDefinition: short,
+    });
+    expect((await content(backend, 'edit', 'word', WORD_ID, edit, '--edition', 'uk')).code).toBe(0);
+
+    const shortOf = (words: readonly { id: string; shortDefinition?: string | undefined }[]) =>
+      words
+        .filter(({ id }) => id === addedId || id === WORD_ID)
+        .map(({ shortDefinition }) => shortDefinition);
+    expect(shortOf((await snapshotOf(backend)).words)).toEqual([short, short]);
+    const patch = await backend.client.content.patch({
+      params: { editionId: 'uk' },
+      query: { since: before.contentVersion, patchFormat: PATCH_FORMAT },
+    });
+    if (patch.status !== 200 || patch.body.status !== 'patch') throw new Error('no Patch');
+    expect(shortOf(patch.body.patch.words)).toEqual([short, short]);
+
+    // An edit file without the field takes it off the Word.
+    const { shortDefinition: _short, ...withoutShort } = await draftOf(backend, {});
+    const off = input('short-off.json', withoutShort);
+    expect((await content(backend, 'edit', 'word', WORD_ID, off, '--edition', 'uk')).code).toBe(0);
+    const after = (await snapshotOf(backend)).words.find(({ id }) => id === WORD_ID);
+    expect(after).toMatchObject({ primaryDefinition: long });
+    expect(after).not.toHaveProperty('shortDefinition');
   });
 
   it('prints the refusal with the current version when an edit saw a stale one', async () => {

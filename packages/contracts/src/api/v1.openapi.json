@@ -35816,6 +35816,10 @@
                                     "type": "string",
                                     "minLength": 1
                                   },
+                                  "shortDefinition": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
                                   "extraDefinitions": {
                                     "type": "array",
                                     "items": {
@@ -37001,6 +37005,10 @@
                             "type": "string"
                           },
                           "primaryDefinition": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "shortDefinition": {
                             "type": "string",
                             "minLength": 1
                           },

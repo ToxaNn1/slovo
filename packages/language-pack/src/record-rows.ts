@@ -33,13 +33,14 @@ const SQL = {
   // A Word's upsert leaves `needs_new_recording` as the pack has it: `applyPatch` clears it when
   // the Patch brings the Word a live Recording.
   word: `
-    INSERT INTO words (id, lemma, part_of_speech, gender, category_id, rarity, etymology, region, history, origin, illustration, retired, needs_new_recording)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO words (id, lemma, part_of_speech, gender, category_id, rarity, etymology, region, history, origin, illustration, retired, needs_new_recording, short_definition)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT (id) DO UPDATE SET
       lemma = excluded.lemma, part_of_speech = excluded.part_of_speech, gender = excluded.gender,
       category_id = excluded.category_id, rarity = excluded.rarity, etymology = excluded.etymology,
       region = excluded.region, history = excluded.history, origin = excluded.origin,
-      illustration = excluded.illustration, retired = excluded.retired
+      illustration = excluded.illustration, retired = excluded.retired,
+      short_definition = excluded.short_definition
   `,
   stress: 'INSERT INTO word_stress (word_id, position) VALUES (?, ?)',
   definition: 'INSERT INTO definitions (word_id, position, text) VALUES (?, ?, ?)',
@@ -251,6 +252,7 @@ export function wordRows(word: Word, needsNewRecording: boolean): Statement[] {
       word.illustration ?? null,
       word.retired ? 1 : 0,
       needsNewRecording ? 1 : 0,
+      word.shortDefinition ?? null,
     ),
     ...word.stress.map((position) => statement(SQL.stress, word.id, position)),
     ...[word.primaryDefinition, ...word.extraDefinitions].map((text, position) =>

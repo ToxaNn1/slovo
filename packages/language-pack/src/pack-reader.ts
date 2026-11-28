@@ -75,6 +75,7 @@ interface WordRow {
   origin: string | null;
   illustration: string | null;
   retired: number;
+  short_definition: string | null;
 }
 
 interface CorrectionRow {
@@ -345,6 +346,7 @@ export function createPackReader(db: PackDatabase): PackReader {
         partOfSpeech: row.part_of_speech,
         ...(row.gender === null ? {} : { gender: row.gender }),
         primaryDefinition,
+        ...(row.short_definition === null ? {} : { shortDefinition: row.short_definition }),
         extraDefinitions,
         examples: (examples.get(row.id) ?? []).map(({ text, author }) =>
           author === null ? { text } : { text, author },
@@ -635,6 +637,8 @@ export type PackOpening =
 /**
  * Opens a compiled Language Pack for the running app, with the metadata it
  * read. It refuses a pack of another pack format than the one this app reads,
+ * a pack of that format built before the Word's Short Definition column, which
+ * a Patch could not be applied to (ADR 0211),
  * and when the native app, the JavaScript bundle and the pack are not all of
  * one Edition, e.g. a development client built for one Edition that Metro
  * serves another to. It throws when the pack's metadata is broken.
@@ -647,6 +651,17 @@ export async function openPack(db: PackDatabase, app: AppEditions): Promise<Pack
     return {
       ok: false,
       reason: `The Language Pack has pack format ${String(packFormat)}; this app reads pack format ${String(PACK_FORMAT)}. Rebuild the Language Pack.`,
+    };
+  }
+  const shortDefinition = await db.getAllAsync<{ name: string }>(
+    "SELECT name FROM pragma_table_info('words') WHERE name = 'short_definition'",
+    [],
+  );
+  if (shortDefinition.length === 0) {
+    return {
+      ok: false,
+      reason:
+        'The Language Pack was built before the Short Definition: its Words have no short_definition column. Rebuild the Language Pack.',
     };
   }
   const { bundle, native } = app;
