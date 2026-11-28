@@ -201,7 +201,11 @@ export const WrongCodeSchema = z.object({ attemptsLeft: z.number().int().min(0) 
 /** The data of a blocked sign-in email: how long it stays blocked. */
 export const SignInBlockedSchema = z.object({ retryAfterSeconds: z.number().int().positive() });
 
-/** What a sign-in step may refuse with: a wrong code with the attempts left, or the email blocked. */
+/**
+ * What a sign-in step may refuse with: a wrong code with the attempts left,
+ * the email blocked, or a TOTP that is on but that this Deployment's
+ * `AUTH_SECRET` does not open, which only `pnpm admin totp reset` sets up again.
+ */
 const SIGN_IN_ERRORS = {
   NOT_FOUND: ADMIN_ERRORS.NOT_FOUND,
   FORBIDDEN: ADMIN_ERRORS.FORBIDDEN,
@@ -210,6 +214,7 @@ const SIGN_IN_ERRORS = {
     message: 'Too many failed attempts: the email is blocked for a while',
     data: SignInBlockedSchema,
   },
+  CONFLICT: { message: 'The TOTP cannot be read here: a server command resets it' },
 } as const;
 
 const EmailSchema = z.string().trim().max(320).pipe(z.email());

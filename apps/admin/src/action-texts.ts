@@ -290,6 +290,7 @@ const NAMED_TEXTS: { readonly [Key in NamedActionKey]: NamedText<Key> } = {
   'admin.user.invite': { what: 'Запрошено людину в адмінку', side: personText },
   'admin.user.role': { what: 'Змінено роль', side: personText },
   'admin.user.remove': { what: 'Прибрано доступ до адмінки', side: personText },
+  'admin.user.totp-reset': { what: 'Скинуто TOTP', side: personText },
   'admin.agent.add': { what: 'Видано токен Агента', side: agentText },
   'admin.agent.revoke': { what: 'Відкликано токен Агента', side: agentText },
   'owner-check.add': { what: 'Додано перевірку власника', side: ownerCheckText },

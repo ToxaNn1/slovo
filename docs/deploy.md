@@ -113,7 +113,7 @@ The Staging Deployment is a second running copy of the backend for the owner's t
 Create the `staging` environment empty, not as a copy of `production`: a copy brings the Cron services, and an apply would have to delete them (`railway config apply` needs `--confirm-destructive` for that). `node scripts/staging.ts wizard` walks the owner through the whole set-up (Neon branch, Railway environment and variables, GitHub secrets, the first deploy, DNS, EAS); `--dry-run` prints every step at once. It calls no API.
 
 - **Deploy**: Actions → "Staging deploy" → Run workflow, with a branch, tag or commit. It checks the ref and that the ref's `.railway/railway.ts` declares the backend alone for `staging`, asleep and with no Cron schedule, then runs `railway config apply` and `railway up --service backend` with `RAILWAY_STAGING_TOKEN`, a project token of the `staging` environment; the release step runs the migrations as in production (ADR 0063). By hand: the same two commands, linked to the `staging` environment.
-- **Reset**: Actions → "Staging reset" → Run workflow, confirmed with the word `staging`. Neon restores the staging branch to the head of its parent, `main`, inside Neon; whatever staging changed is lost, including newer migrations, which the next deploy runs again. On the laptop: `NEON_API_KEY=… NEON_PROJECT_ID=… NEON_STAGING_BRANCH_ID=… node scripts/staging.ts reset staging`. The reset brings production's TOTP secrets, sealed with production's `AUTH_SECRET`, so an Admin user sets up the TOTP again in the staging admin.
+- **Reset**: Actions → "Staging reset" → Run workflow, confirmed with the word `staging`. Neon restores the staging branch to the head of its parent, `main`, inside Neon; whatever staging changed is lost, including newer migrations, which the next deploy runs again. On the laptop: `NEON_API_KEY=… NEON_PROJECT_ID=… NEON_STAGING_BRANCH_ID=… node scripts/staging.ts reset staging`. The reset brings production's TOTP secrets, sealed with production's `AUTH_SECRET`, which staging's does not open: the staging admin refuses that Admin user's sign-in until `pnpm admin totp reset <email>` runs against the staging database, and the next sign-in sets the TOTP up there.
 - **The app against staging**: an update or a development run built with `EXPO_PUBLIC_SLOVO_API_URL=https://staging.slovoapp.org` and no `EXPO_PUBLIC_POSTHOG_KEY` (the OTA workflow takes the EAS environment `production` and overrides both for a `deployment-address` that is not production's). Neither workflow runs on a push or a schedule, and CI never deploys staging.
 
 ## Deploying
@@ -215,6 +215,7 @@ The admin and its API (`/v1/admin`) answer 404 until a Власник exists (AD
 
 ```sh
 DATABASE_URL='<the Neon connection string>' pnpm admin owner add <email>
+DATABASE_URL='<the Neon connection string>' pnpm admin totp reset <email>
 DATABASE_URL='<the Neon connection string>' pnpm admin agent add <name>
 DATABASE_URL='<the Neon connection string>' pnpm admin agent revoke <name>
 ```
@@ -226,7 +227,7 @@ DATABASE_URL='<the Neon connection string>' pnpm admin check add <version> <text
 DATABASE_URL='<the Neon connection string>' pnpm admin check import <file> [--version <version>]
 ```
 
-`agent add` prints the token once; the database keeps its SHA-256 only. The Агент sends it as `Authorization: Bearer <token>`, and only the content-writing procedures of the admin API take it. A person signs in to `/admin` with a code emailed by the mailer above and a TOTP; the TOTP secrets are sealed with a key derived from `AUTH_SECRET`, so after a rotation every Admin user's next sign-in shows the TOTP set-up again after the emailed code, with new recovery codes.
+`agent add` prints the token once; the database keeps its SHA-256 only. The Агент sends it as `Authorization: Bearer <token>`, and only the content-writing procedures of the admin API take it. A person signs in to `/admin` with a code emailed by the mailer above and a TOTP; the TOTP secrets are sealed with a key derived from `AUTH_SECRET`. The emailed code alone never sets up a TOTP in place of one that is on: after a rotation the sign-in of every Admin user whose TOTP was on is refused («TOTP не читається на цьому сервері») until `pnpm admin totp reset <email>` clears their TOTP, recovery codes and sessions; their next sign-in then shows the TOTP set-up after the emailed code, with new recovery codes. A lost phone is reset the same way.
 
 ## Checking «Сервіси» by hand
 

@@ -1,4 +1,4 @@
-// `pnpm admin owner add <email>`, `pnpm admin agent add <name>` and
+// `pnpm admin owner add <email>`, `pnpm admin totp reset <email>`, `pnpm admin agent add <name>` and
 // `pnpm admin agent revoke <name>`, `pnpm admin check add <version> <text>` and
 // `pnpm admin check import <file> [--version <v>]`: the server commands of the owner admin
 // (ADR 0088), run against the database DATABASE_URL names. Each logs itself
@@ -24,6 +24,7 @@ import { createOwnerCheckStore } from './owner-check-store';
 
 const USAGE = [
   'Usage: pnpm admin owner add <email>',
+  '       pnpm admin totp reset <email>',
   '       pnpm admin agent add <name>',
   '       pnpm admin agent revoke <name>',
   '       pnpm admin check add <version> <text>',
@@ -69,6 +70,14 @@ export async function runAdminCommand(
       return 1;
     }
     out(`${value} is a Власник. The admin is on.`);
+    return 0;
+  }
+  if (subject === 'totp' && verb === 'reset') {
+    if (!(await admin.resetTotp(value, 'pnpm admin totp reset'))) {
+      err(`${value} has no active Admin user.`);
+      return 1;
+    }
+    out(`The TOTP of ${value} is reset: their next sign-in sets it up again.`);
     return 0;
   }
   if (subject === 'agent' && verb === 'add') {

@@ -160,12 +160,17 @@ export function adminProcedures({
     errors: {
       UNAUTHORIZED: (options: { data: { attemptsLeft: number } }) => Error;
       TOO_MANY_REQUESTS: (options: { data: { retryAfterSeconds: number } }) => Error;
+      CONFLICT: () => Error;
     },
   ): never {
-    if (refusal.reason === 'wrong-code') {
-      throw errors.UNAUTHORIZED({ data: { attemptsLeft: refusal.attemptsLeft } });
+    switch (refusal.reason) {
+      case 'wrong-code':
+        throw errors.UNAUTHORIZED({ data: { attemptsLeft: refusal.attemptsLeft } });
+      case 'totp-unreadable':
+        throw errors.CONFLICT();
+      default:
+        throw errors.TOO_MANY_REQUESTS({ data: { retryAfterSeconds: refusal.retryAfterSeconds } });
     }
-    throw errors.TOO_MANY_REQUESTS({ data: { retryAfterSeconds: refusal.retryAfterSeconds } });
   }
 
   /** Who writes a Безпека or «Сервіси» change, and why, for the Action log. */

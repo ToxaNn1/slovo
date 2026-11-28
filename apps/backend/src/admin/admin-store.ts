@@ -101,6 +101,17 @@ export function createAdminStore({ db }: Database): AdminStore {
         .where(eq(adminUsers.id, adminUserId));
     },
 
+    async clearTotp(adminUserId) {
+      await db.transaction(async (tx) => {
+        await tx
+          .update(adminUsers)
+          .set({ totpSecret: null, totpConfirmedAt: null, totpLastStep: null })
+          .where(eq(adminUsers.id, adminUserId));
+        await tx.delete(recoveryCodes).where(eq(recoveryCodes.adminUserId, adminUserId));
+        await tx.delete(adminSessions).where(eq(adminSessions.adminUserId, adminUserId));
+      });
+    },
+
     async spendTotpStep(adminUserId, step) {
       const spent = await db
         .update(adminUsers)

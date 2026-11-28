@@ -92,6 +92,7 @@ const SHAPES = {
   'admin.user.invite': Person,
   'admin.user.role': Person,
   'admin.user.remove': Person,
+  'admin.user.totp-reset': Person,
   'admin.agent.add': Agent,
   'admin.agent.revoke': Agent,
   'owner-check.add': OwnerCheck,
