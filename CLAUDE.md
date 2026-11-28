@@ -10,12 +10,12 @@ The owner never names the mode. Before any work, pick it from the task and say i
 
 - No ticket, ADR, handbook page, subagent or wave. Don't read `map.md`, `CONTEXT.md`, ADRs or `docs/react-native.md` up front; read only the files you change and grep a term only when the code needs it.
 - Run only the tests next to the change while working; full lint, typecheck and tests once, before the commit.
-- The owner checks on the phone through Metro (8082). Fixes pile up on one branch; one commit and one PR with auto-merge when the owner says so.
+- Verify UI changes yourself in the simulator; the owner may also check on the phone through Metro (8082). Ask the owner before you start or restart Metro. Fixes pile up on one branch; one commit and one PR with auto-merge when the owner says so.
 - These rules override the ADR, handbook, ticket and "write the test first" rules below for fast-mode work.
 
 **Heavy mode.** Core logic (`packages/core`), data, storage, sync, backend and API contracts, schemas, money, accounts, privacy, native changes, or a new feature.
 
-- The rest of this file applies. Tests first where there is behaviour. An ADR only for a real decision someone could argue with later, never for a string, a style or a size.
+- The rest of this file applies. Tests first where there is behaviour. An ADR only for a big, global decision (see below).
 - Subagents and waves only for a large spec, and only when the owner asks.
 
 **No new process.** Add no rule, hook, check or mechanism unless the owner asks for it. When work feels slow, remove overhead first.
@@ -34,7 +34,7 @@ The owner never names the mode. Before any work, pick it from the task and say i
 - Read `CONTEXT.md` and an ADR with `grep` for the terms and numbers your change names; read one whole only when the change is about it. Every file you read stays in the context of every later step.
 - Respect every ADR. When a ticket conflicts with the glossary or an ADR, stop and report the conflict to the owner.
 - An ADR that blocks sensible work is never worked around or followed in silence: propose a short superseding ADR to the owner (`docs/agents/domain.md`). The end of every version brings an ADR cleanup.
-- Record a new decision as an ADR in the same change, but only a decision that matters: architecture, the Core, data, sync, backend, money, accounts, privacy, or a product rule someone could argue with later. Never an ADR for a string, a size, a colour, a spacing or one screen's layout.
+- Record a decision as an ADR in the same change only when it is big and global: it touches a lot of the logic or the UI across the app and is worth recording. Never an ADR for a string, a style, a size or one screen.
 - A change that adds, changes or removes a feature updates that feature's page in the owner's handbook `~/Downloads/WORD/handbook/` in the same change: Ukrainian, plain words, the page template from its `README.md`. A new feature gets a new page and a line in that `README.md`. A cloud session, which has no such folder, names the page and what changed in its report.
 
 ## Tickets
@@ -92,11 +92,8 @@ Write everything in the repo in English: code, comments, tests, docs, commit mes
 
 ## Token economy
 
-Cost = context size × steps × model price. `.claude/hooks/token-budget.mjs` enforces the hard parts in every session, local and cloud; never work around a block, follow its message.
+`.claude/hooks/token-budget.mjs` prints the budget rules at the start of every session, local and cloud, and enforces the hard parts; follow its messages and never work around a block. Beyond them:
 
-- Context limits: every session, the coordinator included, and every subagent, local and cloud, 200k soft, 230k hard. Hand off near the soft limit and only between tasks, never mid-task. At the hard limit only git and writing a handoff (≤ 2 KB) run: hand off to a fresh session. The session that hands off opens the fresh session itself (in T3 Code a new thread pointed at the handoff file) and renames both: the old one «[СТАРИЙ, можна закрити] <name>», the new one «[ПРОДОВЖЕННЯ] <name>»; the owner never opens it by hand. Never `/compact`.
-- A handoff is rewritten whole each time: the current state and the next steps only. History lives in git and the PRs; never append to an old handoff.
-- Subagents: a fresh agent with a brief of at most 1.5 KB (goal, what is ruled out, files by path, result format). No fork once the context is over 60k. Long results go to a file; the reply is 5–10 lines. Use `Explore` for searches.
-- Models: code on Opus; Fable only for Core logic, sync, architecture, specs, the version review and proofreading; the coordinator and questions on Opus; Sonnet for bumps, renames and docs-only.
-- Output: read in parts (`grep -n`, `sed -n`, offset and limit); never print `README.md`, `CONTEXT.md` or a file over 40 KB whole; test, lint and CI output through `tail` or `grep` (`gh run view --log-failed | tail -80`); a text snapshot before a screenshot, one screenshot per check.
+- Never `/compact`. A handoff (≤ 2 KB) is rewritten whole each time: the current state and the next steps only. The session that hands off opens the fresh one itself (in T3 Code a new thread pointed at the handoff file); the new thread keeps the same icon and name, the old one becomes «✅ <name> — закрити».
+- Sonnet for bumps, renames and docs-only work; `Explore` for searches.
 - Deterministic waiting (CI, merges, queues) belongs in one blocking command or a script, not in a step per poll.
