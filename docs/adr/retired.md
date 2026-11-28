@@ -3,8 +3,10 @@
 Every ADR number with no file, one line each: unused, merged into another ADR, or superseded. `scripts/adr-index.mjs` reads it into the index (ADR 0193). A number is never reused.
 
 - 0002: superseded by 0065.
+- 0003: merged into 0030.
 - 0005: merged into 0041.
 - 0008: merged into 0030.
+- 0010: merged into 0090.
 - 0023: merged into 0006.
 - 0032: superseded by 0090.
 - 0034: unused.
@@ -161,3 +163,4 @@ Every ADR number with no file, one line each: unused, merged into another ADR, o
 - 0190: removed, not a lasting decision; the history is in the commit log.
 - 0191: removed, not a lasting decision; the history is in the commit log.
 - 0192: removed, not a lasting decision; the history is in the commit log.
+- 0197: removed, not a lasting decision; a Game of «На час» lasts 60 seconds (`TIMED_GAME_LENGTH`, the glossary's Game Mode); the history is in the commit log.

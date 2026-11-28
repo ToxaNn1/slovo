@@ -19,7 +19,7 @@ Decision of 2026-11-20, ticket #2058 (spec #2049). The owner confirmed the rule 
   - `createShell` (`app-shell.ts`): whether the Shell has an Account and a Sync at all is `isShippedOn('account')` and `isShippedOn('sync')`, since the Shell is built before anything is read. A Rule that turns on an Account the build shipped off therefore opens none, as before.
   - `createShell`: the shipped `featureSwitches` are the states the Rules are evaluated over, and the verdicts of the Analytics events until the remote switches open.
   - `editionAtLaunch`: the Shell's Edition in effect and the media's (`store-media.ts`) until the remote switches open.
-  - `mascot.tsx` reads the shipped Edition's Badge families and stamp kickers, which no Rule changes; it reads no switch from it.
+  - Any module may read the shipped Edition's data, which no Rule changes (the Badge families and stamp kickers of `mascot.tsx`, the media store); only `shell/app-shell.ts` reads its switches.
 - **The reader's facts never open the Account.** The `signedIn` fact of the Rules reads the Account once it is open; working out the verdicts used to start its opening.
 
 ## Consequences
