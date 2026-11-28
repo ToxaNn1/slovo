@@ -439,15 +439,16 @@ export interface CounterStore {
   /**
    * Adds the events' deltas to their Entries' counts, and each saved +1 to
    * the Entry's adds of the week, all of them or none. The week is its Monday
-   * (UTC) as `YYYY-MM-DD`.
+   * (UTC) as `YYYY-MM-DD`. An event whose id is no live Entry of the Edition
+   * (unknown, retired, or another Edition's) counts nothing.
    */
   add(editionId: string, events: readonly CounterEvent[], week: string): Promise<void>;
   /** The counts kept of those of the Entries ever counted, in any order. */
   read(editionId: string, entryIds: readonly string[]): Promise<readonly EntryCounts[]>;
   /**
    * The Entry with the most Favorites adds in the Edition's ISO week, by its
-   * Monday as `YYYY-MM-DD`, the lower Entry id by code points winning a tie;
-   * none when nobody added anything that week.
+   * Monday as `YYYY-MM-DD`, the lower Entry id by code points winning a tie,
+   * among the Entries live now; none when nobody added one that week.
    */
   mostAdded(editionId: string, week: string): Promise<CommunityWord | undefined>;
   /** Adds one to the count of the answer to the Edition's counted question (ADR 0068). */

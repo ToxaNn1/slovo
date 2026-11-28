@@ -99,7 +99,7 @@ export const countersContract = {
       successStatus: 202,
       summary: 'Count the changes of marks and Favorites a device made',
       description:
-        'Each event names an Entry once and changes its known, unknown and saved counts by −1, 0 or +1; a saved +1 also adds to the Entry’s Favorites adds of the current ISO week (UTC). A request names 1 to 100 Entries and is counted whole or not at all. The backend keeps the totals only: no Account, no device id, no IP address.',
+        'Each event names an Entry once and changes its known, unknown and saved counts by −1, 0 or +1; a saved +1 also adds to the Entry’s Favorites adds of the current ISO week (UTC). A request names 1 to 100 Entries and is counted whole or not at all, except that an id that is no live Entry of the Edition counts nothing. The backend keeps the totals only: no Account, no device id, no IP address.',
       tags: ['counters'],
     })
     .errors({
@@ -156,7 +156,7 @@ export const countersContract = {
       path: '/community/week',
       summary: 'The Community Word of the last ISO week',
       description:
-        'The Entry most added to Favorites in the last full ISO week (UTC), with its adds, the lower Entry id winning a tie; none when nobody added anything.',
+        'The live Entry most added to Favorites in the last full ISO week (UTC), with its adds, the lower Entry id winning a tie; none when nobody added anything.',
       tags: ['counters'],
     })
     .input(z.strictObject({ edition: EditionIdSchema }))

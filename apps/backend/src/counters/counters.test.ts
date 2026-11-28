@@ -1,23 +1,53 @@
 import { randomInt } from 'node:crypto';
 
 import { and, eq } from 'drizzle-orm';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
-import type { Database } from '../database/database';
+import { createDatabase, type Database } from '../database/database';
 import {
   communityCounters,
+  contentWords,
   favoritesAdds,
   questionnaireCounters,
   rateLimits,
   statisticsOffCounters,
 } from '../database/schema';
-import { newIp, passTime, testApp, testEditions } from '../test-support';
+import {
+  contentWordsOf,
+  newIp,
+  passTime,
+  silentLogger,
+  testApp,
+  testDatabaseUrl,
+  testEditions,
+} from '../test-support';
+
+/** The Words the tests name by id, live in every Edition they count in. */
+const NAMED = ['w_a', 'w_b', 'w_c', 'w_ab', 'w_a1'];
+/** The Editions of the file's database whose Words the tests count. */
+const COUNTED = ['uk', 'other'];
+/** Live Words of the counted Editions, handed out one by one. */
+const POOL = Array.from({ length: 4000 }, (_, index) => `w_p${index.toString(36)}`);
+let handedOut = 0;
+
+beforeAll(async () => {
+  const database = createDatabase(testDatabaseUrl(), silentLogger);
+  try {
+    for (const editionId of COUNTED) await contentWordsOf(database, editionId, [...NAMED, ...POOL]);
+  } finally {
+    await database.close();
+  }
+});
 
 /**
- * A Word id no other test counts, since the tests of the file share its
- * database: the backend doesn't check that the Entry is in a pack.
+ * A live Word that no other test counts, since the tests of the file share
+ * its database: the backend counts only live Entries of the Edition.
  */
-const newEntryId = () => `w_${randomInt(2 ** 47).toString(36)}`;
+function newEntryId(): string {
+  const id = POOL[handedOut++];
+  if (id === undefined) throw new Error('the pool of live Words is used up');
+  return id;
+}
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -204,6 +234,27 @@ describe('counters.send', () => {
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toMatchObject({ code: 'BAD_REQUEST' });
     await expect(countsOf(database, word)).resolves.toEqual([]);
+  });
+
+  it('counts nothing for an id that is no live Entry of the Edition, and the rest of the batch', async () => {
+    const { client, database } = testApp({ editions: testEditions(['uk', 'third']).read() });
+    const live = newEntryId();
+    const unknown = `w_${randomInt(2 ** 47).toString(36)}`;
+    const retired = `w_${randomInt(2 ** 47).toString(36)}`;
+    const elsewhere = `w_${randomInt(2 ** 47).toString(36)}`;
+    await contentWordsOf(database, 'uk', [retired], { retired: true });
+    await contentWordsOf(database, 'third', [elsewhere]);
+
+    await client.counters.send({
+      editionId: 'uk',
+      events: [live, unknown, retired, elsewhere].map((id) => event(id, { saved: 1 })),
+    });
+
+    await expect(countsOf(database, live)).resolves.toEqual([{ known: 0, unknown: 0, saved: 1 }]);
+    for (const id of [unknown, retired, elsewhere]) {
+      await expect(countsOf(database, id), id).resolves.toEqual([]);
+      await expect(weeklyAddsOf(database, id), id).resolves.toEqual([]);
+    }
   });
 
   it('refuses a request with no event as BAD_REQUEST', async () => {
@@ -603,9 +654,11 @@ describe('counters.communityWord', () => {
    * the Edition's and the tests of the file share its database.
    */
   const newEditionId = () => `cw-${randomInt(2 ** 47).toString(36)}`;
-  const ownEdition = () => {
+  const ownEdition = async () => {
     const editionId = newEditionId();
-    return { editionId, ...testApp({ editions: testEditions([editionId]).read() }) };
+    const backend = testApp({ editions: testEditions([editionId]).read() });
+    await contentWordsOf(backend.database, editionId, NAMED);
+    return { editionId, ...backend };
   };
 
   /** One device adding each Entry to Favorites, on the test's clock. */
@@ -620,7 +673,7 @@ describe('counters.communityWord', () => {
     });
 
   it('answers the Entry most added to Favorites last ISO week, with its adds', async () => {
-    const { editionId, client, request } = ownEdition();
+    const { editionId, client, request } = await ownEdition();
     // The ISO week of Monday 2026-10-26.
     vi.setSystemTime(new Date('2026-10-26T00:00:00Z'));
     await addToFavorites(client, editionId, ['w_a', 'w_b', 'w_c']);
@@ -640,8 +693,25 @@ describe('counters.communityWord', () => {
     });
   });
 
+  it('passes over an Entry retired since the week it was added in', async () => {
+    const { editionId, client, database } = await ownEdition();
+    vi.setSystemTime(new Date('2026-10-27T09:00:00Z'));
+    await addToFavorites(client, editionId, ['w_a', 'w_b']);
+    await addToFavorites(client, editionId, ['w_a']);
+    await database.db
+      .update(contentWords)
+      .set({ retired: true })
+      .where(and(eq(contentWords.editionId, editionId), eq(contentWords.id, 'w_a')));
+
+    vi.setSystemTime(new Date('2026-11-02T09:00:00Z'));
+
+    await expect(client.counters.communityWord({ edition: editionId })).resolves.toEqual({
+      communityWord: { entryId: 'w_b', adds: 1 },
+    });
+  });
+
   it('gives a tie to the lower Entry id', async () => {
-    const { editionId, client } = ownEdition();
+    const { editionId, client } = await ownEdition();
     vi.setSystemTime(new Date('2026-10-27T09:00:00Z'));
     await addToFavorites(client, editionId, ['w_b', 'w_ab', 'w_a1']);
     await addToFavorites(client, editionId, ['w_b', 'w_ab', 'w_a1', 'w_a']);
@@ -655,7 +725,7 @@ describe('counters.communityWord', () => {
   });
 
   it('answers none for a week nobody added anything in, whatever the weeks around it had', async () => {
-    const { editionId, client } = ownEdition();
+    const { editionId, client } = await ownEdition();
     vi.setSystemTime(new Date('2026-10-21T09:00:00Z'));
     await addToFavorites(client, editionId, ['w_a']);
     // Marks and a Favorite removed are no adds.
@@ -673,7 +743,7 @@ describe('counters.communityWord', () => {
   });
 
   it('ignores the current week until it is over, by UTC', async () => {
-    const { editionId, client } = ownEdition();
+    const { editionId, client } = await ownEdition();
     vi.setSystemTime(new Date('2026-10-28T09:00:00Z'));
     await addToFavorites(client, editionId, ['w_a']);
     vi.setSystemTime(new Date('2026-11-03T09:00:00Z'));
@@ -693,7 +763,8 @@ describe('counters.communityWord', () => {
 
   it('answers from the Edition’s own adds, not another’s', async () => {
     const editionId = newEditionId();
-    const { client } = testApp({ editions: testEditions([editionId, 'other']).read() });
+    const { client, database } = testApp({ editions: testEditions([editionId, 'other']).read() });
+    await contentWordsOf(database, editionId, NAMED);
     vi.setSystemTime(new Date('2026-10-28T09:00:00Z'));
     await addToFavorites(client, 'other', ['w_a']);
     await addToFavorites(client, editionId, ['w_b']);

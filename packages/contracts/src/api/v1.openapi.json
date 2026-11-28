@@ -38208,7 +38208,7 @@
       "post": {
         "operationId": "counters.send",
         "summary": "Count the changes of marks and Favorites a device made",
-        "description": "Each event names an Entry once and changes its known, unknown and saved counts by −1, 0 or +1; a saved +1 also adds to the Entry’s Favorites adds of the current ISO week (UTC). A request names 1 to 100 Entries and is counted whole or not at all. The backend keeps the totals only: no Account, no device id, no IP address.",
+        "description": "Each event names an Entry once and changes its known, unknown and saved counts by −1, 0 or +1; a saved +1 also adds to the Entry’s Favorites adds of the current ISO week (UTC). A request names 1 to 100 Entries and is counted whole or not at all, except that an id that is no live Entry of the Edition counts nothing. The backend keeps the totals only: no Account, no device id, no IP address.",
         "tags": [
           "counters"
         ],
@@ -38723,7 +38723,7 @@
       "get": {
         "operationId": "counters.communityWord",
         "summary": "The Community Word of the last ISO week",
-        "description": "The Entry most added to Favorites in the last full ISO week (UTC), with its adds, the lower Entry id winning a tie; none when nobody added anything.",
+        "description": "The live Entry most added to Favorites in the last full ISO week (UTC), with its adds, the lower Entry id winning a tie; none when nobody added anything.",
         "tags": [
           "counters"
         ],

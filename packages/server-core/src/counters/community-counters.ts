@@ -57,8 +57,9 @@ export interface CommunityCounters {
   /**
    * Adds the events' deltas to the Edition's counts, and each saved +1 to the
    * Entry's Favorites adds of the ISO week (UTC) it arrives in, when the
-   * Edition serves Community Counters. Their shape is checked where they enter; whether
-   * their Entries are in a pack is not. A batch that takes its IP address
+   * Edition serves Community Counters. Their shape is checked where they
+   * enter; an event whose id is no live Entry of the Edition counts nothing,
+   * the rest of its batch counting. A batch that takes its IP address
    * over the day's limit of events is refused whole; one its Edition doesn't
    * take counts nothing.
    */
@@ -80,8 +81,8 @@ export interface CommunityCounters {
   /**
    * The Community Word of the Edition, when it serves both the Community
    * Counters and the Community Word: the
-   * Entry most added to Favorites in the last full ISO week (UTC), the lower
-   * Entry id winning a tie, or none when nobody added anything that week.
+   * live Entry most added to Favorites in the last full ISO week (UTC), the
+   * lower Entry id winning a tie, or none when nobody added one that week.
    */
   communityWord(
     editionId: string,

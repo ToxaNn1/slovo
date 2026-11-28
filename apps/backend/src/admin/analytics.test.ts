@@ -5,6 +5,7 @@ import { describe, expect, it, onTestFinished, vi } from 'vitest';
 
 import { createDatabase } from '../database/database';
 import {
+  contentWordsOf,
   createTestDatabase,
   importedDatabases,
   passTime,
@@ -376,7 +377,10 @@ describe('the reader counts', () => {
 
 describe('the Counters read', () => {
   it('sums the Community Counters and the questionnaire answers stored, per Edition and for all', async () => {
-    const { client, ids } = await analyticsBackend();
+    const { app, client, ids } = await analyticsBackend();
+    // A Community Counter counts only live Entries of its Edition.
+    await contentWordsOf(app.database, ids[0], ['w_a', 'w_b']);
+    await contentWordsOf(app.database, ids[1], ['w_c']);
     const event = (entryId: string, change: { known?: 1; unknown?: 1; saved?: 1 }) =>
       ({ entryId, known: 0, unknown: 0, saved: 0, ...change }) as const;
     await client.counters.send({
@@ -400,8 +404,11 @@ describe('the Counters read', () => {
       known: 2,
       unknown: 1,
       saved: 1,
-      // These Entries are in no content database, so no Word of them is named.
-      top: { known: [], unknown: [], saved: [] },
+      top: {
+        known: [{ entryId: 'w_a', lemma: 'w_a', count: 2 }],
+        unknown: [{ entryId: 'w_b', lemma: 'w_b', count: 1 }],
+        saved: [{ entryId: 'w_a', lemma: 'w_a', count: 1 }],
+      },
       answers: [{ question: 'level', answer: 'only-starting', count: 1 }],
     });
     const all = await client.admin.counters({ editionId: 'all' });
