@@ -3,8 +3,10 @@
 Every ADR number with no file, one line each: unused, merged into another ADR, or superseded. `scripts/adr-index.mjs` reads it into the index (ADR 0193). A number is never reused.
 
 - 0002: superseded by 0065.
+- 0003: merged into 0030.
 - 0005: merged into 0041.
 - 0008: merged into 0030.
+- 0010: merged into 0090.
 - 0023: merged into 0006.
 - 0032: superseded by 0090.
 - 0034: unused.
