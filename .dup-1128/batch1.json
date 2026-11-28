@@ -1,0 +1,2059 @@
+{
+"snapshotContentVersion": 10262,
+"groups": [
+{
+"lemma": "афронт",
+"keep": "w_hnis89",
+"retire": [
+"w_atuc2s"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "бурозубка",
+"keep": "w_vlrqfu",
+"retire": [
+"w_ypighe"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Бурозубку легко сплутати з мишею, але в неї видовжений рухливий носик."
+}
+]
+},
+{
+"lemma": "бювар",
+"keep": "w_hghxnz",
+"retire": [
+"w_0h1sxs"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "бідак",
+"keep": "w_85tn7j",
+"retire": [
+"w_a1aa6h"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "галасвіта",
+"keep": "w_sdke8e",
+"retire": [
+"w_cp5x2r"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Після сварки він подався галасвіта, і довго про нього ніхто не чув."
+}
+]
+},
+{
+"lemma": "гаркебуз",
+"keep": "w_kfz2o5",
+"retire": [
+"w_pyo97d"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Стрілець довго роздмухував ґніт, аж поки гаркебуз нарешті гримнув і оповив мур димом."
+}
+]
+},
+{
+"lemma": "гарматник",
+"keep": "w_42hp8l",
+"retire": [
+"w_788h1r"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Гарматники швидко розвернули гармату й за хвилину вже були готові до пострілу."
+}
+]
+},
+{
+"lemma": "гарусний",
+"keep": "w_hpnvvj",
+"retire": [
+"w_0wnc9x"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Бабуся пов’язала онукові теплий гарусний шарф у червону смужку."
+}
+]
+},
+{
+"lemma": "гелертер",
+"keep": "w_tjnzix",
+"retire": [
+"w_l6jqsn"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Новий професор виявився сухим гелертером, який знав усі трактати, але не вмів пояснити простого."
+}
+]
+},
+{
+"lemma": "гендлювати",
+"keep": "w_nw2ghb",
+"retire": [
+"w_4nifi3"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Він не сіяв і не орав, а тільки гендлював тим, що скуповував у сусідів."
+}
+]
+},
+{
+"lemma": "геройствувати",
+"keep": "w_6kldet",
+"retire": [
+"w_gpiq13"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "гичка",
+"keep": "w_hvfpj3",
+"retire": [
+"w_sfeq8j"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "глупота",
+"keep": "w_fagubp",
+"retire": [
+"w_jhyu0c"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Через власну глупоту він повірив шахраєві й віддав усі заощадження."
+}
+]
+},
+{
+"lemma": "глушина",
+"keep": "w_7u046t",
+"retire": [
+"w_hvfm1e"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "гнівливість",
+"keep": "w_mkg8wq",
+"retire": [
+"w_0gugds"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Через свою гнівливість він часто сварився навіть із найближчими друзями."
+}
+]
+},
+{
+"lemma": "говорильня",
+"keep": "w_ysr58n",
+"retire": [
+"w_ticsyw"
+],
+"addSynonyms": [
+"балаканина"
+],
+"addExamples": [
+{
+"text": "Годі цієї говорильні, беріться до роботи!"
+}
+]
+},
+{
+"lemma": "говір",
+"keep": "w_bavldt",
+"retire": [
+"w_ojazzv"
+],
+"addSynonyms": [
+"гамір"
+],
+"addExamples": []
+},
+{
+"lemma": "голяк",
+"keep": "w_chg4mj",
+"retire": [
+"w_nnkybj"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Поїхав по світу шукати щастя, а вернувся таким самим голяком, як і був."
+}
+]
+},
+{
+"lemma": "голіаф",
+"keep": "w_2ikprr",
+"retire": [
+"w_3loo6w"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "горгона",
+"keep": "w_e4swx0",
+"retire": [
+"w_8fj3hw"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Сусідка знову стоїть під вікнами, як справжня горгона, і шукає, до чого б причепитися."
+}
+]
+},
+{
+"lemma": "гостина",
+"keep": "w_2r92n1",
+"retire": [
+"w_0iql9f"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "гострословити",
+"keep": "w_abs6eu",
+"retire": [
+"w_6s6n70"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "На весіллі дядько Петро гострословив так, що гості аж за животи хапалися."
+}
+]
+},
+{
+"lemma": "гризня",
+"keep": "w_nufts6",
+"retire": [
+"w_up324q"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "грошина",
+"keep": "w_7nigc6",
+"retire": [
+"w_yn1b52"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Бабуся загорнула кожну грошину в хусточку й сховала за образ."
+}
+]
+},
+{
+"lemma": "грубощі",
+"keep": "w_yc5peu",
+"retire": [
+"w_98uzwx"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Він наговорив матері грубощів, а потім цілий вечір шкодував про це."
+}
+]
+},
+{
+"lemma": "грузило",
+"keep": "w_7anx20",
+"retire": [
+"w_602g80"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Дід прив’язав до волосіні свинцеве грузило, і поплавець став рівно."
+}
+]
+},
+{
+"lemma": "губитель",
+"keep": "w_muwbwx",
+"retire": [
+"w_o9ibmc"
+],
+"addSynonyms": [
+"згубник"
+],
+"addExamples": [
+{
+"text": "Люди назвали пожежу губителем лісу, бо після неї лишилися тільки чорні пні."
+}
+]
+},
+{
+"lemma": "гувернер",
+"keep": "w_8zf647",
+"retire": [
+"w_icx28t"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "гугнявити",
+"keep": "w_8bk3ml",
+"retire": [
+"w_3b8nlh"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Застуджений хлопчик гугнявив так, що ніхто не міг розібрати жодного слова."
+}
+]
+},
+{
+"lemma": "гусеня",
+"keep": "w_6qvna3",
+"retire": [
+"w_7zeizg"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "гяур",
+"keep": "w_2fhta0",
+"retire": [
+"w_rn774q"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "У старій думі паша погрожує скарати всіх гяурів, що потрапили в полон."
+}
+]
+},
+{
+"lemma": "гінекократія",
+"keep": "w_98xduf",
+"retire": [
+"w_0rcy9n"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Давні грецькі автори розповідали про гінекократію в амазонок."
+}
+]
+},
+{
+"lemma": "гіркотно",
+"keep": "w_3jps12",
+"retire": [
+"w_7rxyui"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Мати гіркотно зітхнула, перечитуючи старий лист сина."
+}
+]
+},
+{
+"lemma": "данник",
+"keep": "w_lp8g5b",
+"retire": [
+"w_tpnhsr"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Колись плем’я було данником сильного сусіда і щоосені віддавало йому хутро й мед."
+}
+]
+},
+{
+"lemma": "диба",
+"keep": "w_2fncv1",
+"retire": [
+"w_f05uft"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "дичка",
+"keep": "w_57vydz",
+"retire": [
+"w_0hz9ob"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "еклектизм",
+"keep": "w_xvubwg",
+"retire": [
+"w_pwayjt"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Критик дорікнув поетові еклектизмом, бо той змішав у збірці надто різні манери."
+}
+]
+},
+{
+"lemma": "еспланада",
+"keep": "w_wfyr94",
+"retire": [
+"w_rt5q4w"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "З фортечних мурів добре проглядалася вся еспланада, і ворог не міг підійти непоміченим."
+}
+]
+},
+{
+"lemma": "жебри",
+"keep": "w_hqv7hh",
+"retire": [
+"w_5flh5l"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "жижки",
+"keep": "w_4wzw2q",
+"retire": [
+"w_2s4u1h"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Хлопці бігли по стерні, і колюча стерня дряпала їм голі жижки."
+}
+]
+},
+{
+"lemma": "житійний",
+"keep": "w_bb2b36",
+"retire": [
+"w_sph9a1"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "У монастирській бібліотеці зберігали житійні збірки, переписані ченцями від руки."
+}
+]
+},
+{
+"lemma": "жовклий",
+"keep": "w_dnplue",
+"retire": [
+"w_uy519h"
+],
+"addSynonyms": [
+"жовтуватий"
+],
+"addExamples": [
+{
+"text": "Під ногами шурхотіло жовкле листя, і в парку пахло осінню."
+}
+]
+},
+{
+"lemma": "жовтофіоль",
+"keep": "w_h3i2x1",
+"retire": [
+"w_7kweu3"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Біля ганку бабуся щовесни висаджувала жовтофіоль, і її медовий запах стояв аж до порога."
+}
+]
+},
+{
+"lemma": "жовтяк",
+"keep": "w_gkwxy1",
+"retire": [
+"w_lx6ux5"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Свіжі огірки ми з’їли ще в липні, а на грядці лишилися самі жовтяки — хіба що на насіння."
+}
+]
+},
+{
+"lemma": "жолуддя",
+"keep": "w_20cyqz",
+"retire": [
+"w_bqe78w"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Восени під старим дубом жолуддя лежало таким шаром, що ноги ковзали, мов по кульках."
+}
+]
+},
+{
+"lemma": "журкіт",
+"keep": "w_08u9ra",
+"retire": [
+"w_2s8dl3"
+],
+"addSynonyms": [
+"дзюркіт"
+],
+"addExamples": []
+},
+{
+"lemma": "жінота",
+"keep": "w_qsi4gz",
+"retire": [
+"w_ajlmub"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "заблуд",
+"keep": "w_6fd1p7",
+"retire": [
+"w_kz2ijj"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Довго він жив у заблуді, вважаючи вірного друга своїм ворогом."
+}
+]
+},
+{
+"lemma": "загребистий",
+"keep": "w_uv15ux",
+"retire": [
+"w_z4hgmw"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Загребистий сусід приглядався вже й до нашої межі."
+}
+]
+},
+{
+"lemma": "займище",
+"keep": "w_bjhwgl",
+"retire": [
+"w_5twlwy"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "заліззя",
+"keep": "w_ugly9b",
+"retire": [
+"w_biaq9e"
+],
+"addSynonyms": [
+"брухт",
+"пута"
+],
+"addExamples": []
+},
+{
+"lemma": "запівніч",
+"keep": "w_j871d8",
+"retire": [
+"w_vxq89l"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Гості розійшлися запівніч, коли в селі вже давно погасли вогні."
+}
+]
+},
+{
+"lemma": "затим",
+"keep": "w_xcuq4l",
+"retire": [
+"w_ikj2jk"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "затямлювати",
+"keep": "w_fuyb79",
+"retire": [
+"w_ibtym5"
+],
+"addSynonyms": [
+"пам’ятати"
+],
+"addExamples": []
+},
+{
+"lemma": "захалявний",
+"keep": "w_s2kx07",
+"retire": [
+"w_sjejv4"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Козак дістав захалявний ніж і відкраяв собі скибку хліба."
+}
+]
+},
+{
+"lemma": "звільна",
+"keep": "w_m6irct",
+"retire": [
+"w_e34l37"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "злощастя",
+"keep": "w_rks6v2",
+"retire": [
+"w_5qnyv3"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Усе злощастя його роду почалося з тієї пожежі."
+}
+]
+},
+{
+"lemma": "зоріти",
+"keep": "w_uwswcd",
+"retire": [
+"w_bh3oyk"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "каганчик",
+"keep": "w_ozma97",
+"retire": [
+"w_dpjlm3"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Мати засвітила каганчик, і в хаті стало трохи видніше."
+}
+]
+},
+{
+"lemma": "казнокрад",
+"keep": "w_ee8m3y",
+"retire": [
+"w_t63qe5"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Ревізія викрила казнокрада, що роками тягнув гроші з міської скарбниці."
+}
+]
+},
+{
+"lemma": "каймак",
+"keep": "w_0om79g",
+"retire": [
+"w_rp5ap8"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Бабуся зняла з глечика жовтуватий каймак і намастила ним теплий корж."
+}
+]
+},
+{
+"lemma": "калим",
+"keep": "w_53jv8e",
+"retire": [
+"w_yw7cdo"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "камбуз",
+"keep": "w_4t04aw",
+"retire": [
+"w_77b7fz"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Під час шторму кок не міг розпалити плиту на камбузі, тож матроси обідали сухарями."
+}
+]
+},
+{
+"lemma": "канделябр",
+"keep": "w_mig87u",
+"retire": [
+"w_7b4l6s"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "На довгому столі горіли свічки в срібних канделябрах."
+}
+]
+},
+{
+"lemma": "капітул",
+"keep": "w_mxlvgg",
+"retire": [
+"w_10kv1d"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Коперник багато років був членом вармійського капітулу й опікувався його маєтками."
+}
+]
+},
+{
+"lemma": "карбонар",
+"keep": "w_toxgjs",
+"retire": [
+"w_rw8dvk"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Юний карбонар присягнув берегти таємницю товариства навіть під загрозою смерті."
+}
+]
+},
+{
+"lemma": "карбівка",
+"keep": "w_g2u2v2",
+"retire": [
+"w_9g1fjv"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Срібна чарка була вкрита тонкою карбівкою з виноградних лоз."
+}
+]
+},
+{
+"lemma": "карга",
+"keep": "w_yl1jjr",
+"retire": [
+"w_civyx4"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Сусідські діти потай звали бабу Параску каргою, бо вона завжди на них гримала."
+}
+]
+},
+{
+"lemma": "карколомність",
+"keep": "w_vknm9p",
+"retire": [
+"w_uuj03y"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Детектив тримає в напрузі карколомністю сюжету, де кожен розділ перевертає все з ніг на голову."
+}
+]
+},
+{
+"lemma": "картярство",
+"keep": "w_fvcwbo",
+"retire": [
+"w_b6fhso"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "квакша",
+"keep": "w_r8r5gb",
+"retire": [
+"w_zzfcfx"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "кендюх",
+"keep": "w_90gk5w",
+"retire": [
+"w_pb8bfi"
+],
+"addSynonyms": [
+"рубець"
+],
+"addExamples": []
+},
+{
+"lemma": "кетмень",
+"keep": "w_jchxve",
+"retire": [
+"w_osndrg"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Селяни взяли кетмені й до вечора розчистили занесений піском арик."
+}
+]
+},
+{
+"lemma": "китиця",
+"keep": "w_hbshxf",
+"retire": [
+"w_wso9pt"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "книгоїд",
+"keep": "w_toj8kw",
+"retire": [
+"w_oakyh8"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Наш книгоїд за одне літо перечитав половину шкільної бібліотеки."
+}
+]
+},
+{
+"lemma": "колосистий",
+"keep": "w_mw2n2x",
+"retire": [
+"w_zml1ff"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Цього літа пшениця вродила висока й колосиста, тож господарі чекали щедрого врожаю."
+}
+]
+},
+{
+"lemma": "конкубіна",
+"keep": "w_xvbwig",
+"retire": [
+"w_ifpmxq"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Діти конкубіни не мали права на батькову спадщину."
+}
+]
+},
+{
+"lemma": "кошеніль",
+"keep": "w_36v5pt",
+"retire": [
+"w_096rn4"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Колись червоні мундири солдатів фарбували саме кошеніллю."
+}
+]
+},
+{
+"lemma": "кряква",
+"keep": "w_yf5ert",
+"retire": [
+"w_yd9dyv"
+],
+"addSynonyms": [
+"крижень"
+],
+"addExamples": [
+{
+"text": "Мисливці до вечірньої зорі чекали на перельот крякв."
+}
+]
+},
+{
+"lemma": "курильниця",
+"keep": "w_087qln",
+"retire": [
+"w_gis7ne"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "курсистка",
+"keep": "w_mnogvb",
+"retire": [
+"w_axzqn2"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Молода курсистка вечорами переписувала конспекти лекцій з фізики."
+}
+]
+},
+{
+"lemma": "набоб",
+"keep": "w_mehj70",
+"retire": [
+"w_vz97xk"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Місцевий набоб тримав при дворі сотню слуг і загін вершників."
+}
+]
+},
+{
+"lemma": "нагай",
+"keep": "w_208xhw",
+"retire": [
+"w_oym3t3"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "наяда",
+"keep": "w_9nm55n",
+"retire": [
+"w_c9u00w"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "На старовинному фонтані скульптор вирізьбив наяду з глеком, з якого ллється вода."
+}
+]
+},
+{
+"lemma": "ноша",
+"keep": "w_knj8fl",
+"retire": [
+"w_zynk3z"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Відповідальність за цілу родину стала для неї нелегкою ношею."
+}
+]
+},
+{
+"lemma": "нужда",
+"keep": "w_vqdepo",
+"retire": [
+"w_48hyt5"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "обіддя",
+"keep": "w_f76qvz",
+"retire": [
+"w_bgwwuf"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "онагр",
+"keep": "w_25x8qs",
+"retire": [
+"w_1ntcf8"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "орало",
+"keep": "w_zs6v1l",
+"retire": [
+"w_usaskd"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Наші предки розпушували землю дерев’яним оралом, у яке запрягали пару волів."
+}
+]
+},
+{
+"lemma": "оркан",
+"keep": "w_ok5787",
+"retire": [
+"w_qidesi"
+],
+"addSynonyms": [
+"буревій"
+],
+"addExamples": []
+},
+{
+"lemma": "осля",
+"keep": "w_4cowg6",
+"retire": [
+"w_86gymc"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Сіре осля довго не відходило від матері й боязко ховалося за її бік."
+}
+]
+},
+{
+"lemma": "пава",
+"keep": "w_og3r85",
+"retire": [
+"w_rparhz"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "пазур",
+"keep": "w_2wvxor",
+"retire": [
+"w_q79oue"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "палантин",
+"keep": "w_bycwb7",
+"retire": [
+"w_zkwo4z"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "На прем’єру вона вбралася в чорну сукню й накинула на плечі хутряний палантин."
+}
+]
+},
+{
+"lemma": "паля",
+"keep": "w_y8tutn",
+"retire": [
+"w_kpjzal"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Старий млин стояв над річкою на дубових палях, почорнілих від води."
+}
+]
+},
+{
+"lemma": "парча",
+"keep": "w_7nnsj8",
+"retire": [
+"w_wo1u5p"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "У музеї показали гетьманський жупан, оздоблений золотою парчею."
+}
+]
+},
+{
+"lemma": "петиметр",
+"keep": "w_cvvr78",
+"retire": [
+"w_55x93m"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Цей петиметр більше часу проводив перед дзеркалом, ніж на службі."
+}
+]
+},
+{
+"lemma": "пильня",
+"keep": "w_tq9eyv",
+"retire": [
+"w_9eem9d"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Колоди з лісу звозили просто до пильні над річкою."
+}
+]
+},
+{
+"lemma": "писальце",
+"keep": "w_6g4sk9",
+"retire": [
+"w_7hkwrs"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "полукіпок",
+"keep": "w_s8n13o",
+"retire": [
+"w_lsm02r"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Після жнив на стерні рядами стояли полукіпки, чекаючи на вози."
+}
+]
+},
+{
+"lemma": "помийниця",
+"keep": "w_c1iidq",
+"retire": [
+"w_d6yb1w"
+],
+"addSynonyms": [
+"цебер"
+],
+"addExamples": []
+},
+{
+"lemma": "постерунок",
+"keep": "w_0pzwbh",
+"retire": [
+"w_9q8w6m"
+],
+"addSynonyms": [
+"відділок"
+],
+"addExamples": [
+{
+"text": "Старожили ще пам’ятали, де в містечку стояв постерунок."
+}
+]
+},
+{
+"lemma": "підголосок",
+"keep": "w_oo8ty7",
+"retire": [
+"w_k5koqt"
+],
+"addSynonyms": [
+"втора"
+],
+"addExamples": []
+},
+{
+"lemma": "підложниця",
+"keep": "w_7i9ura",
+"retire": [
+"w_rp41el"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "За давніми звичаями князь мав, крім дружини, ще й підложниць."
+}
+]
+},
+{
+"lemma": "разити",
+"keep": "w_2x8769",
+"retire": [
+"w_42i7gy"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "раяти",
+"keep": "w_uc4n1a",
+"retire": [
+"w_hy78mq"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Сусідка раяла мамі садити помідори аж після травневих приморозків."
+}
+]
+},
+{
+"lemma": "рвацтво",
+"keep": "w_a4ahex",
+"retire": [
+"w_jr3lw7"
+],
+"addSynonyms": [
+"хапужність"
+],
+"addExamples": [
+{
+"text": "На зборах бригадир прямо назвав рвацтвом те, як дехто вибирав собі найвигідніші замовлення."
+}
+]
+},
+{
+"lemma": "рдесник",
+"keep": "w_nfqtxx",
+"retire": [
+"w_hj1j4y"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Серед заростей рдесника ховалися мальки."
+}
+]
+},
+{
+"lemma": "рейсшина",
+"keep": "w_98mld9",
+"retire": [
+"w_y7aw84"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Студент притис рейсшину до краю дошки й провів рівну лінію."
+}
+]
+},
+{
+"lemma": "ремство",
+"keep": "w_xp5daz",
+"retire": [
+"w_4h0du0"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Коли оголосили, що автобус сьогодні вже не прийде, на зупинці знялося глухе ремство."
+}
+]
+},
+{
+"lemma": "ретивий",
+"keep": "w_h5zksz",
+"retire": [
+"w_7pw184"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "риштунок",
+"keep": "w_he1efm",
+"retire": [
+"w_k0jpmb"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Козак перевірив риштунок: шаблю, порохівницю й торбу з харчами."
+}
+]
+},
+{
+"lemma": "розбитний",
+"keep": "w_6g4rr3",
+"retire": [
+"w_71oxb6"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Розбитна продавчиня за хвилину знайшла потрібний розмір і ще й зробила знижку."
+}
+]
+},
+{
+"lemma": "розгульний",
+"keep": "w_1gq7ws",
+"retire": [
+"w_jy1j40"
+],
+"addSynonyms": [
+"нестримний"
+],
+"addExamples": [
+{
+"text": "Розгульний вітер гнав по степу перекотиполе."
+}
+]
+},
+{
+"lemma": "роздолина",
+"keep": "w_nnvqje",
+"retire": [
+"w_9wooy7"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Туман уночі заповнив усю роздолину."
+}
+]
+},
+{
+"lemma": "розкоп",
+"keep": "w_z6vqcd",
+"retire": [
+"w_eoqqa7"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Археологи знайшли в розкопі уламки давнього глечика."
+}
+]
+},
+{
+"lemma": "розмаювати",
+"keep": "w_dy2dzs",
+"retire": [
+"w_88aeqf"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "розторопша",
+"keep": "w_88b76t",
+"retire": [
+"w_janv7s"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "На межі між полями розрослися колючі кущі розторопші."
+}
+]
+},
+{
+"lemma": "русий",
+"keep": "w_8ei9uq",
+"retire": [
+"w_rqdv3j"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "З-під хустки вибилося русе пасмо."
+}
+]
+},
+{
+"lemma": "рясніти",
+"keep": "w_naa7y8",
+"retire": [
+"w_iny2tc"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Луки рясніли ромашками."
+}
+]
+},
+{
+"lemma": "рястка",
+"keep": "w_dw0d52",
+"retire": [
+"w_e9gdsx"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "садівникувати",
+"keep": "w_jtwlkp",
+"retire": [
+"w_wk52tb",
+"w_z13gvt"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Він довго садівникував у панському маєтку й знав кожне дерево в саду."
+}
+]
+},
+{
+"lemma": "себелюбство",
+"keep": "w_3dz41q",
+"retire": [
+"w_17s3ar",
+"w_x4fotz"
+],
+"addSynonyms": [
+"самолюбство"
+],
+"addExamples": [
+{
+"text": "Через себелюбство вона й не помітила, як утомилася мати."
+}
+]
+},
+{
+"lemma": "скотобоєць",
+"keep": "w_d5ntov",
+"retire": [
+"w_6llb4a"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Напередодні ярмарку до села прийшов скотобоєць."
+}
+]
+},
+{
+"lemma": "смиренник",
+"keep": "w_ci199b",
+"retire": [
+"w_8j8a7h",
+"w_zraool"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "У школі його вважали смиренником, аж поки він не став на захист молодшого брата."
+}
+]
+},
+{
+"lemma": "смута",
+"keep": "w_zke3lf",
+"retire": [
+"w_aqgdj5"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "согрішати",
+"keep": "w_z9tjke",
+"retire": [
+"w_bbyu82",
+"w_v8phgg"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "сопка",
+"keep": "w_3vhxz5",
+"retire": [
+"w_al2uy0"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Над тайгою здіймалися пологі сопки, вкриті модриною."
+}
+]
+},
+{
+"lemma": "сочити",
+"keep": "w_5e40dr",
+"retire": [
+"w_dslji4",
+"w_wyhvmx"
+],
+"addSynonyms": [
+"цідити"
+],
+"addExamples": []
+},
+{
+"lemma": "сполячувати",
+"keep": "w_96vijn",
+"retire": [
+"w_7rt7bt",
+"w_qcj89o"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Нова школа мала сполячувати місцевих дітей, тож українське слово там заборонили."
+}
+]
+},
+{
+"lemma": "співанка",
+"keep": "w_9wxbnp",
+"retire": [
+"w_3pch4n",
+"w_o6l1m6"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Щочетверга після уроків ми ходили на співанку до сільського клубу."
+}
+]
+},
+{
+"lemma": "сьогочасний",
+"keep": "w_ue1agd",
+"retire": [
+"w_tugl7o"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "тамарикс",
+"keep": "w_hyk39g",
+"retire": [
+"w_c6lnly"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "На піщаних косах Кінбурну тамарикс квітне рожевими хмаринками."
+}
+]
+},
+{
+"lemma": "тамаринд",
+"keep": "w_c0g1sq",
+"retire": [
+"w_dvzjb4"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Соус із тамаринду надає індійським стравам приємної кислинки."
+}
+]
+},
+{
+"lemma": "тараня",
+"keep": "w_f7vtsm",
+"retire": [
+"w_hv7a92"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "тархан",
+"keep": "w_dgt231",
+"retire": [
+"w_vdiilv"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "У хозарському війську тархани вели за собою загони вершників."
+}
+]
+},
+{
+"lemma": "тибель",
+"keep": "w_jros7t",
+"retire": [
+"w_m6jylb"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Тесля збив раму без жодного залізного цвяха, самими дубовими тиблями."
+}
+]
+},
+{
+"lemma": "типікон",
+"keep": "w_pggo0e",
+"retire": [
+"w_vv6d1e"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Дяк звіряв із типіконом, які молитви читати цієї неділі."
+}
+]
+},
+{
+"lemma": "тлінний",
+"keep": "w_us34fc",
+"retire": [
+"w_3l01b3"
+],
+"addSynonyms": [
+"скороминущий"
+],
+"addExamples": []
+},
+{
+"lemma": "толокно",
+"keep": "w_uej6b9",
+"retire": [
+"w_z77zzn"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "На сніданок дід розвів толокно теплим молоком і додав ложку меду."
+}
+]
+},
+{
+"lemma": "тороки",
+"keep": "w_rvz0r4",
+"retire": [
+"w_s6tepz"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "трельяж",
+"keep": "w_o4nzx7",
+"retire": [
+"w_n4tb65"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "трембітати",
+"keep": "w_cr4mr4",
+"retire": [
+"w_k9agv0"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "троюдити",
+"keep": "w_6dzi3g",
+"retire": [
+"w_zlui6u"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "тужавіти",
+"keep": "w_qp682q",
+"retire": [
+"w_oro2df"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Після дощу земля на городі тужавіла, і копати ставало щораз важче."
+}
+]
+},
+{
+"lemma": "туркати",
+"keep": "w_ohqwnq",
+"retire": [
+"w_wp3pgi"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "На горищі туркали голуби, і від того в хаті ставало затишніше."
+}
+]
+},
+{
+"lemma": "тюпати",
+"keep": "w_llhexk",
+"retire": [
+"w_yruwv3"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "убуток",
+"keep": "w_qdhxy8",
+"retire": [
+"w_l9e3ao"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Через спеку в погребі помітили великий убуток води в діжках."
+}
+]
+},
+{
+"lemma": "узмор'я",
+"keep": "w_9s4iqf",
+"retire": [
+"w_5bawic"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "На узмор’ї зранку гойдалися рибальські човни."
+}
+]
+},
+{
+"lemma": "укоханець",
+"keep": "w_inq7k8",
+"retire": [
+"w_l07ogp"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "упертюх",
+"keep": "w_v1tfhk",
+"retire": [
+"w_x74kq3"
+],
+"addSynonyms": [
+"упертець"
+],
+"addExamples": [
+{
+"text": "Цей упертюх третій день не хоче визнати, що ми заблукали."
+}
+]
+},
+{
+"lemma": "урюк",
+"keep": "w_c7juzj",
+"retire": [
+"w_xh1qz7"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "На базарі в Самарканді продавали золотавий урюк просто з великих мішків."
+}
+]
+},
+{
+"lemma": "усовіщати",
+"keep": "w_x23fg0",
+"retire": [
+"w_vb28eq"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "усолода",
+"keep": "w_u4l530",
+"retire": [
+"w_gtyy2z"
+],
+"addSynonyms": [
+"розкіш"
+],
+"addExamples": []
+},
+{
+"lemma": "утлуватий",
+"keep": "w_6ml7uy",
+"retire": [
+"w_az8143"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Хлопчина був утлуватий, проте носив воду нарівні з дорослими."
+}
+]
+},
+{
+"lemma": "учадіти",
+"keep": "w_usqmc6",
+"retire": [
+"w_ssc5xk"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "фатум",
+"keep": "w_rv95au",
+"retire": [
+"w_lbbtcr"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "хиба",
+"keep": "w_cmegwg",
+"retire": [
+"w_42tead"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "хоку",
+"keep": "w_sk7zmg",
+"retire": [
+"w_9qnn3d"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "У збірці перекладів кожне хоку займало окрему сторінку, щоб читач міг затриматися на ньому."
+}
+]
+},
+{
+"lemma": "худяк",
+"keep": "w_cnxkpz",
+"retire": [
+"w_rule68"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Корова за зиму стала справжнім худяком: самі ребра та роги."
+}
+]
+},
+{
+"lemma": "чигир",
+"keep": "w_sc0tsw",
+"retire": [
+"w_x3s8x6"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Колись чигир крутив віл, що ходив по колу, а тепер ту саму роботу робить електричний насос."
+}
+]
+},
+{
+"lemma": "чудернацтво",
+"keep": "w_tulc9m",
+"retire": [
+"w_brr60a"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Бабуся терпляче зносила всі чудернацтва онука, бо знала, що він їх переросте."
+}
+]
+},
+{
+"lemma": "чуперадло",
+"keep": "w_tafn8s",
+"retire": [
+"w_pz4b43"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Після ночі в лісі він повернувся таким чуперадлом, що мати ледве його впізнала."
+}
+]
+},
+{
+"lemma": "шалапутство",
+"keep": "w_vvv9vm",
+"retire": [
+"w_dnc44c"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Батько вважав його втечу з дому звичайним шалапутством і чекав, що син скоро повернеться."
+}
+]
+},
+{
+"lemma": "шанолюбець",
+"keep": "w_0k9k5k",
+"retire": [
+"w_f723yy"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "шанцевий",
+"keep": "w_x7es0d",
+"retire": [
+"w_v7xjpr"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "шапірограф",
+"keep": "w_e24to6",
+"retire": [
+"w_wo6tg5"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Розклад занять гімназисти отримували на блідих аркушах, віддрукованих шапірографом."
+}
+]
+},
+{
+"lemma": "шарманщик",
+"keep": "w_zfxzdp",
+"retire": [
+"w_brfxzt"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "На ярмарку шарманщик крутив ручку, а маленька мавпочка збирала монети в капелюх."
+}
+]
+},
+{
+"lemma": "шатія",
+"keep": "w_q7euqd",
+"retire": [
+"w_mvp6pf"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Уся ця шатія з’являлася на базарі тоді, коли там можна було щось поцупити."
+}
+]
+},
+{
+"lemma": "шахермахерство",
+"keep": "w_3y2qx5",
+"retire": [
+"w_ef1lof"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Усе його підприємництво виявилося звичайним шахермахерством."
+}
+]
+},
+{
+"lemma": "шахиншах",
+"keep": "w_9ora77",
+"retire": [
+"w_kctfzl"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Посли низько вклонилися шахиншахові й поклали дари до його ніг."
+}
+]
+},
+{
+"lemma": "шемрати",
+"keep": "w_bozui1",
+"retire": [
+"w_evga1o"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "школити",
+"keep": "w_qyb6tj",
+"retire": [
+"w_8l1dcm"
+],
+"addSynonyms": [],
+"addExamples": []
+},
+{
+"lemma": "євгеніка",
+"keep": "w_qgimoo",
+"retire": [
+"w_and62o"
+],
+"addSynonyms": [],
+"addExamples": [
+{
+"text": "Наприкінці XIX століття євгеніка здавалася багатьом ученим шляхом до здоровішого людства."
+}
+]
+}
+]
+}
