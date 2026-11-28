@@ -26,6 +26,11 @@ export interface Eligibility {
  * telling `eligibility` after each change. The Entries are made first, as
  * the Mix opens over their Categories; nothing reads an eligible Entry until
  * all three are open. The one wiring the Core composition and its tests share.
+ *
+ * Each of the three makes its change and writes it before it publishes, so
+ * the change stands when following it fails: the publish resolves, the
+ * failure goes to `reportError`, and a caller returns its result, a Hide
+ * Result with its undo or the Rarity Test's result, as for any change.
  */
 export async function openEligibility({
   content,
@@ -33,13 +38,16 @@ export async function openEligibility({
   userState,
   clock,
   eligibility,
+  reportError,
 }: {
   content: ContentReadPort;
   edition: Parameters<typeof createEntries>[0]['edition'] & MixEdition & RarityRangeEdition;
   userState: UserState;
   clock: Clock;
   eligibility: Subject<void>;
+  reportError: (error: unknown) => void;
 }): Promise<Eligibility> {
+  const followed = { publish: () => eligibility.publish().catch(reportError) };
   const entries = createEntries({
     content,
     edition,
@@ -54,8 +62,13 @@ export async function openEligibility({
     entries.categories(),
     entries.correctionCategories(),
   ]);
-  const mix = await openMix({ edition, categories: { word, correction }, userState, eligibility });
-  const rarityRange = await openRarityRange({ edition, userState, eligibility });
-  const hiddenEntries = await openHiddenEntries({ rows, userState, clock, eligibility });
+  const mix = await openMix({
+    edition,
+    categories: { word, correction },
+    userState,
+    eligibility: followed,
+  });
+  const rarityRange = await openRarityRange({ edition, userState, eligibility: followed });
+  const hiddenEntries = await openHiddenEntries({ rows, userState, clock, eligibility: followed });
   return { entries, rows, mix, rarityRange, hiddenEntries };
 }

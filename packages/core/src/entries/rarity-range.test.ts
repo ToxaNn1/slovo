@@ -179,6 +179,42 @@ describe('the Rarity Range', () => {
     expect(await raritiesInFeed(app)).toEqual(new Set([1, 2, 3]));
   });
 
+  it('is set by a Rarity Test whose following of eligibility fails, and the error is reported', async () => {
+    const pack = content();
+    let failing = false;
+    let written = false;
+    const reported: unknown[] = [];
+    const port = createMemoryUserStatePort();
+    const app = await openComposition({
+      content: {
+        ...pack,
+        getEntries: (ids) =>
+          written ? Promise.reject(new Error('The pack is busy')) : pack.getEntries(ids),
+      },
+      edition: edition({}),
+      userState: await openUserState({
+        port: {
+          ...port,
+          write: async (changes) => {
+            await port.write(changes);
+            written = failing;
+          },
+        },
+      }),
+      clock: fakeClock().clock,
+      random: seededRandom(11),
+      reportError: (error) => reported.push(error),
+    });
+    await app.feed.show(0);
+    const answers = await answer(app, [1, 2, 3, 4, 5]);
+    failing = true;
+
+    expect((await app.rarityTest.apply(answers))?.top).toBe(1);
+
+    expect(app.rarityRange.state).toEqual({ from: 1, to: 1 });
+    expect(reported).toEqual([new Error('The pack is busy')]);
+  });
+
   it('is set to «від 1 до 5» by a Rarity Test the reader knows every Word of', async () => {
     const app = await open({ ceiling: 2 });
 
