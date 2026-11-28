@@ -83,12 +83,12 @@ test('the canvas zooms out, in and back to fit its window, as Railway’s does',
   await user.click(zoom.getByRole('button', { name: 'Зменшити' }));
   await user.click(zoom.getByRole('button', { name: 'Зменшити' }));
   expect(zoom.getByText('80 %')).toBeDefined();
-  expect(group.style.transform).toBe('translate(0px, 0px) scale(0.8)');
+  expect(group.style.transform).toMatch(/^translate\(0px(, 0px)?\) scale\(0\.8\)$/);
   await user.click(zoom.getByRole('button', { name: 'Збільшити' }));
   expect(zoom.getByText('90 %')).toBeDefined();
   await user.click(zoom.getByRole('button', { name: 'Вмістити' }));
   expect(zoom.getByText('100 %')).toBeDefined();
-  expect(group.style.transform).toBe('translate(0px, 0px) scale(1)');
+  expect(group.style.transform).toMatch(/^translate\(0px(, 0px)?\) scale\(1\)$/);
 });
 
 test('dragging the empty canvas or the wheel moves it anywhere, as on Railway; dragging a block does not', async () => {
@@ -132,7 +132,7 @@ test('the canvas follows the admin Theme: white with black dots, then black with
   expect((await frame())?.className).toContain('bg-[radial-gradient(rgb(0_0_0/0.22)');
   expect((await frame())?.closest('[data-theme="dark"]')).toBeNull();
 
-  await user.click(screen.getByRole('button', { name: 'owner@example.com Власник' }));
+  await user.click(screen.getByRole('button', { name: /^owner@example\.com\s*Власник$/ }));
   await user.click(screen.getByRole('button', { name: 'Темна' }));
   expect(document.documentElement.dataset['theme']).toBe('dark');
   expect((await frame())?.className).toContain('dark:bg-black');

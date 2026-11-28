@@ -228,7 +228,9 @@ async function openTab(user: ReturnType<typeof userEvent.setup>, name: string) {
 /** Turns the feature off with the Аварійний вимикач tab, giving the reason. */
 async function kill(user: ReturnType<typeof userEvent.setup>, feature: string, reason: string) {
   await openTab(user, 'Аварійний вимикач');
-  await user.click(await screen.findByRole('button', { name: new RegExp(`^${feature} `) }));
+  await user.click(
+    await screen.findByRole('button', { name: new RegExp(`^${feature}(?![\\w-])`) }),
+  );
   const panel = within(screen.getByRole('region', { name: 'Аварійний вимикач' }));
   expect(panel.getByText(`Вимкнеться «${feature}» · усі Editions`)).toBeDefined();
   await user.click(panel.getByRole('button', { name: 'Вимкнути зараз' }));

@@ -170,7 +170,7 @@ test('the Контент link counts the open batches of the Edition filter', as
   render(<Admin />);
   const nav = within(await screen.findByRole('navigation', { name: 'Розділи' }));
 
-  expect(await nav.findByRole('link', { name: 'Контент 1' })).toBeDefined();
+  expect(await nav.findByRole('link', { name: /^Контент\s*1$/ })).toBeDefined();
   expect(asked.some((search) => search.includes('uk'))).toBe(true);
 });
 

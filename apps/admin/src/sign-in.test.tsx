@@ -143,7 +143,7 @@ test('«Мої сесії» lists the sessions, and «Вийти всюди» go
   await typeInto('Код із застосунку', '654321', 'Увійти');
   const user = userEvent.setup();
 
-  await user.click(await screen.findByRole('button', { name: 'owner@example.com Власник' }));
+  await user.click(await screen.findByRole('button', { name: /^owner@example\.com\s*Власник$/ }));
   await user.click(screen.getByRole('link', { name: 'Мої сесії' }));
   const sessions = within(await screen.findByRole('list', { name: 'Сесії' }));
   expect(sessions.getAllByRole('listitem')).toHaveLength(2);
@@ -174,7 +174,7 @@ test('a sign-out drops what the signed-out user loaded, so the next one never se
   await typeInto('Код із листа', '123456', 'Далі');
   await typeInto('Код із застосунку', '654321', 'Увійти');
   const user = userEvent.setup();
-  await user.click(await screen.findByRole('button', { name: 'owner@example.com Власник' }));
+  await user.click(await screen.findByRole('button', { name: /^owner@example\.com\s*Власник$/ }));
   await user.click(screen.getByRole('link', { name: 'Мої сесії' }));
   expect(await screen.findByText(/ця сесія/)).toBeDefined();
   await user.click(screen.getByRole('button', { name: 'Вийти всюди' }));

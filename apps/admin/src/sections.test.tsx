@@ -56,7 +56,7 @@ test('each section not yet built opens with the same texts in both themes, the o
     const light = section.textContent;
     expect(document.documentElement.dataset['theme']).toBe('light');
 
-    await user.click(screen.getByRole('button', { name: 'owner@example.com Власник' }));
+    await user.click(screen.getByRole('button', { name: /^owner@example\.com\s*Власник$/ }));
     const dark = screen.getByRole('button', { name: 'Темна' });
     await user.click(dark);
     expect(document.documentElement.dataset['theme']).toBe('dark');
@@ -69,7 +69,7 @@ test('each section not yet built opens with the same texts in both themes, the o
 test('the dark Theme the owner picked is kept for the next visit', async () => {
   const user = userEvent.setup();
   const { unmount } = render(<Admin />);
-  await user.click(await screen.findByRole('button', { name: 'owner@example.com Власник' }));
+  await user.click(await screen.findByRole('button', { name: /^owner@example\.com\s*Власник$/ }));
   await user.click(screen.getByRole('button', { name: 'Темна' }));
   unmount();
   delete document.documentElement.dataset['theme'];

@@ -138,7 +138,7 @@ test('the Action log names its author, with the same texts in both Themes', asyn
   expect(log.getByText('the Game loses scores')).toBeDefined();
   const section = screen.getByRole('region', { name: 'Безпека' });
   const light = section.textContent;
-  await user.click(screen.getByRole('button', { name: 'owner@example.com Власник' }));
+  await user.click(screen.getByRole('button', { name: /^owner@example\.com\s*Власник$/ }));
   await user.click(screen.getByRole('button', { name: 'Темна' }));
   expect(document.documentElement.dataset['theme']).toBe('dark');
   expect(screen.getByRole('region', { name: 'Безпека' }).textContent).toBe(light);

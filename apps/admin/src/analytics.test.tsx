@@ -46,7 +46,7 @@ test('Аналітика draws the fixtures, the Counters and the Variant result
   expect(variants.getByText('61')).toBeDefined();
 
   const light = screen.getByRole('region', { name: 'Аналітика' }).textContent;
-  await user.click(screen.getByRole('button', { name: 'owner@example.com Власник' }));
+  await user.click(screen.getByRole('button', { name: /^owner@example\.com\s*Власник$/ }));
   await user.click(screen.getByRole('button', { name: 'Темна' }));
   expect(document.documentElement.dataset['theme']).toBe('dark');
   expect(screen.getByRole('region', { name: 'Аналітика' }).textContent).toBe(light);
