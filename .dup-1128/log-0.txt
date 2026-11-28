@@ -1,0 +1,7 @@
+# snapshot content v13088
+NOEDIT 0 афронт
+RETIRE 0 афронт w_atuc2s v2 content v13089 batch f45d1a05-684f-4871-8fa8-109fbba80677
+EDIT 1 бурозубка w_vlrqfu v2 content v13090 batch c88d4bb7-910e-48e1-a04a-6e0700df91d3
+RETIRE 1 бурозубка w_ypighe v3 content v13091 batch a4dc12c3-1929-470d-9d65-e8dabbc704ff
+NOEDIT 2 бювар
+RETIRE 2 бювар w_0h1sxs v2 content v13092 batch e384f78f-752b-4d43-8756-ad94e8d536b4
