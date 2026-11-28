@@ -10,6 +10,7 @@ import {
   Text,
   View,
   type HostInstance,
+  type ViewProps,
 } from 'react-native';
 import Animated, {
   Easing,
@@ -266,6 +267,11 @@ export function OnboardingStep({
   const open = useSharedValue(introStep ? 0 : 1);
   const [givenWay, setGivenWay] = useState(false);
   const opened = !introStep || givenWay || known === true;
+  // Under the red, the content and the buttons stay out of reach of VoiceOver.
+  const underCover: Pick<ViewProps, 'accessibilityElementsHidden' | 'importantForAccessibility'> = {
+    accessibilityElementsHidden: !opened,
+    importantForAccessibility: opened ? 'auto' : 'no-hide-descendants',
+  };
   useEffect(() => {
     if (!introStep || known === undefined) return;
     if (known) open.value = 1;
@@ -376,6 +382,7 @@ export function OnboardingStep({
   const footerBar = (
     <Animated.View
       testID="onboarding-footer"
+      {...underCover}
       onLayout={({ nativeEvent }) => {
         setFooterHeight(nativeEvent.layout.height);
       }}
@@ -401,7 +408,11 @@ export function OnboardingStep({
       >
         {/* The band the red leaves at the top, which the red itself draws. */}
         <View style={{ height: cover.band }} />
-        <Animated.View testID="onboarding-content" style={[styles.content, styles.framed, follow]}>
+        <Animated.View
+          testID="onboarding-content"
+          {...underCover}
+          style={[styles.content, styles.framed, follow]}
+        >
           {body}
         </Animated.View>
         {footerBar}
