@@ -108,7 +108,13 @@ export type ContentWrite =
       readonly recordVersion: number;
       readonly fields: Readonly<Record<string, unknown>>;
     }
-  | { readonly op: 'retire'; readonly id: string; readonly recordVersion: number };
+  | {
+      readonly op: 'retire';
+      readonly id: string;
+      readonly recordVersion: number;
+      /** The Word that replaces the Retired Word (ADR 0214). */
+      readonly replacedBy?: string | undefined;
+    };
 
 /** A record as a row keeps it: the fields with what each save keeps beside them. */
 interface StoredRecord {
@@ -153,6 +159,42 @@ function datedRefusal(
     };
   }
   return undefined;
+}
+
+/**
+ * Why a write is refused by the Word it names as replacing a Retired Word
+ * (ADR 0214): a link, new or changed, names a live Word of the Edition that
+ * is not the Word itself. A link the record already has stays as it is, for
+ * the replacing Word may be Retired later.
+ */
+function replacedByRefusal(
+  kind: RecordKind,
+  id: string,
+  change: ContentWrite,
+  current: StoredRecord | undefined,
+  words: readonly { readonly id: string; readonly fields: { readonly retired?: boolean } }[],
+): Refusal | undefined {
+  const replacedBy = change.op === 'retire' ? change.replacedBy : change.fields['replacedBy'];
+  if (replacedBy === undefined) return undefined;
+  const refusal = (message: string): Refusal => ({
+    rule: 'replaced-by',
+    file: recordFileOf(kind, id),
+    field: 'replacedBy',
+    message,
+  });
+  if (kind !== 'word') {
+    // Of an edit or a create the kind's own schema speaks.
+    return change.op === 'retire'
+      ? refusal('Only a Word names the Word that replaces it')
+      : undefined;
+  }
+  const had =
+    current !== undefined && 'replacedBy' in current.fields ? current.fields.replacedBy : undefined;
+  if (replacedBy === had) return undefined;
+  if (replacedBy === id) return refusal('A Word is not replaced by itself');
+  return words.some((word) => word.id === replacedBy && !word.fields.retired)
+    ? undefined
+    : refusal(`Not a live Word of the Edition: ${JSON.stringify(replacedBy)}`);
 }
 
 /**
@@ -426,8 +468,18 @@ export function createContentWrites({
           (kind === 'crosswordDay'
             ? String(change.op === 'create' ? change.fields['date'] : '')
             : await newId(tx, editionId, kind));
+        // A new id is registered by now: a refusal rolls it back with the rest.
+        const link = replacedByRefusal(kind, id, change, current, records.word);
+        if (link !== undefined)
+          throw new Refused({ ok: false, reason: 'refused', refusals: [link] });
         const fields =
-          change.op === 'retire' ? { ...current?.fields, retired: true } : change.fields;
+          change.op === 'retire'
+            ? {
+                ...current?.fields,
+                retired: true,
+                ...(change.replacedBy === undefined ? {} : { replacedBy: change.replacedBy }),
+              }
+            : change.fields;
         const fieldsOf = <T>(rows: readonly { readonly fields: T }[]) =>
           rows.map((row) => row.fields);
         const set = contentSetOf({

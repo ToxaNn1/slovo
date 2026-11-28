@@ -157,7 +157,7 @@ A PNG picture a Word may carry above its Definition, kept in the Media Store and
 _Avoid_: Image, picture, Decor (Decor belongs to the Edition's look, not to Words)
 
 **Retired Word**:
-A Word marked Retired in the content database (never deleted), so it leaves the Language Pack and the Patches. It never appears in the Feed, notifications, widgets or the Game, but stays visible wherever the user already keeps it (Favorites, Collections, History).
+A Word marked Retired in the content database (never deleted). Its row stays in the Language Pack, marked Retired, and a Patch carries the mark to a pack that holds the Word. It never appears in the Feed, notifications, widgets or the Game, but stays visible wherever the user already keeps it (Favorites, Collections, History). It may name the Word that replaces it (`replacedBy`): the reader's records of it then move to that Word, on every device (ADR 0214). A Retired Entry is never due for Review.
 _Avoid_: Deleted word
 
 **Lemma**:
@@ -203,7 +203,7 @@ A real use of a Correction's standard form in literature, quoted with its author
 _Avoid_: Quote, citation (a citation is a source)
 
 **Retired Correction**:
-A Correction marked Retired in the content database (never deleted), so it leaves the Language Pack and the Patches. Like a Retired Word, it never appears anywhere new and is no longer linked from Words, but stays visible wherever the user already keeps it.
+A Correction marked Retired in the content database (never deleted). Like a Retired Word, its row stays in the Language Pack, marked Retired, and a Patch carries the mark to a pack that holds the Correction; it never appears anywhere new and is no longer linked from Words, but stays visible wherever the user already keeps it.
 _Avoid_: Deleted correction
 
 **Correction Type**:
@@ -218,7 +218,7 @@ What kind of fixed expression an Idiom is: `idiom` («фразеологізм»
 _Avoid_: Subtype, kind (a kind is Word, Correction, Idiom, Synonym Row or Tip)
 
 **Retired Idiom**:
-An Idiom marked Retired in the content database (never deleted), so it leaves the Language Pack and the Patches. Like a Retired Word, it never appears anywhere new, but stays visible wherever the user already keeps it.
+An Idiom marked Retired in the content database (never deleted). Like a Retired Word, its row stays in the Language Pack, marked Retired, and a Patch carries the mark to a pack that holds the Idiom; it never appears anywhere new, but stays visible wherever the user already keeps it.
 _Avoid_: Deleted idiom
 
 **Synonym Row**:

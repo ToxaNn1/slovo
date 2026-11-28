@@ -312,6 +312,70 @@ describe('the content write API', () => {
     expect(after.words.find(({ id }) => id === created.id)).toMatchObject({ lemma: 'обручик' });
   });
 
+  it('retires a Word naming the live Word that replaces it, and refuses any other link, new or changed', async () => {
+    const { client, agent, batchId } = await contentBackend();
+    const before = await snapshotOf(client);
+    const named = new Set([
+      ...before.curatedCollections.flatMap(({ entryIds }) => entryIds),
+      ...before.synonymRows.flatMap((row) => [row.dominant, ...row.members].map((m) => m.wordId)),
+    ]);
+    const [first, second] = before.words.filter(
+      (word) => !word.retired && word.id !== WORD_ID && !named.has(word.id),
+    );
+    const gone = before.words.find((word) => word.retired);
+    const correction = before.corrections.find((found) => !found.retired);
+    if (!first || !second || !gone || !correction) throw new Error('no fixture records');
+    const retire = { editionId: 'uk', kind: 'word', id: WORD_ID, batchId } as const;
+    const refused = (message: string) => ({
+      code: 'REFUSED',
+      data: { refusals: [{ rule: 'replaced-by', field: 'replacedBy', message }] },
+    });
+
+    for (const replacedBy of ['w_zzzzzz', gone.id]) {
+      await expect(
+        agent.admin.content.retire({ ...retire, recordVersion: 1, replacedBy }),
+      ).rejects.toMatchObject(refused(`Not a live Word of the Edition: "${replacedBy}"`));
+    }
+    await expect(
+      agent.admin.content.retire({ ...retire, recordVersion: 1, replacedBy: WORD_ID }),
+    ).rejects.toMatchObject(refused('A Word is not replaced by itself'));
+    await expect(
+      agent.admin.content.retire({
+        ...retire,
+        kind: 'correction',
+        id: correction.id,
+        recordVersion: 1,
+        replacedBy: first.id,
+      }),
+    ).rejects.toMatchObject(refused('Only a Word names the Word that replaces it'));
+    expect((await snapshotOf(client)).contentVersion).toBe(before.contentVersion);
+
+    await agent.admin.content.retire({ ...retire, recordVersion: 1, replacedBy: first.id });
+    const linked = { retired: true, replacedBy: first.id };
+    expect(await wordOf(client, WORD_ID)).toMatchObject(linked);
+    // A retire that names no Word keeps the link the Word has.
+    await agent.admin.content.retire({ ...retire, recordVersion: 2 });
+    expect(await wordOf(client, WORD_ID)).toMatchObject(linked);
+
+    // The replacing Word may be Retired later: the link stays, and a save that keeps it passes.
+    await agent.admin.content.retire({ ...retire, id: first.id, recordVersion: 1 });
+    const word = await wordOf(client, WORD_ID);
+    const edit = (recordVersion: number, fields: Partial<typeof word>) =>
+      agent.admin.content.edit({
+        ...retire,
+        recordVersion,
+        fields: { ...word, ...fields },
+      });
+    await edit(3, { primaryDefinition: 'Невелике кільце на палець.' });
+    expect(await wordOf(client, WORD_ID)).toMatchObject(linked);
+    // An already Retired Word takes a link, and a changed link is checked anew.
+    await expect(edit(4, { replacedBy: gone.id })).rejects.toMatchObject(
+      refused(`Not a live Word of the Edition: "${gone.id}"`),
+    );
+    await agent.admin.content.retire({ ...retire, recordVersion: 4, replacedBy: second.id });
+    expect(await wordOf(client, WORD_ID)).toMatchObject({ retired: true, replacedBy: second.id });
+  });
+
   it('refuses a write without a token, with the app Session, or before the Edition is imported', async () => {
     const backend = await contentBackend();
     const word = await wordOf(backend.client, WORD_ID);

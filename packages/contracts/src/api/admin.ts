@@ -20,6 +20,7 @@ import {
   RuleVerdictSchema,
 } from '../feature-switch-rules';
 import { IdiomTypeSchema } from '../idiom';
+import { WordIdSchema } from '../word';
 import { MistakeTypeSchema } from '../mistake-report';
 import { ADMIN_ERRORS } from './admin-errors';
 import { procedure } from './procedure';
@@ -568,6 +569,11 @@ const contentWriteContract = {
         id: z.string(),
         batchId: BatchIdSchema,
         recordVersion: z.number().int().positive(),
+        /**
+         * The Word that replaces a Retired Word, so the reader's records move
+         * to it (ADR 0214): a live Word of the Edition, never the Word itself.
+         */
+        replacedBy: WordIdSchema.optional(),
         reason: ReasonSchema.optional(),
       }),
     )

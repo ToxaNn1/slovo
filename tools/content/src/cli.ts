@@ -5,6 +5,7 @@
  *   pnpm content add <kind> <array.json | drafts folder> --edition <id>
  *   pnpm content edit <kind> <id> <file.json> --edition <id>
  *   pnpm content retire <kind> <id> --edition <id>
+ *   pnpm content retire word <id> --replaced-by <id> --edition <id>
  *   pnpm content flag <kind> <id> --reason <text> --edition <id>
  *   pnpm content have --edition <id> [--kind <kind>]
  *   pnpm content counts --edition <id>
@@ -56,6 +57,7 @@ const USAGE = [
   `Usage: pnpm content add ${KINDS} <array.json | drafts folder> --edition <id>`,
   `       pnpm content edit ${KINDS} <id> <file.json> --edition <id>`,
   `       pnpm content retire ${KINDS} <id> --edition <id>`,
+  `       pnpm content retire word <id> --replaced-by <id> --edition <id>`,
   `       pnpm content flag ${KINDS} <id> --reason <text> --edition <id>`,
   `       pnpm content have --edition <id> [--kind ${KINDS}]`,
   '       pnpm content counts --edition <id>',
@@ -98,6 +100,7 @@ async function main(): Promise<number> {
       edition: { type: 'string' },
       kind: { type: 'string' },
       reason: { type: 'string' },
+      'replaced-by': { type: 'string' },
       changed: { type: 'string' },
       book: { type: 'string' },
       cache: { type: 'string' },
@@ -178,8 +181,13 @@ async function main(): Promise<number> {
       ? 1
       : edit(api, { editionId, kind, id: first, file: here(second) }, terminal);
   }
+  const replacedBy = values['replaced-by'];
+  // Only the retire of a Word names the Word that replaces it (ADR 0214).
+  if (replacedBy !== undefined && (command !== 'retire' || kind !== 'word')) return usage();
   if (command === 'retire' && args.length === 1 && first !== undefined) {
-    return api === undefined ? 1 : retire(api, { editionId, kind, id: first }, terminal);
+    return api === undefined
+      ? 1
+      : retire(api, { editionId, kind, id: first, replacedBy }, terminal);
   }
   if (
     command === 'flag' &&

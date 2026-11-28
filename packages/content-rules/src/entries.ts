@@ -93,6 +93,7 @@ export function checkEntries(
   const categoriesRequiringHistory = new Set(config.categoriesRequiringHistory);
   const originCodes = new Set(config.originLanguages.map(({ code }) => code));
   const correctionIds = new Set(corrections.map(({ entry }) => entry.id));
+  const wordIds = new Set(words.map(({ entry }) => entry.id));
   const fileById = new Map<string, string>();
 
   for (const { file, entry } of [...words, ...corrections, ...idioms]) {
@@ -147,6 +148,11 @@ export function checkEntries(
         fail('word-correction', `correctionIds.${String(index)}`, `Unknown Correction "${id}"`);
       }
     });
+
+    // The replacing Word may itself be Retired later, so it only has to exist (ADR 0214).
+    if (word.replacedBy !== undefined && !wordIds.has(word.replacedBy)) {
+      fail('replaced-by', 'replacedBy', `Unknown Word "${word.replacedBy}"`);
+    }
 
     if (!checksFile(file)) continue;
 

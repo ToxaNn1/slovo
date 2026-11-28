@@ -157,6 +157,17 @@ describe('openPack', () => {
     });
   });
 
+  it('refuses a pack built before a Retired Word named the Word replacing it, whose Words have no column for it', async () => {
+    const file = builtPack();
+    editMetadata(file, 'ALTER TABLE words DROP COLUMN replaced_by');
+
+    expect(await open(file, { bundle: 'fixture', native: 'fixture' })).toEqual({
+      ok: false,
+      reason:
+        'The Language Pack was built before a Retired Word named the Word that replaces it: its Words have no replaced_by column. Rebuild the Language Pack.',
+    });
+  });
+
   it.each(['edition_id', 'content_version', 'pack_format'])(
     'fails on a pack whose metadata has no %s',
     async (key) => {

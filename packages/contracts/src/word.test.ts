@@ -70,4 +70,15 @@ describe('a Word', () => {
       primaryDefinition: noun.primaryDefinition,
     });
   });
+
+  it('takes the Word that replaces it on a Retired Word alone, never itself', () => {
+    expect(issuesOf({ ...noun, retired: true, replacedBy: 'w_2' })).toBeUndefined();
+    expect(WordSchema.parse({ ...noun, retired: true, replacedBy: 'w_2' }).replacedBy).toBe('w_2');
+    expect(issuesOf({ ...noun, replacedBy: 'w_2' })).toEqual([
+      ['replacedBy', 'Only a Retired Word names the Word that replaces it'],
+    ]);
+    expect(issuesOf({ ...noun, retired: true, replacedBy: 'w_1' })).toEqual([
+      ['replacedBy', 'A Word is not replaced by itself'],
+    ]);
+  });
 });

@@ -233,6 +233,41 @@ describe('Knowledge Marks', () => {
     expect(told).toBe(2);
   });
 
+  it('never has a Retired Entry due for Review: not among the due Entries, the weak ones or Progress', async () => {
+    const time = fakeClock('2026-10-19T09:00:00.000Z');
+    const records = new Map<string, string>();
+    const app = await run({ records, clock: time.clock });
+    await app.knowledge.tap('w_one', 'known');
+    await app.knowledge.tap('w_one', 'unknown');
+    await app.knowledge.tap('w_two', 'unknown');
+    await app.knowledge.tap('w_three', 'known');
+    await app.knowledge.tap('w_three', 'unknown');
+    await app.knowledge.tap('w_three', 'known');
+    time.advance(3 * DAY);
+    await app.resume();
+    expect(app.knowledge.state.due).toEqual(['w_one', 'w_two', 'w_three']);
+    expect(app.progress.state.dueToday).toBe(3);
+
+    // A Patch retires two of them, and the app opens again over the pack (ADR 0090).
+    const patched = await run({
+      records,
+      clock: time.clock,
+      pack: createMemoryContentPort({
+        words: [
+          word('w_one', { retired: true }),
+          word('w_two'),
+          word('w_three', { retired: true }),
+        ],
+      }),
+    });
+
+    expect(patched.knowledge.state.due).toEqual(['w_two']);
+    expect(patched.knowledge.weak()).toEqual(['w_one', 'w_two']);
+    expect(patched.progress.state.dueToday).toBe(1);
+    // Its card, where the reader keeps it, reads as before.
+    expect(patched.knowledge.state.shown.get('w_one')).toBe('review');
+  });
+
   it('keeps a due Entry out of the Mix in the «Вчу» list and the due Entries', async () => {
     const time = fakeClock('2026-10-19T09:00:00.000Z');
     const app = await run({ clock: time.clock });
