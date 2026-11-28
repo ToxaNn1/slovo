@@ -332,6 +332,9 @@ export function createApp({
     hmacSha1,
     vault: createSecretVault(authSecret),
     codeEmail: adminCodeEmail,
+    onCodeNotSent: (error) => {
+      logger.error({ err: error }, 'admin sign-in code not sent');
+    },
   });
   const adminAnalytics = createAdminAnalytics({
     posthog,

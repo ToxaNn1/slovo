@@ -112,6 +112,7 @@ export function createAdminSignIn({
   hmacSha1,
   vault,
   codeEmail,
+  onCodeNotSent,
 }: {
   store: AdminStore;
   clock: Clock;
@@ -126,6 +127,8 @@ export function createAdminSignIn({
   vault: SecretVault;
   /** The email that carries a sign-in code, in the admin's language. */
   codeEmail: (code: string) => Omit<Mail, 'to'>;
+  /** Told of a code email that failed, which the request never waits for. */
+  onCodeNotSent: (error: unknown) => void;
 }): AdminSignIn {
   const letters = (length: number, alphabet = LETTERS) =>
     Array.from({ length }, () => alphabet.charAt(random.int(alphabet.length))).join('');
@@ -242,7 +245,9 @@ export function createAdminSignIn({
         codeHash: codeHashOf(email, code),
         expiresAt: new Date(clock.now().getTime() + CODE_LIFETIME_MS),
       });
-      await mailer.send({ to: email, ...codeEmail(code) });
+      // Not awaited: an email that exists would otherwise answer later, or
+      // fail where an unknown one never does, and tell that it exists.
+      mailer.send({ to: email, ...codeEmail(code) }).catch(onCodeNotSent);
     },
 
     async verifyCode(given, code) {

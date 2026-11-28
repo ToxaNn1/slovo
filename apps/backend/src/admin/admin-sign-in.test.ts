@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
 
 import { createAdminAccess, systemClock, totpOf } from '@slovo/server-core';
-import { describe, expect, it } from 'vitest';
+import { pino } from 'pino';
+import { describe, expect, it, vi } from 'vitest';
 
 import { eq } from 'drizzle-orm';
 
@@ -63,6 +64,22 @@ describe('the admin sign-in', () => {
     expect(set).toContain('Secure');
     expect(set).toContain('SameSite=Strict');
     expect(cookie).toMatch(/^slovo_admin_session=.+/);
+  });
+
+  it('answers an Admin user the same when the code email fails, and logs the failure', async () => {
+    const lines: string[] = [];
+    const logger = pino({ level: 'error' }, { write: (line: string) => lines.push(line) });
+    const backend = testApp({ logger });
+    const { email } = await signedInAdmin(backend, 'owner');
+    backend.mailer.failNext();
+
+    await expect(backend.clientWith(adminHeaders()).admin.requestCode({ email })).resolves.toEqual({
+      sent: true,
+    });
+    await vi.waitFor(() => {
+      expect(lines.join('')).toContain('admin sign-in code not sent');
+    });
+    expect(lines.join('')).not.toContain(email);
   });
 
   it('answers the same for an email with no Admin user, and sends it nothing', async () => {
