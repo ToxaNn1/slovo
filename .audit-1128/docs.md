@@ -78,7 +78,7 @@ Evidence: `tools/content/src/cli.ts:5-13` (usage), `:173-193` (dispatch).
 
 `pnpm admin` is a CLI with only `owner add`, `agent add|revoke`, `check add|import` (`apps/backend/src/admin/admin-command.ts:26-30`). Rules and force-update minimums are set in the Owner admin web app (`apps/admin/src/routes/switches.rule.tsx`, `switches.kill.tsx`), served at `/admin`.
 
-БУЛО: «the HTML admin (`pnpm admin`) sets the other Rules» / СТАЛО: «the Owner admin (`/admin`, «Перемикачі») sets the other Rules»
+БУЛО: «the HTML admin (`pnpm admin`) sets the other Rules» / СТАЛО: «the Owner admin (`/admin`, «Свічі») sets the other Rules»
 
 ### F11. README.md:53 — Core constant `LEGAL_SITE` — CONFIRMED
 
@@ -122,3 +122,30 @@ The heading is `## Run the UA Edition on the simulator` (`README.md:57`), whose 
 
 БУЛО: «ESLint in every package, then Prettier.» / СТАЛО: «oxlint, the ADR index check, ESLint in every package, then Prettier.»
 
+### F17. docs/react-native.md:12 — "a folder has no `index.ts` barrel" against its own line 19 — CONFIRMED
+
+`:12` says no folder has an `index.ts` barrel; `:19` says `tokens/index.ts` re-exports every token file, and it does (`packages/ui/src/tokens/index.ts`); `packages/contracts/src/edition-strings/index.ts` is a second one.
+
+БУЛО: «a folder has no `index.ts` barrel» / СТАЛО: «a folder has no `index.ts` barrel, except `packages/ui/src/tokens/` (one import path for the tokens) and `packages/contracts/src/edition-strings/`»
+
+## Checked, no defect
+
+- Every root `pnpm <script>` a doc names exists in `package.json`; per-package ones (`start`, `test:smoke`, `db:generate`, `db:migrate`, `import-media`, `quote-check`, `recordings`, `describe-api`) exist in their packages and the docs run them in that package or through `--filter`.
+- `pnpm -s adr:index`, `--next`, `--check` (`scripts/adr-index.mjs:8-9`); `docs/adr/retired.md` exists; `docs/adr/README.md` is generated.
+- `.claude/hooks/*`: the token budget (200k / 230k, fork 60k, file 40 KB, brief 1.5 KB, handoff 2 KB) and `commit-messages.mjs` (commit and push checks) are wired in `.claude/settings.json` and do what `CLAUDE.md` and `map.md` say; the `mattpocock-skills` plugin is enabled.
+- `commitlint.config.js`: types and scopes (workspace folder names, `deps`, `deps-dev`, `test`) as `CLAUDE.md` says; CI "Commit messages" checks authors and AI attribution (`.github/workflows/commitlint.yml:81-101`).
+- `docs/deploy.md`: the variables table matches `apps/backend/src/config.ts` and `.env.example` one to one; `.railway/railway.ts` services, Dockerfiles, commands, schedules, restarts, `preDeploy: 'pnpm db:migrate'` (the image's WORKDIR is `apps/backend`), staging port 8080 and domain; `scripts/staging.ts wizard|reset`; CI deploy job and `SLOVO_BACKEND_URL`; the Owner admin's eight sections (`apps/admin/src/sections.ts`); `pnpm admin owner|agent|check`; «Сервіси» eleven Services.
+- `compose.yaml` ports 55432 / 8025 and their variables; `/health`, `content/latest|packs|patch|snapshot` routes (`packages/contracts/src/api/content.ts`); `pnpm reports list|resolve`, `pnpm collection-links delete`, `pnpm switches off`; `housekeeping.yml` runs `pnpm audit` and Knip daily.
+- `docs/property-tests.md`: fast-check only in `packages/core` and `packages/language-pack`; `local-date.property.test.ts` follows the naming.
+- `docs/react-native.md`: every path, the dependency-cruiser rule, `edition-tabs.tsx`, `test-render.ts` helpers, `ConfirmationDialog`, `BottomSheet`, `editionStrings`, Expo Router 58, Gesture Handler 3; no `Alert.alert` or `ActionSheetIOS` in app code.
+- `CONTEXT.md`: Feature Switch ids, Game Mode ids, XP log kinds and the commands it names exist in code. _Avoid_ words found in code are justified: `rarityCeiling` (ADR 0156 keeps the switch id), `settings.dailyLimit` (retired record kept for sync), `deletedCollection` (a reader's deleted Collection, not a Retired Curated Collection), `surzhyk` (a Correction Type value), `content_checksum` (a file hash, not the Content version).
+- `docs/agents/domain.md`, `docs/agents/issue-tracker.md`: consistent with `CLAUDE.md`.
+
+## Not finished
+
+Stopped at the 200k soft context limit (`CLAUDE.md`, token budget). Not checked:
+
+- `docs/agents/ticket-brief.md`, `docs/agents/waves.md` (beyond lines 17-19, whose paths and generators exist), `docs/agents/content-wave.md` (beyond lines 1-15), `docs/agents/test-states.md`.
+- `CONTEXT.md` entries one by one against the code beyond the identifiers and commands above (only the _Avoid_ words were swept across code and the in-scope docs).
+- `README.md:146-180` (Atlas, native build checks) and `docs/deploy.md` claims about outside services (Neon, Cloudflare, Railway settings) that the repo cannot show.
+- The push: GitHub declined `git push` of this branch ("push declined due to email privacy restrictions") for the owner identity the environment sets; the commits are local only.
