@@ -288,3 +288,11 @@ describe('following the foreground', () => {
     expect(contentUpdate.contentVersion()).toBe(5);
   });
 });
+
+describe('the memory content store, as the device’s pack', () => {
+  it('refuses a Patch that would lower its content version', async () => {
+    const store = createMemoryContentStore({ contentVersion: 4 });
+
+    await expect(store.apply(patchOf(4, { contentVersion: 3 }), 'etag-3')).rejects.toThrow();
+  });
+});

@@ -64,10 +64,12 @@ export function createMemoryContentStore({
       if (patch.editionId !== editionId || patch.since !== version) {
         return Promise.reject(new Error('The Patch is not for this pack'));
       }
+      if (patch.contentVersion < patch.since) {
+        return Promise.reject(new Error('The Patch would lower the pack'));
+      }
       applied.push(patch);
       take(patch);
-      // A Word the Patch writes anew, or brings a live Recording of, is no longer marked (ADR 0099).
-      for (const word of patch.words) marked.delete(word.id);
+      // As the device's pack: only a live Recording the Patch brings clears a Word's mark (ADR 0099).
       for (const row of patch.recordings) if (!row.retired) marked.delete(row.wordId);
       base = patch.mediaBase;
       version = patch.contentVersion;
