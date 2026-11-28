@@ -1,6 +1,6 @@
 # SLOVO agent guide
 
-SLOVO is a factory of single-language rare-word apps: one language-agnostic Core, many Editions. Read `docs/agents/map.md` for the map; `README.md` is for people.
+SLOVO is a factory of single-language rare-word apps: one language-agnostic Core, many Editions. In heavy mode, read `docs/agents/map.md` for the map; `README.md` is for people.
 
 ## Two modes: pick one yourself
 
@@ -19,12 +19,6 @@ The owner never names the mode. Before any work, pick it from the task and say i
 - Subagents and waves only for a large spec, and only when the owner asks.
 
 **No new process.** Add no rule, hook, check or mechanism unless the owner asks for it. When work feels slow, remove overhead first.
-
-## Core Principles
-
-- **Simplicity First**: Make every change as simple as possible. Impact minimal code.
-- **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
-- **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
 
 ## Source of truth
 

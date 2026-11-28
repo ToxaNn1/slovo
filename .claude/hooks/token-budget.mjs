@@ -21,7 +21,7 @@ const RULES = `SLOVO token budget (enforced by .claude/hooks/token-budget.mjs, l
 - Subagents: a fresh agent with a brief of at most 1.5 KB; never a fork once the context is over 60k. Long results go to a file; return 5-10 lines.
 - Models: code on Opus; Fable only for Core logic, sync, architecture, specs, the version review and proofreading; the coordinator and questions on Opus.
 - Output: read in parts; never print README.md, CONTEXT.md or any file over 40 KB whole; tests and CI logs through tail or grep; a text snapshot before a screenshot.
-- Start from docs/agents/map.md, not README.md.`;
+- Never start from README.md; in heavy mode start from docs/agents/map.md.`;
 
 const HANDOFF = `Do only this, then stop:
 1. Commit and push finished work on your branch if your permission allows it (git commands still run).
