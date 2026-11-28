@@ -16,7 +16,7 @@ The CEO runs this every day so that the Board is fresh before the owner's 9:00 T
 4. **Pace.** Compare the week's downloads with the plan. Under 70 % two weeks in a row: ask the Marketer for the card «Вмикаємо бюджет».
 5. **Hand-out.** Start the specialists whose work is due today, each with a brief of at most 1.5 KB: the goal, what is ruled out, files by path, the result format. A task over 2 hours becomes a card first.
 6. **Cards.** File the cards that today's state calls for. Every open risk to the 15.12 release has one.
-7. **Journal.** One entry for the standup, one for each action taken.
+7. **Journal.** One entry for the standup, one for each action taken. Then save the day's entries, oldest first, to `~/Downloads/WORD/office/journal/<YYYY-MM-DD>.md`: the owner's copy outside the Board.
 8. **Summary.** Reply in Ukrainian, 10 lines at most: new cards by priority, the three KPIs against the plan, what the team does today, what waits for the owner longest.
 
 ## The schedule
