@@ -350,6 +350,19 @@ export const userStateMigrations: readonly UserStateMigration[] = [
       return changes;
     },
   },
+  // 1.0: the Statistics consent of a reader who finished the onboarding before
+  // ADR 0210 and kept no choice is settled once (ADR 0212): marked here, since
+  // the region and the time zone are known only to the composition, which
+  // keeps the switch off where the reader would be asked and removes the mark.
+  {
+    version: 10,
+    async migrate({ get }) {
+      const due =
+        (await get('onboarding.finished')) !== undefined &&
+        (await get('settings.shareCounters')) === undefined;
+      return due ? new Map([['statisticsConsent.due', 'true']]) : new Map();
+    },
+  },
 ];
 
 /** The Mix record of each kind of Entry beside Words, by kind. */

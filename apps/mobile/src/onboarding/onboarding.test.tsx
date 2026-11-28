@@ -307,9 +307,12 @@ describe('the Statistics consent', () => {
     isFeatureEnabled: (feature) =>
       feature === 'statisticsConsent' || shipped.isFeatureEnabled(feature),
   };
-  /** Draws the onboarding of a new reader on a phone of `region`, none where the locale names none. */
+  /** Draws the onboarding of a new reader on a phone of `region`, none where the locale names none, in Kyiv time. */
   const onPhoneOf = (region: string | undefined) =>
-    renderOnboarding(consentOn, statisticsConsentFor(consentOn, region));
+    renderOnboarding(
+      consentOn,
+      statisticsConsentFor(consentOn, { region, timeZone: 'Europe/Kyiv' }),
+    );
   const shares = async () =>
     (await createSettings({ userState: readerState, defaults: shipped.userSettingDefaults }).read())
       .shareCounters;

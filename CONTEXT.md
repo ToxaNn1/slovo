@@ -470,7 +470,7 @@ Reader-consented product events (onboarding steps, Games, Review, goals, Streak 
 _Avoid_: Tracking, telemetry, stats (the reader's own numbers)
 
 **Statistics consent**:
-The question the onboarding asks a reader whose phone's region is in the EEA or unknown, with two equal choices, before anything is sent: the answer sets «Ділитися анонімною статистикою», which is off for that reader until they choose and on for every other reader (ADR 0210).
+The question the onboarding asks a reader whose phone's region is in the EEA or unknown, or whose phone's time zone is in the EEA, with two equal choices, before anything is sent: the answer sets «Ділитися анонімною статистикою», which is off for that reader until they choose and on for every other reader (ADR 0210, 0212).
 _Avoid_: Cookie banner, GDPR prompt, tracking prompt, opt-in
 
 **Mistake Report**:
