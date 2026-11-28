@@ -14,23 +14,30 @@ const CODE_REQUESTS = 20;
  * A backend behind a proxy that trusts the hops given: every request comes
  * on a connection from the proxy, with the forwarded header it brings.
  */
-function behindProxy(trustedProxyHops: number) {
-  const backend = testApp({ trustedProxyHops });
+function behindProxy(trustedProxyHops: number, edgeSecret?: string) {
+  const backend = testApp({ trustedProxyHops, edgeSecret });
   const proxy = newIp();
-  const requestCode = (forwardedFor: string) =>
+  const requestCode = (forwardedFor: string, headers: Record<string, string> = {}) =>
     backend.request(
       '/v1/account/sign-in-codes',
       {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-forwarded-for': forwardedFor },
+        headers: {
+          'content-type': 'application/json',
+          'x-forwarded-for': forwardedFor,
+          ...headers,
+        },
         body: JSON.stringify({ email: newEmail(), editionId: 'uk' }),
       },
       proxy,
     );
   /** Sends as many code requests as one IP address may with the forwarded headers it is given. */
-  const useUpTheLimit = async (forwardedFor: () => string) => {
+  const useUpTheLimit = async (
+    forwardedFor: () => string,
+    headers: () => Record<string, string> = () => ({}),
+  ) => {
     for (let sent = 0; sent < CODE_REQUESTS; sent++) {
-      expect((await requestCode(forwardedFor())).status).toBe(200);
+      expect((await requestCode(forwardedFor(), headers())).status).toBe(200);
     }
   };
   return { requestCode, useUpTheLimit };
@@ -91,6 +98,36 @@ describe('with two trusted proxy hops, Cloudflare in front of Railway', () => {
     await useUpTheLimit(() => `${newIp()}, ${caller}`);
 
     expect((await requestCode(`${newIp()}, ${caller}`)).status).toBe(429);
+  });
+});
+
+describe("with two trusted proxy hops and the secret header of the app's Cloudflare zone", () => {
+  const cloudflare = '172.64.1.10';
+  const secret = `edge-${randomUUID()}`;
+  const ours = { 'x-slovo-edge-secret': secret };
+
+  it('counts the client Cloudflare forwarded for when the zone set the header', async () => {
+    const { requestCode, useUpTheLimit } = behindProxy(2, secret);
+    const client = newIp();
+    await useUpTheLimit(
+      () => `${newIp()}, ${client}, ${cloudflare}`,
+      () => ours,
+    );
+
+    expect((await requestCode(`${client}, ${cloudflare}`, ours)).status).toBe(429);
+    expect((await requestCode(`${newIp()}, ${cloudflare}`, ours)).status).toBe(200);
+  });
+
+  it("counts Cloudflare's hop, not the forged client, when another zone or a Worker sent it", async () => {
+    const { requestCode, useUpTheLimit } = behindProxy(2, secret);
+    // Through Cloudflare, but not the app's zone: no header, or a wrong one.
+    let sent = 0;
+    await useUpTheLimit(
+      () => `${newIp()}, ${cloudflare}`,
+      () => (sent++ % 2 === 0 ? {} : { 'x-slovo-edge-secret': `${secret}x` }),
+    );
+
+    expect((await requestCode(`${newIp()}, ${cloudflare}`)).status).toBe(429);
   });
 });
 

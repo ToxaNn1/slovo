@@ -541,6 +541,17 @@ describe('the server', { timeout: 30_000 }, () => {
     expect(server.output().stderr).toContain('TRUSTED_PROXY_HOPS: must be 2 or less');
   });
 
+  it('refuses to start with an EDGE_SECRET but not two trusted proxy hops, naming it', async () => {
+    const server = runServer({
+      ...VALID_ENV,
+      TRUSTED_PROXY_HOPS: '1',
+      EDGE_SECRET: 'a'.repeat(32),
+    });
+
+    expect(await server.exited).toBe(1);
+    expect(server.output().stderr).toContain('EDGE_SECRET: needs TRUSTED_PROXY_HOPS=2');
+  });
+
   it('stops on SIGTERM', async () => {
     const server = runServer({ ...VALID_ENV, DATABASE_URL: testDatabaseUrl(), PORT: '0' });
     await server.listening;

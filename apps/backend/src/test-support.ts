@@ -676,6 +676,8 @@ interface TestAppOptions {
   readonly random?: Random;
   /** How many proxies in front of the backend it trusts; none unless given. */
   readonly trustedProxyHops?: number;
+  /** The secret header value the app's Cloudflare zone sets; none unless given. */
+  readonly edgeSecret?: string | undefined;
   /** The built owner admin app's folder; none unless given. */
   readonly adminDist?: string;
   /** GitHub, for Розробка; a fake GitHub unless given. */
@@ -708,6 +710,7 @@ export function testApp({
   apple: givenApple,
   random = systemRandom,
   trustedProxyHops = 0,
+  edgeSecret,
   adminDist,
   github = createFakeGitHub(),
   eas = createFakeEas(),
@@ -742,6 +745,7 @@ export function testApp({
     // A fake Sentry: it keeps every report.
     reporter: { report: (report) => reports.push(report) },
     trustedProxyHops,
+    edgeSecret,
     adminDist,
     github,
     eas,

@@ -60,6 +60,7 @@ export default defineRailway((ctx) => {
       R2_SECRET_ACCESS_KEY: preserve(),
       MEDIA_BASE: preserve(),
       TRUSTED_PROXY_HOPS: preserve(),
+      EDGE_SECRET: preserve(),
       RAILWAY_READ_TOKEN: preserve(),
       NEON_API_KEY: preserve(),
       NEON_PROJECT_ID: preserve(),
@@ -151,6 +152,7 @@ function stagingProject() {
       // Production's Media Store root: staging reads its public URLs, no R2 key.
       MEDIA_BASE: preserve(),
       TRUSTED_PROXY_HOPS: preserve(),
+      EDGE_SECRET: preserve(),
     },
   });
 

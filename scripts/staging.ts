@@ -190,6 +190,8 @@ const VARIABLE_HINTS: Record<string, string> = {
     'DSN проєкту бекенду в Sentry, той самий, що в production (звіти підуть з environment staging)',
   MEDIA_BASE: 'те саме, що в production: staging лише читає медіа',
   TRUSTED_PROXY_HOPS: 'те саме, що в production (Cloudflare перед Railway)',
+  EDGE_SECRET:
+    'НОВЕ значення (openssl rand -hex 32), те саме, що ставить Transform Rule зони Cloudflare для staging; порожнє вимикає перевірку',
 };
 
 /**

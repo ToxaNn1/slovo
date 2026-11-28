@@ -146,6 +146,12 @@ const ServerVariablesSchema = z.object({
     .min(0, 'must be 0 or more')
     .max(2, 'must be 2 or less')
     .default(0),
+  // The value of the `X-Slovo-Edge-Secret` header that a Transform Rule of
+  // the app's own Cloudflare zone sets on every request (docs/deploy.md).
+  // Set, two hops trust the address Cloudflare forwarded only on a request
+  // that carries it, so another zone or a Worker cannot name a client of its
+  // choosing. Needs TRUSTED_PROXY_HOPS=2.
+  EDGE_SECRET: unsetWhenEmpty(z.string().min(32, 'must be 32 characters or more')),
   // 0 takes any free port.
   PORT: z.coerce.number().int().min(0).max(65535).default(8787),
   // The folder that holds one folder per Edition.
@@ -320,6 +326,13 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
         message: 'must be 1 or more in production',
       });
     }
+  }
+  if (variables.EDGE_SECRET !== undefined && variables.TRUSTED_PROXY_HOPS !== 2) {
+    context.addIssue({
+      code: 'custom',
+      path: ['EDGE_SECRET'],
+      message: 'needs TRUSTED_PROXY_HOPS=2',
+    });
   }
   refineVaultKey(variables, context);
   if (variables.DEPLOYMENT === 'staging') {
