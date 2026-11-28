@@ -87,6 +87,9 @@ async function settle(action: () => unknown = () => undefined) {
     await action();
     await jest.runAllTimersAsync();
   });
+  // The first Word's red gives way, and lets VoiceOver reach the step, only
+  // once Reduce Motion has answered, which is after the first pass.
+  await act(() => jest.runAllTimersAsync());
 }
 
 const press = (testID: string) => settle(() => fireEvent.press(screen.getByTestId(testID)));
