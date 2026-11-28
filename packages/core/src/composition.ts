@@ -367,6 +367,13 @@ const coreGameModes: readonly GameMode[] = [
   timedMode,
 ];
 
+/** Leaves the error unhandled, as a rejection no one awaits. */
+function leaveUnhandled(error: unknown): void {
+  void Promise.resolve().then(() => {
+    throw error;
+  });
+}
+
 /**
  * Opens the composition for a new app session, once the Language Pack is
  * open: one Entries module, one Cycle and one Word of the Day over the stored
@@ -394,6 +401,7 @@ export async function openComposition({
   consent,
   visit = createVisit(),
   signedIn,
+  reportError = leaveUnhandled,
   ...ports
 }: {
   content: ContentReadPort;
@@ -433,6 +441,12 @@ export async function openComposition({
    * features, the Feed offers no saving of progress.
    */
   signedIn?: () => boolean;
+  /**
+   * Where an error goes that the Core goes on past, as one following
+   * eligibility after a change already written; without it, the error is
+   * left unhandled, which the app's crash reports take.
+   */
+  reportError?: (error: unknown) => void;
 }): Promise<Composition> {
   const { userState, scheduling, schedule, stopped, close } = closable(ports);
   /** The Edition's text comparison, built once and handed to every module that compares text. */
@@ -457,6 +471,7 @@ export async function openComposition({
     userState,
     clock,
     eligibility,
+    reportError,
   });
   const cycle = await openCycle({ entries, userState, random, starterWords });
   // The Cycle reads the eligible Entries first; the Feed, the plan and the Game follow it.

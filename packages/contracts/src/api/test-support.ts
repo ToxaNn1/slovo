@@ -162,14 +162,16 @@ export function refusal(
 }
 
 /**
- * A `fetch` that answers every request with the status and the body, as a
- * proxy in front of the backend does, which is no answer of the contract.
+ * A `fetch` that answers every request with the status, the body and the
+ * headers, as a proxy in front of the backend does, which is no answer of the
+ * contract.
  */
 export function answeringWith(
   status: number,
   body: string,
+  headers: Record<string, string> = {},
 ): (request: Request) => Promise<Response> {
-  return () => Promise.resolve(new Response(body, { status }));
+  return () => Promise.resolve(new Response(body, { status, headers }));
 }
 
 /**

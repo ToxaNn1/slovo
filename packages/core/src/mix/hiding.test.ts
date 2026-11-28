@@ -207,6 +207,91 @@ describe('a hide', () => {
   );
 });
 
+describe('a hide whose following of eligibility fails', () => {
+  /**
+   * The composition with its Feed shown, over a pack whose Entries fail to
+   * read once a change is written while `failing.on`, and the errors it reports.
+   */
+  async function failingRun() {
+    const failing = { on: false };
+    let written = false;
+    const reported: unknown[] = [];
+    const port = createMemoryUserStatePort();
+    const app = await openComposition({
+      content: {
+        ...content,
+        getEntries: (ids) =>
+          written ? Promise.reject(new Error('The pack is busy')) : content.getEntries(ids),
+      },
+      edition: testEdition({
+        isFeatureEnabled: (feature) => feature === 'corrections',
+        userSettingDefaults: { mix: { categoryIds: categories.map(({ id }) => id) } },
+      }),
+      userState: await openUserState({
+        port: {
+          ...port,
+          write: async (changes) => {
+            await port.write(changes);
+            written = failing.on;
+          },
+        },
+      }),
+      clock: fakeClock().clock,
+      random: { next: () => 0.25 },
+      reportError: (error) => reported.push(error),
+    });
+    await turnTo(app.feed, 0);
+    return {
+      app,
+      failing,
+      reported,
+      /** Stops failing, as the next read of the pack would succeed. */
+      recover: () => {
+        failing.on = false;
+        written = false;
+      },
+    };
+  }
+
+  it('hides the Entry, gives its undo and reports the error', async () => {
+    const { app, failing, reported, recover } = await failingRun();
+    const [entryId = ''] = entryIdsOf(app.feed.cards);
+    failing.on = true;
+
+    const hidden = await app.hide({ kind: 'entry', entryId });
+
+    expect(hidden?.changed.kind).toBe('entry');
+    expect(app.hiddenEntries.has(entryId)).toBe(true);
+    expect(reported).toEqual([new Error('The pack is busy')]);
+    recover();
+    await hidden?.undo(app);
+    expect(app.hiddenEntries.has(entryId)).toBe(false);
+  });
+
+  it('takes the Category out, gives its undo and reports the error', async () => {
+    const { app, failing, reported } = await failingRun();
+    const [entryId = ''] = entryIdsOf(app.feed.cards);
+    const shown = categories.find((category) => isWordOf(category)(entryId));
+    failing.on = true;
+
+    const hidden = await app.hide({ kind: 'category', categoryId: shown?.id ?? '' });
+
+    expect(hidden?.changed.kind).toBe('category');
+    expect(app.mix.state.hiddenCategories).toEqual([shown]);
+    expect(reported).toEqual([new Error('The pack is busy')]);
+  });
+
+  it('lets the Mix take a Category out and say so, reporting the error', async () => {
+    const { app, failing, reported } = await failingRun();
+    failing.on = true;
+
+    expect(await app.mix.takeOut('nature')).toBe(true);
+
+    expect(app.mix.state.hiddenCategories).toEqual([nature]);
+    expect(reported).toEqual([new Error('The pack is busy')]);
+  });
+});
+
 describe('two hides at once', () => {
   it.each([
     ['an Entry', { kind: 'entry', entryId: 'w_speech1' }],

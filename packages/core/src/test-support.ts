@@ -485,6 +485,8 @@ export async function openLiveEntries({
     userState,
     clock: fakeClock().clock,
     eligibility: createSubject(),
+    // Nothing follows this eligibility, so nothing fails to.
+    reportError: () => undefined,
   });
   return { entries, mix, rarityRange, hiddenEntries };
 }
