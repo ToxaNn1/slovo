@@ -1,3 +1,4 @@
+import type { FeatureSwitch } from '@slovo/contracts';
 import type { Edition } from '../edition/edition';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
@@ -8,11 +9,12 @@ import { userStateRecords } from '../user-state-schema';
  * an EU state that are in the EU under a region code of their own (Åland, the
  * Canary Islands, Ceuta and Melilla, the French overseas regions).
  */
+// prettier-ignore
 const EEA_REGIONS: ReadonlySet<string> = new Set([
-  ...['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE'],
-  ...['IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE'],
-  ...['IS', 'LI', 'NO'],
-  ...['AX', 'IC', 'EA', 'GF', 'GP', 'MQ', 'YT', 'RE', 'MF'],
+  'AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE',
+  'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE',
+  'IS', 'LI', 'NO',
+  'AX', 'IC', 'EA', 'GF', 'GP', 'MQ', 'YT', 'RE', 'MF',
 ]);
 
 /**
@@ -41,13 +43,16 @@ export function statisticsConsentFor(
   return { asks: () => inEea && edition.isFeatureEnabled('statisticsConsent') };
 }
 
+/** The Feature Switches of what «Ділитися анонімною статистикою» governs (ADR 0068). */
+const GOVERNED: readonly FeatureSwitch[] = ['analytics', 'communityCounters'];
+
 /**
  * Whether anything «Ділитися анонімною статистикою» governs is on: Analytics
- * or the Community Counters (ADR 0068). Without either, «Конфіденційність»
- * shows no switch and nothing points the reader at it.
+ * or the Community Counters. Without either, «Конфіденційність» shows no
+ * switch and nothing points the reader at it.
  */
 export function statisticsGoverned(edition: Pick<Edition, 'isFeatureEnabled'>): boolean {
-  return edition.isFeatureEnabled('analytics') || edition.isFeatureEnabled('communityCounters');
+  return GOVERNED.some((feature) => edition.isFeatureEnabled(feature));
 }
 
 /**
