@@ -11,6 +11,9 @@
       "pnpm": "12.9.1",
       "ios": {
         "simulator": true
+      },
+      "env": {
+        "EXPO_PUBLIC_SLOVO_API_URL": "https://api.slovoapp.org"
       }
     },
     "beta": {
