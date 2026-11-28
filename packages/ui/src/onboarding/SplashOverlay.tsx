@@ -13,6 +13,7 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 import Svg, { Path, Polygon } from 'react-native-svg';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useInterfaceSounds } from '../providers/InterfaceSoundsProvider';
@@ -132,17 +133,22 @@ export function SplashOverlay({
 
   const done = useEffectEvent(onDone);
   // Starts the cut once the system has answered and gives how long it lasts.
-  const play = useEffectEvent((still: boolean) => {
+  // A moving cut ends on its own last frame, not on a JS timer beside it, which
+  // fires late while the app opens (27.11 pass); the still frame holds on a timer.
+  const play = useEffectEvent((still: boolean): number | undefined => {
     if (still) {
       progress.value = splashMotion.still;
       return reduceMotionHold;
     }
-    progress.value = withTiming(1, {
-      duration,
-      easing: Easing.linear,
-      reduceMotion: ReduceMotion.Never,
-    });
-    return duration;
+    progress.value = withTiming(
+      1,
+      { duration, easing: Easing.linear, reduceMotion: ReduceMotion.Never },
+      (finished) => {
+        'worklet';
+        if (finished === true) scheduleOnRN(done);
+      },
+    );
+    return undefined;
   });
 
   const shout = useEffectEvent(() => {
@@ -159,9 +165,11 @@ export function SplashOverlay({
   useEffect(() => {
     // The cut waits for the system to say whether it may move, then plays once.
     if (reduceMotion === undefined) return;
+    const hold = play(reduceMotion);
+    if (hold === undefined) return;
     const timer = setTimeout(() => {
       done();
-    }, play(reduceMotion));
+    }, hold);
     return () => {
       clearTimeout(timer);
     };

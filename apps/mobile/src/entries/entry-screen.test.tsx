@@ -436,6 +436,36 @@ describe('the Entry screen of each stack', () => {
     },
   );
 
+  it('opens a linked Correction once its card is read, and draws it with no read of its own (27.11 pass)', async () => {
+    const app = await renderEntry('w_chemnyi', '/saved/history/w_chemnyi');
+    const plain = composition.entryCard.bind(composition);
+    const read = jest.spyOn(composition, 'entryCard');
+    let release: (() => void) | undefined;
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    read.mockImplementationOnce(async (entryId) => {
+      await held;
+      return plain(entryId);
+    });
+
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId('word-often-said-c_vezhlyvyi'));
+      await jest.runAllTimersAsync();
+    });
+    // The card is still being read: the screen waits to open.
+    expect(app.pathname()).toBe('/saved/history/w_chemnyi');
+
+    await act(async () => {
+      release?.();
+      await jest.runAllTimersAsync();
+    });
+
+    expect(app.pathname()).toBe('/saved/history/c_vezhlyvyi');
+    expect(backOnTop()).toHaveProp('accessibilityLabel', 'че\u0301мний');
+    expect(read.mock.calls).toEqual([['c_vezhlyvyi']]);
+  });
+
   it('names the Back of a Collection’s Entry after the Collection', async () => {
     const created = await composition.collections.create('Ввічливі', 'w_chemnyi');
     if (!created.ok) throw new Error(`The Collection was refused: ${created.reason}`);

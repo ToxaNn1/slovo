@@ -10,6 +10,7 @@ import { wordOfTheDayLanding, type LandingAsked } from '../feed/word-of-the-day-
 import { keep } from '../keep';
 import { useSubscribed } from '../opening';
 import { useOpenScreen } from '../use-open-screen';
+import { useOpenEntry } from '../entry-ahead';
 
 /** What the Dashboard screen draws and does. */
 export interface DashboardScreen {
@@ -59,6 +60,7 @@ export function useDashboardScreen(): DashboardScreen {
   const blocks = useSubscribed(dashboard, (source) => source.blocks);
   const today = useSubscribed(feed, (source) => source.today);
   const openScreen = useOpenScreen();
+  const openEntryScreen = useOpenEntry();
   const focused = useIsFocused();
   const asked = useSyncExternalStore(wordOfTheDayLanding.subscribe, wordOfTheDayLanding.asked);
   useEffect(() => {
@@ -80,7 +82,7 @@ export function useDashboardScreen(): DashboardScreen {
       void keep("the unpick of today's Mood", mood.unpick());
     },
     openPreviousWord: (entryId) => {
-      openScreen(`/search/${entryId}?back=${encodeURIComponent(previousWordsTitle)}`);
+      openEntryScreen(entryId, `/search/${entryId}?back=${encodeURIComponent(previousWordsTitle)}`);
     },
     openCorrectionType: (type) => {
       openScreen(`/correction-type/${type}`);

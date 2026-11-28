@@ -15,6 +15,7 @@ import { editionStrings } from '../edition/edition';
 import { useKnownCards } from '../knowledge/marks';
 import { useMixState } from '../mix/mix';
 import { useOpenScreen } from '../use-open-screen';
+import { useOpenEntry } from '../entry-ahead';
 import { useEditionInEffect } from '../edition/remote-switches';
 
 const { toasts } = editionStrings.dashboard.category;
@@ -58,6 +59,7 @@ export function useCategoryScreen(of: CategoryKind, category: Category): Categor
   const mixState = useMixState();
   const showToast = useUndoToast();
   const openScreen = useOpenScreen();
+  const openEntryScreen = useOpenEntry();
   const categoryFeed = useEditionInEffect().isFeatureEnabled('categoryFeed');
   const read = useCallback(
     async (open: Composition) =>
@@ -103,7 +105,7 @@ export function useCategoryScreen(of: CategoryKind, category: Category): Categor
         openScreen(`/category-feed/${category.id}?from=${encodeURIComponent(entryId)}`);
         return;
       }
-      openScreen(`/search/${entryId}?back=${encodeURIComponent(name)}`);
+      openEntryScreen(entryId, `/search/${entryId}?back=${encodeURIComponent(name)}`);
     },
   };
 }

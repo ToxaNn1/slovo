@@ -1,7 +1,8 @@
 import { EditionProvider, GameTimer } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { render, screen } from '@testing-library/react-native';
+import { act, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
+import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
 
 const texts = {
@@ -9,10 +10,16 @@ const texts = {
   shown: (seconds: number) => `${String(seconds)} s`,
 };
 
-function Timer({ remainingMs }: { remainingMs: number }) {
+function Timer({ remainingMs, running = false }: { remainingMs: number; running?: boolean }) {
   return (
     <EditionProvider edition={{ locale: 'uk' }} strings={testStrings({})}>
-      <GameTimer remainingMs={remainingMs} totalMs={60_000} texts={texts} testID="timer" />
+      <GameTimer
+        remainingMs={remainingMs}
+        totalMs={60_000}
+        running={running}
+        texts={texts}
+        testID="timer"
+      />
     </EditionProvider>
   );
 }
@@ -59,5 +66,40 @@ describe('GameTimer', () => {
     await view.rerender(<Timer remainingMs={37_500} />);
 
     expect(announce.mock.calls.map(([text]) => text)).toEqual(['38 seconds left']);
+  });
+
+  describe('its bar', () => {
+    /** How much of the bar is left, 1 full and 0 empty. */
+    const barLeft = () =>
+      (getAnimatedStyle(screen.getByTestId('timer-left')) as { transform: [{ scaleX: number }] })
+        .transform[0].scaleX;
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it('stands at the share of the time left while the clock is paused', async () => {
+      jest.useFakeTimers();
+      await render(<Timer remainingMs={45_000} />);
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(10_000);
+      });
+
+      expect(barLeft()).toBeCloseTo(0.75);
+    });
+
+    it('empties on its own at the pace of the clock while it runs, with no new time drawn', async () => {
+      jest.useFakeTimers();
+      await render(<Timer remainingMs={30_000} running />);
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(15_000);
+      });
+
+      expect(barLeft()).toBeCloseTo(0.25, 1);
+      await act(async () => {
+        await jest.advanceTimersByTimeAsync(15_000);
+      });
+      expect(barLeft()).toBe(0);
+    });
   });
 });

@@ -131,7 +131,19 @@ export function WholeWordsText({
       : wordFits === undefined || linesFit === undefined
         ? undefined
         : true;
-  if (stepped && fits === false && step < floor) setFit({ key: fitKey, step: step + 1 });
+  // A word's width grows with its size, so one measure tells the step its widest word fits at:
+  // the text jumps there and is measured once more, rather than tried at every step between
+  // (27.11 pass: a long title stayed hidden for a pass per step). The guess errs a point
+  // large, and a step it got wrong is tried on from.
+  const nextStep = () => {
+    if (wordFits !== false || widest === undefined || lineWidth === undefined) return step + 1;
+    const at = steps[step] ?? size.fontSize;
+    const fitting = steps.findIndex(
+      (candidate, index) => index > step && (widest * candidate) / at <= lineWidth + 1,
+    );
+    return fitting === -1 ? floor : fitting;
+  };
+  if (stepped && fits === false && step < floor) setFit({ key: fitKey, step: nextStep() });
   const atFloor = stepped && fits === false && step >= floor;
   const settled = fits === true || (fits === false && (!stepped || step >= floor));
   // A text off the scale too wide for its line shrinks just enough, with a point of slack so

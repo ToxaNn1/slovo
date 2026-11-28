@@ -104,9 +104,16 @@ export interface VerticalPagerProps<Item> {
   readonly initialIndex?: number;
   /**
    * Called as soon as a swipe or `turnTo` heads for another page, while that
-   * page still moves in, so the next swipe can follow on from it.
+   * page still moves in, so the next swipe can follow on from it. Keep it
+   * light: what a turn sets off goes into `onIndexSettled`.
    */
   readonly onIndexChange: (index: number) => void;
+  /**
+   * Called for each page a swipe or `turnTo` headed for, in order, once the
+   * screen comes to rest (or the pager leaves, or `showPage` jumps), so the
+   * work a turn sets off never runs in the motion (27.11 pass).
+   */
+  readonly onIndexSettled?: (index: number) => void;
   /**
    * The names of the VoiceOver actions that turn to the next and the previous
    * page, in the Edition's language. Pages offer them through
@@ -182,6 +189,7 @@ export function VerticalPager<Item>({
   renderPage,
   initialIndex = 0,
   onIndexChange,
+  onIndexSettled,
   turnActionLabels,
   testID,
   ref,
@@ -226,6 +234,36 @@ export function VerticalPager<Item>({
       if (near !== previous) scheduleOnRN(setNearest, near);
     },
   );
+  /**
+   * The turns `onIndexSettled` has yet to hear of. They are told once the screen
+   * rests, in order: what a turn sets off (the Seen, XP, History, the next card,
+   * media ahead) never runs in the page's motion (27.11 pass).
+   */
+  const untold = useRef<number[]>([]);
+  const tell = useCallback(() => {
+    const turns = untold.current;
+    untold.current = [];
+    for (const target of turns) onIndexSettled?.(target);
+  }, [onIndexSettled]);
+  const cameToRest = useCallback(
+    (rest: number) => {
+      setRested(rest);
+      tell();
+    },
+    [tell],
+  );
+  // A pager that leaves mid-motion still tells the turns it took.
+  const latestTell = useRef(tell);
+  useEffect(() => {
+    latestTell.current = tell;
+  }, [tell]);
+  useEffect(
+    () => () => {
+      latestTell.current();
+    },
+    [],
+  );
+
   // On a whole page the screen shows that page alone: the others are off it,
   // or invisible with Reduce Motion.
   useAnimatedReaction(
@@ -233,7 +271,7 @@ export function VerticalPager<Item>({
     (rest, previous) => {
       if (rest === undefined || rest === previous) return;
       settled.value = rest;
-      scheduleOnRN(setRested, rest);
+      scheduleOnRN(cameToRest, rest);
     },
   );
 
@@ -241,6 +279,7 @@ export function VerticalPager<Item>({
     (target: number) => {
       setIndex(target);
       onIndexChange(target);
+      untold.current.push(target);
     },
     [onIndexChange],
   );
@@ -260,12 +299,21 @@ export function VerticalPager<Item>({
     (target: number) => {
       const clamped = Math.min(Math.max(target, 0), lastPage);
       if (clamped === index) return;
+      // While a turn moves, its owner hasn't heard of it yet and still holds
+      // the page the screen leaves: that page is never shown back.
+      if (untold.current.length > 0 && (clamped === rested || untold.current.includes(clamped)))
+        return;
+      // The turns before the jump are told before it.
+      tell();
       turnedTo.value = clamped;
+      // A jump has no motion: the page it shows is at rest at once, and no
+      // page between is drawn on its way.
       setIndex(clamped);
       setNearest(clamped);
+      setRested(clamped);
       position.value = clamped;
     },
-    [index, lastPage, position, turnedTo],
+    [index, lastPage, position, rested, tell, turnedTo],
   );
 
   useImperativeHandle(ref, () => ({ turnTo, showPage }));
@@ -415,10 +463,12 @@ export function VerticalPager<Item>({
     setHeight(measured);
   }
 
-  // The current page and its neighbours, ready to move in, and while a swipe
-  // moves, the pages it passes on its way.
-  const first = Math.max(Math.min(index, nearest) - 1, 0);
-  const visible = items.slice(first, Math.max(index, nearest) + 2);
+  // The page at rest, its neighbours and the page after the next, ready to move
+  // in, so a swipe on to the next page mounts no page in the middle of its
+  // motion (27.11 pass); and while a swipe moves, the pages it passes on its way.
+  // The pages a turn leaves behind go once the screen rests.
+  const first = Math.max(Math.min(rested, index, nearest) - 1, 0);
+  const visible = items.slice(first, Math.max(rested + 2, index + 1, nearest + 1) + 1);
 
   return (
     <PagerContext value={pager}>

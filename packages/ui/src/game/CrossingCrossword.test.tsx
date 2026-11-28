@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import { useState, type ReactElement } from 'react';
-import { Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
 import { GestureHandlerRootView, State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import {
@@ -16,6 +16,22 @@ import {
 } from '@slovo/ui';
 import { testStrings } from '../test-strings';
 import { crossingCrosswordLayout, minTouchTarget, offsetShadow } from '../tokens';
+
+/** How many times each tile drew, by its testID: a cell draws one tile. */
+const mockTileRenders = new Map<string, number>();
+jest.mock('../primitives/PressedTile', () => {
+  const actual = jest.requireActual<typeof import('../primitives/PressedTile')>(
+    '../primitives/PressedTile',
+  );
+  return {
+    ...actual,
+    PressedTile: (props: Parameters<typeof actual.PressedTile>[0]) => {
+      if (props.testID !== undefined)
+        mockTileRenders.set(props.testID, (mockTileRenders.get(props.testID) ?? 0) + 1);
+      return actual.PressedTile(props);
+    },
+  };
+});
 
 const answer = ['c', 'a', 't'];
 const wheelLetters = ['t', 'c', 'a'];
@@ -209,6 +225,35 @@ describe('CrossingGrid and CrossingClueBar', () => {
     expect(screen.getByLabelText('1 across. A pet that purrs')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Next word'));
     expect(onNext).toHaveBeenCalled();
+  });
+
+  it('draws again only the cells a play changes, though the grid comes as new cells', async () => {
+    const grid = (letter: string | undefined): CrossingGridCell[][] => [
+      [cell({ letter, current: true, label: 'a' }), cell({ current: true, label: 'b' })],
+      [cell({ label: 'c' }), cell({ label: 'd' })],
+    ];
+    const onSelect = jest.fn();
+    function Board() {
+      const [cells, setCells] = useState(() => grid(undefined));
+      return (
+        <>
+          <Pressable
+            testID="play"
+            accessibilityRole="button"
+            onPress={() => {
+              setCells(grid('a'));
+            }}
+          />
+          <CrossingGrid cells={cells} onSelect={onSelect} testID="grid" />
+        </>
+      );
+    }
+    await renderIn(<Board />);
+    mockTileRenders.clear();
+
+    await fireEvent.press(screen.getByTestId('play'));
+
+    expect([...mockTileRenders.keys()]).toEqual(['grid-0-0']);
   });
 
   it('shrinks its cells to the room the screen leaves it, and never past the board size', async () => {

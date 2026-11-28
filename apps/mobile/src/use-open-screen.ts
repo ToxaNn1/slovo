@@ -12,14 +12,10 @@ export const screenSettled = screenOpener.settled;
 /**
  * Opens a screen from a tap, once however fast it is tapped. Every row, card
  * and link that pushes a screen from a tap goes through it; no screen keeps a guard of its own.
+ * Returns whether it opened the screen.
  */
-export function useOpenScreen(): (href: string) => void {
+export function useOpenScreen(): (href: string) => boolean {
   const router = useRouter();
   // Kept from render to render, so a row that takes it re-renders only when its own data changes.
-  return useCallback(
-    (href: string) => {
-      screenOpener.open(router, href);
-    },
-    [router],
-  );
+  return useCallback((href: string) => screenOpener.open(router, href), [router]);
 }

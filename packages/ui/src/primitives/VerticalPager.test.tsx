@@ -1,7 +1,13 @@
 import type { Haptics } from '@slovo/core';
-import { HapticsProvider, usePageTurnActions, VerticalPager } from '@slovo/ui';
+import {
+  HapticsProvider,
+  usePageTurnActions,
+  VerticalPager,
+  type VerticalPagerHandle,
+} from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { createRef, type Ref } from 'react';
 import { AccessibilityInfo, Text } from 'react-native';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
@@ -21,10 +27,19 @@ function TurnablePage({ page }: { page: string }) {
 async function renderPager({
   initialIndex = 0,
   onIndexChange = jest.fn(),
+  onIndexSettled = jest.fn(),
   selection = jest.fn(),
+  pages = PAGES,
+  ref = null,
+  onRender = () => undefined,
 }: {
   initialIndex?: number;
+  pages?: readonly string[];
+  ref?: Ref<VerticalPagerHandle>;
+  /** Hears of each page the pager renders. */
+  onRender?: (page: string) => void;
   onIndexChange?: (index: number) => void;
+  onIndexSettled?: (index: number) => void;
   /** The light tick of a selection, which a swipe plays as it turns the page. */
   selection?: () => void;
 }) {
@@ -42,12 +57,17 @@ async function renderPager({
         items={items}
         initialIndex={initialIndex}
         onIndexChange={onIndexChange}
-        renderPage={(page) => <TurnablePage page={page} />}
+        onIndexSettled={onIndexSettled}
+        renderPage={(page) => {
+          onRender(page);
+          return <TurnablePage page={page} />;
+        }}
         turnActionLabels={TURN_LABELS}
+        ref={ref}
       />
     </HapticsProvider>
   );
-  await render(pager(PAGES));
+  await render(pager(pages));
   // The pages are drawn once the pager knows its height.
   await fireEvent(screen.getByTestId('pager'), 'layout', {
     nativeEvent: { layout: { x: 0, y: 0, width: 400, height: HEIGHT } },
@@ -127,6 +147,73 @@ describe('VerticalPager', () => {
 
     expect(screen.getByText('First')).toBeTruthy();
     expect(screen.queryByText('Second')).toBeNull();
+  });
+
+  it('has the page after the next one ready before a swipe, so none mounts while it moves', async () => {
+    await renderPager({});
+
+    expect(screen.getByText('Third', { includeHiddenElements: true })).toBeTruthy();
+  });
+
+  it('tells a swipe’s turn as settled once the page comes to rest, not while it moves (27.11 pass)', async () => {
+    const onIndexChange = jest.fn();
+    const onIndexSettled = jest.fn();
+    await renderPager({ onIndexChange, onIndexSettled });
+
+    await swipe(-500, -200, { settle: false });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(SETTLE_MS / 3);
+    });
+    expect(onIndexChange).toHaveBeenCalledWith(1);
+    expect(onIndexSettled).not.toHaveBeenCalled();
+
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(SETTLE_MS);
+    });
+    expect(onIndexSettled).toHaveBeenCalledTimes(1);
+    expect(onIndexSettled).toHaveBeenCalledWith(1);
+  });
+
+  it('stays on the page a swipe heads for when its owner shows the page the swipe leaves', async () => {
+    const ref = createRef<VerticalPagerHandle>();
+    const onIndexSettled = jest.fn();
+    await renderPager({ ref, onIndexSettled });
+
+    await swipe(-500, -200, { settle: false });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(SETTLE_MS / 3);
+    });
+    // The owner still holds the page the swipe left, as the Feed does until
+    // it hears of the turn, and shows it when its cards change.
+    await act(() => {
+      ref.current?.showPage(0);
+    });
+    expect(onIndexSettled).not.toHaveBeenCalled();
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(SETTLE_MS);
+    });
+
+    expect(pageAt('Second').y).toBe(0);
+    expect(onIndexSettled).toHaveBeenCalledTimes(1);
+    expect(onIndexSettled).toHaveBeenCalledWith(1);
+  });
+
+  it('mounts none of the pages between the page at rest and the one a jump shows', async () => {
+    const ref = createRef<VerticalPagerHandle>();
+    const pages = Array.from({ length: 30 }, (_, page) => `Page ${String(page)}`);
+    const rendered = new Set<string>();
+    await renderPager({ ref, pages, initialIndex: 25, onRender: (page) => rendered.add(page) });
+    rendered.clear();
+
+    await act(() => {
+      ref.current?.showPage(2);
+    });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(SETTLE_MS);
+    });
+
+    expect(screen.getByText('Page 2')).toBeTruthy();
+    for (const page of [5, 10, 15, 20]) expect(rendered.has(`Page ${String(page)}`)).toBe(false);
   });
 
   it('turns to the next page on a swipe up', async () => {

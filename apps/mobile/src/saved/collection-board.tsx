@@ -28,7 +28,7 @@ import { useCollectionShareSheet } from '@/saved/collection-sharing';
 import { handDeleteUndo } from '@/saved/collection-undo';
 import { createMenuFollowUp } from '@/saved/menu-follow-up';
 import { ListTopButton } from '@/shell/list-top';
-import { useOpenScreen } from '@/use-open-screen';
+import { useOpenEntry } from '@/entry-ahead';
 
 const { collections: collectionStrings } = editionStrings;
 const strings = collectionStrings.screen;
@@ -73,7 +73,7 @@ function Board({ collectionId, created }: { collectionId: string; created: boole
   const { count } = useEdition();
   const showToast = useUndoToast();
   const router = useRouter();
-  const openScreen = useOpenScreen();
+  const openEntry = useOpenEntry();
   const [menuOpen, setMenuOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   /** Whether the rename's toast waits for the name sheet to slide away, which would cover it (owner 15.11). */
@@ -132,7 +132,7 @@ function Board({ collectionId, created }: { collectionId: string; created: boole
             entry={item}
             collectionName={name}
             onPress={() => {
-              openScreen(`/saved/collections/${collectionId}/${item.entryId}`);
+              openEntry(item.entryId, `/saved/collections/${collectionId}/${item.entryId}`);
             }}
             onRemove={() => {
               removeEntry(item.entryId);

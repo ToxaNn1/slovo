@@ -44,26 +44,28 @@ export function useGameActions() {
   };
 }
 
-/** How often the timer of a timed Game reads the clock, in milliseconds, so each second turns on time. */
-const TICK_MS = 250;
-
 /**
  * The play time a timed Game has left now, in milliseconds, read from the
  * clock while it runs and kept as the Core gave it while it is paused; none
- * in another Game.
+ * in another Game. It reads the clock as each whole second of the time left
+ * turns, and only then, so the screen draws again once a second (the bar
+ * empties on its own between).
  */
 export function useTimeLeft(time: GameTime | undefined): number | undefined {
   const endsAt = time?.endsAt?.getTime();
   const [now, setNow] = useState(() => deviceClock.now().getTime());
   useEffect(() => {
     if (endsAt === undefined) return undefined;
+    let next: ReturnType<typeof setTimeout> | undefined;
     const tick = () => {
-      setNow(deviceClock.now().getTime());
+      const at = deviceClock.now().getTime();
+      setNow(at);
+      const left = endsAt - at;
+      if (left > 0) next = setTimeout(tick, left % 1000 || 1000);
     };
     tick();
-    const ticking = setInterval(tick, TICK_MS);
     return () => {
-      clearInterval(ticking);
+      clearTimeout(next);
     };
   }, [endsAt]);
   if (time === undefined) return undefined;

@@ -27,6 +27,7 @@ let composition: Composition;
 const mockPushed: string[] = [];
 
 jest.mock('expo-router', () => ({
+  usePathname: () => '/saved/words-of-the-day',
   useRouter: () => ({
     back: () => undefined,
     push: (href: string) => {

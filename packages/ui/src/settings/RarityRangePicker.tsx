@@ -140,6 +140,8 @@ export function RarityRangePicker({
 
   const width = useSharedValue(0);
   const start = useSharedValue(-1);
+  /** The rarity the drag was last told at, so JS hears only when it moves on (27.11 pass). */
+  const told = useSharedValue(-1);
   const count = rarities.length;
   const config = useMemo((): PanGestureConfig => {
     const place = (x: number) => {
@@ -153,22 +155,25 @@ export function RarityRangePicker({
       onBegin: ({ x }) => {
         'worklet';
         start.value = place(x);
+        told.value = -1;
       },
       onUpdate: ({ x }) => {
         'worklet';
         const at = place(x);
-        if (start.value < 0 || at < 0) return;
+        if (start.value < 0 || at < 0 || at === told.value) return;
+        told.value = at;
         scheduleOnRN(drag, start.value, at);
       },
       onFinalize: () => {
         'worklet';
         start.value = -1;
+        told.value = -1;
         scheduleOnRN(release);
       },
       // How a component test finds the drag; Gesture Handler reads it in Jest only.
       testID: `${testID}-drag`,
     };
-  }, [count, drag, release, start, testID, width]);
+  }, [count, drag, release, start, told, testID, width]);
   const pan = usePanGesture(config);
 
   const onLayout = (event: LayoutChangeEvent) => {

@@ -12,7 +12,7 @@ import {
 } from '@slovo/core';
 import type { CrossingGridCell, CrosswordMiniCell, WheelMiss } from '@slovo/ui';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import { deviceClock } from '../device/device-clock';
 import { editionStrings } from '../edition/edition';
@@ -24,7 +24,7 @@ type Strings = EditionStrings['game']['dailyCrossword'];
 /** How often the Solve time reads the clock, in milliseconds, so each second counts on time. */
 const TICK_MS = 1000;
 
-const letterAt = (state: CrossingPlay, place: PuzzlePlace) => {
+const letterAt = (state: Pick<CrossingPlay, 'cells'>, place: PuzzlePlace) => {
   const cell = state.cells[crossingCellKey(place)];
   return cell === undefined || cell.kind === 'empty' ? undefined : cell.letter;
 };
@@ -40,7 +40,7 @@ const crossingWordName = ({ number, direction }: CrossingWord, strings: Strings)
  */
 function crossingCells(
   puzzle: CrossingPuzzle,
-  state: CrossingPlay,
+  state: Pick<CrossingPlay, 'current' | 'words' | 'cells'>,
   strings: Strings,
   solved: boolean,
 ): CrossingGridCell[][] {
@@ -73,7 +73,7 @@ function crossingCells(
 /** The small grid of the crossing Daily Crossword's card: its blocks, and the letters in so far. */
 export function crossingMiniGrid(
   puzzle: CrossingPuzzle,
-  state: CrossingPlay,
+  state: Pick<CrossingPlay, 'current' | 'words' | 'cells'>,
 ): CrosswordMiniCell[][] {
   return crossingGridOf(puzzle).map((spots, row) =>
     spots.map((spot, column): CrosswordMiniCell =>
@@ -192,9 +192,21 @@ export function useCrossingCrossword(crossword: CrossingCrossword): CrossingCros
   const strings = editionStrings.game.dailyCrossword;
   const current = puzzle.words[state.current];
   const { solve } = crossword;
+  const { current: currentWord, words, cells: filled } = state;
+  // Built again only when what the grid shows changes, not at each letter of a trace.
+  const cells = useMemo(
+    () =>
+      crossingCells(
+        puzzle,
+        { current: currentWord, words, cells: filled },
+        strings,
+        solve !== undefined,
+      ),
+    [puzzle, currentWord, words, filled, strings, solve],
+  );
   return {
     puzzle,
-    cells: crossingCells(puzzle, state, strings, solve !== undefined),
+    cells,
     clue: {
       number:
         current === undefined

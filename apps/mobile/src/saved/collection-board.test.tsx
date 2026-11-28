@@ -9,6 +9,7 @@ import {
 } from '@slovo/core/testing';
 import { Tabs } from 'expo-router';
 import { renderApp } from '../shell/test-app';
+import { layOutSheets } from '../shell/test-render';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import * as Clipboard from 'expo-clipboard';
 import { Share, Text } from 'react-native';
@@ -269,9 +270,11 @@ describe('a Collection in the board style', () => {
     await renderCollection(id);
 
     await settle(() => fireEvent.press(screen.getByRole('button', { name: menuLabel })));
+    await layOutSheets();
     await settle(() => fireEvent.press(screen.getByTestId('collection-menu-rename')));
     // The menu slides away first, then what it chose opens.
     await settle();
+    await layOutSheets();
     await settle(() => fireEvent.changeText(screen.getByDisplayValue('Осінь'), 'Зима'));
     await act(async () => {
       await fireEvent.press(screen.getByRole('button', { name: strings.nameSheet.save }));

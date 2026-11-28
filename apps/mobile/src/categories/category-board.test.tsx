@@ -365,10 +365,11 @@ describe("the Category's Feed", () => {
 
     expect(cardAt(0).meaning).toHaveTextContent('Значення слова гайовий.');
     const read = () => new Set(reads.mock.calls.map(([id]) => id));
-    expect(read()).toEqual(new Set(['w_lis', 'w_bir']));
+    // The current page, the next one and the one after it, ready before a swipe.
+    expect(read()).toEqual(new Set(['w_lis', 'w_bir', 'w_luh']));
     await swipeUp();
     expect(cardAt(1).meaning).toHaveTextContent('Значення слова бір.');
-    expect(read()).toEqual(new Set(['w_lis', 'w_bir', 'w_luh']));
+    expect(read()).toEqual(new Set(['w_lis', 'w_bir', 'w_luh', 'w_dibrova']));
   });
 
   it('shows the error with a retry, under a back tile, when its read fails, and the retry reads again', async () => {

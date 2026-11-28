@@ -6,7 +6,7 @@ import {
   type Visit,
 } from '@slovo/core';
 import type { PackReader } from '@slovo/language-pack/reader';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { logError } from './diagnostics/log';
 import { deviceNotificationScheduler } from './notifications/device-notifications';
@@ -96,18 +96,22 @@ const loading = { status: 'loading' } as const;
  * is shown: an earlier one that ends after it is dropped. A read that fails is
  * logged as `failure` and ends failed, with a retry that reads again. The
  * last thing read stays until the next read ends, but not over a composition
- * reopened: what the old one read is loading in the new one.
+ * reopened: what the old one read is loading in the new one. What is `known`
+ * already, read ahead in this composition, is ready at the first render, and
+ * the first read is skipped.
  */
 export function useCompositionRead<T>(
   read: (composition: Composition) => Promise<T>,
   failure: string,
   changes?: (composition: Composition) => Source,
+  known?: { readonly value: T },
 ): OpeningState<T> {
   const open = useComposition();
-  const [last, setRead] = useState<{ in: Composition; state: OpeningState<T> }>({
+  const [last, setRead] = useState<{ in: Composition; state: OpeningState<T> }>(() => ({
     in: open,
-    state: loading,
-  });
+    state: known === undefined ? loading : { status: 'ready', value: known.value },
+  }));
+  const skipRead = useRef(known !== undefined);
   // A retry counts up, so the effect reads again.
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
@@ -136,7 +140,8 @@ export function useCompositionRead<T>(
         },
       );
     };
-    reread();
+    if (skipRead.current) skipRead.current = false;
+    else reread();
     const stop = changes?.(open).subscribe(reread);
     return () => {
       active = false;

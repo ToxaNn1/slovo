@@ -2,16 +2,16 @@ import type { AnyEntryCard, Composition, EntryLinkSource } from '@slovo/core';
 import { EntryDetails, UndoToastProvider, useTokens } from '@slovo/ui';
 import { StatusBar } from 'expo-status-bar';
 import { usePathname, useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, type ComponentProps } from 'react';
+import { useCallback, useEffect, useRef, useState, type ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useCompositionRead } from '../composition';
+import { useComposition, useCompositionRead } from '../composition';
 import { ReadFailed } from '../read-failed';
 import { useShell } from '../shell-value';
 import { ShownCardFeatures } from './card-features';
+import { entryReadAhead, forgetEntryAhead, useOpenEntry } from '../entry-ahead';
 import { useEntrySlots } from './entry-actions';
-import { useOpenScreen } from '../use-open-screen';
 
 /**
  * The Entry screen a list opens: Entry details, the red panel with the back
@@ -48,7 +48,7 @@ export function EntryScreen({
   const { colors } = useTokens();
   const { top, bottom } = useSafeAreaInsets();
   const router = useRouter();
-  const openScreen = useOpenScreen();
+  const openEntryScreen = useOpenEntry();
   // The stack's Entry route, such as `/saved/favorites`: this screen's path without its Entry.
   const pathname = usePathname();
   const route = pathname.slice(0, pathname.lastIndexOf('/'));
@@ -57,14 +57,22 @@ export function EntryScreen({
     async (open: Composition) => (await openEntry(open, entryId, openedFrom)) ?? null,
     [entryId, openedFrom],
   );
-  const reading = useCompositionRead(read, 'Could not open the Entry');
+  // A tap that opened it read the card first, so the card mounts before the push slides.
+  const composition = useShell().composition;
+  const open = useComposition();
+  const [ahead] = useState(() =>
+    openedFrom === undefined || openedFrom === 'search' ? entryReadAhead(open, entryId) : undefined,
+  );
+  useEffect(() => {
+    forgetEntryAhead(entryId);
+  }, [entryId]);
+  const reading = useCompositionRead(read, 'Could not open the Entry', undefined, ahead);
   const card = reading.status === 'ready' ? reading.value : undefined;
   useEffect(() => {
     if (card === null) router.replace('/');
   }, [card, router]);
   // The Word History drawn is the history opened for Analytics (ADR 0068), once per Entry:
   // «Історія» draws it again on every return to the tab and at each smaller size.
-  const composition = useShell().composition;
   const historyCountedFor = useRef<string | undefined>(undefined);
   const onWordHistoryShown = useCallback(() => {
     const open = composition.state;
@@ -97,14 +105,20 @@ export function EntryScreen({
             bottomInset={bottom}
             onOpenCorrection={(correctionId) => {
               const word = card.kind === 'word' ? card.model.lemma : back;
-              openScreen(`${route}/${correctionId}?back=${encodeURIComponent(word)}`);
+              openEntryScreen(
+                correctionId,
+                `${route}/${correctionId}?back=${encodeURIComponent(word)}`,
+              );
             }}
             onOpenWord={(wordId) => {
-              openScreen(`${route}/${wordId}?back=${encodeURIComponent(back)}`);
+              openEntryScreen(wordId, `${route}/${wordId}?back=${encodeURIComponent(back)}`);
             }}
             onOpenSynonymRow={(synonymRowId) => {
               const word = card.kind === 'word' ? card.model.lemma : back;
-              openScreen(`${route}/${synonymRowId}?back=${encodeURIComponent(word)}`);
+              openEntryScreen(
+                synonymRowId,
+                `${route}/${synonymRowId}?back=${encodeURIComponent(word)}`,
+              );
             }}
             onWordHistoryShown={onWordHistoryShown}
           />

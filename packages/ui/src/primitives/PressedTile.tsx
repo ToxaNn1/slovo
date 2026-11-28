@@ -23,6 +23,21 @@ import {
 } from '../tokens';
 
 /**
+ * A press's timings, built once rather than on every press (27.11 pass):
+ * the sink, and the fade under Reduce Motion.
+ */
+const SINK = {
+  duration: motion.press.duration,
+  easing: Easing.bezier(...motion.press.easing),
+  reduceMotion: ReduceMotion.Never,
+};
+const FADE = {
+  duration: motion.reduceMotion.duration,
+  easing: Easing.bezier(...motion.reduceMotion.easing),
+  reduceMotion: ReduceMotion.Never,
+};
+
+/**
  * What a tile's face is: the cream `tile` with its `tileEdge`, the red
  * `accent` with its `accentEdge`, the ink of both Themes for a tile on red,
  * the Theme's own `inverse` ink on a dark edge, as a filed tile of the
@@ -101,13 +116,8 @@ export function PressedTile({
     key: offsetShadow.key,
     card: offsetShadow.card,
   }[depth];
-  const timing = sinks ? motion.press : motion.reduceMotion;
   const press = (to: number) => {
-    pressed.value = withTiming(to, {
-      duration: timing.duration,
-      easing: Easing.bezier(...timing.easing),
-      reduceMotion: ReduceMotion.Never,
-    });
+    pressed.value = withTiming(to, sinks ? SINK : FADE);
   };
   const faceMotion = useAnimatedStyle(() =>
     sinks

@@ -33,6 +33,7 @@ import {
   type MascotFrame,
 } from '../tokens';
 import { bezier, REDUCED_FADE } from './timing';
+import { useIsPageOnScreen } from './VerticalPager';
 
 /** The colour of each paint role of the Mascot's vector. */
 type Paints = Readonly<Record<'body' | 'ink' | 'accent', string>>;
@@ -259,10 +260,13 @@ function useSleepMarkDrift(index: number, scale: number) {
   const { duration, delays, from, to } = mascotSleepMarks;
   const delay = delays[index] ?? 0;
 
+  // A page waiting off screen in the Feed keeps its loops still (27.11 pass).
+  const onScreen = useIsPageOnScreen();
+
   useEffect(() => {
     cancelAnimation(cycle);
     cycle.value = -1;
-    if (reduceMotion) return;
+    if (reduceMotion || !onScreen) return;
     cycle.value = withDelay(
       delay,
       withSequence(
@@ -273,7 +277,7 @@ function useSleepMarkDrift(index: number, scale: number) {
         ),
       ),
     );
-  }, [cycle, delay, duration, reduceMotion]);
+  }, [cycle, delay, duration, reduceMotion, onScreen]);
 
   return useAnimatedStyle(() => {
     const t = cycle.value;
@@ -296,16 +300,17 @@ function useRayFlicker() {
   const reduceMotion = useReduceMotion();
   const cycle = useSharedValue(0);
   const { duration, opacities } = mascotRayFlicker;
+  const onScreen = useIsPageOnScreen();
 
   useEffect(() => {
     cancelAnimation(cycle);
     cycle.value = 0;
-    if (reduceMotion) return;
+    if (reduceMotion || !onScreen) return;
     cycle.value = withRepeat(
       withTiming(1, { duration, easing: Easing.linear, reduceMotion: ReduceMotion.Never }),
       -1,
     );
-  }, [cycle, duration, reduceMotion]);
+  }, [cycle, duration, reduceMotion, onScreen]);
 
   return useAnimatedStyle(() => {
     const step = Math.min(opacities.length - 1, Math.floor(cycle.value * opacities.length));
@@ -367,7 +372,9 @@ function useFigureMotion(state: MascotState) {
   const reduceMotion = useReduceMotion();
   const progress = useSharedValue(0);
   const shown = useSharedValue(reduceMotion ? 0 : 1);
-  const plan = reduceMotion ? undefined : mascotMotion[state];
+  // Off screen it stands still and moves once its page comes on screen.
+  const onScreen = useIsPageOnScreen();
+  const plan = reduceMotion || !onScreen ? undefined : mascotMotion[state];
 
   useEffect(() => {
     cancelAnimation(progress);

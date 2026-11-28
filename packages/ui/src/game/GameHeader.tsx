@@ -79,8 +79,11 @@ export function GameHeader({
   livesAtStart: number | undefined;
   /** How long after a wrong answer its Life is lost, in milliseconds. */
   lifeLostAfter: number;
-  /** The play time left of a timed Game and its whole time, in milliseconds; none in another Game. */
-  time: { left: number; limit: number } | undefined;
+  /**
+   * The play time left of a timed Game and its whole time, in milliseconds,
+   * and whether its clock runs; none in another Game.
+   */
+  time: { left: number; limit: number; running: boolean } | undefined;
   onExit: () => void;
 }) {
   const tokens = useTokens();
@@ -156,6 +159,7 @@ export function GameHeader({
         <GameTimer
           remainingMs={time.left}
           totalMs={time.limit}
+          running={time.running}
           texts={{
             remaining: (seconds) => count(words.timer, seconds),
             shown: (seconds) => fill(words.timerShown, { seconds: String(seconds) }),

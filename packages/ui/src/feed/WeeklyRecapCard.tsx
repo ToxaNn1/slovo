@@ -3,7 +3,7 @@
 
 import type { Plural } from '@slovo/contracts';
 import { sentences, type LocalDate, type WeeklyRecapModel } from '@slovo/core';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   ReduceMotion,
@@ -13,6 +13,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
@@ -232,20 +233,13 @@ function useFold(onDone: (() => void) | undefined) {
   const reduceMotion = useReduceMotion();
   const progress = useSharedValue(0);
   const height = useSharedValue(0);
-  const [started, setStarted] = useState(false);
   // Set at once on the first tap, so a double tap folds the card once.
   const tapped = useRef(false);
   const done = useRef(onDone);
   useEffect(() => {
     done.current = onDone;
   }, [onDone]);
-  useEffect(() => {
-    if (!started) return;
-    const timer = setTimeout(() => done.current?.(), fold.duration);
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [started]);
+  const folded = () => done.current?.();
   const style = useAnimatedStyle(() => {
     const p = progress.value;
     if (p === 0) return {};
@@ -278,12 +272,16 @@ function useFold(onDone: (() => void) | undefined) {
         onDone?.();
         return;
       }
-      setStarted(true);
-      progress.value = withTiming(1, {
-        duration: fold.duration,
-        easing: foldEasing,
-        reduceMotion: ReduceMotion.Never,
-      });
+      // The fold's own end tells `onDone`, so the card leaves on the frame it
+      // is folded, not on a JS timer beside it (27.11 pass).
+      progress.value = withTiming(
+        1,
+        { duration: fold.duration, easing: foldEasing, reduceMotion: ReduceMotion.Never },
+        (finished) => {
+          'worklet';
+          if (finished === true) scheduleOnRN(folded);
+        },
+      );
     },
   };
 }

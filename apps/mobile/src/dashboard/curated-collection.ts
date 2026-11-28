@@ -13,6 +13,7 @@ import { editionStrings } from '../edition/edition';
 import { keep } from '../keep';
 import { useSubscribed } from '../opening';
 import { useOpenScreen } from '../use-open-screen';
+import { useOpenEntry } from '../entry-ahead';
 import { useEditionInEffect } from '../edition/remote-switches';
 
 /**
@@ -66,6 +67,7 @@ export interface CuratedCollectionScreen {
 export function useCuratedCollectionScreen(collectionId: string): CuratedCollectionScreen {
   const { curatedCollections, collections } = useComposition();
   const openScreen = useOpenScreen();
+  const openEntryScreen = useOpenEntry();
   const curatedCollectionFeed = useEditionInEffect().isFeatureEnabled('curatedCollectionFeed');
   const showToast = useUndoToast();
   const read = useCallback(
@@ -96,7 +98,7 @@ export function useCuratedCollectionScreen(collectionId: string): CuratedCollect
         openScreen(`/curated-collection-feed/${collectionId}?from=${encodeURIComponent(entryId)}`);
         return;
       }
-      openScreen(`/search/${entryId}?back=${encodeURIComponent(name)}`);
+      openEntryScreen(entryId, `/search/${entryId}?back=${encodeURIComponent(name)}`);
     },
   };
 }

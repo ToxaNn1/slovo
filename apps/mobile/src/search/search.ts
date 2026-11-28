@@ -6,7 +6,7 @@ import { useComposition, useCompositionRead } from '../composition';
 import { logError } from '../diagnostics/log';
 import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
-import { useOpenScreen } from '../use-open-screen';
+import { useOpenEntry } from '../entry-ahead';
 
 /** A group of the Search screen: the kind of Entry its results are. */
 export type SearchGroupName = keyof SearchResults;
@@ -115,13 +115,16 @@ export function useSearchScreen(query: string): SearchScreenModel {
  */
 export function useOpenSearchResult(query: string): (entryId: string) => void {
   const composition = useComposition();
-  const openScreen = useOpenScreen();
+  const openEntryScreen = useOpenEntry();
   return useCallback(
     (entryId: string) => {
       void keep('the recent queries', composition.recentQueries.resultOpened(query));
-      openScreen(`/search/${entryId}?back=${encodeURIComponent(editionStrings.search.title)}`);
+      openEntryScreen(
+        entryId,
+        `/search/${entryId}?back=${encodeURIComponent(editionStrings.search.title)}`,
+      );
     },
-    [composition, openScreen, query],
+    [composition, openEntryScreen, query],
   );
 }
 

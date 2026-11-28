@@ -147,7 +147,11 @@ export function GameRound({
         time={
           game.time === undefined || game.timeLimit === undefined
             ? undefined
-            : { left: timeLeft ?? game.time.left, limit: game.timeLimit }
+            : {
+                left: timeLeft ?? game.time.left,
+                limit: game.timeLimit,
+                running: game.time.endsAt !== undefined,
+              }
         }
         onExit={() => {
           setAsking(true);
