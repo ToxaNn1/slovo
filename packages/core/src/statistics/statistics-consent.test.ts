@@ -162,6 +162,15 @@ describe('Statistics consent', () => {
     expect(reader.sent()).toEqual(NOTHING);
   });
 
+  it('treats a region that is no country code as unknown, so as the EEA (ADR 0210)', async () => {
+    for (const region of ['150', '001', '419', '', 'EUR']) {
+      const reader = await run({ region });
+      expect(await steps(reader), region).toContain('statisticsConsent');
+    }
+    const outside = await run({ region: 'us' });
+    expect(await steps(outside)).not.toContain('statisticsConsent');
+  });
+
   it('turns the switch on when the reader allows, and sends from then on', async () => {
     const reader = await run({ region: 'DE' });
     await reader.app.onboarding.next();
