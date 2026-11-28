@@ -669,7 +669,7 @@ describe('two devices of one Account', () => {
 });
 
 // Spec #378, "The first sign-in rule": a sync without a cursor.
-// ADR 0212: a change the reader makes after a pull is later than what the pull brought.
+// ADR 0215: a change the reader makes after a pull is later than what the pull brought.
 describe('a device whose clock is behind another’s', () => {
   const MINUTE = 60_000;
 

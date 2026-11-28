@@ -312,7 +312,7 @@ describe('deleting the sent pending changes', () => {
   });
 });
 
-// ADR 0212: a change is later than every change time the Account is known to hold.
+// ADR 0215: a change is later than every change time the Account is known to hold.
 describe('the change time of a write after one the Account holds', () => {
   it('is 1 ms after the Account’s when the clock is not past it', async () => {
     const { userState } = await tracked();

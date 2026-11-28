@@ -57,7 +57,7 @@ export interface SyncExchange {
    * value wins where it has one and gets the device's where it has none. The
    * pull applies every page after the cursor, each in one write with its
    * cursor and the latest change time it brings, which every later change of
-   * the device passes (ADR 0212), by the record's mark:
+   * the device passes (ADR 0215), by the record's mark:
    * - last write wins: the Account's value replaces the device's, unless the
    *   key has a later pending change, which stays for the push;
    * - `union`: every Active Day is kept, and none is deleted;
@@ -319,7 +319,7 @@ export function createSyncExchange({
         ...syncCursor.change(cursor),
         ...syncCursorAccount.change(account),
       ]);
-      // The latest change time the page brings is one the Account holds (ADR 0212).
+      // The latest change time the page brings is one the Account holds (ADR 0215).
       const pulledAt = Math.max(0, ...records.map(({ changedAt }) => changedAt));
       if (pulledAt > ((await userState.read(syncAccountChangedAt)) ?? 0)) {
         for (const change of syncAccountChangedAt.change(pulledAt)) untracked.set(...change);

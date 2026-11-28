@@ -58,7 +58,7 @@ const { syncAccountChangedAt, syncPending, syncCursor } = userStateRecords;
  * Wraps the user state so that every write of a synced record leaves its
  * pending change in the same atomic batch, with the clock's time, or 1 ms
  * after the latest change time the Account holds when the clock is not past
- * it (ADR 0212): a write that
+ * it (ADR 0215): a write that
  * fails leaves none. `device-only` records, the schema version, the pending
  * changes and the cursor are never tracked, and nothing written before is
  * back-filled. Writes, `deleteSent` and `merge` run one at a time.

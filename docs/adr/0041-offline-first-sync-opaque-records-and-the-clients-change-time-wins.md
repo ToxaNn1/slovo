@@ -1,5 +1,5 @@
 ---
-summary: Offline-first: the backend keeps opaque records, devices exchange changes, the client's change time, cut to the server's, wins. Amended by 0205, 0208, 0212.
+summary: Offline-first: the backend keeps opaque records, devices exchange changes, the client's change time, cut to the server's, wins. Amended by 0205, 0208, 0215.
 ---
 
 # Offline-first sync: opaque records, and the client's change time wins
