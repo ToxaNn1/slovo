@@ -77,7 +77,7 @@ export const HolidayRuleSchema = z.discriminatedUnion('kind', [
       month: MonthSchema,
     })
     .refine(({ day, month }) => day <= (DAYS_IN_MONTH[month - 1] ?? 0), {
-      message: 'Expected a day that month has',
+      error: 'Expected a day that month has',
       path: ['day'],
     }),
   z.strictObject({
