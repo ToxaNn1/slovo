@@ -59,10 +59,10 @@ const CounterEventSchema = z
     saved: DeltaSchema,
   })
   .refine((event) => Math.abs(event.known + event.unknown) <= 1, {
-    message: 'An Entry holds at most one mark: known and unknown cannot change the same way',
+    error: 'An Entry holds at most one mark: known and unknown cannot change the same way',
   })
   .refine((event) => event.known !== 0 || event.unknown !== 0 || event.saved !== 0, {
-    message: 'An event changes something',
+    error: 'An event changes something',
   });
 
 /** What one Entry's counts change by, as one device counted it. */

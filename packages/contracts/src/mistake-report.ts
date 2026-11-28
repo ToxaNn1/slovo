@@ -32,7 +32,7 @@ export const MistakeReportSchema = z
     contentVersion: PackMetadataSchema.shape.contentVersion,
   })
   .refine((report) => report.type !== 'other' || report.comment !== '', {
-    message: 'A report of type other needs a comment',
+    error: 'A report of type other needs a comment',
     path: ['comment'],
   });
 

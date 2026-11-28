@@ -228,7 +228,7 @@ export const NarratorVoiceSampleSchema = z
   })
   .refine(({ syllables, stressed }) => stressed < syllables.length, {
     path: ['stressed'],
-    message: 'Expected the stressed syllable to be one of the syllables',
+    error: 'Expected the stressed syllable to be one of the syllables',
   });
 
 export type NarratorVoiceSample = z.infer<typeof NarratorVoiceSampleSchema>;
@@ -524,7 +524,7 @@ export const DailyGoalsSchema = z
   })
   .refine(({ options, highlighted }) => options.includes(highlighted), {
     path: ['highlighted'],
-    message: 'Expected the highlighted Daily Goal among the options',
+    error: 'Expected the highlighted Daily Goal among the options',
   });
 
 export type DailyGoals = z.infer<typeof DailyGoalsSchema>;
@@ -642,7 +642,7 @@ const WidgetBackgroundSchema = z
   .strictObject({ background: HexColorSchema, text: HexColorSchema })
   .refine(({ background, text }) => contrastRatio(background, text) >= MINIMUM_CONTRAST, {
     path: ['text'],
-    message: `Expected text at least ${String(MINIMUM_CONTRAST)}:1 in contrast with its background (WCAG AA)`,
+    error: `Expected text at least ${String(MINIMUM_CONTRAST)}:1 in contrast with its background (WCAG AA)`,
   });
 
 /**
@@ -813,8 +813,8 @@ export const EditionConfigSchema = z
      */
     dashboardMoods: z
       .array(KebabCaseIdSchema)
-      .min(3, { message: 'The Dashboard lists three to five moods' })
-      .max(5, { message: 'The Dashboard lists three to five moods' }),
+      .min(3, { error: 'The Dashboard lists three to five moods' })
+      .max(5, { error: 'The Dashboard lists three to five moods' }),
     /**
      * The letters Search reads as another, each lower-case letter
      * to the one it reads as, such as ґ to г: the Edition owns them, so the
