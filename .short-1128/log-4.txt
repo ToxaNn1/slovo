@@ -12,3 +12,18 @@ EDIT 2009 w_qud58h діахронія [0] w_qud58h v2 content v17442 batch 5662c
 EDIT 2010 w_quebt9 ряска [0] w_quebt9 v3 content v17443 batch c73ad190-ca2f-4405-b383-ad64c46a31ed | $ pnpm --filter @slovo/content content edit word w_quebt9 /home/user/slovo/.short-1128/edits/w_quebt9.json --edition uk | $ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_quebt9 /home/user/slovo/.short-1128/edits/w_quebt9.json --edition uk
 EDIT 2011 w_quqbdn бартка [0] w_quqbdn v3 content v17444 batch 2e4bcdfe-a4be-4e9f-8ecf-13b4f055e027 | $ pnpm --filter @slovo/content content edit word w_quqbdn /home/user/slovo/.short-1128/edits/w_quqbdn.json --edition uk | $ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_quqbdn /home/user/slovo/.short-1128/edits/w_quqbdn.json --edition uk
 # interrupted by a container restart; resumed
+# snapshot content v17444, plan[2000:2500]
+DONE 2000 w_qr3rc0 придуха
+DONE 2001 w_qrewyf голець
+DONE 2002 w_qrgnfe коцюба
+DONE 2003 w_qsnoy3 креси
+DONE 2004 w_qsohkp місячина
+DONE 2005 w_qsr4io штундизм
+DONE 2006 w_qtd4fv ресора
+DONE 2007 w_qu1pju трансепт
+DONE 2008 w_qu2cbv оксамитка
+DONE 2009 w_qud58h діахронія
+DONE 2010 w_quebt9 ряска
+DONE 2011 w_quqbdn бартка
+EDIT 2012 w_qvfvhn паронім [0] w_qvfvhn v4 content v17445 batch 8b5b3c36-f896-4915-9427-58e2e342bc77 | $ pnpm --filter @slovo/content content edit word w_qvfvhn /home/user/slovo/.short-1128/edits/w_qvfvhn.json --edition uk | $ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_qvfvhn /home/user/slovo/.short-1128/edits/w_qvfvhn.json --edition uk
+EDIT 2013 w_qw6hd9 покуть [0] w_qw6hd9 v3 content v17446 batch 851151df-1dc6-4edf-97bb-68ddc771eca8 | $ pnpm --filter @slovo/content content edit word w_qw6hd9 /home/user/slovo/.short-1128/edits/w_qw6hd9.json --edition uk | $ tsx --disable-warning=ExperimentalWarning src/cli.ts edit word w_qw6hd9 /home/user/slovo/.short-1128/edits/w_qw6hd9.json --edition uk
