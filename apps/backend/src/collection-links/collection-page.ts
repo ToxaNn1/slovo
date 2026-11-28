@@ -6,7 +6,7 @@ import type { HtmlEscapedString } from 'hono/utils/html';
 /** The order the page lists the kinds of Entries in, the Feed's (CONTEXT.md). */
 const KINDS: readonly EntryKind[] = ['word', 'correction', 'idiom', 'synonymRow', 'tip'];
 
-/** What the page shows of an Entry: its headword, with Stress where it has one, and one line under it. */
+/** What the page shows of an Entry: its text (a Word's Lemma), with Stress where it has one, and one line under it. */
 function shownOf(entry: Entry): { readonly title: string; readonly line: string } {
   switch (entry.kind) {
     case 'word':
