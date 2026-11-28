@@ -497,6 +497,7 @@ describe('a stress trap in «Обери правильне»', () => {
         answer: trap,
         eligible: [trap, ...others],
         next: [],
+        weakNext: new Set(),
         upTo: 1,
         round: 1,
         random: seededRandom(1),

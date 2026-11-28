@@ -129,6 +129,7 @@ export function createQuickQuestion({
           answer,
           eligible: eligible.entries,
           next: [],
+          weakNext: new Set(),
           upTo: 1,
           round: 1,
           random,

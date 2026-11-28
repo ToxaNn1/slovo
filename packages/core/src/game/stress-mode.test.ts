@@ -394,6 +394,7 @@ describe('the Entries «Наголос» builds no Round for', () => {
       answer,
       eligible: [answer],
       next: [],
+      weakNext: new Set(),
       upTo: 1,
       round: 1,
       random: seededRandom(1),

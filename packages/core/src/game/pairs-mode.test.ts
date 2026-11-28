@@ -306,18 +306,32 @@ describe('the grids of «Пари»', () => {
   it('puts the Words the reader marked «Не знаю» in grids drawn anew for each Game, not always the first', async () => {
     const weak = ['w_n03', 'w_n07', 'w_n09'];
     const places: number[] = [];
-    for (const seed of [1, 2, 3, 4]) {
-      const app = await run({ seed });
-      for (const id of weak) await app.knowledge.tap(id, 'unknown');
+    const leftOut: string[] = [];
+    // The Words as the fixture lists them, and by id, as a Language Pack reads them.
+    const byId = createMemoryContentPort({
+      categories: [test, crafts],
+      words: words.toSorted((one, other) => (one.id < other.id ? -1 : 1)),
+    });
+    // Past 60, the seeds whose last grid starts with «n02», the synonym of a weak Word due in it.
+    const seeds = [...Array.from({ length: 60 }, (_, index) => index + 1), 134, 144, 151, 166];
+    for (const [order, pack] of [content, byId].entries()) {
+      for (const seed of seeds) {
+        const app = await run({ seed, pack });
+        for (const id of weak) await app.knowledge.tap(id, 'unknown');
 
-      const shown = (await playGame(app)).map((grid) =>
-        grid.words.map(({ shown: { text } }) => text),
-      );
+        const shown = (await playGame(app)).map((grid) =>
+          grid.words.map(({ shown: { text } }) => text),
+        );
 
-      places.push(...weak.map((id) => shown.findIndex((texts) => texts.includes(id.slice(2)))));
+        for (const id of weak) {
+          const place = shown.findIndex((texts) => texts.includes(id.slice(2)));
+          if (place < 0) leftOut.push(`order ${String(order)}, seed ${String(seed)}: ${id}`);
+          places.push(place);
+        }
+      }
     }
 
-    expect(places.every((place) => place >= 0)).toBe(true);
+    expect(leftOut).toEqual([]);
     expect(places.some((place) => place >= 4)).toBe(true);
   });
 

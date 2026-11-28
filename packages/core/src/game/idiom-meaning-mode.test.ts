@@ -269,6 +269,7 @@ describe('the Distractors of «Фразеологізми»', () => {
         answer,
         eligible: [answer, ...others],
         next: [],
+        weakNext: new Set(),
         upTo: 1,
         round: 1,
         random: seededRandom(seed),

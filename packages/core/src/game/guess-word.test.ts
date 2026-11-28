@@ -20,6 +20,7 @@ const roundFor = (
     answer,
     eligible,
     next: [],
+    weakNext: new Set(),
     upTo: 1,
     round,
     random: seededRandom(seed),
