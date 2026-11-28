@@ -11,6 +11,7 @@ import { deviceClock } from '@/device/device-clock';
 import { deviceFacts } from '@/device/device-facts';
 import { ForceUpdateGate } from '@/force-update/force-update';
 import { startCrashReports } from '@/diagnostics/crash-reports';
+import { updateChannel } from '@/settings/installed-build';
 import { AppProviders, ScreenProviders } from '@/app-providers';
 import { DecorInEffect } from '@/shell/decor-in-effect';
 import { InterfaceSoundsInEffect, soundEngine } from '@/sounds/interface-sounds';
@@ -25,7 +26,7 @@ import { EditionTabs } from '@/shell/edition-tabs';
 import { useEditionFontsReady } from '@/shell/expo-go-fonts';
 
 // Before the first screen, so a crash at launch is reported too.
-startCrashReports(process.env.EXPO_PUBLIC_SENTRY_DSN);
+startCrashReports(process.env.EXPO_PUBLIC_SENTRY_DSN, updateChannel());
 
 export default function RootLayout() {
   // In Expo Go only: nothing draws until the Edition's fonts have loaded.

@@ -52,8 +52,8 @@ describe('crash reports', () => {
   it('starts nothing without a DSN', () => {
     const sentry = fakeSentry();
 
-    startCrashReports(undefined, sentry.load);
-    startCrashReports('', sentry.load);
+    startCrashReports(undefined, 'production', sentry.load);
+    startCrashReports('', 'production', sentry.load);
 
     expect(sentry.load).not.toHaveBeenCalled();
   });
@@ -61,7 +61,7 @@ describe('crash reports', () => {
   it('starts Sentry with the DSN, and the event sent carries no email, IP, user or Account id', () => {
     const sentry = fakeSentry();
 
-    startCrashReports('https://key@o1.ingest.sentry.io/1', sentry.load);
+    startCrashReports('https://key@o1.ingest.sentry.io/1', 'production', sentry.load);
 
     expect(sentry.init).toHaveBeenCalledWith(
       expect.objectContaining({ dsn: 'https://key@o1.ingest.sentry.io/1', sendDefaultPii: false }),
@@ -81,20 +81,35 @@ describe('crash reports', () => {
     expect(sent?.contexts?.device?.model).toBe('iPhone17,3');
   });
 
-  it('tracks no sessions, so no launch is counted per install (ADR 0048 covers crash reports only)', () => {
+  it('tracks release-health sessions, so crash-free users are counted, still with no user', () => {
     const sentry = fakeSentry();
 
-    startCrashReports('https://key@o1.ingest.sentry.io/1', sentry.load);
+    startCrashReports('https://key@o1.ingest.sentry.io/1', 'production', sentry.load);
 
     expect(sentry.init).toHaveBeenCalledWith(
-      expect.objectContaining({ enableAutoSessionTracking: false }),
+      expect.objectContaining({ enableAutoSessionTracking: true, sendDefaultPii: false }),
     );
+    expect(sentry.init.mock.calls[0]?.[0]).not.toHaveProperty('initialScope');
+  });
+
+  it("names the environment by the build's update channel, so beta and the App Store stay apart", () => {
+    const environmentOf = (channel: string | null) => {
+      const sentry = fakeSentry();
+      startCrashReports('https://key@o1.ingest.sentry.io/1', channel, sentry.load);
+      return sentry.init.mock.calls[0]?.[0]?.environment;
+    };
+
+    expect(environmentOf('beta')).toBe('beta');
+    expect(environmentOf('production')).toBe('production');
+    // A development build and Expo Go run no channel.
+    expect(environmentOf(null)).toBe('development');
+    expect(environmentOf('')).toBe('development');
   });
 
   it('keeps no breadcrumbs', () => {
     const sentry = fakeSentry();
 
-    startCrashReports('https://key@o1.ingest.sentry.io/1', sentry.load);
+    startCrashReports('https://key@o1.ingest.sentry.io/1', 'production', sentry.load);
 
     expect(sentry.breadcrumbKept()).toBeNull();
   });

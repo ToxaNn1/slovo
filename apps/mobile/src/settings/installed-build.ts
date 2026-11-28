@@ -36,6 +36,20 @@ function updatedOn(): InstalledBuild['updatedOn'] {
 }
 
 /**
+ * The EAS Update channel the binary was built for (`beta`, `production`), or
+ * null in a development build, under Expo Go and on a binary that lacks
+ * `expo-updates`. Crash reports name their environment by it (ADR 0048).
+ */
+export function updateChannel(): string | null {
+  const updates = nativeModules.load(
+    'updates',
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    () => require('expo-updates') as UpdatesModule,
+  );
+  return updates?.channel ?? null;
+}
+
+/**
  * The app's version, as its app config names it, and the build number
  * `expo-application` reports. The native version is not read: under Expo Go
  * it is Expo Go's own («58.0.7»). `expo-application` is required here and
