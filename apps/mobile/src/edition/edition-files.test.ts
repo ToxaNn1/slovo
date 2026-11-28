@@ -878,7 +878,8 @@ describe('the strings of the Category screens and the board style (spec #1604)',
       inMix: 'У ТЕМАХ',
       known: 'ЗНАЮ 3 З 12',
       knownStamp: 'ЗНАЮ',
-      feedKicker: 'Категорія · Емоції · 2 з 4',
+      // A line breaks only after a «·», never inside the place or before a «·» (app pass 27.11).
+      feedKicker: 'Категорія\u00a0· Емоції\u00a0· 2\u00a0з\u00a04',
       addedToMix: '«Емоції» тепер у твоїх темах.',
       removedFromMix: '«Емоції» прибрано з твоїх тем.',
       curatedAdd: 'ДОДАТИ СОБІ',
@@ -1057,7 +1058,7 @@ describe('the board «slogo game last» strings (spec #1880)', () => {
       xp: '+{count} XP',
       wrong: 'Мимо',
       lastLife: 'Життя все',
-      answer: 'Майже. Ось як правильно: {answer}',
+      answer: 'Ось як правильно: {answer}',
     });
     expect(parsed.round.lives).toBe('Життів: {count} з {total}');
     expect(parsed.round.typed.submit).toBe('Перевірити');

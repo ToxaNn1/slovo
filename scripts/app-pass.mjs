@@ -12,7 +12,8 @@
 // `exp://127.0.0.1:<metro>/--/` links instead of the development client's
 // `slovo://`. --state loads a test state first (docs/agents/test-states.md,
 // development client only), replacing the simulator's user state:
-// `full-saved` gives the Collection steps a Collection. --out keeps the
+// `full-saved` gives the Collection steps a Collection and makes them
+// required (`COLLECTION=1`). --out keeps the
 // screenshots and the log in that folder (a new temporary one by default).
 //
 // The run holds the machine-wide Maestro lock `/tmp/slovo-maestro.lock`, as
@@ -28,7 +29,8 @@ import { parseArgs } from 'node:util';
 
 const mobile = fileURLToPath(new URL('../apps/mobile/', import.meta.url));
 const LOCK = '/tmp/slovo-maestro.lock';
-const JAVA_HOME = '/usr/local/opt/openjdk@17';
+// Homebrew's openjdk@17 on Intel Macs, then on Apple silicon.
+const JAVA_HOMES = ['/usr/local/opt/openjdk@17', '/opt/homebrew/opt/openjdk@17'];
 const USAGE =
   'Usage: pnpm app-pass [--device <udid>] [--expo-go] [--metro <port>] [--entry <id>] [--state <name>] [--out <folder>]';
 
@@ -60,6 +62,8 @@ const settings = values['expo-go']
   ? ['APP_ID=host.exp.Exponent', `LINK=exp://127.0.0.1:${values.metro}/--/`]
   : [];
 if (values.entry !== undefined) settings.push(`ENTRY_ID=${values.entry}`);
+// `full-saved` keeps Collections, so the pass requires its Collection steps.
+if (values.state === 'full-saved') settings.push('COLLECTION=1');
 
 async function takeLock() {
   let told = false;
@@ -111,7 +115,8 @@ try {
     await sleep(8_000);
   }
   const env = { ...process.env };
-  if (!env.JAVA_HOME && existsSync(JAVA_HOME)) env.JAVA_HOME = JAVA_HOME;
+  const javaHome = JAVA_HOMES.find((home) => existsSync(home));
+  if (!env.JAVA_HOME && javaHome !== undefined) env.JAVA_HOME = javaHome;
   const args = [
     ...(values.device === undefined ? [] : ['--device', values.device]),
     'test',

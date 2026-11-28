@@ -5,6 +5,7 @@ import {
   OnboardingWelcome,
   TokensProvider,
 } from '@slovo/ui';
+import { capitalMarkRoom } from '@slovo/ui/tokens';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo, StyleSheet, Text } from 'react-native';
@@ -240,6 +241,23 @@ describe('An onboarding step', () => {
     await renderWelcome(on);
     const skipRowBottom = on.insets.top + 44;
     expect(shoutOnScreen().highest).toBeGreaterThanOrEqual(skipRowBottom);
+  });
+
+  // App pass 27.11 (B2): «ГРАЙ!» and «ДЗИНЬ!» ran into «Пропустити»: the marks over the capitals
+  // rise above the word's line, which the room under the skip button left out.
+  it.each([
+    ['under a notch', notched],
+    ['on the smallest phone', small],
+  ])('keeps the marks over its shrunk shout word under its skip button %s', async (_, on) => {
+    await renderWelcome(on);
+    // The word shrunk to half its size to fit across the top.
+    await fireEvent(screen.getByTestId('onboarding-shout'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 340, height: 151 / 2 } },
+    });
+    const room = capitalMarkRoom('stepShout', { fontSize: 168 / 2, lineHeight: 151 / 2 });
+    const { scale, highest } = shoutOnScreen();
+    expect(room).toBeGreaterThan(0);
+    expect(highest - scale * room).toBeGreaterThan(on.insets.top + 44 - 0.01);
   });
 
   it("draws its red top as the board on the board's phone", async () => {

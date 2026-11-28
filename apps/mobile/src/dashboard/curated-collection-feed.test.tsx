@@ -197,7 +197,7 @@ describe("a Curated Collection's Feed", () => {
       expect(card.getByTestId(`${kind}-card`)).toBeTruthy();
       expect(card.getAllByText(text, { exact: false }).length).toBeGreaterThan(0);
       expect(card.getByTestId(`${kind}-card-kicker`)).toHaveTextContent(
-        `Добірка · Мішанина · ${String(place)} з 3`,
+        `Добірка\u00a0· Мішанина\u00a0· ${String(place)}\u00a0з\u00a03`,
       );
     }
   });

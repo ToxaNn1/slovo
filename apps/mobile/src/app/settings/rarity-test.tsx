@@ -96,9 +96,9 @@ export default function RarityTestScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   top: { paddingHorizontal: space[5], paddingTop: space[2] },
+  // From the top, as in onboarding: centred, a question left a screen's half empty above it.
   content: {
     flexGrow: 1,
-    justifyContent: 'center',
     gap: space[3],
     paddingHorizontal: space[5],
     paddingVertical: space[6],

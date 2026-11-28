@@ -8,6 +8,7 @@ import { useLemmaSize } from '../providers/FontSizeProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { entryPanel, iconButton, space, swipeStampLayout, wedges, wordCardSide } from '../tokens';
 import { AccentGround } from './AccentGround';
+import { CardGroundContext } from './CardTabs';
 import { useCardFeatures } from './card-features';
 import { SwipeMarks, type EntrySwipe } from './SwipeMarks';
 import type { EntryCardProps } from './EntryCard';
@@ -53,6 +54,7 @@ export function EntryDetails({
   bottomInset: number;
 }) {
   const lemmaSize = useLemmaSize();
+  const { colors } = useTokens();
   const { sourceTab } = useCardFeatures();
   const swipe = slots?.swipe;
   // The tab bar stands at the screen's foot (owner 08.11): under it only the room
@@ -119,17 +121,20 @@ export function EntryDetails({
       )}
     </Swiped>
   );
+  // No card lies under the tabs here: a clamped tab's last line fades into the screen's background.
   return (
-    <EntryReveal>
-      {/* The tabbed card is a fixed frame the rest of the screen's height: nothing around it
+    <CardGroundContext value={colors.background}>
+      <EntryReveal>
+        {/* The tabbed card is a fixed frame the rest of the screen's height: nothing around it
       scrolls, only an opened tab inside it. */}
-      <View
-        testID="entry-frame"
-        style={[styles.scroll, { paddingBottom: foot }, drop > 0 && { marginBottom: -drop }]}
-      >
-        {body}
-      </View>
-    </EntryReveal>
+        <View
+          testID="entry-frame"
+          style={[styles.scroll, { paddingBottom: foot }, drop > 0 && { marginBottom: -drop }]}
+        >
+          {body}
+        </View>
+      </EntryReveal>
+    </CardGroundContext>
   );
 }
 

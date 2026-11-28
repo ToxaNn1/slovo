@@ -84,7 +84,7 @@ describe('the Game screen', () => {
 
         const { title, line } = banner();
         expect(title).toHaveTextContent(wrong === lives.length ? 'Життя все' : 'Мимо');
-        expect(line).toHaveTextContent(/^Майже\. Ось як правильно: \S+$/);
+        expect(line).toHaveTextContent(/^Ось як правильно: \S+$/);
 
         await advance(60_000);
         expect(screen.getByTestId('game-answer-banner')).toBeOnTheScreen();

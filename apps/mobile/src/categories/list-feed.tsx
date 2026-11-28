@@ -6,6 +6,7 @@ import {
   FeedError,
   Placeholder,
   space,
+  OverCardToasts,
   UndoToastProvider,
   useCloseUndoToast,
   useTokens,
@@ -180,16 +181,22 @@ function ListFeedPageView({
   );
 }
 
-/** A read card of a list's Feed, with its Entry's slots. */
-function ListFeedCard({
-  card,
-  testID,
-  kicker,
-}: {
+/** A read card of a list's Feed, with its Entry's slots, whose toasts sit over it. */
+function ListFeedCard(props: ListFeedCardProps) {
+  return (
+    <OverCardToasts>
+      <SlottedListFeedCard {...props} />
+    </OverCardToasts>
+  );
+}
+
+interface ListFeedCardProps {
   card: AnyEntryCard;
   testID: string;
   kicker: string;
-}) {
+}
+
+function SlottedListFeedCard({ card, testID, kicker }: ListFeedCardProps) {
   const slots = useEntrySlots(card);
   return (
     <EntryCard
